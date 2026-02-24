@@ -22,9 +22,35 @@
                 <div class="p-10 text-center text-slate-400">[[ isArabic ? 'واجهة المشتريات قيد التطوير...' : 'Procurement module is under development...' ]]</div>
             </div>
 
-            <div v-if="view === 'item_master'">
-                <div class="p-10 text-center text-slate-400">[[ isArabic ? 'سجل الأصناف الرئيسي' : 'Item Master Registry' ]]</div>
+            <div v-if="view === 'item_master'" class="animate-in slide-in-from-bottom-4 duration-500">
+    <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-slate-800">[[ isArabic ? 'إضافة صنف جديد' : 'Add New Item' ]]</h2>
+            <span class="text-slate-400 italic font-medium">Product Image</span>
+        </div>
+
+        <div class="border-2 border-dashed border-slate-200 rounded-3xl p-10 flex items-center justify-center gap-10 bg-slate-50/30 relative group hover:border-blue-400 transition-all">
+            
+            <div class="flex flex-col items-center gap-3">
+                <label class="bg-[#1e293b] text-white px-8 py-3 rounded-xl cursor-pointer hover:bg-slate-800 transition-all flex items-center gap-3 font-bold shadow-lg shadow-slate-200">
+                    <i class="fas fa-upload text-sm"></i>
+                    [[ isArabic ? 'اختيار صورة' : 'Choose Image' ]]
+                    <input type="file" @change="handleImageUpload" class="hidden">
+                </label>
+                <p class="text-xs text-slate-400 font-medium">Max size: 2MB (JPG, PNG)</p>
             </div>
+
+            <div class="w-28 h-28 rounded-2xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden shadow-sm relative transition-transform group-hover:scale-105">
+                <img v-if="imagePreview" :src="imagePreview" class="w-full h-full object-cover">
+                <div v-else class="flex flex-col items-center opacity-20">
+                    <i class="fas fa-image text-4xl mb-1"></i>
+                    <i class="fas fa-plus-circle text-xs absolute top-2 right-2"></i>
+                </div>
+            </div>
+        </div>
+
+        </div>
+</div>
 
             <div v-if="view === 'global_config'" class="animate-in fade-in duration-500">
     <div class="flex items-center justify-between mb-8">
