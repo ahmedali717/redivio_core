@@ -1,0 +1,153 @@
+{% extends "auth_base.html" %}
+
+{% block content %}
+<style>
+    @keyframes float-robot {
+        0%, 100% { transform: translateY(0px) rotate(10deg); }
+        50% { transform: translateY(-10px) rotate(5deg); } 
+    }
+    .robot-float {
+        animation: float-robot 3s ease-in-out infinite;
+        filter: drop-shadow(0 10px 15px rgba(59, 130, 246, 0.4));
+    }
+    @keyframes pop-in {
+        0% { opacity: 0; transform: scale(0.8) translateX(-10px); }
+        100% { opacity: 1; transform: scale(1) translateX(0); }
+    }
+    .msg-pop {
+        animation: pop-in 0.5s ease-out 1s forwards;
+        opacity: 0;
+    }
+</style>
+
+<div class="w-full max-w-7xl h-auto lg:h-[85vh] relative z-10 flex flex-col lg:flex-row overflow-hidden rounded-3xl shadow-2xl border border-slate-800 bg-[#0f172a]">
+    
+    <div class="lg:w-5/12 relative p-8 lg:p-12 flex flex-col justify-between bg-slate-900 overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-900/20 to-transparent pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
+        
+        <div class="relative z-10 flex items-center gap-3 mb-8 lg:mb-0">
+            <div class="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white text-xl font-bold shadow-lg">R</div>
+            <span class="text-xl font-bold text-white tracking-wider tech-font">REDIVIO <span class="text-blue-500">ERP</span></span>
+        </div>
+
+        <div class="relative z-10 my-auto animate-intro">
+            <h1 class="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+                Master Your <br/> 
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">Operations</span>
+            </h1>
+            
+            <div class="space-y-4 text-slate-400 text-sm lg:text-base mb-4 max-w-md leading-relaxed">
+                <p>
+                    A state-of-the-art solution designed for startups and SMEs to 
+                    <strong class="text-blue-200">monitor, decide, and enhance</strong> 
+                    performance in real-time.
+                </p>
+                <div class="border-l-2 border-blue-500 pl-4 py-1 bg-blue-900/10 rounded-r-lg">
+                    <p class="text-slate-300 italic text-xs">
+                        "Simplifying the onboarding process with self-service customization, eliminating huge rollout investments."
+                    </p>
+                </div>
+            </div>
+            
+            <div class="relative inline-block mt-16">
+                <div class="absolute -right-24 -top-8 z-20 pointer-events-none">
+                    <div class="robot-float relative">
+                        <i class="fas fa-robot text-6xl text-blue-400"></i> <div class="absolute top-4 left-3 w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                        <div class="absolute top-4 right-3 w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                        <div class="msg-pop absolute -left-20 top-0 bg-white text-slate-900 text-[10px] font-bold py-1 px-2 rounded-full shadow-lg whitespace-nowrap">
+                            Start Free! 👇
+                            <div class="absolute right-2 -bottom-1 w-2 h-2 bg-white transform rotate-45"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative z-10 rounded-2xl p-6 backdrop-blur-md border border-blue-500/30 bg-slate-900/60 shadow-2xl">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="relative flex h-2 w-2">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span class="text-xs text-blue-200 font-bold uppercase tracking-widest">Free Starter Plan</span>
+                    </div>
+                    <div class="flex items-center gap-6 text-white">
+                        <div>
+                            <span class="block text-3xl font-bold tech-font">14</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wide">Days Trial</span>
+                        </div>
+                        <div class="w-px h-8 bg-slate-600"></div>
+                        <div>
+                            <span class="block text-3xl font-bold tech-font">&lt; 50</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wide">SKUs Limit</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:w-7/12 bg-[#0b1120] p-8 lg:p-12 overflow-y-auto" x-data="signupForm()">
+        <div class="max-w-md mx-auto animate-form">
+            
+            <a href="{% url 'landing_page' %}" class="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 group cursor-pointer">
+                <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+                <span class="text-sm font-bold">Back to Home</span>
+            </a>
+
+            <h2 class="text-2xl font-bold text-white mb-6">Create Account</h2>
+            <form @submit.prevent="submitForm">
+                <div class="mb-4"><label class="text-xs text-slate-400 mb-1 block">Full Name</label><input type="text" x-model="form.name" class="input-field" placeholder="John Doe"></div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><label class="text-xs text-slate-400 mb-1 block">Work Email</label><input type="email" x-model="form.email" class="input-field" placeholder="name@work.com"></div>
+                    <div><label class="text-xs text-slate-400 mb-1 block">Phone Number</label><input type="tel" x-model="form.phone" class="input-field" placeholder="+966 5X XXX XXXX"></div>
+                </div>
+                <div class="mb-4"><label class="text-xs text-slate-400 mb-1 block">Company Name</label><input type="text" x-model="form.company" class="input-field" placeholder="Company Name"></div>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Industry</label>
+                        <select x-model="form.industry" class="input-field">
+                            <option value="">Select</option><option value="Retail">Retail</option><option value="Tech">Technology</option><option value="Logistics">Logistics</option>
+                        </select>
+                    </div>
+                    <div><label class="text-xs text-slate-400 mb-1 block">Password</label><input type="password" x-model="form.password" class="input-field" placeholder="••••••••"></div>
+                </div>
+                
+                <div class="mb-8">
+                    <div class="flex items-center gap-3 cursor-pointer group select-none" @click="form.agree = !form.agree">
+                        <div class="w-5 h-5 rounded border flex items-center justify-center transition-all duration-200" :class="form.agree ? 'bg-blue-600 border-blue-600' : 'bg-slate-800 border-slate-600 group-hover:border-blue-500'">
+                            <svg x-show="form.agree" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <span class="text-sm text-slate-400">I agree to Terms & Conditions.</span>
+                    </div>
+                </div>
+
+                <button type="submit" :disabled="!form.agree || loading" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-lg shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50 flex items-center justify-center gap-2">
+                    <span x-show="!loading">INITIALIZE ACCOUNT</span>
+                    <span x-show="loading"><i class="fas fa-circle-notch fa-spin"></i> PROCESSING</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function signupForm() {
+        return {
+            loading: false,
+            form: { name: '', email: '', phone: '', company: localStorage.getItem('companyName') || '', industry: '', password: '', agree: false },
+            submitForm() {
+                this.loading = true;
+                localStorage.setItem('signupData', JSON.stringify(this.form));
+                setTimeout(() => {
+                    this.loading = false;
+                    window.location.href = "{% url 'otp_page' %}"; 
+                }, 1000);
+            }
+        }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        gsap.from(".animate-intro > *", { y: 20, opacity: 0, duration: 0.8, stagger: 0.2, ease: "power3.out" });
+        gsap.from(".animate-form", { x: 20, opacity: 0, duration: 0.8, delay: 0.3, ease: "power3.out" });
+    });
+</script>
+{% endblock %}

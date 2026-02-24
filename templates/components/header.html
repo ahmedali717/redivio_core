@@ -1,0 +1,26 @@
+{% verbatim %}
+<header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800 capitalize tracking-tight flex items-center gap-2">
+            <span class="text-blue-600" v-if="view === 'dashboard'"><i class="fas fa-chart-pie"></i></span>
+            <span class="text-blue-600" v-if="view === 'org_builder'"><i class="fas fa-sitemap"></i></span>
+            <span class="text-blue-600" v-if="['wms'].includes(view)"><i class="fas fa-boxes-stacked"></i></span>
+            <span x-text="view.replace('_', ' ')">[[ view.replace('_', ' ') ]]</span>
+        </h2>
+        <p class="text-xs text-slate-400 font-medium mt-1">
+            <span class="text-slate-600">[[ config.company_name ]]</span> &bull; Workspace
+        </p>
+    </div>
+
+    <div class="flex items-center gap-6">
+        <div class="hidden md:flex flex-col items-end mr-4">
+            <span class="text-2xl font-bold text-slate-700 tech-font leading-none">[[ currentTime ]]</span>
+            <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">[[ currentDate ]]</span>
+        </div>
+        <div class="h-8 w-px bg-slate-300 mx-2"></div>
+        <a href="{% url 'logout_action' %}" class="w-10 h-10 rounded-full bg-red-50 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center shadow-sm" title="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+        </a>
+    </div>
+</header>
+{% endverbatim %}

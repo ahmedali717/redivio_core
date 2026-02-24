@@ -1,0 +1,146 @@
+{% extends "base.html" %} {% block title %}Warehouse Management{% endblock %}
+
+{% block content %}
+<div class="wms-dashboard-wrapper space-y-8">
+    <div class="flex justify-between items-end border-b border-slate-200 pb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800 tracking-tight">إدارة المخازن (WMS)</h1>
+            <p class="text-slate-500 mt-1">متابعة دقيقة لحركة المخزون وتوزيع المستودعات</p>
+        </div>
+        <div class="flex gap-3">
+            <button @click="openModal('receipt')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 font-medium">
+                <i class="fas fa-plus"></i> استلام شحنة
+            </button>
+            <button @click="getListData" class="bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
+                <i class="fas fa-sync-alt" :class="{'fa-spin': loading}"></i>
+            </button>
+        </div>
+    </div>
+    <div class="flex gap-4 mb-6">
+    <button @click="wmsSubView = 'inventory'" 
+            :class="wmsSubView === 'inventory' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600'"
+            class="px-4 py-2 rounded-lg border font-medium transition-all">
+        الأرصدة الحالية
+    </button>
+    <button @click="wmsSubView = 'materials'" 
+            :class="wmsSubView === 'materials' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600'"
+            class="px-4 py-2 rounded-lg border font-medium transition-all">
+        دليل الأصناف (Item Master)
+    </button>
+</div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 group hover:border-indigo-200 transition-all">
+            <div class="bg-indigo-50 text-indigo-600 p-4 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                <i class="fas fa-warehouse fa-2x"></i>
+            </div>
+            <div>
+                <span class="text-slate-400 text-sm font-medium">عدد المخازن</span>
+                <div class="text-3xl font-bold text-slate-800">[[ wms_stats.plants ]]</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 group hover:border-emerald-200 transition-all">
+            <div class="bg-emerald-50 text-emerald-600 p-4 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                <i class="fas fa-boxes fa-2x"></i>
+            </div>
+            <div>
+                <span class="text-slate-400 text-sm font-medium">إجمالي الأصناف</span>
+                <div class="text-3xl font-bold text-slate-800">[[ wms_stats.items ]]</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 group hover:border-orange-200 transition-all">
+            <div class="bg-orange-50 text-orange-600 p-4 rounded-2xl group-hover:bg-orange-600 group-hover:text-white transition-all">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+            </div>
+            <div>
+                <span class="text-slate-400 text-sm font-medium">نواقص (قريباً)</span>
+                <div class="text-3xl font-bold text-slate-800">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                <i class="fas fa-list-ul text-slate-400"></i> قائمة الجرد التفصيلية
+            </h3>
+            <div class="relative">
+                <input type="text" placeholder="بحث سريع..." class="pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-64">
+                <i class="fas fa-search absolute left-3 top-2.5 text-slate-400"></i>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-right" dir="rtl">
+                <thead>
+                    <tr class="text-slate-400 text-xs uppercase tracking-wider bg-slate-50/50">
+                        <th class="px-6 py-4 font-semibold text-right">الصنف (Material)</th>
+                        <th class="px-6 py-4 font-semibold text-center">المخزن</th>
+                        <th class="px-6 py-4 font-semibold text-center">الموقع</th>
+                        <th class="px-6 py-4 font-semibold text-center">الرف (Bin)</th>
+                        <th class="px-6 py-4 font-semibold text-center">الكمية المتاحة</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% verbatim %}
+                    <tr v-for="item in inventoryList" :key="item.id" class="hover:bg-slate-50 transition-all group">
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-slate-800">[[ item.material_name ]]</div>
+                            <div class="text-xs text-slate-400 uppercase">[[ item.material_sku ]]</div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">[[ item.plant_name ]]</span>
+                        </td>
+                        <td class="px-6 py-4 text-center text-sm text-slate-600">[[ item.location_name ]]</td>
+                        <td class="px-6 py-4 text-center">
+                            <code class="bg-slate-100 text-slate-500 px-2 py-1 rounded border border-slate-200 text-xs font-mono">[[ item.bin_code ]]</code>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span :class="item.quantity > 10 ? 'text-emerald-600' : 'text-rose-600'" class="font-black text-lg">
+                                [[ item.quantity ]]
+                            </span>
+                        </td>
+                    </tr>
+                    {% endverbatim %}
+                </tbody>
+            </table>
+            <div v-if="inventoryList.length === 0 && !loading" class="p-20 text-center">
+                <div class="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-box-open fa-2x text-slate-300"></i>
+                </div>
+                <p class="text-slate-400">لا يوجد بيانات مخزون لعرضها حالياً</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // تطبيق Vue خاص بصفحة المخازن فقط!
+    createApp({
+        mixins: [BaseMixin], // يرث الخصائص العامة
+        delimiters: ['[[', ']]'], // عشان ما يتعارضش مع جانغو
+        data() {
+            return {
+                plants_count: 0,
+                items_count: 0
+            }
+        },
+        mounted() {
+            this.fetchWMSData();
+        },
+        methods: {
+            async fetchWMSData() {
+                // جلب بيانات خاصة بالمخازن فقط
+                const res = await fetch('/api/wms/stats/');
+                const data = await res.json();
+                this.plants_count = data.plants;
+                this.items_count = data.items;
+            }
+        }
+    }).mount('#app');
+</script>
+{% endblock %}

@@ -1,0 +1,379 @@
+{% verbatim %}
+<div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
+    <div class="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl transform transition-all scale-100 max-h-[90vh] overflow-y-auto">
+        
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i v-if="modalType === 'stock_entry'" class="fas fa-exchange-alt text-emerald-500"></i>
+                <i v-else-if="modalType === 'material'" class="fas fa-box text-blue-500"></i>
+                <i v-else class="fas fa-plus-circle text-blue-500"></i>
+                <span>[[ isArabic ? modalTitles[modalType].ar : modalTitles[modalType].en ]]</span>
+            </h3>
+            <button @click="showModal = false" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form @submit.prevent="submitForm" class="space-y-5">
+            <div v-if="opcos.length > 1 && ['plant', 'material', 'stock_entry'].includes(modalType)" 
+                class="bg-indigo-50 p-4 rounded-xl border-2 border-indigo-100 mb-6 animate-in fade-in zoom-in duration-300">
+                <label class="block text-[10px] font-black text-indigo-600 mb-2 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fas fa-city"></i>
+                    [[ isArabic ? 'تحديد الشركة المشغلة' : 'Select Operating Company' ]]
+                </label>
+                <select v-model="activeOpcoId" @change="onOpcoChange" 
+                        class="w-full border-none p-2.5 rounded-lg font-bold bg-white text-indigo-900 shadow-sm focus:ring-2 focus:ring-indigo-500" required>
+                    <option value="">[[ isArabic ? '-- اختر الشركة --' : '-- Select Company --' ]]</option>
+                    <option v-for="opco in opcos" :key="opco.id" :value="opco.id">[[ opco.name ]]</option>
+                </select>
+                <p class="text-[9px] text-indigo-400 mt-2 italic">
+                    [[ isArabic ? '* سيتم تصفية المخازن والأصناف بناءً على اختيارك' : '* Plants and Materials will be filtered based on this selection' ]]
+                </p>
+            </div>
+            <div v-if="modalType === 'opco'" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 italic uppercase">Company Name</label>
+                    <input v-model="forms.opco.name" type="text" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 outline-none" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Code</label>
+                        <input v-model="forms.opco.code" type="text" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 outline-none uppercase font-mono" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Currency</label>
+                        <select v-model="forms.opco.currency" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50">
+                            <option value="USD">USD</option>
+                            <option value="SAR">SAR</option>
+                            <option value="EGP">EGP</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="modalType === 'plant'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 italic uppercase">Code</label>
+                    <input v-model="forms.plant.code" type="text" 
+                        class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 outline-none uppercase font-mono" 
+                        placeholder="PL01" required>
+                </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">[[ isArabic ? 'اسم المنشأة' : 'Facility Name' ]]</label>
+            <input v-model="forms.plant.name" type="text" 
+                   class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50" required>
+        </div>
+    </div>
+            </div>
+            <div v-if="modalType === 'location'" class="space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1 italic uppercase">Location Code</label>
+            <input v-model="forms.location.code" type="text" 
+                   class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 outline-none uppercase font-mono" 
+                   placeholder="LOC01" required>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">[[ isArabic ? 'اسم الموقع' : 'Location Name' ]]</label>
+            <input v-model="forms.location.name" type="text" 
+                   class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50" required>
+        </div>
+    </div>
+</div>
+
+<div v-if="modalType === 'bin'" class="space-y-4">
+    <div class="grid grid-cols-2 gap-4 text-right" dir="rtl">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1 italic uppercase">كود الرف (BIN CODE)</label>
+            <input v-model="forms.bin.code" type="text" 
+                   class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 outline-none uppercase font-mono" 
+                   placeholder="A-01-01" required>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">[[ isArabic ? 'وصف الرف' : 'Bin Description' ]]</label>
+            <input v-model="forms.bin.name" type="text" 
+                   class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50" 
+                   placeholder="مثلاً: الرف العلوي">
+        </div>
+    </div>
+    <p class="text-[10px] text-indigo-500 italic">
+        [[ isArabic ? '* سيتم ربط الرف تلقائياً بالموقع الذي تم السحب إليه' : '* Bin will be linked to the dropped location automatically' ]]
+    </p>
+</div>
+
+            <div v-if="modalType === 'material'" class="space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1 italic uppercase">SKU / Part No</label>
+            <input v-model="forms.material.sku" type="text" class="w-full border border-slate-300 p-2.5 rounded-lg font-mono uppercase" required>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1 italic uppercase">Base UOM</label>
+            <select v-model="forms.material.base_uom" class="w-full border border-slate-300 p-2.5 rounded-lg">
+                <option value="PCS">Pieces (PCS)</option>
+                <option value="KG">Kilograms (KG)</option>
+            </select>
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1 italic uppercase">Barcode (EAN/UPC)</label>
+        <div class="relative">
+            <span class="absolute inset-y-0 right-3 flex items-center text-slate-400">
+                <i class="fas fa-barcode"></i>
+            </span>
+            <input v-model="forms.material.barcode" type="text" 
+                   class="w-full pr-10 border border-slate-300 p-2.5 rounded-lg font-mono" 
+                   placeholder="000000000000">
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1">[[ isArabic ? 'اسم الصنف' : 'Material Description' ]]</label>
+        <input v-model="forms.material.name" type="text" class="w-full border border-slate-300 p-2.5 rounded-lg" required>
+    </div>
+
+    <div class="border-2 border-dashed border-slate-200 rounded-xl p-4 transition-all hover:border-emerald-400">
+        <label class="block text-xs font-bold text-slate-500 mb-2 italic">Product Image</label>
+        <div class="flex items-center gap-4">
+            <div class="w-20 h-20 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden border border-slate-200">
+                <img v-if="imagePreview" :src="imagePreview" class="w-full h-full object-cover">
+                <i v-else class="fas fa-image text-slate-300 text-2xl"></i>
+            </div>
+            <div class="flex-1">
+                <input type="file" @change="handleImageUpload" accept="image/*" class="hidden" id="file-upload">
+                <label for="file-upload" class="cursor-pointer bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-700 transition-colors">
+                    <i class="fas fa-upload mr-1"></i> [[ isArabic ? 'اختيار صورة' : 'Choose Image' ]]
+                </label>
+                <p class="text-[10px] text-slate-400 mt-2">Max size: 2MB (JPG, PNG)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-span-2 mt-4">
+    <label class="block text-sm font-medium text-slate-700 mb-2 italic">
+        <i class="fas fa-map-marker-alt ml-2"></i>
+        [[ isArabic ? 'أماكن التخزين المتاحة لهذا الصنف' : 'Assigned Storage Bins' ]]
+    </label>
+    <select v-model="forms.material.assigned_bins" multiple 
+            class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 h-32">
+        <option v-for="bin in bins" :key="bin.id" :value="bin.id">
+            [[ bin.code ]] ([[ getBinLocationName(bin.storage_location) ]])
+        </option>
+    </select>
+    <p class="text-xs text-slate-400 mt-1">
+        [[ isArabic ? 'اضغط Ctrl (أو Command) لاختيار أكثر من موقع' : 'Hold Ctrl/Cmd to select multiple locations' ]]
+    </p>
+    </div>
+</div>
+
+            <div v-if="modalType === 'stock_entry'" class="space-y-4">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <label class="block text-xs font-bold text-slate-600 mb-2 italic">[[ isArabic ? 'نوع العملية' : 'Transaction Type' ]]</label>
+                    <select v-model="forms.stock_entry.receipt_type" class="w-full border-2 border-emerald-500 p-2.5 rounded-lg font-bold bg-white text-emerald-800" required>
+                        <option value="PURCHASE">[[ isArabic ? 'شراء مباشر / توريد' : 'Direct Purchase' ]]</option>
+                        <option value="TRANSFER">[[ isArabic ? 'تحويل مخزني' : 'Stock Transfer' ]]</option>
+                        <option value="RETURN">[[ isArabic ? 'مرتجع مبيعات' : 'Sales Return' ]]</option>
+                        <option value="PRODUCTION">[[ isArabic ? 'من تصنيع' : 'From Production' ]]</option>
+                    </select>
+                </div>
+
+                <div v-if="forms.stock_entry.receipt_type === 'TRANSFER'" class="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-3 animate-in slide-in-from-top-2">
+                    <h4 class="text-[10px] font-bold text-amber-600 uppercase italic">[[ isArabic ? 'المخزن مصدر الحركة' : 'Source Storage' ]]</h4>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 uppercase font-bold">[[ isArabic ? 'المخزن' : 'Plant' ]]</label>
+                            <select v-model="forms.stock_entry.src_plant" @change="onSourcePlantChange" class="w-full text-xs border p-2 rounded-lg">
+                                <option value="">--</option>
+                                <option v-for="p in plants" :value="p.id">[[ p.name ]]</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 uppercase font-bold">[[ isArabic ? 'الموقع' : 'Loc' ]]</label>
+                            <select v-model="forms.stock_entry.src_location" @change="onSourceLocationChange" class="w-full text-xs border p-2 rounded-lg" :disabled="!sourceLocations.length">
+                                <option value="">--</option>
+                                <option v-for="l in sourceLocations" :value="l.id">[[ l.name ]]</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-amber-700 uppercase font-bold italic">[[ isArabic ? 'الرف' : 'Bin' ]]</label>
+                            <select v-model="forms.stock_entry.src_bin" class="w-full text-xs border border-amber-300 p-2 rounded-lg" :disabled="!sourceBins.length">
+                                <option value="">--</option>
+                                <option v-for="b in sourceBins" :value="b.id">[[ b.code ]]</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 space-y-3">
+                    <h4 class="text-[10px] font-bold text-indigo-600 uppercase italic">[[ isArabic ? 'المخزن مستلم الحركة (الوجهة)' : 'Target Storage' ]]</h4>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 uppercase font-bold">[[ isArabic ? 'المخزن' : 'Plant' ]]</label>
+                            <select v-model="forms.stock_entry.target_plant" @change="onTargetPlantChange" class="w-full text-xs border p-2 rounded-lg" required>
+                                <option value="">--</option>
+                                <option v-for="p in plants" :value="p.id">[[ p.name ]]</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 uppercase font-bold">[[ isArabic ? 'الموقع' : 'Loc' ]]</label>
+                            <select v-model="forms.stock_entry.target_location" @change="onTargetLocationChange" class="w-full text-xs border p-2 rounded-lg" :disabled="!targetLocations.length">
+                                <option value="">--</option>
+                                <option v-for="l in targetLocations" :value="l.id">[[ l.name ]]</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-indigo-600 uppercase font-bold italic">[[ isArabic ? 'الرف' : 'Bin' ]]</label>
+                            <select v-model="forms.stock_entry.bin_id" class="w-full text-xs border border-indigo-300 p-2 rounded-lg" :disabled="!targetBins.length" required>
+                                <option value="">--</option>
+                                <option v-for="b in targetBins" :value="b.id">[[ b.code ]]</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="forms.stock_entry.receipt_type === 'PURCHASE'" class="space-y-3 animate-in fade-in">
+                    <div class="grid grid-cols-2 gap-3 border-b pb-3">
+                        <div class="relative">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">[[ isArabic ? 'المورد' : 'Vendor' ]]</label>
+                            <input list="vendors-list" v-model="forms.stock_entry.vendor_name" class="w-full border p-2 rounded-lg text-sm">
+                            <datalist id="vendors-list">
+                                <option v-for="v in vendors" :value="v.name"></option>
+                            </datalist>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-emerald-600 uppercase">[[ isArabic ? 'طريقة السداد' : 'Payment Term' ]]</label>
+                            <select v-model="forms.stock_entry.payment_term" class="w-full border border-emerald-200 bg-emerald-50 p-2 rounded-lg font-bold">
+                                <option value="CASH">[[ isArabic ? 'نقدي' : 'Cash' ]]</option>
+                                <option value="CREDIT">[[ isArabic ? 'آجل' : 'Credit' ]]</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="border rounded-xl overflow-hidden">
+                        <table class="w-full text-xs">
+                            <thead class="bg-slate-100">
+                                <tr>
+                                    <th class="p-2 text-right">[[ isArabic ? 'الصنف / الوحدة' : 'Item / Unit' ]]</th>
+                                    <th class="p-2 w-20">[[ isArabic ? 'الكمية' : 'Qty' ]]</th>
+                                    <th class="p-2 w-24">[[ isArabic ? 'سعر الوحدة' : 'Price' ]]</th>
+                                    <th class="p-2 w-8"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(item, index) in forms.stock_entry.items" :key="index" class="border-t">
+                                    <td class="p-1">
+                                        <select v-model="item.material_id" class="w-full border-none focus:ring-0 text-[10px]">
+                                            <option value="">--</option>
+                                            <option v-for="m in materials_list" :key="m.id" :value="m.id">[[ m.sku ]] - [[ m.name ]]</option>
+                                        </select>
+                                    </td>
+                                    <td class="p-1"><input type="number" v-model="item.quantity" class="w-full border rounded p-1 text-center"></td>
+                                    <td class="p-1"><input type="number" step="0.01" v-model="item.unit_cost" class="w-full border rounded p-1 text-center font-bold text-emerald-700"></td>
+                                    <td class="p-1 text-center">
+                                        <button v-if="forms.stock_entry.items.length > 1" @click="forms.stock_entry.items.splice(index, 1)" type="button" class="text-red-400 hover:text-red-600">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button type="button" @click="forms.stock_entry.items.push({material_id: '', quantity: 1, unit_cost: 0})" class="w-full py-2 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold text-slate-500 transition-colors">
+                            <i class="fas fa-plus-circle mr-1"></i> [[ isArabic ? 'إضافة صنف آخر' : 'Add More Items' ]]
+                        </button>
+                    </div>
+                </div>
+
+                <div v-if="['TRANSFER', 'PRODUCTION', 'RETURN'].includes(forms.stock_entry.receipt_type)" class="space-y-4">
+                    
+                    <div v-if="forms.stock_entry.receipt_type === 'RETURN'" class="space-y-4 animate-in fade-in">
+                        
+                        <div class="flex gap-2 p-3 bg-orange-50 rounded-xl border border-orange-200">
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-orange-600 mb-1 italic">Sales Order Ref</label>
+                                <div class="relative">
+                                    <input v-model="forms.stock_entry.so_ref" type="text" class="w-full border-2 border-orange-100 p-2 rounded-lg focus:border-orange-400 outline-none" placeholder="SO-2024-001">
+                                </div>
+                            </div>
+                            <button type="button" @click="fetchSODetails" class="mt-5 bg-orange-500 hover:bg-orange-600 text-white px-4 rounded-lg transition-colors">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+
+                        <div v-if="selectedSO" class="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm italic text-center">
+                            <div class="border-r last:border-0 border-slate-100">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">العميل</p>
+                                <p class="text-xs font-bold text-slate-700">[[ selectedSO.customer_name ]]</p>
+                            </div>
+                            <div class="border-r last:border-0 border-slate-100">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">التاريخ</p>
+                                <p class="text-xs font-bold text-slate-700">[[ selectedSO.date ]]</p>
+                            </div>
+                            <div class="border-r last:border-0 border-slate-100">
+                                <p class="text-[9px] font-bold text-emerald-500 uppercase">إجمالي القيمة</p>
+                                <p class="text-xs font-black text-emerald-700">[[ selectedSO.total_value ]]</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">طريقة السداد</p>
+                                <p class="text-xs font-bold text-slate-600">[[ selectedSO.payment_method ]]</p>
+                            </div>
+                        </div>
+
+                        <div v-if="selectedSO" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <table class="w-full text-[11px] text-right">
+                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
+                                    <tr>
+                                        <th class="p-2">الصنف</th>
+                                        <th class="p-2 text-center w-16">الكمية</th>
+                                        <th class="p-2 text-center w-20">سعر الوحدة</th>
+                                        <th class="p-2 text-center w-20 italic">القيمة</th>
+                                        <th class="p-2 text-center w-24 bg-orange-50 text-orange-600 font-bold">المرتجع</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr v-for="item in selectedSO.items" :key="item.material_id">
+                                        <td class="p-2 font-bold text-slate-700">[[ item.material_name ]]</td>
+                                        <td class="p-2 text-center text-slate-600">[[ item.quantity ]]</td>
+                                        <td class="p-2 text-center text-slate-600">[[ item.unit_price ]]</td>
+                                        <td class="p-2 text-center text-slate-400 italic">[[ (item.quantity * item.unit_price).toFixed(2) ]]</td>
+                                        <td class="p-1 bg-orange-50/50">
+                                            <input type="number" v-model.number="item.return_qty" :max="item.quantity" min="0" 
+                                                   class="w-full border border-orange-200 rounded p-1 text-center font-bold text-orange-700 outline-none focus:border-orange-500">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div v-if="forms.stock_entry.receipt_type !== 'RETURN'">
+                        <label class="block text-xs font-bold text-slate-500 mb-1">[[ isArabic ? 'الصنف المعني' : 'Material' ]]</label>
+                        <select v-model="forms.stock_entry.material_id" class="w-full border p-2.5 rounded-lg text-sm" required>
+                            <option value="">-- [[ isArabic ? 'اختر الصنف' : 'Select Item' ]] --</option>
+                            <option v-for="m in materials_list" :value="m.id">[[ m.sku ]] - [[ m.name ]]</option>
+                        </select>
+                    </div>
+                    
+                    <div v-if="forms.stock_entry.receipt_type !== 'RETURN'" class="border-t pt-3">
+                        <label class="block text-xs font-bold text-slate-500 mb-1 italic">[[ isArabic ? 'إجمالي الكمية' : 'Total Quantity' ]]</label>
+                        <input v-model="forms.stock_entry.quantity" type="number" class="w-full border-2 border-slate-300 p-2 rounded-lg font-black text-lg text-center">
+                    </div>
+
+                    <div v-if="forms.stock_entry.receipt_type === 'RETURN' && selectedSO" class="border-t pt-3">
+                         <label class="block text-xs font-bold text-slate-500 mb-1 italic text-center">[[ isArabic ? 'إجمالي الكمية المرتجعة' : 'Total Return Quantity' ]]</label>
+                         <div class="w-full bg-slate-100 p-3 rounded-lg font-black text-xl text-center text-orange-600">
+                            [[ selectedSO.items.reduce((sum, i) => sum + (i.return_qty || 0), 0) ]]
+                         </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-slate-900 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl mt-6 transition-all shadow-lg flex items-center justify-center gap-3">
+                <i class="fas fa-save"></i>
+                <span>[[ isArabic ? 'حفظ السجل وتحديث المخزون' : 'Save & Post Inventory' ]]</span>
+            </button>
+        </form>
+    </div>
+</div>
+{% endverbatim %}

@@ -1,0 +1,229 @@
+{% extends "auth_base.html" %}
+
+{% block content %}
+<style>
+    /* --- CSS من النسخة المظبوطة --- */
+    
+    /* الحاوية المركزية: نقطة صفرية في منتصف الشاشة */
+    #assembly-center {
+        position: absolute; top: 50%; left: 50%;
+        width: 0; height: 0; 
+        overflow: visible;
+    }
+
+    /* القطع: تتمركز حول النقطة الصفرية باستخدام المارجن */
+    .puzzle-piece {
+        position: absolute; 
+        width: 120px; height: 120px;
+        background: #1e293b;
+        border: 2px solid #475569;
+        border-radius: 12px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 10;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* سر التمركز الصحيح: المارجن السالب لنصف العرض والطول */
+        margin-left: -60px; margin-top: -60px; 
+    }
+
+    /* الدوائر (Knobs) */
+    .knob {
+        position: absolute; width: 30px; height: 30px;
+        background: inherit; border: inherit; border-radius: 50%;
+        z-index: 1;
+    }
+    .knob.top { top: -17px; left: 50%; transform: translateX(-50%); border-bottom: none; }
+    .knob.right { right: -17px; top: 50%; transform: translateY(-50%); border-left: none; }
+    .knob.bottom { bottom: -17px; left: 50%; transform: translateX(-50%); border-top: none; }
+    .knob.left { left: -17px; top: 50%; transform: translateY(-50%); border-right: none; }
+
+    /* القطعة الأساسية (Core) */
+    .piece-core {
+        background: #0f172a; border-color: #3b82f6; z-index: 20;
+        box-shadow: 0 0 40px rgba(59, 130, 246, 0.2);
+    }
+    .piece-core .knob { background: #0f172a; border-color: #3b82f6; }
+
+    /* حالات التوهج (Energy States) */
+    .puzzle-piece.energized {
+        background: #fff; border-color: #fff;
+        color: #0f172a !important; 
+        box-shadow: 0 0 50px currentColor; 
+    }
+    
+    /* ألوان الموديولات */
+    .p-wms.energized { color: #f59e0b; box-shadow: 0 0 60px #f59e0b; }
+    .p-sales.energized { color: #10b981; box-shadow: 0 0 60px #10b981; }
+    .p-proc.energized { color: #a855f7; box-shadow: 0 0 60px #a855f7; }
+    .p-hr.energized { color: #3b82f6; box-shadow: 0 0 60px #3b82f6; }
+
+    .p-icon { font-size: 2.5rem; margin-bottom: 8px; }
+</style>
+
+<div x-data="moduleBuilder()" class="h-screen w-screen relative overflow-hidden bg-[#0b1120]">
+    
+    <div x-show="phase === 'selection'" 
+         x-transition:leave="transition ease-in duration-500" 
+         x-transition:leave-end="opacity-0 scale-90" 
+         class="absolute inset-0 flex flex-col items-center justify-center z-20 text-center px-4">
+        
+        <h2 class="text-4xl font-bold text-white mb-2 tech-font">Select Modules</h2>
+        <p class="text-slate-400 mb-10">Choose the components to integrate.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12 max-w-6xl w-full">
+            <template x-for="mod in availableModules" :key="mod.id">
+                <div @click="toggleModule(mod.id)" 
+                     :class="isSelected(mod.id) ? 'border-blue-500 bg-slate-800/80 shadow-[0_0_30px_rgba(59,130,246,0.2)]' : 'border-slate-700 bg-slate-900/40 hover:border-slate-500'"
+                     class="cursor-pointer border p-8 rounded-2xl flex flex-col items-center justify-center h-64 transition-all duration-300 group relative backdrop-blur-sm">
+                    
+                    <div x-show="isSelected(mod.id)" class="absolute top-4 right-4 text-blue-400">
+                        <i class="fas fa-check-circle text-xl"></i>
+                    </div>
+
+                    <i :class="mod.icon" class="text-5xl mb-6 transition-colors duration-300" 
+                       :style="isSelected(mod.id) ? {color: mod.color} : {color: '#64748b'}"></i>
+                    
+                    <h3 class="font-bold text-xl text-white mb-2" x-text="mod.name"></h3>
+                    <p class="text-xs text-slate-400" x-text="mod.desc"></p>
+                </div>
+            </template>
+        </div>
+
+        <button @click="startAssembly()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-12 rounded-full shadow-lg transition-all hover:scale-105 tracking-widest tech-font text-lg">
+            INTEGRATE & BUILD <i class="fas fa-cogs ml-2"></i>
+        </button>
+    </div>
+
+    <div x-show="phase === 'assembly'" class="fixed inset-0 z-50 flex flex-col items-center justify-center pointer-events-none">
+        
+        <div class="absolute top-24 text-center pointer-events-auto">
+            <div id="status-text" class="text-xl tech-font text-slate-500 tracking-[0.3em]">ASSEMBLING CORE...</div>
+        </div>
+
+        <div id="assembly-center">
+
+            <div id="core-piece" class="puzzle-piece piece-core opacity-0">
+                <div class="knob top"></div><div class="knob right"></div><div class="knob bottom"></div><div class="knob left"></div>
+                <i class="fas fa-cube text-4xl text-blue-500 mb-2"></i>
+                <span class="text-[10px] font-bold text-slate-400 tracking-widest">CORE</span>
+            </div>
+
+            <div id="pieces-container"></div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function moduleBuilder() {
+        return {
+            phase: 'selection',
+            selectedModules: ['wms', 'sales'], 
+            availableModules: [
+                {id: 'wms', name: 'WMS', icon: 'fas fa-warehouse', color: '#f59e0b', desc: 'Inventory'},
+                {id: 'sales', name: 'SALES', icon: 'fas fa-chart-line', color: '#10b981', desc: 'CRM'},
+                {id: 'proc', name: 'SUPPLY', icon: 'fas fa-truck-fast', color: '#a855f7', desc: 'Procurement'},
+                {id: 'hr', name: 'TEAMS', icon: 'fas fa-users', color: '#3b82f6', desc: 'HR'},
+            ],
+
+            isSelected(id) { return this.selectedModules.includes(id); },
+            toggleModule(id) {
+                if (this.isSelected(id)) this.selectedModules = this.selectedModules.filter(m => m !== id);
+                else this.selectedModules.push(id);
+            },
+
+            startAssembly() {
+                localStorage.setItem('selectedModules', JSON.stringify(this.selectedModules));
+                this.phase = 'assembly';
+                this.$nextTick(() => this.runAnimation());
+            },
+
+            runAnimation() {
+                const timeline = gsap.timeline();
+                const container = document.getElementById('pieces-container');
+                const statusText = document.getElementById('status-text');
+                const corePiece = document.getElementById('core-piece');
+                
+                // 1. Show Core
+                timeline.to(corePiece, { opacity: 1, scale: 1, duration: 1, ease: "back.out(1.5)" });
+
+                // 2. Create Pieces
+                this.selectedModules.forEach((modId, index) => {
+                    const modInfo = this.availableModules.find(m => m.id === modId);
+                    const piece = document.createElement('div');
+                    
+                    piece.className = `puzzle-piece p-${modId}`;
+                    piece.innerHTML = `
+                        <i class="${modInfo.icon} p-icon" style="color: ${modInfo.color}"></i>
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">${modInfo.name}</span>
+                    `;
+                    container.appendChild(piece);
+
+                    // المسافة (Offset) - نفس النسخة المظبوطة
+                    const offset = 122;
+                    let startX=0, startY=0, endX=0, endY=0;
+
+                    if (index % 4 === 0) { startY = -500; endY = -offset; } // Top
+                    else if (index % 4 === 1) { startX = 500; endX = offset; } // Right
+                    else if (index % 4 === 2) { startY = 500; endY = offset; } // Bottom
+                    else { startX = -500; endX = -offset; } // Left
+
+                    gsap.set(piece, { x: startX, y: startY, opacity: 0 });
+
+                    const pieceTL = gsap.timeline();
+                    pieceTL.to(piece, {
+                        x: endX, y: endY, opacity: 1, duration: 0.7, ease: "power3.inOut",
+                        onStart: () => statusText.innerText = `INTEGRATING ${modInfo.name}...`
+                    });
+                    
+                    // هزة بسيطة عند التلاحم
+                    pieceTL.to(piece, { scale: 1.1, duration: 0.1, yoyo: true, repeat: 1 });
+                    
+                    timeline.add(pieceTL, "-=0.4");
+                });
+
+                // 3. The Glow (لحظة الاندماج)
+                timeline.call(() => { statusText.innerText = "SYNCHRONIZING..."; statusText.style.color = "#fff"; });
+                timeline.to({}, {duration: 0.2}); 
+
+                // وميض الـ Core
+                timeline.to(corePiece, { 
+                    boxShadow: "0 0 100px rgba(59, 130, 246, 0.8)", 
+                    borderColor: "#fff", 
+                    backgroundColor: "#fff", 
+                    color: "#0f172a",
+                    duration: 0.2 
+                });
+
+                // وميض القطع (إضافة كلاس CSS للتحكم في اللون)
+                timeline.to(".puzzle-piece:not(#core-piece)", {
+                    scale: 1.05,
+                    duration: 0.3,
+                    onStart: function() { 
+                        // إضافة الكلاس يدوياً لضمان تفعيل الـ CSS
+                        this.targets().forEach(el => el.classList.add("energized")); 
+                    }
+                });
+
+                // استقرار
+                timeline.to(".puzzle-piece", { scale: 1, duration: 0.5 });
+                
+                timeline.call(() => { 
+                    statusText.innerHTML = "SYSTEM <span class='text-blue-500'>ONLINE</span>";
+                    statusText.style.textShadow = "0 0 20px rgba(59, 130, 246, 0.8)";
+                });
+
+                // 4. الانتقال لصفحة الـ Setup
+                timeline.to("body", { 
+                    opacity: 0, 
+                    duration: 1.5, 
+                    delay: 2, 
+                    onComplete: () => {
+                        window.location.href = "{% url 'setup_page' %}";
+                    }
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

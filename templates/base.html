@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>REDIVIO ERP - {% block title %}Dashboard{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #f8fafc; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
+        [v-cloak] { display: none; }
+        .glass-sidebar { background: #0f172a; color: white; }
+    </style>
+</head>
+<body class="h-screen flex flex-col text-slate-800">
+
+    <div id="app" class="flex-1 flex h-full" v-cloak>
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>

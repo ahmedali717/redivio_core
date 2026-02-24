@@ -1,0 +1,80 @@
+{% extends "auth_base.html" %}
+
+{% block content %}
+<div class="w-full max-w-md relative z-10" x-data="loginAuth()">
+    <div class="bg-slate-900/80 backdrop-blur-xl border border-slate-700 p-8 rounded-2xl shadow-2xl">
+        
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-white mb-2 tech-font">Welcome Back</h2>
+            <p class="text-slate-400 text-sm">Access your REDIVIO workspace</p>
+        </div>
+
+        <form @submit.prevent="login">
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Email Address</label>
+                    <input type="email" x-model="email" class="input-field" placeholder="admin@company.com" required>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Password</label>
+                    <input type="password" x-model="password" class="input-field" placeholder="••••••••" required>
+                </div>
+            </div>
+
+            <div x-show="error" class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs text-center" x-text="error" style="display: none;"></div>
+
+            <button type="submit" :disabled="loading" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center gap-2">
+                <span x-show="!loading">LOG IN</span>
+                <span x-show="loading"><i class="fas fa-circle-notch fa-spin"></i> AUTHENTICATING...</span>
+            </button>
+        </form>
+
+        <div class="mt-6 text-center pt-6 border-t border-slate-800">
+            <a href="{% url 'landing_page' %}" class="text-xs text-slate-400 hover:text-white transition-colors">Don't have an account? <span class="text-blue-400">Initialize Workspace</span></a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loginAuth() {
+        return {
+            email: '',
+            password: '',
+            loading: false,
+            error: null,
+            async login() {
+                this.loading = true;
+                this.error = null;
+                try {
+                    const response = await fetch('/api/login/', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'X-CSRFToken': '{{ csrf_token }}' 
+                        },
+                        // تأكد أن السيرفر يتوقع مفتاح "email" وليس "username"
+                        body: JSON.stringify({ 
+                            email: this.email, 
+                            password: this.password 
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // النجاح: التوجه للداشبورد مباشرة
+                        window.location.href = data.redirect_url || '/dashboard/';
+                    } else {
+                        // الفشل: عرض رسالة الخطأ من السيرفر
+                        this.error = data.error || 'Invalid email or password';
+                    }
+                } catch (err) {
+                    this.error = 'Server connection failed.';
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

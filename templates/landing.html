@@ -1,0 +1,194 @@
+{% extends "auth_base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap');
+    
+    /* إجبار الخلفية على الظهور ومنع أي تداخل */
+    body { 
+        background-color: #020202 !important; 
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    /* طبقة الشبكة الثابتة والمتحركة */
+    .grid-container {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background-image: 
+            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+        z-index: -1;
+    }
+
+    /* بقعة الضوء التي تتبع الماوس */
+    .cursor-glow {
+        position: fixed;
+        width: 800px; height: 800px;
+        background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+        transform: translate(-50%, -50%);
+    }
+
+    /* تصميم اللوحة الزجاجية - النسخة المظلمة العميقة */
+    .glass-card {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+
+    /* تصميم الأزرار الرمادية (Charcoal) */
+    .btn-custom {
+        background: #111111; /* مطابق لطلبك: رمادي غامق جداً */
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        color: #555;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        display: block;
+        width: 100%;
+        text-decoration: none;
+    }
+
+    /* تأثير اللمعان عند التفعيل أو الماوس */
+    .btn-custom:hover, .btn-active {
+        background: #ffffff !important;
+        color: #000000 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(255, 255, 255, 0.1);
+    }
+</style>
+
+<div class="grid-container" id="main-grid"></div>
+<div class="cursor-glow" id="mouse-glow"></div>
+
+<div class="relative min-h-screen w-full flex items-center justify-center p-6 z-10" 
+     x-data="{ view: 'menu', activeTab: 'none', ...entryPortal() }">
+    
+    <div class="w-full max-w-6xl flex flex-col lg:flex-row items-center gap-16">
+        
+        <div class="lg:w-1/2">
+            <div class="flex items-center gap-4 mb-12">
+                <img src="{% static 'brand/logo_r.png' %}" class="w-14 h-14 object-contain">
+                <h2 class="text-white font-bold tracking-[0.3em] text-2xl">REDIVIO <span class="text-zinc-700 font-light">ERP</span></h2>
+            </div>
+            <h1 class="text-7xl font-bold text-white mb-8 leading-[1.1]">
+                Ease Your <br><span class="text-zinc-500">Business Control</span>
+            </h1>
+            <p class="text-zinc-500 text-xl max-w-md font-light">
+                Professional ecosystem for <span class="text-white">Inventory</span> and <span class="text-white">Financial analysis</span>.
+            </p>
+        </div>
+
+        <div class="lg:w-1/2 w-full max-w-md">
+            <div class="glass-card p-12 h-[550px] flex flex-col justify-center relative overflow-hidden">
+                
+                <div x-show="view === 'menu'" x-transition.duration.500ms class="space-y-6">
+                    <p class="text-center text-zinc-600 text-xs tracking-[0.4em] uppercase mb-12">Select Access Path</p>
+                    
+                    <a href="{% url 'signup_page' %}" 
+                       class="btn-custom p-8 rounded-3xl group relative overflow-hidden">
+                        <div class="relative z-10">
+                            <h3 class="text-xl font-bold mb-1">Start Your Journey</h3>
+                            <p class="text-sm opacity-50">Create a new workspace.</p>
+                        </div>
+                        <i class="fas fa-rocket absolute right-8 top-1/2 -translate-y-1/2 text-3xl opacity-10 group-hover:opacity-40 transition-all"></i>
+                    </a>
+
+                    <button @click="view = 'login'" 
+                            class="btn-custom p-8 rounded-3xl text-left group relative overflow-hidden">
+                        <div class="relative z-10">
+                            <h3 class="text-xl font-bold mb-1">Continue Enjoying</h3>
+                            <p class="text-sm opacity-50">Access your dashboard.</p>
+                        </div>
+                        <i class="fas fa-user-astronaut absolute right-8 top-1/2 -translate-y-1/2 text-3xl opacity-10 group-hover:opacity-40 transition-all"></i>
+                    </button>
+                </div>
+
+                <div x-show="view === 'login'" x-transition.duration.500ms style="display: none;">
+                    <button @click="view = 'menu'" class="text-zinc-500 hover:text-white mb-10 text-xs uppercase tracking-widest transition-colors">
+                        ← Back to Path Selection
+                    </button>
+                    <form @submit.prevent="login" class="space-y-6">
+                        <h2 class="text-3xl font-bold text-white mb-8 tracking-tighter">System Access</h2>
+                        <input type="email" x-model="loginData.email" placeholder="WORK EMAIL" required
+                               class="w-full bg-black/40 border border-zinc-800 p-5 rounded-2xl text-white focus:border-white outline-none transition-all">
+                        <input type="password" x-model="loginData.password" placeholder="PASSWORD" required
+                               class="w-full bg-black/40 border border-zinc-800 p-5 rounded-2xl text-white focus:border-white outline-none transition-all">
+                        <button type="submit" class="w-full bg-white text-black font-bold p-5 rounded-2xl hover:bg-zinc-200 transition-all uppercase tracking-[0.2em] text-xs">
+                            Verify Credentials
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // كود تحريك الخلفية والإضاءة (لا نغيره)
+    const glow = document.getElementById('mouse-glow');
+    const grid = document.getElementById('main-grid');
+
+    document.addEventListener('mousemove', (e) => {
+        glow.style.left = e.clientX + 'px';
+        glow.style.top = e.clientY + 'px';
+        const x = (window.innerWidth / 2 - e.pageX) / 40;
+        const y = (window.innerHeight / 2 - e.pageY) / 40;
+        grid.style.transform = `translate(${x}px, ${y}px)`;
+    });
+
+    // --- التعديل الجوهري هنا ---
+    function entryPortal() {
+        return {
+            loginData: { email: '', password: '' },
+            loading: false,
+            error: null,
+            async login() {
+                this.loading = true;
+                this.error = null;
+
+                try {
+                    const response = await fetch('/api/login/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // نستخدم التوكن من Django لحماية الطلب
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            email: this.loginData.email,
+                            password: this.loginData.password
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // في حال النجاح، التوجه للداشبورد
+                        // الميدل وير سيقوم بتحديد الشركة (OpCo) تلقائياً
+                        window.location.href = data.redirect_url || '/dashboard/';
+                    } else {
+                        // إظهار الخطأ إذا كانت البيانات غير صحيحة
+                        alert(data.error || 'Invalid credentials');
+                    }
+                } catch (err) {
+                    console.error('Login Error:', err);
+                    alert('Server connection failed. Make sure the server is running.');
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

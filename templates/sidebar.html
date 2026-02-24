@@ -1,0 +1,84 @@
+<aside class="w-64 bg-slate-900 text-white flex flex-col h-full hidden md:flex shadow-xl z-20">
+    <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-800 bg-slate-950">
+        <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold shadow-lg">R</div>
+        <span class="text-lg font-bold tracking-wider tech-font">REDIVIO</span>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+        
+        <a href="#" @click.prevent="view = 'dashboard'" 
+           :class="view === 'dashboard' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group">
+            <i class="fas fa-chart-pie w-5 text-center"></i>
+            <span class="font-medium text-sm">[[ isArabic ? 'لوحة التحكم' : 'Dashboard' ]]</span>
+        </a>
+
+        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider px-3 mt-6 mb-2">
+            [[ isArabic ? 'الإعدادات والتهيئة' : 'Settings / Configuration' ]]
+        </div>
+
+        <div class="space-y-1">
+            <a href="#" @click.prevent="view = 'global_config'"
+               :class="view === 'global_config' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group">
+                <i class="fas fa-cogs w-5 text-center"></i>
+                <span class="font-medium text-sm">[[ isArabic ? 'الإعدادات العامة' : 'Global Config' ]]</span>
+            </a>
+
+            <a href="#" @click.prevent="view = 'users'"
+               :class="view === 'users' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group">
+                <i class="fas fa-users w-5 text-center"></i>
+                <span class="font-medium text-sm">[[ isArabic ? 'المستخدمين' : 'Users' ]]</span>
+            </a>
+
+            <a href="#" @click.prevent="view = 'customize_form'"
+               :class="view === 'customize_form' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group">
+                <i class="fas fa-edit w-5 text-center"></i>
+                <span class="font-medium text-sm">[[ isArabic ? 'تخصيص النماذج' : 'Customize Form' ]]</span>
+            </a>
+        </div>
+
+        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider px-3 mt-6 mb-2">
+            [[ isArabic ? 'العمليات التشغيلية' : 'Operations' ]]
+        </div>
+
+        <div class="space-y-1">
+            <a href="#" @click.prevent="view = 'org_builder'"
+               :class="view === 'org_builder' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group">
+                <i class="fas fa-sitemap w-5 text-center"></i>
+                <span class="font-medium text-sm">[[ isArabic ? 'هيكلة المنظمة' : 'Organization' ]]</span>
+            </a>
+
+            <a href="#" @click.prevent="view = 'inventory'; getListData()" 
+               :class="view === 'inventory' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group">
+                <i class="fas fa-boxes-stacked w-5 text-center"></i>
+                <span class="font-medium text-sm">[[ isArabic ? 'إدارة المخزون' : 'Inventory' ]]</span>
+            </a>
+
+            <a href="#" @click.prevent="view = 'item_master'"
+               :class="view === 'item_master' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group">
+                <i class="fas fa-barcode w-5 text-center"></i>
+                <span class="font-medium text-sm">[[ isArabic ? 'سجل الأصناف' : 'Item Master' ]]</span>
+            </a>
+
+            <a href="#" @click.prevent="view = 'procurement'"
+               :class="view === 'procurement' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group">
+                <i class="fas fa-truck w-5 text-center"></i>
+                <span class="font-medium text-sm">[[ isArabic ? 'المشتريات' : 'Procurement' ]]</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="p-4 border-t border-slate-800 bg-slate-950">
+        <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-3 text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white rounded-lg transition-all duration-200 group">
+            <i class="fas fa-sign-out-alt w-5 text-center group-hover:rotate-180 transition-transform"></i>
+            <span class="font-bold text-sm">[[ isArabic ? 'تسجيل الخروج' : 'Logout' ]]</span>
+        </a>
+    </div>
+</aside>

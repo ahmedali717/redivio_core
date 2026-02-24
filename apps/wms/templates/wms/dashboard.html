@@ -1,0 +1,201 @@
+{% verbatim %}
+
+<div class="wms-dashboard-wrapper space-y-8 bg-slate-50/30 p-4 rounded-3xl min-h-screen">
+
+<div class="flex justify-between items-end border-b border-slate-200 pb-6">
+    <div>
+        <h1 class="text-3xl font-black text-slate-800 tracking-tight">إدارة المخازن (WMS)</h1>
+        <p class="text-slate-500 mt-1 font-medium">متابعة دقيقة لحركة المخزون وتوزيع المستودعات</p>
+    </div>
+    <div class="flex gap-3">
+        <button @click="openModal('stock_entry')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl shadow-lg shadow-emerald-100 transition-all flex items-center gap-2 font-bold transform active:scale-95">
+            <i class="fas fa-plus-circle"></i> استلام شحنة
+        </button>
+        <button @click="openModal('material')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl shadow-lg shadow-indigo-100 transition-all flex items-center gap-2 font-bold transform active:scale-95">
+            <i class="fas fa-cube"></i> إضافة صنف جديد
+        </button>
+    </div>
+</div>
+
+<div class="flex gap-4">
+    <button @click="view = 'inventory'; getListData();" 
+            :class="view === 'inventory' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 border-slate-200 shadow-sm'"
+            class="px-8 py-3 rounded-2xl border font-black transition-all text-sm">
+        الأرصدة الحالية
+    </button>
+    <button @click="view = 'wms'; fetchMaterialsList();" 
+            :class="view === 'wms' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 border-slate-200 shadow-sm'"
+            class="px-8 py-3 rounded-2xl border font-black transition-all text-sm">
+        دليل الأصناف (Item Master)
+    </button>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-6 group hover:border-indigo-300 transition-all">
+        <div class="bg-indigo-50 text-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110">
+            <i class="fas fa-warehouse text-3xl"></i>
+        </div>
+        <div>
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">عدد المخازن</span>
+            <div class="text-3xl font-black text-slate-800">[[ wms_stats.plants ]]</div>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-6 group hover:border-emerald-300 transition-all">
+        <div class="bg-emerald-50 text-emerald-600 w-16 h-16 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110">
+            <i class="fas fa-boxes text-3xl"></i>
+        </div>
+        <div>
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">إجمالي الأصناف المسجلة</span>
+            <div class="text-3xl font-black text-slate-800">[[ materials_list.length ]]</div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
+    
+    <div v-if="view === 'inventory' && !loading">
+        <table class="w-full text-right" dir="rtl">
+            <thead>
+                <tr class="text-slate-400 text-xs uppercase bg-slate-50/80 border-b">
+                    <th class="px-8 py-5">الصنف</th>
+                    <th class="px-6 py-5 text-center">المخزن</th>
+                    <th class="px-6 py-5 text-center">الرف (Bin)</th>
+                    <th class="px-6 py-5 text-center">الكمية المتاحة</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <tr v-for="item in filteredInventory" :key="item.id" @click="openItemCard(item)"
+                    class="hover:bg-indigo-50/50 cursor-pointer transition-all border-r-4 border-transparent hover:border-indigo-500 group">
+                    <td class="px-8 py-5">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                <img v-if="item.material_image" :src="item.material_image" class="w-full h-full object-cover">
+                                <i v-else class="fas fa-image text-slate-300 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="font-black text-slate-800 group-hover:text-indigo-700 transition-colors">[[ item.material_name ]]</div>
+                                <div class="text-xs text-slate-400 font-mono mt-0.5 tracking-tighter">SKU: [[ item.material_sku ]]</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-5 text-center text-sm font-bold text-slate-600">[[ item.plant_name ]]</td>
+                    <td class="px-6 py-5 text-center">
+                        <code class="bg-slate-100 text-indigo-600 px-3 py-1 rounded-lg text-xs font-bold border border-slate-200">[[ item.bin_code ]]</code>
+                    </td>
+                    <td class="px-6 py-5 text-center font-black text-xl" :class="item.quantity > 5 ? 'text-emerald-600' : 'text-rose-500'">
+                        [[ item.quantity ]]
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div v-if="view === 'wms' && !loading">
+        <table class="w-full text-right" dir="rtl">
+            <thead>
+                <tr class="text-slate-400 text-xs uppercase bg-slate-50/80 border-b">
+                    <th class="px-8 py-5">كود الصنف (SKU)</th>
+                    <th class="px-8 py-5">الاسم التجاري</th>
+                    <th class="px-8 py-5 text-center">وحدة القياس</th>
+                    <th class="px-8 py-5 text-center">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <tr v-for="m in materials_list" :key="m.id" class="hover:bg-slate-50 transition-all">
+                    <td class="px-8 py-5 font-mono font-black text-indigo-600">[[ m.sku ]]</td>
+                    <td class="px-8 py-5 text-slate-800 font-bold">[[ m.name ]]</td>
+                    <td class="px-8 py-5 text-center text-slate-500 font-medium italic">[[ m.base_uom ]]</td>
+                    <td class="px-8 py-5 text-center">
+                        <button @click.stop="editMaterial(m)" class="bg-slate-100 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl transition-all font-bold text-xs flex items-center gap-1 mx-auto">
+                            <i class="fas fa-edit"></i> تعديل
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div v-if="loading" class="p-20 text-center flex flex-col items-center gap-4">
+        <i class="fas fa-circle-notch fa-spin text-indigo-500 text-4xl"></i>
+        <span class="text-slate-400 font-bold animate-pulse">جاري تحديث البيانات...</span>
+    </div>
+</div>
+
+<transition name="fade">
+    <div v-if="selectedItemCard" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="selectedItemCard = null"></div>
+        
+        <div class="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in duration-300">
+            
+            <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                <div class="flex items-center gap-5 text-right" dir="rtl">
+                    <div class="w-20 h-20 rounded-2xl bg-indigo-50 border-2 border-indigo-100 overflow-hidden shadow-sm flex-shrink-0 flex items-center justify-center">
+                        <img v-if="selectedItemCard.material_image" :src="selectedItemCard.material_image" class="w-full h-full object-cover">
+                        <i v-else class="fas fa-image text-indigo-200 text-3xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ selectedItemCard.material_name ]]</h2>
+                        <p class="text-sm text-slate-400 font-mono uppercase tracking-widest mt-1">[[ selectedItemCard.material_sku ]]</p>
+                    </div>
+                </div>
+                <button @click="selectedItemCard = null" class="text-slate-300 hover:text-rose-500 transition-all transform hover:rotate-90 p-2">
+                    <i class="fas fa-times-circle text-4xl"></i>
+                </button>
+            </div>
+
+            <div class="p-8 overflow-y-auto">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 text-right" dir="rtl">
+                    <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col gap-1">
+                        <span class="text-slate-400 font-bold text-[10px] uppercase tracking-tighter">المخزن</span>
+                        <span class="text-slate-800 font-black text-xl">[[ selectedItemCard.plant_name ]]</span>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col gap-1">
+                        <span class="text-slate-400 font-bold text-[10px] uppercase tracking-tighter">موقع الرف (Bin)</span>
+                        <code class="text-indigo-600 font-black text-2xl">[[ selectedItemCard.bin_code ]]</code>
+                    </div>
+                    <div class="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 flex flex-col gap-1 shadow-inner">
+                        <span class="text-emerald-600 font-bold text-[10px] uppercase tracking-tighter">الرصيد المتاح</span>
+                        <span class="text-emerald-700 text-4xl font-black">[[ selectedItemCard.quantity ]]</span>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-right" dir="rtl">
+                    <h3 class="font-black text-slate-800 text-lg flex items-center gap-3">
+                        <i class="fas fa-history text-indigo-500"></i> سجل التحركات المخزنية
+                    </h3>
+                    
+                    <div class="rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
+                        <table class="w-full text-right" dir="rtl">
+                            <thead class="bg-slate-50 text-slate-400 text-[11px] uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-6 py-4">التاريخ</th>
+                                    <th class="px-6 py-4 text-center">نوع الحركة</th>
+                                    <th class="px-6 py-4 text-center">الكمية</th>
+                                    <th class="px-6 py-4 text-center">المرجع</th>
+                                    <th class="px-6 py-4 text-center">المسؤول</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                <tr v-for="log in itemLogs" :key="log.id" class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 text-slate-500 text-sm">[[ formatDate(log.created_at) ]]</td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span :class="log.move_type === 'IN' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-amber-600 bg-amber-50 border-amber-100'" 
+                                              class="px-3 py-1 rounded-full font-bold text-[10px] border shadow-sm">
+                                            [[ log.move_type === 'IN' ? 'إدخال مخزني +' : 'صرف مخزني -' ]]
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center font-black text-slate-700">[[ log.quantity ]]</td>
+                                    <td class="px-6 py-4 text-center text-slate-400 font-mono text-xs">[[ log.reference || '---' ]]</td>
+                                    <td class="px-6 py-4 text-center text-slate-600 font-medium text-sm">[[ log.created_by ]]</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</transition>
+
+</div>
+{% endverbatim %}

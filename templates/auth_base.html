@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REDIVIO ERP</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;600&display=swap');
+        .tech-font { font-family: 'Rajdhani', sans-serif; }
+        body { font-family: 'Inter', sans-serif; background-color: hsl(223, 49%, 8%); }
+        
+        /* Global Styles for Inputs */
+        .input-field { 
+            width: 100%; 
+            background-color: #1e293b67; 
+            border: 1px solid #1e293b67; 
+            color: white; 
+            padding: 0.75rem; 
+            border-radius: 0.5rem; 
+            outline: none; 
+            transition: all 0.2s; 
+        }
+        .input-field:focus { 
+            border-color: #3b82f6; 
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); 
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 overflow-hidden relative">
+    
+    <div class="absolute inset-0 z-0 opacity-20 pointer-events-none" 
+         style="background-image: linear-gradient(#334155c0 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px); background-size: 40px 40px;">
+    </div>
+
+    {% block content %}{% endblock %}
+
+</body>
+</html>
