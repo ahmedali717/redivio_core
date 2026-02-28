@@ -31,25 +31,36 @@
                 </p>
             </div>
             <div v-if="modalType === 'opco'" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 italic uppercase">Company Name</label>
-                    <input v-model="forms.opco.name" type="text" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 outline-none" required>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Code</label>
-                        <input v-model="forms.opco.code" type="text" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 outline-none uppercase font-mono" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Currency</label>
-                        <select v-model="forms.opco.currency" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50">
-                            <option value="USD">USD</option>
-                            <option value="SAR">SAR</option>
-                            <option value="EGP">EGP</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+    <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+        <label class="block text-[10px] font-black text-indigo-600 mb-1 uppercase tracking-widest flex items-center gap-2">
+            <i class="fas fa-link"></i>
+            [[ isArabic ? 'معرف الشركة الأم' : 'Parent Company ID' ]]
+        </label>
+        <input v-model="forms.opco.parent" type="text" 
+               class="w-full bg-transparent border-none p-0 text-sm font-bold text-indigo-900 outline-none" 
+               readonly placeholder="Root Company">
+    </div>
+
+    <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1 italic uppercase">Company Name</label>
+        <input v-model="forms.opco.name" type="text" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 outline-none" required>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Code</label>
+            <input v-model="forms.opco.code" type="text" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 outline-none uppercase font-mono" required>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Currency</label>
+            <select v-model="forms.opco.currency" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50">
+                <option value="USD">USD</option>
+                <option value="SAR">SAR</option>
+                <option value="EGP">EGP</option>
+            </select>
+        </div>
+    </div>
+</div>
 
             <div v-if="modalType === 'plant'" class="space-y-4">
             <div class="grid grid-cols-2 gap-4">

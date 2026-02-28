@@ -1,36 +1,61 @@
 /**
  * موديول بناء الهيكل التنظيمي (Org Builder Module)
- * مسؤول عن: الربط بين الشركات، المنشآت، المواقع، والأرفف.
  */
 export const orgModule = {
     methods: {
-        // حماية المصفوفات باستخدام (|| []) لمنع خطأ TypeError: Cannot read properties of undefined
         getPlantsForOpco(instance, id) { 
-            return (instance.plants || []).filter(p => p.opco === id); 
+            return (instance.plants || []).filter(p => Number(p.opco) === Number(id)); 
         },
+        
         getLocationsForPlant(instance, id) { 
-            return (instance.locations || []).filter(l => l.plant === id); 
+            return (instance.locations || []).filter(l => Number(l.plant) === Number(id)); 
         },
+
         getBinsForLocation(instance, id) { 
-            return (instance.bins || []).filter(b => b.storage_location === id); 
+            return (instance.bins || []).filter(b => Number(b.storage_location) === Number(id)); 
         },
+
         getBinsCount(instance, id) { 
-            const bins = this.getBinsForLocation(instance, id);
+            // استخدام orgModule.methods بدلاً من this لضمان الوصول للدالة
+            const bins = orgModule.methods.getBinsForLocation(instance, id);
             return bins ? bins.length : 0; 
         },
         
         handleDrop(instance, targetType, parentId) {
-            // منطق تحديد النوع المسحوب وفتح النافذة المناسبة
-            if (instance.draggedType === 'plant' && targetType === 'plant') {
-                instance.activeOpcoId = parentId; 
-                instance.openModal('plant'); 
-            } else if (instance.draggedType === 'location' && targetType === 'location') {
-                instance.activePlantId = parentId; 
-                instance.openModal('location'); 
-            } else if (instance.draggedType === 'bin' && targetType === 'bin') {
-                instance.activeLocationId = parentId; 
-                instance.openModal('bin'); 
+            const type = instance.draggedType;
+            
+            // حالة إضافة شركة تابعة
+            if (type === 'opco') {
+                const targetOpco = (instance.opcos || []).find(o => o.id === parentId);
+                if (targetOpco && targetOpco.is_holding) {
+                    const subCount = (instance.opcos || []).filter(o => {
+                        const pId = (o.parent && typeof o.parent === 'object') ? o.parent.id : o.parent;
+                        return Number(pId) === Number(parentId);
+                    }).length;
+                    instance.openModal('opco', { parent: parentId, code: `${targetOpco.code}-${subCount + 1}` });
+                } else if (!parentId) {
+                    instance.openModal('opco');
+                }
+            } 
+            
+            // حالة إضافة مستودع (Plant) فوق شركة
+            else if (type === 'plant' && targetType === 'opco') {
+                instance.activeOpcoId = parentId;
+                instance.openModal('plant');
             }
+            
+            // حالة إضافة موقع (Location) فوق مستودع
+            else if (type === 'location' && targetType === 'plant') {
+                instance.activePlantId = parentId;
+                instance.openModal('location');
+            }
+            
+            // حالة إضافة رف (Bin) فوق موقع
+            else if (type === 'bin' && targetType === 'location') {
+                instance.activeLocationId = parentId;
+                instance.openModal('bin');
+            }
+
             instance.draggedType = null;
         }
     }

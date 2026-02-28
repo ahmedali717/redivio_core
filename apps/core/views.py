@@ -217,11 +217,36 @@ class OpCoViewSet(viewsets.ModelViewSet):
     serializer_class = OpCoSerializer
 
     def get_queryset(self):
+        # جلب الشركات التي يملكها المستخدم فقط
         return OpCo.objects.filter(owner=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+    def destroy(self, request, *args, **kwargs):
+        """
+        تعديل منطق الحذف لمنع حذف الشركة الأساسية أو الشركة الأم التي لها تابعين
+        """
+        instance = self.get_object()
+
+        # 1. منع حذف الشركة الأساسية للنظام (Root)
+        if hasattr(instance, 'is_system_root') and instance.is_system_root:
+            return Response(
+                {"error": "Forbidden: This is the system root company and cannot be deleted."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # 2. منع حذف شركة قابضة (Parent) طالما لديها شركات تابعة (Subsidiaries)
+        # ملاحظة: استخدمنا related_name="subsidiaries" في الموديل
+        if instance.subsidiaries.exists():
+            return Response(
+                {"error": "Conflict: This company has subsidiaries. Delete them first."},
+                status=status.HTTP_409_CONFLICT
+            )
+
+        return super().destroy(request, *args, **kwargs)
+
+# باقي الـ ViewSets (Plant, Location, etc.) تظل كما هي...
 class PlantViewSet(viewsets.ModelViewSet):
     authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticated]

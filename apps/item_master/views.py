@@ -38,9 +38,20 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
 
 class MaterialViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    """ إدارة المواد والأصناف (Items) """
-    queryset = Material.objects.all().order_by('-created_at')
+    """ إدارة المواد والأصناف (Items) مع التصفية حسب الشركة """
     serializer_class = MaterialSerializer
+
+    def get_queryset(self):
+        # جلب الـ opco النشط من الجلسة
+        active_opco_id = self.request.session.get('active_opco_id')
+        
+        # إذا كان هناك شركة مختارة، أظهر أصنافها فقط
+        if active_opco_id:
+            return Material.objects.filter(opco_id=active_opco_id).order_by('-created_at')
+        
+        # إذا لم تكن هناك شركة مختارة (أو مستخدم superuser يريد رؤية الكل)
+        # يمكنك إرجاع فارغ أو كل الأصناف حسب رغبتك
+        return Material.objects.all().order_by('-created_at')
 
 class FieldDefinitionViewSet(viewsets.ModelViewSet):
     """ 

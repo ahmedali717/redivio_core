@@ -4,22 +4,56 @@
         <h2 class="text-2xl font-bold text-slate-800 capitalize tracking-tight flex items-center gap-2">
             <span class="text-blue-600" v-if="view === 'dashboard'"><i class="fas fa-chart-pie"></i></span>
             <span class="text-blue-600" v-if="view === 'org_builder'"><i class="fas fa-sitemap"></i></span>
-            <span class="text-blue-600" v-if="['wms'].includes(view)"><i class="fas fa-boxes-stacked"></i></span>
-            <span x-text="view.replace('_', ' ')">[[ view.replace('_', ' ') ]]</span>
+            <span class="text-blue-600" v-if="['inventory', 'wms'].includes(view)"><i class="fas fa-boxes-stacked"></i></span>
+            <span class="text-blue-600" v-if="view === 'item_master'"><i class="fas fa-barcode"></i></span>
+            <span class="text-blue-600" v-if="view === 'global_config'"><i class="fas fa-cogs"></i></span>
+            
+            <span>[[ view.replace('_', ' ') ]]</span>
         </h2>
-        <p class="text-xs text-slate-400 font-medium mt-1">
-            <span class="text-slate-600">[[ config.company_name ]]</span> &bull; Workspace
-        </p>
+
+        <div class="flex items-center gap-4 mt-1">
+            <div class="flex flex-col border-l-2 border-blue-500 pl-3">
+                <span class="text-xs font-bold text-slate-700">[[ licenseStatus.companyName ]]</span>
+                <span class="text-[10px] text-slate-400 font-medium">
+                    [[ isArabic ? 'تاريخ الإنشاء:' : 'Created:' ]] 
+                    <span class="text-slate-600">
+                        [[ licenseStatus.createdAt ? new Date(licenseStatus.createdAt).toLocaleDateString('en-GB') : '...' ]]
+                    </span>
+                </span>
+            </div>
+
+            <div class="flex flex-col gap-1 w-32 ml-2">
+                <div class="flex justify-between text-[9px] font-black text-slate-500 uppercase tracking-tighter">
+                    <span>[[ licenseStatus.daysRemaining ]] [[ isArabic ? 'يوم' : 'Days' ]]</span>
+                    <span>[[ Math.round((licenseStatus.daysRemaining / 15) * 100) ]]%</span>
+                </div>
+                <div class="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                    <div class="h-full transition-all duration-1000 ease-out" 
+                         :class="licenseStatus.daysRemaining <= 3 ? 'bg-red-500' : 'bg-blue-500'"
+                         :style="{ width: (licenseStatus.daysRemaining / 15 * 100) + '%' }">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="flex items-center gap-6">
-        <div class="hidden md:flex flex-col items-end mr-4">
-            <span class="text-2xl font-bold text-slate-700 tech-font leading-none">[[ currentTime ]]</span>
-            <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">[[ currentDate ]]</span>
+        <div class="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
+            <i class="fas fa-hourglass-half text-blue-500 text-xs animate-pulse"></i>
+            <span class="text-xs font-bold text-blue-700">
+                [[ licenseStatus.daysRemaining ]] / 15 [[ isArabic ? 'يوم متبقي' : 'Days Left' ]]
+            </span>
         </div>
-        <div class="h-8 w-px bg-slate-300 mx-2"></div>
-        <a href="{% url 'logout_action' %}" class="w-10 h-10 rounded-full bg-red-50 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center shadow-sm" title="Logout">
-            <i class="fas fa-sign-out-alt"></i>
+
+        <div class="hidden md:flex flex-col items-end">
+            <span class="text-2xl font-bold text-slate-700 tech-font leading-none">[[ currentTime ]]</span>
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">[[ currentDate ]]</span>
+        </div>
+        
+        <div class="h-8 w-px bg-slate-200 mx-2"></div>
+        
+        <a href="/logout/" class="w-10 h-10 rounded-full bg-slate-50 hover:bg-red-500 text-slate-400 hover:text-white transition-all duration-300 flex items-center justify-center border border-slate-100 shadow-sm group">
+            <i class="fas fa-sign-out-alt group-hover:scale-110 transition-transform"></i>
         </a>
     </div>
 </header>

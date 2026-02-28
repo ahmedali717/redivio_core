@@ -32,6 +32,11 @@ class StorageBin(models.Model):
     
     def __str__(self): return self.code
 
+    class Meta:
+        # هذا السطر يضمن عدم تكرار الكود على مستوى قاعدة البيانات
+        # إذا كنت تريد التميز على مستوى الشركة، يفضل دمج كود الشركة مع كود الرف
+        unique_together = ('code', 'storage_location')
+
 class StockQuant(models.Model):
     # ربطنا هنا بـ 'core.OpCo' نصياً
     opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)

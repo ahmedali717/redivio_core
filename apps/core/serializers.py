@@ -6,7 +6,11 @@ from apps.wms.models import Plant, StorageLocation, StorageBin
 class OpCoSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpCo
-        fields = ['id', 'name', 'code', 'currency']
+        # أضفنا 'parent' هنا لضمان حفظ الربط بين الشركات
+        fields = [
+            'id', 'name', 'code', 'created_at', 'is_holding', 
+            'plan', 'tax_id', 'cr_number', 'logo', 'parent', 'currency'
+        ]
 
 class PlantSerializer(serializers.ModelSerializer):
     class Meta:

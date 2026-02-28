@@ -41,24 +41,28 @@ export const itemMasterModule = {
          * تحضير بيانات صنف موجود للتعديل (Edit Mode)
          */
         editMaterial(material, instance) {
-            instance.isEditing = true;
-            instance.modalType = 'material';
-            instance.showModal = true;
-            
-            // ملء النموذج ببيانات الصنف (تأكد من التعامل مع opco كـ ID)
-            instance.forms.material = {
-                id: material.id,
-                sku: material.sku,
-                name: material.name,
-                category: material.category,
-                base_uom: material.base_uom,
-                barcode: material.barcode || '',
-                opco: (typeof material.opco === 'object') ? material.opco.id : material.opco,
-                assigned_bins: material.assigned_bins || []
-            };
-            
-            instance.imagePreview = material.image || null; 
-            instance.selectedFile = null;
-        }
+    if (!instance) {
+        console.error("Vue instance is missing in editMaterial!");
+        return;
+    }
+    instance.isEditing = true;
+    instance.modalType = 'material';
+    instance.showModal = true;
+    
+    instance.forms.material = {
+        id: material.id,
+        sku: material.sku,
+        name: material.name,
+        category: material.category,
+        base_uom: material.base_uom,
+        barcode: material.barcode || '',
+        opco: (typeof material.opco === 'object') ? material.opco.id : material.opco,
+        assigned_bins: material.assigned_bins || []
+    };
+    
+    // استخدام fixImagePath لضمان ظهور الصورة في المودال
+    instance.imagePreview = instance.fixImagePath(material.image); 
+    instance.selectedFile = null;
+}
     }
 };

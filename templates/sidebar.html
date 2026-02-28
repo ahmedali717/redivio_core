@@ -75,6 +75,25 @@
         </div>
     </nav>
 
+    <div class="px-4 py-3 mx-2 mb-2 bg-slate-800/50 rounded-lg border border-slate-700/50 text-[11px] space-y-1">
+        <div class="flex justify-between text-slate-400">
+            <span>[[ isArabic ? 'الشركة:' : 'Company:' ]]</span>
+            <span class="text-blue-400 font-bold">[[ licenseStatus.companyName ]]</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+            <span>[[ isArabic ? 'تاريخ اليوم:' : 'Today:' ]]</span>
+            <span class="text-slate-200">[[ licenseStatus.todayStr ]]</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+            <span>[[ isArabic ? 'تاريخ التأسيس:' : 'Created:' ]]</span>
+            <span class="text-slate-200">[[ licenseStatus.createdStr ]]</span>
+        </div>
+        <div class="pt-1 mt-1 border-t border-slate-700 flex justify-between">
+            <span class="text-slate-400">[[ isArabic ? 'الرصيد الزمني:' : 'Remaining:' ]]</span>
+            <span :class="licenseStatus.daysRemaining < 3 ? 'text-red-400' : 'text-green-400'">[[ licenseStatus.daysRemaining ]] [[ isArabic ? 'يوم' : 'Days' ]]</span>
+        </div>
+    </div>
+
     <div class="p-4 border-t border-slate-800 bg-slate-950">
         <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-3 text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white rounded-lg transition-all duration-200 group">
             <i class="fas fa-sign-out-alt w-5 text-center group-hover:rotate-180 transition-transform"></i>
