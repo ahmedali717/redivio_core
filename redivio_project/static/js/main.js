@@ -149,22 +149,28 @@ createApp({
 
         // 🚀 دالة جديدة لإظهار رسائل احترافية في منتصف الشاشة
         showToast(message, type = 'success') {
+            console.log("Toast Triggered:", message, type); // 🔍 سطر للتأكد في الـ Console
             const toast = document.createElement('div');
             toast.className = `custom-toast ${type}`;
+            // إضافة تنسيق داخلي سريع للتأكد لو الـ CSS الخارجي محملش
+            toast.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:9999; padding:20px; color:white; border-radius:10px; text-align:center; min-width:200px;";
+            toast.style.backgroundColor = type === 'success' ? '#28a745' : '#dc3545';
+            
             toast.innerHTML = `
                 <div class="toast-content">
                     <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
-                    <span>${message}</span>
+                    <div style="margin-top:10px">${message}</div>
                 </div>
             `;
             document.body.appendChild(toast);
             
-            // إزالة الرسالة بعد 3 ثوانٍ
             setTimeout(() => {
-                toast.classList.add('fade-out');
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s ease';
                 setTimeout(() => toast.remove(), 500);
             }, 3000);
         },
+
 
         async switchCompany(companyId) {
             try {
