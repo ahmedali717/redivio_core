@@ -99,14 +99,11 @@ WSGI_APPLICATION = "redivio_project.wsgi.application"
 DATABASE_URL = "postgresql://neondb_owner:npg_KrNedg5V2ThF@ep-broad-tooth-adixzfhp-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
 DATABASES = {
-    "default": dj_database_url.config(
-        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
-
-# Ensure standard PostgreSQL backend (NOT django-tenants)
-DATABASES["default"]["ENGINE"] = "django.db.backends.postgresql"
 
 # =========================================================
 # PASSWORD VALIDATION
