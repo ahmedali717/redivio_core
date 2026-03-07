@@ -126,3 +126,18 @@ class CompanyUser(models.Model):
     class Meta:
         unique_together = ('user', 'company')
         verbose_name = "موظف في شركة"
+
+class PutawayRule(models.Model):
+    # نربط بـ item_master.Material بدلاً من Item
+    item = models.ForeignKey('item_master.Material', on_delete=models.CASCADE)
+    
+    opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
+    
+    # نربط بـ wms.StorageBin بدلاً من WarehouseBin
+    default_bin = models.ForeignKey('wms.StorageBin', on_delete=models.SET_NULL, null=True)
+    
+    class Meta:
+        unique_together = ('item', 'opco')
+
+    def __str__(self):
+        return f"{self.item.name} -> {self.default_bin.code}"

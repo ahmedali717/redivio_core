@@ -656,6 +656,20 @@ createApp({
                 if(data.kpis) this.kpis = data.kpis;
             } catch (e) { console.log("KPI fetch error"); }
         },
+        // داخل methods في main.js
+        async onMaterialSelect(item) {
+            // 1. جلب بيانات الصنف شاملة الرفوف
+            const res = await fetch(`/api/materials/${item.material_id}/`);
+            const data = await res.json();
+            
+            // 2. البحث عن الرف اللي واخد تعليم "is_primary"
+            const primary = data.material_bins.find(b => b.is_primary);
+            
+            if (primary) {
+                this.forms.stock_entry.bin_id = primary.storage_bin;
+                this.showToast(this.isArabic ? "تم تحديد الرف الافتراضي تلقائياً" : "Default bin selected", 'success');
+            }
+        },
 
         async fetchMaterialsList() {
             try {
@@ -688,7 +702,7 @@ createApp({
             else if(type === 'material') {
                 this.forms.material = {
                     id: null, sku: '', name: '', category: '', 
-                    base_uom: 'PCS', barcode: '', opco: this.activeOpcoId, assigned_bins: [] 
+                    base_uom: 'PCS', barcode: '', opco: this.activeOpcoId, assigned_bins: [], primary_bin: null
                 };
             }
             else if(type === 'stock_entry') {

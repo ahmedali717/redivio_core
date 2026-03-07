@@ -134,7 +134,7 @@
             <div class="col-span-1 md:col-span-2 flex justify-center">
                  <div class="relative group">
                     <div class="w-32 h-32 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden group-hover:border-blue-400 transition-all">
-                        <img v-if="imagePreview" :src="imagePreview" class="w-full h-full object-cover">
+                        <img v-if="imagePreview" :src="fixImagePath(imagePreview)" class="w-full h-full object-cover">
                         <i v-else class="fas fa-camera text-slate-300 text-3xl"></i>
                     </div>
                     <label for="file-upload" class="absolute -bottom-2 -right-2 bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-blue-700">
@@ -176,45 +176,57 @@
 
     <div v-show="materialTab === 'inventory'" class="space-y-4 animate-in fade-in duration-300">
         <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-            <h4 class="text-xs font-black text-blue-700 mb-3 uppercase flex items-center gap-2">
-                <i class="fas fa-map-marked-alt"></i>
-                [[ isArabic ? 'تحديد أماكن التخزين المسموحة' : 'Allowed Storage Bins' ]]
-            </h4>
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="text-xs font-black text-blue-700 uppercase flex items-center gap-2">
+                    <i class="fas fa-map-marked-alt"></i>
+                    [[ isArabic ? 'تحديد أماكن التخزين والرف الافتراضي' : 'Storage Bins & Putaway Rule' ]]
+                </h4>
+                <span class="text-[9px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold">
+                    [[ isArabic ? 'انقر على النجمة لتحديد الرف الرئيسي' : 'Click star for Primary Bin' ]]
+                </span>
+            </div>
             
             <div class="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                 <div v-for="bin in availableBinsForMaterial" :key="bin.id" 
-                     class="flex items-center p-3 bg-white rounded-lg border border-slate-200 hover:border-blue-300 transition-colors">
-                    <input type="checkbox" :id="'bin-'+bin.id" :value="bin.id" v-model="forms.material.assigned_bins"
-                           class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500">
-                    <label :for="'bin-'+bin.id" class="mx-3 flex-1 cursor-pointer">
-                        <span class="block text-sm font-bold text-slate-700">[[ bin.code ]]</span>
-                        <span class="text-[10px] text-slate-400">[[ getBinLocationName(bin.storage_location) ]]</span>
-                    </label>
-                    <span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">
+                     @click="toggleBinSelection(bin.id)"
+                     :class="forms.material.assigned_bins.includes(bin.id) ? 'border-blue-400 bg-white shadow-sm' : 'border-slate-200 bg-slate-50/50'"
+                     class="flex items-center p-3 rounded-xl border-2 transition-all cursor-pointer group relative">
+                    
+                    <div class="flex-1 flex items-center">
+                        <div class="w-5 h-5 rounded-md border flex items-center justify-center transition-all"
+                             :class="forms.material.assigned_bins.includes(bin.id) ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-300'">
+                            <i v-if="forms.material.assigned_bins.includes(bin.id)" class="fas fa-check text-[10px]"></i>
+                        </div>
+
+                        <div class="mx-3">
+                            <span class="block text-sm font-bold text-slate-700">[[ bin.code ]]</span>
+                            <span class="text-[10px] text-slate-400">[[ getBinLocationName(bin.storage_location) ]]</span>
+                        </div>
+                    </div>
+
+                    <button type="button" 
+                            v-if="forms.material.assigned_bins.includes(bin.id)"
+                            @click.stop="setPrimaryBin(bin.id)"
+                            class="w-8 h-8 rounded-full flex items-center justify-center transition-all border"
+                            :class="forms.material.primary_bin === bin.id ? 'bg-yellow-400 border-yellow-500 text-white shadow-md' : 'bg-white border-slate-200 text-slate-300 hover:text-yellow-500'">
+                        <i class="fas fa-star"></i>
+                    </button>
+
+                    <span class="text-[9px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono ml-2">
                         [[ getPlantNameByBin(bin.storage_location) ]]
                     </span>
                 </div>
             </div>
-            
-            <p class="text-[10px] text-blue-500 mt-3 italic text-center">
-                [[ isArabic ? '* سيظهر الصنف فقط في الرفوف المختارة عند عمل حركات مخزنية' : '* Item will only be available in selected bins during stock entries' ]]
-            </p>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
             <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <label class="block text-xs font-bold text-red-500 mb-1">[[ isArabic ? 'حد إعادة الطلب' : 'Reorder Level' ]]</label>
-                <input v-model.number="forms.material.reorder_level" 
-                       type="number" 
-                       min="0"
-                       class="w-full border border-slate-300 p-2 rounded-lg text-center font-bold focus:ring-2 focus:ring-red-400 outline-none">
+                <input v-model.number="forms.material.reorder_level" type="number" min="0" class="w-full border border-slate-300 p-2 rounded-lg text-center font-bold focus:ring-2 focus:ring-red-400 outline-none">
             </div>
             <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <label class="block text-xs font-bold text-slate-500 mb-1">[[ isArabic ? 'الحد الأقصى' : 'Max Capacity' ]]</label>
-                <input v-model.number="forms.material.max_level" 
-                       type="number" 
-                       min="0"
-                       class="w-full border border-slate-300 p-2 rounded-lg text-center font-bold focus:ring-2 focus:ring-blue-400 outline-none">
+                <input v-model.number="forms.material.max_level" type="number" min="0" class="w-full border border-slate-300 p-2 rounded-lg text-center font-bold focus:ring-2 focus:ring-blue-400 outline-none">
             </div>
         </div>
     </div>
