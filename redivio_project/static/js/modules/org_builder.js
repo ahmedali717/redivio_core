@@ -16,7 +16,6 @@ export const orgModule = {
         },
 
         getBinsCount(instance, id) { 
-            // استخدام orgModule.methods بدلاً من this لضمان الوصول للدالة
             const bins = orgModule.methods.getBinsForLocation(instance, id);
             return bins ? bins.length : 0; 
         },
@@ -24,16 +23,26 @@ export const orgModule = {
         handleDrop(instance, targetType, parentId) {
             const type = instance.draggedType;
             
-            // حالة إضافة شركة تابعة
+            // 🚀 حالة إضافة شركة تابعة (تعديل لضمان التنبيه الاحترافي)
             if (type === 'opco') {
-                const targetOpco = (instance.opcos || []).find(o => o.id === parentId);
-                if (targetOpco && targetOpco.is_holding) {
-                    const subCount = (instance.opcos || []).filter(o => {
-                        const pId = (o.parent && typeof o.parent === 'object') ? o.parent.id : o.parent;
-                        return Number(pId) === Number(parentId);
-                    }).length;
-                    instance.openModal('opco', { parent: parentId, code: `${targetOpco.code}-${subCount + 1}` });
-                } else if (!parentId) {
+                if (parentId) {
+                    const targetOpco = (instance.opcos || []).find(o => o.id === parentId);
+                    
+                    if (targetOpco && targetOpco.is_holding) {
+                        const subCount = (instance.opcos || []).filter(o => {
+                            const pId = (o.parent && typeof o.parent === 'object') ? o.parent.id : o.parent;
+                            return Number(pId) === Number(parentId);
+                        }).length;
+                        instance.openModal('opco', { parent: parentId, code: `${targetOpco.code}-${subCount + 1}` });
+                    } else {
+                        // ✅ إظهار تنبيه احترافي إذا كانت الشركة ليست قابضة
+                        instance.showToast(
+                            instance.isArabic ? "لا يمكن إضافة شركة تابعة إلا تحت شركة قابضة (Holding)" : "Subsidiaries can only be added under a Holding company", 
+                            'error'
+                        );
+                    }
+                } else {
+                    // إضافة شركة رئيسية (لا يوجد parentId)
                     instance.openModal('opco');
                 }
             } 
