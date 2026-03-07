@@ -195,7 +195,7 @@ class TenantSignupAPI(APIView):
                         'code': random_code, 
                         'currency': currency,
                         'owner': user,
-                        'is_holding': True 
+                        'is_holding': False 
                     }
                 )
                 
