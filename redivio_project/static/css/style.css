@@ -1,0 +1,75 @@
+/* ================================================= */
+/* Custom Animated Toasts (Success & Error Messages) */
+/* ================================================= */
+
+/* الحاوية الرئيسية للرسالة */
+.custom-toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000; /* لضمان ظهورها فوق أي مودال أو سايدبار */
+    padding: 25px 50px;
+    border-radius: 15px;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.1rem;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    min-width: 320px;
+    text-align: center;
+    pointer-events: none; /* لمنع الرسالة من حجب الضغطات خلفها */
+    animation: bounceInCenter 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* محتوى الرسالة (الأيقونة والنص) */
+.toast-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.toast-content i {
+    font-size: 3rem;
+    margin-bottom: 5px;
+}
+
+/* حالة النجاح (Success) */
+.custom-toast.success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* حالة الخطأ (Error) */
+.custom-toast.error {
+    background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* تأثير الخروج (Fade Out) */
+.custom-toast.fade-out {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+    transition: all 0.5s ease;
+}
+
+/* أنيميشن الدخول من المنتصف */
+@keyframes bounceInCenter {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* تحسين الخط للأرقام والنصوص الإنجليزية داخل الرسائل العربية */
+[lang="ar"] .custom-toast {
+    font-family: 'Tajawal', sans-serif; /* أو أي خط عربي تستخدمه */
+    direction: rtl;
+}
