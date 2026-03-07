@@ -1,12 +1,28 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from .context import get_current_tenant_id  # تأكد من إنشاء ملف context.py في نفس المجلد
 
+# --- 1. الـ Manager المسؤول عن الفلترة التلقائية (Odoo Style) ---
+class TenantManager(models.Manager):
+    """
+    Manager مخصص يضيف فلترة تلقائية بناءً على الشركة النشطة في السياق الحالي.
+    """
+    def get_queryset(self):
+        tenant_id = get_current_tenant_id()
+        queryset = super().get_queryset()
+        
+        # إذا كان هناك شركة نشطة، يتم الفلترة بناءً عليها تلقائياً
+        # ملاحظة: يتم تطبيق هذا على الموديلات التي ترث من TenantBaseModel فقط
+        if tenant_id:
+            return queryset.filter(opco_id=tenant_id)
+        return queryset
+
+# --- 2. كود OpCo (يجب أن يكون أول كلاس موديل لكي تراه بقية الجداول) ---
 class OpCo(models.Model):
     """
     الشركة المشغلة (Tenant / Workspace)
-    تم التحديث لدعم نظام الشركات القابضة (Holding) والشركات التابعة (Subsidiaries)
-    مع إضافة حماية أمان للشركة الأساسية.
+    تدعم نظام الشركات القابضة (Holding) والشركات التابعة (Subsidiaries)
     """
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -16,10 +32,10 @@ class OpCo(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=20, unique=True)
 
-    # --- إضافات الهيكل الهرمي (Holding & Subsidiaries) ---
+    # الهيكل الهرمي
     parent = models.ForeignKey(
         'self', 
-        on_delete=models.PROTECT,  # يمنع حذف الشركة الأم إذا كان لها شركات تابعة
+        on_delete=models.PROTECT, 
         null=True, 
         blank=True, 
         related_name="subsidiaries",
@@ -34,10 +50,8 @@ class OpCo(models.Model):
 
     is_system_root = models.BooleanField(
         default=False, 
-        editable=False,  # لا تظهر في النماذج العادية لحمايتها
         verbose_name="شركة أساسية للنظام"
     )
-    # --------------------------------------------------
 
     plan = models.CharField(
         max_length=20,
@@ -58,17 +72,19 @@ class OpCo(models.Model):
     cr_number = models.CharField(max_length=50, blank=True, null=True, verbose_name="السجل التجاري")
     logo = models.ImageField(upload_to='company_logos/', blank=True, null=True, verbose_name="شعار الشركة")
 
+    # ✅ المانيجرز:objects العادي لا يفلتر لكي يرى السيرفر كل الشركات في الهيدر
+    objects = models.Manager() 
+    all_objects = models.Manager() 
+
     class Meta:
         verbose_name = "شركة مشغلة"
         verbose_name_plural = "الشركات المشغلة"
 
     def clean(self):
-        # التحقق من أن الشركة لا تتبع نفسها لتجنب الحلقات اللانهائية
         if self.parent and self.pk == self.parent.pk:
             raise ValidationError("لا يمكن للشركة أن تكون تابعة لنفسها.")
 
     def delete(self, *args, **kwargs):
-        # منع حذف الشركة الأساسية برمجياً
         if self.is_system_root:
             raise ValidationError("أمان: لا يمكن حذف الشركة الأساسية المسجلة للنظام.")
         super().delete(*args, **kwargs)
@@ -81,13 +97,10 @@ class OpCo(models.Model):
             label = f"↳ {label}"
         return label
 
-
-
-
-
+# --- 3. تحديث TenantBaseModel (يعتمد على OpCo المعرف أعلاه) ---
 class TenantBaseModel(models.Model):
     """
-    موديل تجريدي ترث منه كافة الجداول التي تحتاج للعزل حسب الشركة.
+    موديل تجريدي ترث منه الجداول التي تحتاج للعزل (مثل Plants, Materials, Bins)
     """
     opco = models.ForeignKey(
         OpCo, 
@@ -97,5 +110,19 @@ class TenantBaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # ✅ استخدام TenantManager لضمان الفلترة التلقائية في الجداول التشغيلية
+    objects = TenantManager() 
+    all_objects = models.Manager() 
+
     class Meta:
         abstract = True
+
+# --- 4. كود CompanyUser ---
+class CompanyUser(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="company_assignments")
+    company = models.ForeignKey(OpCo, on_delete=models.CASCADE)
+    is_active_session = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'company')
+        verbose_name = "موظف في شركة"

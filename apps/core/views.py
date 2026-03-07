@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from rest_framework import viewsets, status
@@ -25,7 +25,6 @@ User = get_user_model()
 
 @ensure_csrf_cookie
 def landing_view(request):
-    # إزالة الـ redirect التلقائي مؤقتاً لكسر الـ Loop
     return render(request, 'landing.html') 
 
 def login_view(request):
@@ -69,30 +68,76 @@ def check_email_status(request):
     exists = User.objects.filter(email__iexact=email).exists()
     return Response({'exists': exists})
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def switch_active_company(request):
+    company_id = request.data.get('company_id')
+    if not company_id:
+        return Response({"error": "Company ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    can_access = OpCo.all_objects.filter(id=company_id).filter(
+        Q(owner=request.user) | Q(companyuser__user=request.user)
+    ).exists()
+
+    if can_access:
+        request.session['active_opco_id'] = company_id
+        request.session.modified = True
+        return Response({"success": True, "message": "Company switched successfully"})
+    
+    return Response({"error": "Unauthorized access to this company"}, status=status.HTTP_403_FORBIDDEN)
+
 class CheckAuthAPI(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        if request.user.is_authenticated:
-            # جلب الشركة المرتبطة بالمستخدم فقط
-            user_opco = OpCo.objects.filter(owner=request.user).first()
-            company_name = user_opco.name if user_opco else "REDIVIO Inc."
+        if not request.user.is_authenticated:
+            return Response({"authenticated": False})
 
-            return Response({
-                "authenticated": True,
-                "user": request.user.username,
-                "email": request.user.email,
-                "company": company_name,
-                "is_superuser": request.user.is_superuser,
-                "role": 'Admin' if request.user.is_superuser else 'Manager'
-            })
-        return Response({"authenticated": False})
+        active_id = request.session.get('active_opco_id')
+        user_all_opcos = OpCo.all_objects.filter(
+            Q(owner=request.user) | Q(companyuser__user=request.user)
+        ).distinct()
+
+        user_opco = user_all_opcos.filter(id=active_id).first() if active_id else user_all_opcos.first()
+        
+        if user_opco and not active_id:
+            request.session['active_opco_id'] = user_opco.id
+
+        holding_opco = user_opco
+        if user_opco:
+            while holding_opco.parent:
+                holding_opco = holding_opco.parent
+
+        days_remaining = 15
+        if holding_opco and holding_opco.created_at:
+            from django.utils import timezone
+            diff = timezone.now() - holding_opco.created_at
+            days_remaining = max(15 - diff.days, 0)
+
+        header_opcos = [
+            {
+                "id": op.id,
+                "name": op.name,
+                "code": op.code,
+                "is_holding": op.is_holding
+            } for op in user_all_opcos.order_by('-is_holding', 'name')
+        ]
+
+        return Response({
+            "authenticated": True,
+            "user": request.user.username,
+            "company_id": user_opco.id if user_opco else None,
+            "holding_name": holding_opco.name if holding_opco else "REDIVIO Inc.",
+            "days_remaining": days_remaining,
+            "header_opcos": header_opcos,
+            "is_superuser": request.user.is_superuser,
+            "role": 'Admin' if request.user.is_superuser else 'Manager'
+        })
 
 class LoginAPI(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # دعم الإيميل أو اليوزرنيم في حقل 'username'
         email = request.data.get('username') or request.data.get('email')
         password = request.data.get('password')
         
@@ -103,9 +148,7 @@ class LoginAPI(APIView):
         
         if user is not None:
             login(request, user)
-            
-            # ✅ الإصلاح: ربط الشركة بالجلسة فوراً لكي لا يطردك الميدل وير
-            user_opco = OpCo.objects.filter(owner=user).first()
+            user_opco = OpCo.all_objects.filter(owner=user).first()
             if user_opco:
                 request.session['active_opco_id'] = user_opco.id
                 request.session.modified = True
@@ -133,7 +176,6 @@ class TenantSignupAPI(APIView):
 
         try:
             with transaction.atomic():
-                # 1. إنشاء المستخدم
                 user, created = User.objects.get_or_create(
                     username=email,
                     defaults={'email': email, 'is_superuser': False, 'is_staff': True}
@@ -142,38 +184,27 @@ class TenantSignupAPI(APIView):
                     user.set_password(password if password else 'Admin@123')
                     user.save()
                 
-                # تسجيل الدخول تلقائياً
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-                # 2. إنشاء الشركة وربطها بالمالك (Owner)
                 import random, string
                 random_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
                 
-                opco, created = OpCo.objects.get_or_create(
+                opco, created = OpCo.all_objects.get_or_create(
                     name=company_name,
                     defaults={
                         'code': random_code, 
                         'currency': currency,
-                        'owner': user
+                        'owner': user,
+                        'is_holding': True 
                     }
                 )
                 
-                # ✅ الإصلاح: ربط الشركة الجديدة بالجلسة فوراً
                 request.session['active_opco_id'] = opco.id
                 request.session.modified = True
 
-                # 3. إنشاء الهيكل التنظيمي الأولي
                 if created:
-                    plant = Plant.objects.create(
-                        opco=opco, 
-                        code="MAIN", 
-                        name=f"{company_name} HQ"
-                    )
-                    StorageLocation.objects.create(
-                        plant=plant, 
-                        code="IN-1", 
-                        name="Receiving"
-                    )
+                    plant = Plant.objects.create(opco=opco, code="MAIN", name=f"{company_name} HQ")
+                    StorageLocation.objects.create(plant=plant, code="IN-1", name="Receiving")
 
                 return Response({
                     "success": True,
@@ -189,26 +220,28 @@ class DashboardDataViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     
     def list(self, request):
-        # جلب الشركات التي يملكها المستخدم الحالي
-        user_opcos = OpCo.objects.filter(owner=request.user)
-        
-        # حساب إجمالي المخزون باستخدام حقل 'plant' (لحل مشكلة الـ FieldError السابقة)
+        active_id = request.session.get('active_opco_id')
+        if active_id:
+            target_opcos = OpCo.all_objects.filter(Q(id=active_id) | Q(parent_id=active_id))
+        else:
+            target_opcos = OpCo.all_objects.filter(owner=request.user)
+
         stock_qty = 0
-        if user_opcos.exists():
+        if target_opcos.exists():
             stock_qty = StockQuant.objects.filter(
-                plant__opco__in=user_opcos
+                plant__opco__in=target_opcos
             ).aggregate(total=Sum('quantity'))['total'] or 0
 
         kpis = {
-            'materials': Material.objects.filter(opco__in=user_opcos).count(),
-            'vendors': Vendor.objects.filter(opco__in=user_opcos).count(),
-            'pending_pos': PurchaseOrder.objects.filter(opco__in=user_opcos, status='DRAFT').count(),
+            'materials': Material.objects.filter(opco__in=target_opcos).count(),
+            'vendors': Vendor.objects.filter(opco__in=target_opcos).count(),
+            'pending_pos': PurchaseOrder.objects.filter(opco__in=target_opcos, status='DRAFT').count(),
             'stock_qty': stock_qty,
         }
         return Response({'kpis': kpis})
     
 # =========================================================
-#  SECTION 3: VIEWSETS (CRUD with Isolation)
+#  SECTION 3: VIEWSETS (Intelligent Hierarchy Filtering)
 # =========================================================
 
 class OpCoViewSet(viewsets.ModelViewSet):
@@ -217,56 +250,67 @@ class OpCoViewSet(viewsets.ModelViewSet):
     serializer_class = OpCoSerializer
 
     def get_queryset(self):
-        # جلب الشركات التي يملكها المستخدم فقط
-        return OpCo.objects.filter(owner=self.request.user)
+        user_all_opcos = OpCo.all_objects.filter(
+            Q(owner=self.request.user) | Q(companyuser__user=self.request.user)
+        ).distinct()
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        if self.request.query_params.get('all') == 'true':
+            return user_all_opcos.order_by('-is_holding', 'name')
 
-    def destroy(self, request, *args, **kwargs):
-        """
-        تعديل منطق الحذف لمنع حذف الشركة الأساسية أو الشركة الأم التي لها تابعين
-        """
-        instance = self.get_object()
+        active_id = self.request.session.get('active_opco_id')
+        if not active_id:
+            return user_all_opcos.order_by('-is_holding', 'name')
 
-        # 1. منع حذف الشركة الأساسية للنظام (Root)
-        if hasattr(instance, 'is_system_root') and instance.is_system_root:
-            return Response(
-                {"error": "Forbidden: This is the system root company and cannot be deleted."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        active_opco = user_all_opcos.filter(id=active_id).first()
+        
+        if active_opco:
+            if active_opco.is_holding:
+                return user_all_opcos.filter(
+                    Q(id=active_id) | Q(parent_id=active_id)
+                ).order_by('-is_holding', 'name')
+            
+            return user_all_opcos.filter(id=active_id)
 
-        # 2. منع حذف شركة قابضة (Parent) طالما لديها شركات تابعة (Subsidiaries)
-        # ملاحظة: استخدمنا related_name="subsidiaries" في الموديل
-        if instance.subsidiaries.exists():
-            return Response(
-                {"error": "Conflict: This company has subsidiaries. Delete them first."},
-                status=status.HTTP_409_CONFLICT
-            )
-
-        return super().destroy(request, *args, **kwargs)
-
-# باقي الـ ViewSets (Plant, Location, etc.) تظل كما هي...
+        return user_all_opcos.order_by('-is_holding', 'name')
+           
 class PlantViewSet(viewsets.ModelViewSet):
-    authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
     serializer_class = PlantSerializer
-
     def get_queryset(self):
-        return Plant.objects.filter(opco__owner=self.request.user)
+        active_id = self.request.session.get('active_opco_id')
+        if not active_id: return Plant.objects.none()
+        
+        active_opco = OpCo.all_objects.filter(id=active_id).first()
+        
+        if active_opco and active_opco.is_holding:
+            return Plant.objects.filter(
+                Q(opco_id=active_id) | Q(opco__parent_id=active_id)
+            ).distinct()
+        
+        return Plant.objects.all()
 
 class LocationViewSet(viewsets.ModelViewSet):
-    authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
     serializer_class = StorageLocationSerializer
-
     def get_queryset(self):
-        return StorageLocation.objects.filter(plant__opco__owner=self.request.user)
+        active_id = self.request.session.get('active_opco_id')
+        active_opco = OpCo.all_objects.filter(id=active_id).first()
+        
+        if active_opco and active_opco.is_holding:
+            return StorageLocation.objects.filter(
+                Q(plant__opco_id=active_id) | Q(plant__opco__parent_id=active_id)
+            ).distinct()
+        
+        return StorageLocation.objects.all()
 
 class StorageBinViewSet(viewsets.ModelViewSet):
-    authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
     serializer_class = StorageBinSerializer
-
     def get_queryset(self):
-        return StorageBin.objects.filter(storage_location__plant__opco__owner=self.request.user)
+        active_id = self.request.session.get('active_opco_id')
+        active_opco = OpCo.all_objects.filter(id=active_id).first()
+        
+        if active_opco and active_opco.is_holding:
+            return StorageBin.objects.filter(
+                Q(storage_location__plant__opco_id=active_id) | 
+                Q(storage_location__plant__opco__parent_id=active_id)
+            ).distinct()
+            
+        return StorageBin.objects.all()

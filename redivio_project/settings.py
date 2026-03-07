@@ -61,6 +61,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -99,7 +100,7 @@ DATABASE_URL = "postgresql://neondb_owner:npg_KrNedg5V2ThF@ep-broad-tooth-adixzf
 
 DATABASES = {
     "default": dj_database_url.config(
-        default=DATABASE_URL,
+        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
         conn_max_age=600,
     )
 }
@@ -132,6 +133,9 @@ USE_TZ = True
 # =========================================================
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# عشان ريندر يضغط ملفات الـ static ويسرع الموقع
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATICFILES_DIRS = [
     BASE_DIR / "redivio_project/static",
 ]

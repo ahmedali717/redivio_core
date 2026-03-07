@@ -24,7 +24,7 @@
 
             <div class="flex flex-col gap-1 w-32 ml-2">
                 <div class="flex justify-between text-[9px] font-black text-slate-500 uppercase tracking-tighter">
-                    <span>[[ licenseStatus.daysRemaining ]] [[ isArabic ? 'يوم' : 'Days' ]]</span>
+                    <span>[[ licenseStatus.daysRemaining ]] [[ isArabic ? 'يوم متبقي' : 'Days' ]]</span>
                     <span>[[ Math.round((licenseStatus.daysRemaining / 15) * 100) ]]%</span>
                 </div>
                 <div class="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner">
@@ -43,6 +43,38 @@
             <span class="text-xs font-bold text-blue-700">
                 [[ licenseStatus.daysRemaining ]] / 15 [[ isArabic ? 'يوم متبقي' : 'Days Left' ]]
             </span>
+        </div>
+
+        <div class="relative group">
+            <button class="flex items-center gap-3 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:bg-white hover:border-blue-400 transition-all shadow-sm">
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase leading-none mb-1">[[ isArabic ? 'المنشأة الحالية' : 'Current Entity' ]]</p>
+                    <p class="text-xs font-bold text-slate-700 leading-none">
+                        [[ opcos.find(o => o.id === parseInt(activeOpcoId))?.name || '...' ]]
+                    </p>
+                </div>
+                <i class="fas fa-shuffle text-blue-500 text-xs transition-transform group-hover:rotate-180"></i>
+            </button>
+
+            <div class="absolute top-full right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                <div class="p-3 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                    <span class="text-[10px] font-black text-slate-400 uppercase">[[ isArabic ? 'اختر منشأة للعمل' : 'Select Work Entity' ]]</span>
+                    <i class="fas fa-building text-blue-200"></i>
+                </div>
+                <div class="max-h-60 overflow-y-auto">
+                    <div v-for="company in allOpcos" 
+                         :key="company.id"
+                         @click="switchCompany(company.id)"
+                         class="p-4 hover:bg-blue-50 cursor-pointer flex items-center justify-between transition-colors border-b border-slate-50 last:border-0"
+                         :class="{'bg-blue-50/50 border-r-4 border-blue-500': company.id === parseInt(activeOpcoId)}">
+                        <div>
+                            <p class="text-sm font-bold text-slate-700">[[ company.name ]]</p>
+                            <p class="text-[9px] text-slate-400 font-mono">[[ company.code ]]</p>
+                        </div>
+                        <i v-if="company.id === parseInt(activeOpcoId)" class="fas fa-circle-check text-blue-500"></i>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="hidden md:flex flex-col items-end">

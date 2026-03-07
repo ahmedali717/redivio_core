@@ -9,7 +9,6 @@ createApp({
     delimiters: ['[[', ']]'],
     data() {
         return {
-            // 1. الحالة العامة (UI State)
             view: 'org_builder', 
             loading: false, 
             sidebarCollapsed: false,
@@ -29,13 +28,11 @@ createApp({
                 ]
             },
 
-            // دمج الحالات من الموديولات
             ...(utils.state || {}),
             ...(inventoryModule.state || {}),
             
             user: { name: '...', role: '...', is_superuser: false },
             
-            // كائن الإعدادات (Data Model for Global Config)
             config: { 
                 company_name: '', 
                 is_holding: false,
@@ -46,13 +43,17 @@ createApp({
             },
 
             license: {
-                days_limit: 15,
-                sku_limit: 50
+                daysRemaining: 15,
+                companyName: '...',
+                isExpired: false
             },
 
             kpis: { materials: 0, stock_qty: 0, vendors: 0, pending_pos: 0 },
             
-            opcos: [], 
+            // 🚀 المصفوفتين المنفصلتين للتحكم التام 
+            allOpcos: [], // قائمة كل الشركات (تُستخدم لتبديل الشركات في الهيدر)
+            opcos: [],    // قائمة الشركات المعزولة (تُستخدم في مساحة العمل)
+            
             subsidiaries: [], 
             plants: [], 
             locations: [], 
@@ -60,8 +61,11 @@ createApp({
             materials_list: [], 
             inventoryList: [],
             wms_stats: {},
+            selectedItemCard: null,
+            vendors: [],
 
             showModal: false, 
+            materialTab: 'general',
             modalType: '', 
             draggedType: null,
             activeOpcoId: null, 
@@ -96,20 +100,24 @@ createApp({
     },
 
     computed: {
-        currentSubsidiaries() {
-    if (!this.activeOpcoId) return [];
-    
-    return this.opcos.filter(o => {
-        // 1. استخراج قيمة الأب (سواء كانت Object أو ID مباشر)
-        const rawParent = (o.parent && typeof o.parent === 'object') ? o.parent.id : o.parent;
-        
-        // 2. إذا لم يكن هناك أب أصلاً، استبعد هذه الشركة فوراً
-        if (rawParent === null || rawParent === undefined) return false;
+        availableBinsForMaterial() {
+            if (!this.activeOpcoId) return this.bins;
+            return this.bins.filter(bin => {
+                const location = this.locations.find(l => l.id === bin.storage_location);
+                if (!location) return false;
+                const plant = this.plants.find(p => p.id === location.plant);
+                return plant && parseInt(plant.opco) === parseInt(this.activeOpcoId);
+            });
+        },
 
-        // 3. المقارنة بعد التأكد من أن الطرفين أرقام صحيحة
-        return parseInt(rawParent) === parseInt(this.activeOpcoId);
-    });
-},
+        currentSubsidiaries() {
+            if (!this.activeOpcoId) return [];
+            const activeId = parseInt(this.activeOpcoId);
+            return this.opcos.filter(o => {
+                const parentId = (o.parent && typeof o.parent === 'object') ? o.parent.id : o.parent;
+                return parentId !== null && parseInt(parentId) === activeId;
+            });
+        },
 
         materials() {
             return this.materials_list || [];
@@ -125,27 +133,9 @@ createApp({
             return loc ? loc.name : '...';
         },
 
+        // 🚀 تم تبسيطها بالكامل لتقرأ البيانات الجاهزة من الباك-إند
         licenseStatus() {
-            let active = this.opcos.find(o => o.id === parseInt(this.activeOpcoId));
-            
-            if (!active && this.opcos.length > 0) {
-                active = this.opcos[0];
-            }
-
-            const rawDate = active ? (active.created_at || active.created_on) : null;
-            let daysRemaining = 15;
-
-            if (rawDate) {
-                const createdDate = new Date(rawDate);
-                const diffDays = Math.floor((new Date() - createdDate) / (1000 * 60 * 60 * 24));
-                daysRemaining = Math.max(15 - diffDays, 0);
-            }
-
-            return {
-                daysRemaining: daysRemaining,
-                companyName: active ? active.name : 'ERP System',
-                createdAt: rawDate 
-            };
+            return this.license;
         }
     },
 
@@ -158,40 +148,88 @@ createApp({
     methods: {
         ...utils.methods,
         ...itemMasterModule.methods,
-        // دالة لتصحيح المسار (أضفها ضمن الـ methods)
-fixImagePath(path) {
-    if (!path) return null;
-    // إذا كان الرابط يحتوي على localhost، نحذفه ونأخذ المسار الذي يبدأ بـ /media/
-    if (path.includes('localhost') || path.includes('127.0.0.1')) {
-        const parts = path.split('/media/');
-        return '/media/' + parts[1];
-    }
-    // إذا كان المسار لا يبدأ بـ / أضفها له
-    if (!path.startsWith('http') && !path.startsWith('/')) {
-        return '/' + path;
-    }
-    return path;
-},
 
+        async switchCompany(companyId) {
+            try {
+                this.loading = true;
+                const response = await fetch('/api/switch-company/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ company_id: companyId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.activeOpcoId = companyId;
+                    window.location.reload(); 
+                } else {
+                    alert(this.isArabic ? "عذراً، لا تملك صلاحية الوصول لهذه الشركة" : "Access denied for this company");
+                }
+            } catch (error) {
+                console.error("Switch Company Error:", error);
+                alert(this.isArabic ? "حدث خطأ أثناء التبديل" : "Error while switching");
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        getPlantNameByBin(binId) {
+            const bin = this.bins.find(b => b.id === binId);
+            if (!bin) return '...';
+            const location = this.locations.find(l => l.id === bin.storage_location);
+            if (!location) return '...';
+            const plant = this.plants.find(p => p.id === location.plant);
+            return plant ? plant.name : '...';
+        },
+
+        fixImagePath(path) {
+            if (!path) return null;
+            if (path.includes('localhost') || path.includes('127.0.0.1')) {
+                const parts = path.split('/media/');
+                return '/media/' + parts[1];
+            }
+            if (!path.startsWith('http') && !path.startsWith('/')) {
+                return '/' + path;
+            }
+            return path;
+        },
+
+        getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        },
+
+        // 🚀 البحث دايماً يتم في allOpcos لتجنب اختفاء الشعار
         syncGlobalConfig(opcoId) {
-    if (!opcoId || this.opcos.length === 0) return;
+            if (!opcoId || this.allOpcos.length === 0) return;
 
-    const active = this.opcos.find(o => o.id === parseInt(opcoId));
-    if (active) {
-        // نستخدم دالة fixImagePath لضمان إزالة localhost وإضافة السلاش
-        const finalLogo = this.fixImagePath(active.logo);
-
-        this.config = {
-            company_name: active.name || '',
-            is_holding: !!active.is_holding,
-            tax_id: active.tax_id || '',
-            cr_number: active.cr_number || '',
-            logo: finalLogo // تم التصحيح هنا
-        };
-        this.imagePreview = finalLogo; // تم التصحيح هنا
-    }
-},
-
+            const active = this.allOpcos.find(o => o.id === parseInt(opcoId));
+            if (active) {
+                const finalLogo = this.fixImagePath(active.logo);
+                this.config = {
+                    company_name: active.name || '',
+                    is_holding: !!active.is_holding,
+                    tax_id: active.tax_id || '',
+                    cr_number: active.cr_number || '',
+                    logo: finalLogo 
+                };
+                this.imagePreview = finalLogo; 
+            }
+        },
 
         startClock() { utils.methods.startClock(this); },
         triggerReadySystem() { utils.methods.triggerReadySystem(this); },
@@ -213,20 +251,14 @@ fixImagePath(path) {
         },
 
         handleLogoUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        // 1. تخزين الملف لإرساله للسيرفر عند الحفظ
-        this.newLogoFile = file; 
-
-        // 2. توليد رابط "معاينة" مؤقت للملف المرفوع الآن من الجهاز
-        // نستخدم URL.createObjectURL لكي تظهر الصورة فوراً للمستخدم قبل الرفع
-        const previewUrl = URL.createObjectURL(file);
-        
-        // 3. تحديث المعاينة في الواجهة
-        this.imagePreview = previewUrl;
-        this.config.logo = previewUrl;
-    }
-},
+            const file = event.target.files[0];
+            if (file) {
+                this.newLogoFile = file; 
+                const previewUrl = URL.createObjectURL(file);
+                this.imagePreview = previewUrl;
+                this.config.logo = previewUrl;
+            }
+        },
 
         async openItemCard(item) { await inventoryModule.methods.openItemCard(item, this); },
         addItemRow() { inventoryModule.methods.addItemRow(this); },
@@ -234,29 +266,47 @@ fixImagePath(path) {
         async fetchSODetails() { await inventoryModule.methods.fetchSODetails(this); },
         onSOMaterialSelect() { inventoryModule.methods.onSOMaterialSelect(this); },
 
-        getPlantsForOpco(id) { 
-            return orgModule.methods.getPlantsForOpco(this, id); 
-        },
-        getLocationsForPlant(id) { 
-            return orgModule.methods.getLocationsForPlant(this, id); 
-        },
-        getBinsForLocation(id) { 
-            // التعديل: تمرير this أولاً ليتوافق مع تصميم الموديول
-            return orgModule.methods.getBinsForLocation(this, id); 
-        },
-        getBinsCount(id) { 
-            // التعديل: تمرير this أولاً
-            return orgModule.methods.getBinsCount(this, id); 
-        },
+        getPlantsForOpco(id) { return orgModule.methods.getPlantsForOpco(this, id); },
+        getLocationsForPlant(id) { return orgModule.methods.getLocationsForPlant(this, id); },
+        getBinsForLocation(id) { return orgModule.methods.getBinsForLocation(this, id); },
+        getBinsCount(id) { return orgModule.methods.getBinsCount(this, id); },
         handleDrop(targetType, parentId) { orgModule.methods.handleDrop(this, targetType, parentId); },
         onDragStart(type) { this.draggedType = type; },
         startDrag(type) { this.onDragStart(type); },
 
+        editMaterial(material) {
+            itemMasterModule.methods.editMaterial(material, this);
+        },
+
         editItem(type, item) {
             this.isEditing = true;
             this.modalType = type;
-            this.forms[type] = JSON.parse(JSON.stringify(item));
             this.showModal = true;
+
+            if (type === 'material') {
+                const itemData = JSON.parse(JSON.stringify(item));
+                this.forms.material = {
+                    id: itemData.id,
+                    sku: itemData.sku,
+                    name: itemData.name,
+                    category: itemData.category,
+                    opco: itemData.opco,
+                    base_uom: itemData.base_uom,
+                    barcode: itemData.barcode,
+                    reorder_level: itemData.reorder_level || 0,
+                    max_level: itemData.max_level || 0,
+                    assigned_bins: item.storage_locations ? 
+                        item.storage_locations.map(bin => typeof bin === 'object' ? bin.id : bin) : []
+                };
+
+                if (item.image) {
+                    this.imagePreview = this.fixImagePath(item.image);
+                } else {
+                    this.imagePreview = null;
+                }
+            } else {
+                this.forms[type] = JSON.parse(JSON.stringify(item));
+            }
         },
 
         async deleteItem(type, id) {
@@ -270,232 +320,247 @@ fixImagePath(path) {
             } catch (e) { console.error(e); }
         },
 
-async submitForm() {
-    if (this.view === 'global_config' && !this.showModal) {
-        return await this.saveGlobalConfig();
-    }
-    const type = this.modalType;
-    if (!type || !this.forms[type]) return;
-
-    // --- بداية الجزء الجديد للتحقق من الـ Bin ---
-    if (type === 'bin') {
-        const binCode = this.forms.bin.code.trim().toUpperCase();
-        
-        // البحث في كل الـ bins المحملة عن كود مطابق
-        const isDuplicate = this.bins.some(b => 
-            b.code.trim().toUpperCase() === binCode && 
-            b.id !== this.forms.bin.id // تجاهل السجل الحالي إذا كنا في وضع التعديل
-        );
-
-        if (isDuplicate) {
-            alert(this.isArabic ? 
-                `خطأ: كود الرف (${binCode}) مستخدم بالفعل في مكان آخر بالشركة!` : 
-                `Error: Bin code (${binCode}) is already in use!`);
-            return; // توقف عن إكمال عملية الحفظ
-        }
-    }
-
-    const isEdit = this.isEditing;
-    const id = this.forms[type].id;
-    let url = isEdit ? `/api/${type}s/${id}/` : `/api/${type}s/`;
-    let method = isEdit ? 'PUT' : 'POST';
-    const csrftoken = this.getCookie('csrftoken');
-
-    try {
-        this.loading = true;
-        let payload;
-
-        // تعديل: استخدام FormData للـ opco أيضاً لدعم رفع الملفات وتجنب خطأ الـ logo
-        if (type === 'material' || type === 'opco') {
-            payload = new FormData();
-            const data = this.forms[type];
-            
-            // إضافة كل الحقول للـ FormData
-            Object.keys(data).forEach(key => {
-                if (data[key] !== null && key !== 'logo') {
-                    payload.append(key, data[key]);
-                }
-            });
-
-            // إضافة الملف فقط إذا اختار المستخدم ملفاً جديداً
-            if (this.selectedFile) {
-                payload.append('logo', this.selectedFile);
+        async submitForm() {
+            if (this.view === 'global_config' && !this.showModal) {
+                return await this.saveGlobalConfig();
             }
-        } else {
-            payload = JSON.stringify(this.forms[type]);
-        }
+            const type = this.modalType;
+            if (!type || !this.forms[type]) return;
 
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'X-CSRFToken': csrftoken,
-                // لا نضع Content-Type إذا كان payload هو FormData، المتصفح سيقوم بذلك تلقائياً
-                ...(type !== 'material' && type !== 'opco' && { 'Content-Type': 'application/json' })
-            },
-            body: payload
-        });
+            if (type === 'bin') {
+                const binCode = this.forms.bin.code.trim().toUpperCase();
+                const isDuplicate = this.bins.some(b => 
+                    b.code.trim().toUpperCase() === binCode && b.id !== this.forms.bin.id
+                );
+                if (isDuplicate) {
+                    alert(this.isArabic ? `خطأ: كود الرف (${binCode}) مستخدم بالفعل!` : `Error: Bin code (${binCode}) is already in use!`);
+                    return;
+                }
+            }
 
-        if (response.ok) {
-            this.showModal = false;
-            this.selectedFile = null; // تنظيف الملف بعد الحفظ
-            await this.refreshAllData();
-            alert(this.isArabic ? "تم الحفظ بنجاح" : "Saved successfully");
-        } else {
-            const errorData = await response.json();
-            console.error("خطأ من السيرفر:", errorData);
-            alert(this.isArabic ? "فشل الحفظ: راجع بيانات الشعار أو الكود" : "Save failed: Check logo or code");
-        }
-    } catch (error) {
-        console.error("Submit Error:", error);
-    } finally {
-        this.loading = false;
-    }
-},
+            const isEdit = this.isEditing;
+            const id = this.forms[type].id;
+            let url = isEdit ? `/api/${type}s/${id}/` : `/api/${type}s/`;
+            let method = isEdit ? 'PUT' : 'POST';
+            const csrftoken = this.getCookie('csrftoken');
+
+            try {
+                this.loading = true;
+                let payload;
+
+                if (type === 'material' || type === 'opco') {
+                    payload = new FormData();
+                    const data = this.forms[type];
+                    
+                    Object.keys(data).forEach(key => {
+                        if (key === 'assigned_bins' && Array.isArray(data[key])) {
+                            data[key].forEach(binId => {
+                                payload.append('storage_locations', binId); 
+                            });
+                        } 
+                        else if (data[key] !== null && key !== 'logo' && key !== 'image' && key !== 'assigned_bins') {
+                            payload.append(key, data[key]);
+                        }
+                    });
+
+                    if (this.selectedFile) {
+                        const fieldName = (type === 'material') ? 'image' : 'logo';
+                        payload.append(fieldName, this.selectedFile);
+                    }
+                } else {
+                    payload = JSON.stringify(this.forms[type]);
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        ...(type !== 'material' && type !== 'opco' && { 'Content-Type': 'application/json' })
+                    },
+                    body: payload
+                });
+
+                if (response.ok) {
+                    this.showModal = false;
+                    this.selectedFile = null;
+                    await this.refreshAllData();
+                    alert(this.isArabic ? "تم الحفظ بنجاح" : "Saved successfully");
+                } else {
+                    const errorData = await response.json();
+                    const errorMsg = JSON.stringify(errorData);
+                    alert(this.isArabic ? `فشل الحفظ: ${errorMsg}` : `Save failed: ${errorMsg}`);
+                }
+            } catch (error) {
+                console.error("Submit Error:", error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async onOpcoChange() {
+            const opcoId = this.activeOpcoId;
+            if (!opcoId) return;
+
+            try {
+                this.loading = true;
+                this.syncGlobalConfig(opcoId);
+                await this.getListData();
+                await this.fetchWMSStats();
+            } catch (error) {
+                console.error("Error during OpCo change:", error);
+            } finally {
+                this.loading = false;
+            }
+        },
 
         async saveGlobalConfig() {
-    const targetId = this.activeOpcoId;
-    if (!targetId) return;
+            const targetId = this.activeOpcoId;
+            if (!targetId) return;
 
-    try {
-        this.loading = true;
-        const formData = new FormData();
-        
-        // 1. إرسال البيانات النصية
-        formData.append('name', this.config.company_name); 
-        formData.append('is_holding', this.config.is_holding ? 'true' : 'false');
-        formData.append('tax_id', this.config.tax_id || '');
-        formData.append('cr_number', this.config.cr_number || '');
-        
-        // 2. إرسال الكود (تأكد من إرسال الكود الحالي للشركة حتى لا يشتكي السيرفر)
-        const activeOpco = this.opcos.find(o => o.id === parseInt(targetId));
-        if (activeOpco) {
-            formData.append('code', activeOpco.code); 
-        }
+            try {
+                this.loading = true;
+                const formData = new FormData();
+                formData.append('name', this.config.company_name); 
+                formData.append('is_holding', this.config.is_holding ? 'true' : 'false');
+                formData.append('tax_id', this.config.tax_id || '');
+                formData.append('cr_number', this.config.cr_number || '');
+                
+                const activeOpco = this.allOpcos.find(o => o.id === parseInt(targetId));
+                if (activeOpco) {
+                    formData.append('code', activeOpco.code); 
+                }
 
-        // 3. الحل الجذري لمشكلة الـ Logo:
-        // لا نرسل حقل logo إلا إذا كان هناك ملف جديد (File Object)
-        if (this.newLogoFile instanceof File) {
-            formData.append('logo', this.newLogoFile);
-        }
-        // ملاحظة: إذا لم نضف حقل logo، سيحتفظ Django بالصورة القديمة تلقائياً
+                if (this.newLogoFile instanceof File) {
+                    formData.append('logo', this.newLogoFile);
+                }
 
-        const url = `/api/opcos/${targetId}/`; 
+                const url = `/api/opcos/${targetId}/`; 
 
-        const response = await fetch(url, {
-            method: 'PATCH', // استخدام PATCH أفضل من PUT عند تعديل أجزاء من البيانات
-            headers: { 'X-CSRFToken': this.getCookie('csrftoken') },
-            body: formData
-        });
+                const response = await fetch(url, {
+                    method: 'PATCH', 
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: formData
+                });
 
-        if (response.ok) {
-            const data = await response.json();
-            this.handleSaveSuccess(data);
-        } else {
-            const errorData = await response.json();
-            console.error("تفاصيل الخطأ من السيرفر:", errorData);
-            
-            // إظهار تنبيه مفصل للمستخدم
-            let msg = this.isArabic ? "فشل الحفظ:\n" : "Save Failed:\n";
-            if(errorData.code) msg += `Code: ${errorData.code[0]}\n`;
-            if(errorData.logo) msg += `Logo: ${errorData.logo[0]}\n`;
-            alert(msg);
-        }
-    } catch (error) {
-        console.error("Save Error:", error);
-    } finally {
-        this.loading = false;
-    }
-},
+                if (response.ok) {
+                    const data = await response.json();
+                    this.handleSaveSuccess(data);
+                } else {
+                    const errorData = await response.json();
+                    let msg = this.isArabic ? "فشل الحفظ:\n" : "Save Failed:\n";
+                    if(errorData.code) msg += `Code: ${errorData.code[0]}\n`;
+                    if(errorData.logo) msg += `Logo: ${errorData.logo[0]}\n`;
+                    alert(msg);
+                }
+            } catch (error) {
+                console.error("Save Error:", error);
+            } finally {
+                this.loading = false;
+            }
+        },
 
-// دالة مساعدة لتحديث البيانات بعد النجاح
-handleSaveSuccess(updatedData) {
-    // 1. تصحيح مسار الشعار (Logo)
-    let logoUrl = updatedData.logo;
-    if (logoUrl && !logoUrl.startsWith('http') && !logoUrl.startsWith('/')) {
-        logoUrl = '/' + logoUrl;
-    }
-
-    // 2. تحديث المصفوفة الكبيرة (opcos) - هذا هو مفتاح الحل للظهور الفوري
-    const index = this.opcos.findIndex(o => o.id === updatedData.id);
-    
-    if (index !== -1) {
-        // إذا كانت الشركة موجودة (تعديل)، نستخدم splice لضمان استجابة Vue (Reactivity)
-        this.opcos.splice(index, 1, { ...updatedData, logo: logoUrl });
-    } else {
-        // إذا كانت شركة تابعة جديدة، نضيفها للمصفوفة
-        this.opcos.push({ ...updatedData, logo: logoUrl });
-    }
-
-    // 3. تحديث بيانات العرض في شاشة الإعدادات (إذا كانت هي الشركة النشطة)
-    if (parseInt(this.activeOpcoId) === parseInt(updatedData.id)) {
-        this.config = {
-            company_name: updatedData.name,
-            is_holding: updatedData.is_holding,
-            tax_id: updatedData.tax_id,
-            cr_number: updatedData.cr_number,
-            logo: logoUrl 
-        };
-        this.imagePreview = logoUrl;
-    }
-
-    // 4. تنظيف حالة الرفع
-    this.newLogoFile = null;
-
-    // 5. إشعار المستخدم
-    alert(this.isArabic ? 'تم حفظ البيانات وظهورها بنجاح' : 'Data saved and updated successfully');
-},
-
-        async refreshAllData() {
-    this.loading = true;
-    try {
-        await this.fetchAll(); 
-        await Promise.all([
-            this.fetchDashboardData(), 
-            this.getListData(), 
-            this.fetchWMSStats(),
-            this.fetchMaterialsList() // تم التعديل للاسم الصحيح الموجود في ميثودز
-        ]);
-        if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
-    } catch (e) {
-        console.error("Error in refreshAllData:", e); // أضفنا catch لرؤية أي أخطاء أخرى
-    } finally {
-        this.loading = false;
-    }
-},
-
-        async checkAuth() {
-    try {
-        const res = await fetch('/api/check-auth/');
-        const data = await res.json();
-        if (data.authenticated) {
-            this.user = { name: data.user, is_superuser: data.is_superuser, role: 'Admin' };
-            
-            // أولاً: جلب كل البيانات الأساسية (opcos, plants...)
-            await this.fetchAll(); 
-            
-            // ثانياً: ضبط المعرف النشط
-            if (data.company_id) {
-                this.activeOpcoId = data.company_id;
-            } else if (this.opcos.length > 0) {
-                this.activeOpcoId = this.opcos[0].id;
+        handleSaveSuccess(updatedData) {
+            let logoUrl = updatedData.logo;
+            if (logoUrl && !logoUrl.startsWith('http') && !logoUrl.startsWith('/')) {
+                logoUrl = '/' + logoUrl;
             }
 
-            // ثالثاً: الآن المزامنة ستجد بيانات في opcos
-            this.syncGlobalConfig(this.activeOpcoId);
-            await this.refreshAllData();
-        }
-    } catch (e) { console.error("Auth Error", e); }
-},
+            // تحديث في المصفوفة الكلية
+            const allIndex = this.allOpcos.findIndex(o => o.id === updatedData.id);
+            if (allIndex !== -1) {
+                this.allOpcos.splice(allIndex, 1, { ...updatedData, logo: logoUrl });
+            } else {
+                this.allOpcos.push({ ...updatedData, logo: logoUrl });
+            }
+
+            // تحديث في مصفوفة مساحة العمل
+            const index = this.opcos.findIndex(o => o.id === updatedData.id);
+            if (index !== -1) {
+                this.opcos.splice(index, 1, { ...updatedData, logo: logoUrl });
+            } else {
+                this.opcos.push({ ...updatedData, logo: logoUrl });
+            }
+
+            if (parseInt(this.activeOpcoId) === parseInt(updatedData.id)) {
+                this.config = {
+                    company_name: updatedData.name,
+                    is_holding: updatedData.is_holding,
+                    tax_id: updatedData.tax_id,
+                    cr_number: updatedData.cr_number,
+                    logo: logoUrl 
+                };
+                this.imagePreview = logoUrl;
+            }
+
+            this.newLogoFile = null;
+            alert(this.isArabic ? 'تم حفظ البيانات بنجاح' : 'Data saved successfully');
+        },
+
+        async refreshAllData() {
+            this.loading = true;
+            try {
+                await this.fetchAll(); 
+                await Promise.all([
+                    this.fetchDashboardData(), 
+                    this.getListData(), 
+                    this.fetchWMSStats(),
+                    this.fetchMaterialsList() 
+                ]);
+                if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
+            } catch (e) {
+                console.error("Error in refreshAllData:", e); 
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async checkAuth() {
+            try {
+                const res = await fetch('/api/check-auth/');
+                const data = await res.json();
+                if (data.authenticated) {
+                    this.user = { 
+                        name: data.user, 
+                        is_superuser: data.is_superuser,
+                        role: data.role
+                    };
+                    
+                    // 🚀 قراءة الترخيص من السيرفر مباشرة
+                    this.license = {
+                        daysRemaining: data.days_remaining,
+                        companyName: data.holding_name,
+                        isExpired: data.days_remaining <= 0
+                    };
+                    
+                    await this.fetchAll(); 
+                    this.activeOpcoId = data.company_id || (this.allOpcos[0] ? this.allOpcos[0].id : null);
+                    this.syncGlobalConfig(this.activeOpcoId);
+                    await this.refreshAllData();
+                }
+            } catch (e) { console.error("Auth Error", e); }
+        },
 
         async fetchAll() {
             try {
+                // 🚀 1. جلب كل الشركات للهيدر (القائمة المنسدلة للتبديل)
+                const resAll = await fetch('/api/opcos/?all=true');
+                this.allOpcos = await resAll.json();
+
+                // 🚀 2. جلب بيانات مساحة العمل (المفلترة من الباك إند)
+                // لاحظ هنا: أزلنا ?all=true لكي يطبق السيرفر العزل التام
                 const endpoints = ['opcos', 'plants', 'locations', 'bins'];
-                const results = await Promise.all(endpoints.map(e => fetch(`/api/${e}/`).then(r => r.json())));
-                this.opcos = results[0];
+                
+                const results = await Promise.all(
+                    endpoints.map(e => fetch(`/api/${e}/`).then(r => r.json()))
+                );
+
+                this.opcos = results[0]; // هذه المصفوفة الآن معزولة تماماً
                 this.plants = results[1];
                 this.locations = results[2];
                 this.bins = results[3];
-            } catch (e) { console.error("Core Data Error", e); }
+            } catch (e) { 
+                console.error("Core Data Fetch Error:", e); 
+            }
         },
 
         async getListData() {
@@ -511,7 +576,8 @@ handleSaveSuccess(updatedData) {
 
         async fetchWMSStats() {
             try {
-                const res = await fetch('/api/wms/stats/');
+                const url = this.activeOpcoId ? `/api/wms/stats/?opco=${this.activeOpcoId}` : '/api/wms/stats/';
+                const res = await fetch(url);
                 if (res.ok) this.wms_stats = await res.json();
             } catch (e) { console.error("Stats Error", e); }
         },
@@ -544,6 +610,7 @@ handleSaveSuccess(updatedData) {
         openModal(type , data = null) {
             this.isEditing = false;
             this.modalType = type;
+            this.materialTab = 'general';
             this.showModal = true;
             this.imagePreview = null;
             this.selectedFile = null;
@@ -552,7 +619,11 @@ handleSaveSuccess(updatedData) {
             else if(type === 'location') this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
             else if(type === 'bin') this.forms.bin = { id: null, storage_location: this.activeLocationId, code: '' };
             else if(type === 'material') {
-                this.forms.material = { id: null, sku: '', name: '', base_uom: 'PCS', opco: this.activeOpcoId, assigned_bins: [] };
+                // 🚀 تم إصلاح الخطأ البرمجي (Syntax Error) في تهيئة فورم الصنف الجديد
+                this.forms.material = {
+                    id: null, sku: '', name: '', category: '', 
+                    base_uom: 'PCS', barcode: '', opco: this.activeOpcoId, assigned_bins: [] 
+                };
             }
             else if(type === 'stock_entry') {
                 this.forms.stock_entry = { 
@@ -561,15 +632,14 @@ handleSaveSuccess(updatedData) {
                 };
             }
             else if(type === 'opco') {
-        this.forms.opco = { 
-            id: null, 
-            // استخدام البيانات القادمة من دالة handleDrop
-            code: data ? data.code : '', 
-            name: '', 
-            currency: 'USD', 
-            parent: data ? data.parent : (this.activeOpcoId || null), 
-            is_holding: false 
-        };
+                this.forms.opco = { 
+                    id: null, 
+                    code: data ? data.code : '', 
+                    name: '', 
+                    currency: 'USD', 
+                    parent: data ? data.parent : (this.activeOpcoId || null), 
+                    is_holding: false 
+                };
             }
         }
     },
