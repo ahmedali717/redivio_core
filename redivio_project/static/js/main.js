@@ -323,8 +323,7 @@ createApp({
                     reorder_level: itemData.reorder_level || 0,
                     max_level: itemData.max_level || 0,
                     // 🚀 ربط الرفوف المختارة من الحقل الجديد
-                    assigned_bins: itemData.storage_locations_ids || [],
-                    // 🚀 ربط الرف الرئيسي (النجمة) من الحقل الجديد
+                    assigned_bins: itemData.storage_locations_ids || [], // الربط مع حقل القراءة الجديد
                     primary_bin: itemData.current_primary_bin || null
                 };
 
@@ -468,9 +467,11 @@ createApp({
                     Object.keys(data).forEach(key => {
                         // 🚀 الجزء الأهم: إرسال قائمة الرفوف بشكل يفهمه Django
                         if (key === 'assigned_bins' && Array.isArray(data[key])) {
-                            data[key].forEach(binId => {
-                                if (binId) payload.append('assigned_bins', binId);
-                            });
+    data[key].forEach(binId => {
+        if (binId) payload.append('assigned_bins', binId); // إرسال IDs الرفوف
+    });
+                        } else if (key === 'primary_bin') {
+                            if (data[key] !== null) payload.append('primary_bin', data[key]); // إرسال النجمة
                         } 
                         // 🚀 إرسال الرف الرئيسي (النجمة)
                         else if (key === 'primary_bin') {
