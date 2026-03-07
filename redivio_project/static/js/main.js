@@ -425,13 +425,15 @@ createApp({
         },
 
         async submitForm() {
+            // 1. التعامل مع حفظ الإعدادات العامة (خارج المودال)
             if (this.view === 'global_config' && !this.showModal) {
                 return await this.saveGlobalConfig();
             }
+
             const type = this.modalType;
             if (!type || !this.forms[type]) return;
 
-            // 🛡️ التحقق من صلاحية الشركة القابضة
+            // 2. التحقق من منطق الشركات التابعة (Business Logic)
             if (type === 'opco' && this.forms.opco.parent) {
                 const parentCompany = this.allOpcos.find(o => o.id === parseInt(this.forms.opco.parent));
                 if (parentCompany && !parentCompany.is_holding) {
@@ -446,6 +448,7 @@ createApp({
             const isEdit = this.isEditing;
             const id = this.forms[type].id;
             
+            // 3. تحديد الرابط ونوع الطلب (PATCH للتعديل و POST للإضافة)
             let url = isEdit ? `/api/${type}s/${id}/` : `/api/${type}s/`;
             let method = isEdit ? 'PATCH' : 'POST'; 
             const csrftoken = this.getCookie('csrftoken');
@@ -455,6 +458,7 @@ createApp({
                 let payload;
                 let headers = { 'X-CSRFToken': csrftoken };
 
+                // 4. الأصناف والشركات تحتاج FormData لدعم رفع الصور (Image/Logo)
                 const useFormData = (type === 'material' || type === 'opco');
 
                 if (useFormData) {
@@ -462,27 +466,36 @@ createApp({
                     const data = this.forms[type];
                     
                     Object.keys(data).forEach(key => {
+                        // 🚀 الجزء الأهم: إرسال قائمة الرفوف بشكل يفهمه Django
                         if (key === 'assigned_bins' && Array.isArray(data[key])) {
-                            // إرسال قائمة الرفوف
-                            data[key].forEach(binId => payload.append('assigned_bins', binId));
-                        } else if (key === 'primary_bin') {
-                            // إرسال الرف الرئيسي (الـ Putaway Rule)
+                            data[key].forEach(binId => {
+                                if (binId) payload.append('assigned_bins', binId);
+                            });
+                        } 
+                        // 🚀 إرسال الرف الرئيسي (النجمة)
+                        else if (key === 'primary_bin') {
                             if (data[key] !== null) payload.append('primary_bin', data[key]);
-                        } else if (data[key] !== null && !['logo', 'image'].includes(key)) {
+                        } 
+                        // منع إرسال حقول الصور كـ String (سيتم إرسالها كملفات لاحقاً)
+                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins'].includes(key)) {
                             let val = data[key];
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             payload.append(key, val);
                         }
                     });
+
+                    // 5. إرفاق الملف الفعلي (الصورة) إذا تم اختيارها
                     if (this.selectedFile) {
                         const fileKey = (type === 'material') ? 'image' : 'logo';
                         payload.append(fileKey, this.selectedFile);
                     }
                 } else {
+                    // بقية الموديلات (Plant, Location, Bin) ترسل كـ JSON عادي
                     headers['Content-Type'] = 'application/json';
                     payload = JSON.stringify(this.forms[type]);
                 }
 
+                // 6. تنفيذ طلب الـ Fetch
                 const response = await fetch(url, {
                     method: method,
                     headers: headers,
@@ -491,20 +504,28 @@ createApp({
 
                 const contentType = response.headers.get("content-type");
 
-                if (response.ok && contentType && contentType.includes("application/json")) {
-                    await response.json();
+                if (response.ok) {
+                    // نجاح العملية
+                    if (contentType && contentType.includes("application/json")) {
+                        await response.json();
+                    }
                     this.showModal = false;
                     this.selectedFile = null;
                     this.imagePreview = null;
+                    
+                    // تحديث كافة البيانات في الواجهة لتعكس التغييرات
                     await this.refreshAllData();
                     
-                    // ✅ رسالة نجاح احترافية
-                    this.showToast(this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully", 'success');
+                    this.showToast(
+                        this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully", 
+                        'success'
+                    );
                 } else {
+                    // معالجة أخطاء السيرفر
                     const errorResponse = await response.text();
-                    console.error("Server Error Response:", errorResponse);
+                    console.error("Server Error:", errorResponse);
 
-                    if (errorResponse.includes("<!DOCTYPE") || errorResponse.includes("<html")) {
+                    if (errorResponse.includes("<!DOCTYPE")) {
                         let errWindow = window.open("", "_blank");
                         errWindow.document.write(errorResponse);
                         errWindow.document.close();
@@ -514,7 +535,7 @@ createApp({
                     }
                 }
             } catch (error) {
-                console.error("Submit Error:", error);
+                console.error("Network Error:", error);
                 this.showToast(this.isArabic ? "حدث خطأ في الشبكة أو السيرفر" : "Network or Server error", 'error');
             } finally {
                 this.loading = false;
