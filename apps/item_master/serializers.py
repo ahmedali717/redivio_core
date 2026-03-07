@@ -56,41 +56,40 @@ class MaterialSerializer(serializers.ModelSerializer):
         return primary.storage_bin_id if primary else None
 
     def create(self, validated_data):
+        # 🚀 فحص المسميين لضمان الاستلام
+        bins_ids = validated_data.pop('assigned_bins', validated_data.pop('storage_locations', []))
         primary_bin_id = validated_data.pop('primary_bin', None)
-        bins_ids = validated_data.pop('assigned_bins', [])
-        target_opco = validated_data.get('opco')
-        sku = validated_data.get('sku')
-
-        # 1. إنشاء الصنف
+        
         material = Material.objects.create(**validated_data)
         
-        # 2. ربط الرفوف وتعيين الرئيسي
-        for bin_id in bins_ids:
-            is_primary = (bin_id == primary_bin_id)
-            MaterialLocation.objects.create(
-                material=material, 
-                storage_bin_id=bin_id, 
-                is_primary=is_primary
-            )
-
-        # 3. التزامن مع الشركة القابضة
-        if target_opco and target_opco.parent:
-            holding_opco = target_opco.parent
-            if not Material.objects.filter(opco=holding_opco, sku=sku).exists():
-                Material.objects.create(
-                    opco=holding_opco,
-                    sku=sku,
-                    name=validated_data.get('name'),
-                    category=validated_data.get('category'),
-                    base_uom=validated_data.get('base_uom'),
-                    barcode=validated_data.get('barcode'),
-                    image=validated_data.get('image'),
-                    reorder_level=validated_data.get('reorder_level', 0),
-                    max_level=validated_data.get('max_level', 0)
+        # ربط الرفوف
+        if bins_ids:
+            for bin_id in bins_ids:
+                MaterialLocation.objects.create(
+                    material=material, 
+                    storage_bin_id=bin_id, 
+                    is_primary=(str(bin_id) == str(primary_bin_id))
                 )
         return material
 
     def update(self, instance, validated_data):
+        # 🚀 نفس الفحص في التحديث
+        bins_ids = validated_data.pop('assigned_bins', validated_data.pop('storage_locations', None))
+        primary_bin_id = validated_data.pop('primary_bin', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if bins_ids is not None:
+            instance.material_bins.all().delete()
+            for bin_id in bins_ids:
+                MaterialLocation.objects.create(
+                    material=instance, 
+                    storage_bin_id=bin_id, 
+                    is_primary=(str(bin_id) == str(primary_bin_id))
+                )
+        return instance
         primary_bin_id = validated_data.pop('primary_bin', None)
         bins_ids = validated_data.pop('assigned_bins', None)
         target_opco = instance.opco
