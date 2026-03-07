@@ -320,8 +320,12 @@ createApp({
                     barcode: itemData.barcode,
                     reorder_level: itemData.reorder_level || 0,
                     max_level: itemData.max_level || 0,
+                    //assigned_bins: item.storage_locations ? 
+                    //    item.storage_locations.map(bin => typeof bin === 'object' ? bin.id : bin) : []
                     assigned_bins: item.storage_locations ? 
-                        item.storage_locations.map(bin => typeof bin === 'object' ? bin.id : bin) : []
+                        item.storage_locations.map(bin => typeof bin === 'object' ? bin.id : bin) : [],
+                // 🚀 سحب الرف الرئيسي من البيانات القادمة من السيرفر
+                    primary_bin: item.primary_bin || null
                 };
 
                 if (item.image) {
@@ -331,6 +335,36 @@ createApp({
                 }
             } else {
                 this.forms[type] = JSON.parse(JSON.stringify(item));
+            }
+        },
+
+        setPrimaryBin(binId) {
+            // 1. تحديث قيمة الرف الرئيسي في نموذج الصنف
+            this.forms.material.primary_bin = binId;
+            
+            // 2. التأكد من أن الرف المختار كـ Primary موجود أصلاً في قائمة الرفوف المختارة
+            if (!this.forms.material.assigned_bins.includes(binId)) {
+                this.forms.material.assigned_bins.push(binId);
+            }
+            
+            // 3. تنبيه بصرى سريع للمستخدم
+            this.showToast(
+                this.isArabic ? "تم تحديد الرف كوجهة افتراضية للاستلام" : "Primary bin set for Putaway", 
+                'success'
+            );
+        },
+
+        // دالة محسنة لاختيار/إلغاء اختيار الرفوف
+        toggleBinSelection(binId) {
+            const index = this.forms.material.assigned_bins.indexOf(binId);
+            if (index > -1) {
+                // إذا كان المستخدم يلغي اختيار رف هو أصلاً الرف الرئيسي
+                if (this.forms.material.primary_bin === binId) {
+                    this.forms.material.primary_bin = null;
+                }
+                this.forms.material.assigned_bins.splice(index, 1);
+            } else {
+                this.forms.material.assigned_bins.push(binId);
             }
         },
 
@@ -429,14 +463,17 @@ createApp({
                     
                     Object.keys(data).forEach(key => {
                         if (key === 'assigned_bins' && Array.isArray(data[key])) {
-                            data[key].forEach(binId => payload.append('storage_locations', binId));
-                        } else if (data[key] !== null && !['logo', 'image', 'assigned_bins'].includes(key)) {
+                            // إرسال قائمة الرفوف
+                            data[key].forEach(binId => payload.append('assigned_bins', binId));
+                        } else if (key === 'primary_bin') {
+                            // إرسال الرف الرئيسي (الـ Putaway Rule)
+                            if (data[key] !== null) payload.append('primary_bin', data[key]);
+                        } else if (data[key] !== null && !['logo', 'image'].includes(key)) {
                             let val = data[key];
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             payload.append(key, val);
                         }
                     });
-
                     if (this.selectedFile) {
                         const fileKey = (type === 'material') ? 'image' : 'logo';
                         payload.append(fileKey, this.selectedFile);
