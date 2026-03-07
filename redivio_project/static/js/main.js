@@ -335,32 +335,58 @@ createApp({
         },
 
         async deleteItem(type, id) {
-            // إظهار المودال المخصص
+            // 🛡️ صمام الأمان: حماية الكيان الأساسي من الحذف
+            if (type === 'opco') {
+                const targetOpco = (this.opcos || []).find(o => o.id === id);
+                
+                // منع حذف الشركة إذا كانت هي القابضة (Holding) أو الشركة الأم (التي ليس لها Parent)
+                if (targetOpco && (targetOpco.is_holding || !targetOpco.parent)) {
+                    this.showToast(
+                        this.isArabic ? "لا يمكن حذف الشركة الأساسية للمنظومة" : "The primary entity cannot be deleted", 
+                        'error'
+                    );
+                    return; // إيقاف العملية فوراً
+                }
+            }
+
+            // 1️⃣ إظهار المودال المخصص للتأكيد
             this.confirmModal.show = true;
             
-            // تعريف وظيفة "عند التأكيد"
+            // 2️⃣ تعريف وظيفة "عند التأكيد" (Logic الحذف الفعلي)
             this.confirmModal.onConfirm = async () => {
                 this.confirmModal.show = false; // إخفاء المودال فوراً
                 try {
                     this.loading = true;
                     const res = await fetch(`/api/${type}s/${id}/`, {
                         method: 'DELETE',
-                        headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                        headers: { 
+                            'X-CSRFToken': this.getCookie('csrftoken') 
+                        }
                     });
+
                     if (res.ok) {
+                        // تحديث البيانات في الواجهة
                         await this.refreshAllData();
+                        // إظهار رسالة نجاح احترافية في منتصف الشاشة
                         this.showToast(this.isArabic ? "تم الحذف بنجاح" : "Deleted successfully", 'success');
+                    } else {
+                        // معالجة فشل الحذف (مثلاً لوجود بيانات مرتبطة)
+                        const errorData = await res.text();
+                        console.error("Delete Error:", errorData);
+                        this.showToast(this.isArabic ? "فشل الحذف: قد يكون العنصر مرتبطاً ببيانات أخرى" : "Delete failed: Item may be linked to other data", 'error');
                     }
                 } catch (e) {
-                    this.showToast(this.isArabic ? "حدث خطأ أثناء الحذف" : "Error during deletion", 'error');
+                    console.error("Network Error:", e);
+                    this.showToast(this.isArabic ? "حدث خطأ في الشبكة أثناء الحذف" : "Network error during deletion", 'error');
                 } finally {
                     this.loading = false;
                 }
             };
 
-            // تعريف وظيفة "عند الإلغاء"
+            // 3️⃣ تعريف وظيفة "عند الإلغاء"
             this.confirmModal.onCancel = () => {
                 this.confirmModal.show = false;
+                // لا يتم اتخاذ أي إجراء آخر
             };
         },
 
