@@ -50,9 +50,8 @@ createApp({
 
             kpis: { materials: 0, stock_qty: 0, vendors: 0, pending_pos: 0 },
             
-            // 🚀 المصفوفتين المنفصلتين للتحكم التام 
-            allOpcos: [], // قائمة كل الشركات (تُستخدم لتبديل الشركات في الهيدر)
-            opcos: [],    // قائمة الشركات المعزولة (تُستخدم في مساحة العمل)
+            allOpcos: [], 
+            opcos: [],    
             
             subsidiaries: [], 
             plants: [], 
@@ -133,7 +132,6 @@ createApp({
             return loc ? loc.name : '...';
         },
 
-        // 🚀 تم تبسيطها بالكامل لتقرأ البيانات الجاهزة من الباك-إند
         licenseStatus() {
             return this.license;
         }
@@ -213,7 +211,6 @@ createApp({
             return cookieValue;
         },
 
-        // 🚀 البحث دايماً يتم في allOpcos لتجنب اختفاء الشعار
         syncGlobalConfig(opcoId) {
             if (!opcoId || this.allOpcos.length === 0) return;
 
@@ -327,71 +324,81 @@ createApp({
             const type = this.modalType;
             if (!type || !this.forms[type]) return;
 
-            if (type === 'bin') {
-                const binCode = this.forms.bin.code.trim().toUpperCase();
-                const isDuplicate = this.bins.some(b => 
-                    b.code.trim().toUpperCase() === binCode && b.id !== this.forms.bin.id
-                );
-                if (isDuplicate) {
-                    alert(this.isArabic ? `خطأ: كود الرف (${binCode}) مستخدم بالفعل!` : `Error: Bin code (${binCode}) is already in use!`);
-                    return;
-                }
-            }
-
             const isEdit = this.isEditing;
             const id = this.forms[type].id;
+            
+            // ✅ السلاش مهم جداً في Django/PythonAnywhere
             let url = isEdit ? `/api/${type}s/${id}/` : `/api/${type}s/`;
-            let method = isEdit ? 'PUT' : 'POST';
+            let method = isEdit ? 'PATCH' : 'POST'; 
             const csrftoken = this.getCookie('csrftoken');
 
             try {
                 this.loading = true;
                 let payload;
+                let headers = { 'X-CSRFToken': csrftoken };
 
-                if (type === 'material' || type === 'opco') {
+                // 🚀 فصل الأنواع التي ترسل ملفات
+                const useFormData = (type === 'material' || type === 'opco');
+
+                if (useFormData) {
                     payload = new FormData();
                     const data = this.forms[type];
                     
                     Object.keys(data).forEach(key => {
                         if (key === 'assigned_bins' && Array.isArray(data[key])) {
-                            data[key].forEach(binId => {
-                                payload.append('storage_locations', binId); 
-                            });
-                        } 
-                        else if (data[key] !== null && key !== 'logo' && key !== 'image' && key !== 'assigned_bins') {
-                            payload.append(key, data[key]);
+                            data[key].forEach(binId => payload.append('storage_locations', binId));
+                        } else if (data[key] !== null && !['logo', 'image', 'assigned_bins'].includes(key)) {
+                            // تحويل Boolean لنصوص ليقرأها Django بشكل صحيح من FormData
+                            let val = data[key];
+                            if (typeof val === 'boolean') val = val ? 'true' : 'false';
+                            payload.append(key, val);
                         }
                     });
 
                     if (this.selectedFile) {
-                        const fieldName = (type === 'material') ? 'image' : 'logo';
-                        payload.append(fieldName, this.selectedFile);
+                        const fileKey = (type === 'material') ? 'image' : 'logo';
+                        payload.append(fileKey, this.selectedFile);
                     }
+                    // ✅ لا تضع Content-Type يدوياً، اتركه للمتصفح ليضع الـ Boundary
                 } else {
+                    headers['Content-Type'] = 'application/json';
                     payload = JSON.stringify(this.forms[type]);
                 }
 
                 const response = await fetch(url, {
                     method: method,
-                    headers: {
-                        'X-CSRFToken': csrftoken,
-                        ...(type !== 'material' && type !== 'opco' && { 'Content-Type': 'application/json' })
-                    },
+                    headers: headers,
                     body: payload
                 });
 
-                if (response.ok) {
+                // 🕵️ معالجة الأخطاء الذكية: فحص هل الرد JSON أم HTML؟
+                const contentType = response.headers.get("content-type");
+
+                if (response.ok && contentType && contentType.includes("application/json")) {
+                    await response.json();
                     this.showModal = false;
                     this.selectedFile = null;
+                    this.imagePreview = null;
                     await this.refreshAllData();
                     alert(this.isArabic ? "تم الحفظ بنجاح" : "Saved successfully");
                 } else {
-                    const errorData = await response.json();
-                    const errorMsg = JSON.stringify(errorData);
-                    alert(this.isArabic ? `فشل الحفظ: ${errorMsg}` : `Save failed: ${errorMsg}`);
+                    // إذا أرجع السيرفر صفحة HTML (خطأ 500)، سنقوم بإظهارها لك بدلاً من الانهيار
+                    const errorResponse = await response.text();
+                    console.error("Server Error Response:", errorResponse);
+
+                    if (errorResponse.includes("<!DOCTYPE") || errorResponse.includes("<html")) {
+                        // فتح صفحة الخطأ في نافذة جديدة لرؤية الـ Traceback
+                        let errWindow = window.open("", "_blank");
+                        errWindow.document.write(errorResponse);
+                        errWindow.document.close();
+                        alert(this.isArabic ? "خطأ في السيرفر! تم فتح صفحة التفاصيل في نافذة جديدة." : "Server Error! Details opened in a new tab.");
+                    } else {
+                        alert(this.isArabic ? "فشل الحفظ: " + errorResponse : "Save failed: " + errorResponse);
+                    }
                 }
             } catch (error) {
                 console.error("Submit Error:", error);
+                alert(this.isArabic ? "حدث خطأ في الشبكة أو السيرفر" : "Network or Server error");
             } finally {
                 this.loading = false;
             }
@@ -465,7 +472,6 @@ createApp({
                 logoUrl = '/' + logoUrl;
             }
 
-            // تحديث في المصفوفة الكلية
             const allIndex = this.allOpcos.findIndex(o => o.id === updatedData.id);
             if (allIndex !== -1) {
                 this.allOpcos.splice(allIndex, 1, { ...updatedData, logo: logoUrl });
@@ -473,7 +479,6 @@ createApp({
                 this.allOpcos.push({ ...updatedData, logo: logoUrl });
             }
 
-            // تحديث في مصفوفة مساحة العمل
             const index = this.opcos.findIndex(o => o.id === updatedData.id);
             if (index !== -1) {
                 this.opcos.splice(index, 1, { ...updatedData, logo: logoUrl });
@@ -525,7 +530,6 @@ createApp({
                         role: data.role
                     };
                     
-                    // 🚀 قراءة الترخيص من السيرفر مباشرة
                     this.license = {
                         daysRemaining: data.days_remaining,
                         companyName: data.holding_name,
@@ -542,19 +546,15 @@ createApp({
 
         async fetchAll() {
             try {
-                // 🚀 1. جلب كل الشركات للهيدر (القائمة المنسدلة للتبديل)
                 const resAll = await fetch('/api/opcos/?all=true');
                 this.allOpcos = await resAll.json();
 
-                // 🚀 2. جلب بيانات مساحة العمل (المفلترة من الباك إند)
-                // لاحظ هنا: أزلنا ?all=true لكي يطبق السيرفر العزل التام
                 const endpoints = ['opcos', 'plants', 'locations', 'bins'];
-                
                 const results = await Promise.all(
                     endpoints.map(e => fetch(`/api/${e}/`).then(r => r.json()))
                 );
 
-                this.opcos = results[0]; // هذه المصفوفة الآن معزولة تماماً
+                this.opcos = results[0]; 
                 this.plants = results[1];
                 this.locations = results[2];
                 this.bins = results[3];
@@ -619,7 +619,6 @@ createApp({
             else if(type === 'location') this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
             else if(type === 'bin') this.forms.bin = { id: null, storage_location: this.activeLocationId, code: '' };
             else if(type === 'material') {
-                // 🚀 تم إصلاح الخطأ البرمجي (Syntax Error) في تهيئة فورم الصنف الجديد
                 this.forms.material = {
                     id: null, sku: '', name: '', category: '', 
                     base_uom: 'PCS', barcode: '', opco: this.activeOpcoId, assigned_bins: [] 

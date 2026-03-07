@@ -15,15 +15,17 @@ sys.path.insert(0, str(BASE_DIR))
 # =========================================================
 
 SECRET_KEY = "django-insecure-change-this-in-production"
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
+DEBUG = True # حولها لـ False عند الانتهاء تماماً
+ALLOWED_HOSTS = ["ahmedali717.pythonanywhere.com", "localhost", "127.0.0.1"]
 
+# ضروري جداً لعمل الـ Vue.js مع السيرفر الجديد
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.app.github.dev",
-    "https://*.github.dev",
+    "https://ahmedali717.pythonanywhere.com",
     "http://localhost:8000",
-    "https://localhost:8000",
 ]
+
+# إجبار جانغو على وضع / في نهاية الروابط
+APPEND_SLASH = True
 
 # =========================================================
 # INSTALLED APPS
@@ -131,8 +133,11 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-# عشان ريندر يضغط ملفات الـ static ويسرع الموقع
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# نستخدم التخزين العادي لتجنب مشاكل الملفات الناقصة في Whitenoise
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+WHITENOISE_MANIFEST_STRICT = False
+
 STATICFILES_DIRS = [
     BASE_DIR / "redivio_project/static",
 ]
