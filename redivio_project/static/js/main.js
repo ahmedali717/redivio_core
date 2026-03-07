@@ -309,7 +309,9 @@ createApp({
             this.showModal = true;
 
             if (type === 'material') {
+                // نأخذ نسخة عميقة من البيانات
                 const itemData = JSON.parse(JSON.stringify(item));
+                
                 this.forms.material = {
                     id: itemData.id,
                     sku: itemData.sku,
@@ -320,12 +322,10 @@ createApp({
                     barcode: itemData.barcode,
                     reorder_level: itemData.reorder_level || 0,
                     max_level: itemData.max_level || 0,
-                    //assigned_bins: item.storage_locations ? 
-                    //    item.storage_locations.map(bin => typeof bin === 'object' ? bin.id : bin) : []
-                    assigned_bins: item.storage_locations ? 
-                        item.storage_locations.map(bin => typeof bin === 'object' ? bin.id : bin) : [],
-                // 🚀 سحب الرف الرئيسي من البيانات القادمة من السيرفر
-                    primary_bin: item.primary_bin || null
+                    // 🚀 ربط الرفوف المختارة من الحقل الجديد
+                    assigned_bins: itemData.storage_locations_ids || [],
+                    // 🚀 ربط الرف الرئيسي (النجمة) من الحقل الجديد
+                    primary_bin: itemData.current_primary_bin || null
                 };
 
                 if (item.image) {

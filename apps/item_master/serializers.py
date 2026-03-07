@@ -13,26 +13,29 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = '__all__'
 
-# 3. سيريالايزر الأصناف المطور (النسخة النهائية المعتمدة)
+# 3. سيريالايزر الأصناف المطور (النسخة النهائية المصححة)
 class MaterialSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     opco_name = serializers.CharField(source='opco.name', read_only=True)
     
-    # حقل الرفوف المحددة من الواجهة
+    # حقول الكتابة (تستخدم عند الحفظ والتعديل)
     assigned_bins = serializers.ListField(
         child=serializers.IntegerField(), 
         write_only=True, 
         required=False
     )
-    
-    # 🚀 حقل الرف الافتراضي (قاعدة التوجيه - Putaway Rule)
     primary_bin = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+
+    # 🚀 حقول القراءة (تستخدم لإظهار البيانات في الواجهة وقت التعديل)
+    storage_locations_ids = serializers.SerializerMethodField()
+    current_primary_bin = serializers.SerializerMethodField()
 
     class Meta:
         model = Material
         fields = [
             'id', 'opco', 'sku', 'name', 'category', 'category_name', 
             'opco_name', 'base_uom', 'barcode', 'assigned_bins', 'primary_bin',
+            'storage_locations_ids', 'current_primary_bin', # الحقول المضافة للعرض
             'extra_data', 'image', 'reorder_level', 'max_level'
         ]
         validators = [
@@ -43,17 +46,25 @@ class MaterialSerializer(serializers.ModelSerializer):
             )
         ]
 
+    # دالة لجلب قائمة الـ IDs الخاصة بالرفوف المرتبطة بالصنف
+    def get_storage_locations_ids(self, obj):
+        return list(obj.material_bins.values_list('storage_bin_id', flat=True))
+
+    # دالة لجلب الـ ID الخاص بالرف الرئيسي (صاحب النجمة)
+    def get_current_primary_bin(self, obj):
+        primary = obj.material_bins.filter(is_primary=True).first()
+        return primary.storage_bin_id if primary else None
+
     def create(self, validated_data):
-        # استخراج بيانات الرفوف قبل إنشاء الصنف
         primary_bin_id = validated_data.pop('primary_bin', None)
         bins_ids = validated_data.pop('assigned_bins', [])
         target_opco = validated_data.get('opco')
         sku = validated_data.get('sku')
 
-        # 1. إنشاء الصنف في الشركة الحالية (التابعة)
+        # 1. إنشاء الصنف
         material = Material.objects.create(**validated_data)
         
-        # 2. ربط الرفوف المحددة وتعيين الرف الرئيسي (Putaway Rule)
+        # 2. ربط الرفوف وتعيين الرئيسي
         for bin_id in bins_ids:
             is_primary = (bin_id == primary_bin_id)
             MaterialLocation.objects.create(
@@ -62,10 +73,9 @@ class MaterialSerializer(serializers.ModelSerializer):
                 is_primary=is_primary
             )
 
-        # 🚀 3. التزامن التلقائي مع الشركة القابضة (Holding Propagation)
+        # 3. التزامن مع الشركة القابضة
         if target_opco and target_opco.parent:
             holding_opco = target_opco.parent
-            # التأكد من عدم وجود الصنف مسبقاً في القابضة بنفس الـ SKU
             if not Material.objects.filter(opco=holding_opco, sku=sku).exists():
                 Material.objects.create(
                     opco=holding_opco,
@@ -78,25 +88,21 @@ class MaterialSerializer(serializers.ModelSerializer):
                     reorder_level=validated_data.get('reorder_level', 0),
                     max_level=validated_data.get('max_level', 0)
                 )
-                print(f"✅ Auto-propagated SKU {sku} to Holding: {holding_opco.name}")
-
         return material
 
     def update(self, instance, validated_data):
-        # استخراج بيانات الرفوف للتحديث
         primary_bin_id = validated_data.pop('primary_bin', None)
         bins_ids = validated_data.pop('assigned_bins', None)
         target_opco = instance.opco
         sku = validated_data.get('sku', instance.sku)
 
-        # 1. تحديث الحقول الأساسية للصنف
+        # 1. تحديث البيانات الأساسية
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
-        # 2. تحديث علاقات الرفوف وقاعدة الـ Putaway
+        # 2. تحديث الرفوف (حذف القديم وإضافة الجديد)
         if bins_ids is not None:
-            # مسح الروابط القديمة وإعادة إنشائها بالقيم الجديدة
             instance.material_bins.all().delete()
             for bin_id in bins_ids:
                 is_primary = (bin_id == primary_bin_id)
@@ -106,8 +112,7 @@ class MaterialSerializer(serializers.ModelSerializer):
                     is_primary=is_primary
                 )
 
-        # 🚀 3. تحديث "المراية" في الشركة القابضة (Full Sync)
-        # لضمان بقاء بيانات الكتالوج موحدة عند تعديل الاسم أو الصورة
+        # 3. تحديث الشركة القابضة
         if target_opco and target_opco.parent:
             holding_opco = target_opco.parent
             Material.objects.filter(opco=holding_opco, sku=sku).update(
