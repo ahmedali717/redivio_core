@@ -14,7 +14,11 @@ createApp({
             sidebarCollapsed: false,
             isArabic: true,
             isEditing: false,
-
+            confirmModal: {
+                show: false,
+                onConfirm: null,
+                onCancel: null
+            },
             sidebarGroups: {
                 settings: [
                     { id: 'global_config', name: { ar: 'الإعدادات العامة', en: 'Global Config' }, icon: 'fas fa-cogs' },
@@ -147,19 +151,18 @@ createApp({
         ...utils.methods,
         ...itemMasterModule.methods,
 
-        // 🚀 دالة جديدة لإظهار رسائل احترافية في منتصف الشاشة
+        // 🚀 نظام التنبيهات الاحترافي في منتصف الشاشة
         showToast(message, type = 'success') {
-            console.log("Toast Triggered:", message, type); // 🔍 سطر للتأكد في الـ Console
+            console.log("Toast Triggered:", message, type); 
             const toast = document.createElement('div');
             toast.className = `custom-toast ${type}`;
-            // إضافة تنسيق داخلي سريع للتأكد لو الـ CSS الخارجي محملش
-            toast.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:9999; padding:20px; color:white; border-radius:10px; text-align:center; min-width:200px;";
+            toast.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:9999; padding:20px; color:white; border-radius:10px; text-align:center; min-width:200px; box-shadow: 0 15px 35px rgba(0,0,0,0.3);";
             toast.style.backgroundColor = type === 'success' ? '#28a745' : '#dc3545';
             
             toast.innerHTML = `
                 <div class="toast-content">
-                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
-                    <div style="margin-top:10px">${message}</div>
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}" style="font-size: 2.5rem;"></i>
+                    <div style="margin-top:10px; font-weight:600;">${message}</div>
                 </div>
             `;
             document.body.appendChild(toast);
@@ -170,7 +173,6 @@ createApp({
                 setTimeout(() => toast.remove(), 500);
             }, 3000);
         },
-
 
         async switchCompany(companyId) {
             try {
@@ -190,11 +192,12 @@ createApp({
                     this.activeOpcoId = companyId;
                     window.location.reload(); 
                 } else {
-                    alert(this.isArabic ? "عذراً، لا تملك صلاحية الوصول لهذه الشركة" : "Access denied for this company");
+                    // ✅ استخدام التنبيه الاحترافي
+                    this.showToast(this.isArabic ? "عذراً، لا تملك صلاحية الوصول لهذه الشركة" : "Access denied for this company", 'error');
                 }
             } catch (error) {
                 console.error("Switch Company Error:", error);
-                alert(this.isArabic ? "حدث خطأ أثناء التبديل" : "Error while switching");
+                this.showToast(this.isArabic ? "حدث خطأ أثناء التبديل" : "Error while switching", 'error');
             } finally {
                 this.loading = false;
             }
@@ -332,14 +335,33 @@ createApp({
         },
 
         async deleteItem(type, id) {
-            if (!confirm(this.isArabic ? "هل أنت متأكد من الحذف؟" : "Are you sure?")) return;
-            try {
-                const res = await fetch(`/api/${type}s/${id}/`, {
-                    method: 'DELETE',
-                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
-                });
-                if (res.ok) await this.refreshAllData();
-            } catch (e) { console.error(e); }
+            // إظهار المودال المخصص
+            this.confirmModal.show = true;
+            
+            // تعريف وظيفة "عند التأكيد"
+            this.confirmModal.onConfirm = async () => {
+                this.confirmModal.show = false; // إخفاء المودال فوراً
+                try {
+                    this.loading = true;
+                    const res = await fetch(`/api/${type}s/${id}/`, {
+                        method: 'DELETE',
+                        headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                    });
+                    if (res.ok) {
+                        await this.refreshAllData();
+                        this.showToast(this.isArabic ? "تم الحذف بنجاح" : "Deleted successfully", 'success');
+                    }
+                } catch (e) {
+                    this.showToast(this.isArabic ? "حدث خطأ أثناء الحذف" : "Error during deletion", 'error');
+                } finally {
+                    this.loading = false;
+                }
+            };
+
+            // تعريف وظيفة "عند الإلغاء"
+            this.confirmModal.onCancel = () => {
+                this.confirmModal.show = false;
+            };
         },
 
         async submitForm() {
@@ -349,16 +371,15 @@ createApp({
             const type = this.modalType;
             if (!type || !this.forms[type]) return;
 
-            // 🛡️ التحديث 1: التأكد من أن الشركة الأم قابضة (Holding) قبل الإرسال
+            // 🛡️ التحقق من صلاحية الشركة القابضة
             if (type === 'opco' && this.forms.opco.parent) {
                 const parentCompany = this.allOpcos.find(o => o.id === parseInt(this.forms.opco.parent));
                 if (parentCompany && !parentCompany.is_holding) {
-                    // استخدام التنبيه الاحترافي بدل alert
                     this.showToast(
                         this.isArabic ? "لا يمكن إضافة شركة تابعة إلا تحت شركة قابضة (Holding)" : "Subsidiaries can only be added under a Holding company", 
                         'error'
                     );
-                    return; // إيقاف العملية
+                    return; 
                 }
             }
 
@@ -414,7 +435,7 @@ createApp({
                     this.imagePreview = null;
                     await this.refreshAllData();
                     
-                    // ✅ التحديث 2: رسالة نجاح احترافية
+                    // ✅ رسالة نجاح احترافية
                     this.showToast(this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully", 'success');
                 } else {
                     const errorResponse = await response.text();
@@ -424,7 +445,6 @@ createApp({
                         let errWindow = window.open("", "_blank");
                         errWindow.document.write(errorResponse);
                         errWindow.document.close();
-                        // ✅ تنبيه احترافي للخطأ
                         this.showToast(this.isArabic ? "خطأ في السيرفر! راجع النافذة الجديدة." : "Server Error! Check the new tab.", 'error');
                     } else {
                         this.showToast(this.isArabic ? "فشل الحفظ: " + errorResponse : "Save failed: " + errorResponse, 'error');
@@ -487,11 +507,7 @@ createApp({
                     const data = await response.json();
                     this.handleSaveSuccess(data);
                 } else {
-                    const errorData = await response.json();
-                    let msg = this.isArabic ? "فشل الحفظ:\n" : "Save Failed:\n";
-                    if(errorData.code) msg += `Code: ${errorData.code[0]}\n`;
-                    if(errorData.logo) msg += `Logo: ${errorData.logo[0]}\n`;
-                    alert(msg);
+                    this.showToast(this.isArabic ? "فشل حفظ الإعدادات" : "Failed to save settings", 'error');
                 }
             } catch (error) {
                 console.error("Save Error:", error);
@@ -509,15 +525,6 @@ createApp({
             const allIndex = this.allOpcos.findIndex(o => o.id === updatedData.id);
             if (allIndex !== -1) {
                 this.allOpcos.splice(allIndex, 1, { ...updatedData, logo: logoUrl });
-            } else {
-                this.allOpcos.push({ ...updatedData, logo: logoUrl });
-            }
-
-            const index = this.opcos.findIndex(o => o.id === updatedData.id);
-            if (index !== -1) {
-                this.opcos.splice(index, 1, { ...updatedData, logo: logoUrl });
-            } else {
-                this.opcos.push({ ...updatedData, logo: logoUrl });
             }
 
             if (parseInt(this.activeOpcoId) === parseInt(updatedData.id)) {
@@ -528,11 +535,11 @@ createApp({
                     cr_number: updatedData.cr_number,
                     logo: logoUrl 
                 };
-                this.imagePreview = logoUrl;
             }
 
             this.newLogoFile = null;
-            alert(this.isArabic ? 'تم حفظ البيانات بنجاح' : 'Data saved successfully');
+            // ✅ رسالة نجاح احترافية
+            this.showToast(this.isArabic ? 'تم حفظ البيانات بنجاح' : 'Data saved successfully', 'success');
         },
 
         async refreshAllData() {
