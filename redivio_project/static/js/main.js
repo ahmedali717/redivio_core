@@ -147,6 +147,25 @@ createApp({
         ...utils.methods,
         ...itemMasterModule.methods,
 
+        // 🚀 دالة جديدة لإظهار رسائل احترافية في منتصف الشاشة
+        showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `custom-toast ${type}`;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            // إزالة الرسالة بعد 3 ثوانٍ
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        },
+
         async switchCompany(companyId) {
             try {
                 this.loading = true;
@@ -324,10 +343,22 @@ createApp({
             const type = this.modalType;
             if (!type || !this.forms[type]) return;
 
+            // 🛡️ التحديث 1: التأكد من أن الشركة الأم قابضة (Holding) قبل الإرسال
+            if (type === 'opco' && this.forms.opco.parent) {
+                const parentCompany = this.allOpcos.find(o => o.id === parseInt(this.forms.opco.parent));
+                if (parentCompany && !parentCompany.is_holding) {
+                    // استخدام التنبيه الاحترافي بدل alert
+                    this.showToast(
+                        this.isArabic ? "لا يمكن إضافة شركة تابعة إلا تحت شركة قابضة (Holding)" : "Subsidiaries can only be added under a Holding company", 
+                        'error'
+                    );
+                    return; // إيقاف العملية
+                }
+            }
+
             const isEdit = this.isEditing;
             const id = this.forms[type].id;
             
-            // ✅ السلاش مهم جداً في Django/PythonAnywhere
             let url = isEdit ? `/api/${type}s/${id}/` : `/api/${type}s/`;
             let method = isEdit ? 'PATCH' : 'POST'; 
             const csrftoken = this.getCookie('csrftoken');
@@ -337,7 +368,6 @@ createApp({
                 let payload;
                 let headers = { 'X-CSRFToken': csrftoken };
 
-                // 🚀 فصل الأنواع التي ترسل ملفات
                 const useFormData = (type === 'material' || type === 'opco');
 
                 if (useFormData) {
@@ -348,7 +378,6 @@ createApp({
                         if (key === 'assigned_bins' && Array.isArray(data[key])) {
                             data[key].forEach(binId => payload.append('storage_locations', binId));
                         } else if (data[key] !== null && !['logo', 'image', 'assigned_bins'].includes(key)) {
-                            // تحويل Boolean لنصوص ليقرأها Django بشكل صحيح من FormData
                             let val = data[key];
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             payload.append(key, val);
@@ -359,7 +388,6 @@ createApp({
                         const fileKey = (type === 'material') ? 'image' : 'logo';
                         payload.append(fileKey, this.selectedFile);
                     }
-                    // ✅ لا تضع Content-Type يدوياً، اتركه للمتصفح ليضع الـ Boundary
                 } else {
                     headers['Content-Type'] = 'application/json';
                     payload = JSON.stringify(this.forms[type]);
@@ -371,7 +399,6 @@ createApp({
                     body: payload
                 });
 
-                // 🕵️ معالجة الأخطاء الذكية: فحص هل الرد JSON أم HTML؟
                 const contentType = response.headers.get("content-type");
 
                 if (response.ok && contentType && contentType.includes("application/json")) {
@@ -380,25 +407,26 @@ createApp({
                     this.selectedFile = null;
                     this.imagePreview = null;
                     await this.refreshAllData();
-                    alert(this.isArabic ? "تم الحفظ بنجاح" : "Saved successfully");
+                    
+                    // ✅ التحديث 2: رسالة نجاح احترافية
+                    this.showToast(this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully", 'success');
                 } else {
-                    // إذا أرجع السيرفر صفحة HTML (خطأ 500)، سنقوم بإظهارها لك بدلاً من الانهيار
                     const errorResponse = await response.text();
                     console.error("Server Error Response:", errorResponse);
 
                     if (errorResponse.includes("<!DOCTYPE") || errorResponse.includes("<html")) {
-                        // فتح صفحة الخطأ في نافذة جديدة لرؤية الـ Traceback
                         let errWindow = window.open("", "_blank");
                         errWindow.document.write(errorResponse);
                         errWindow.document.close();
-                        alert(this.isArabic ? "خطأ في السيرفر! تم فتح صفحة التفاصيل في نافذة جديدة." : "Server Error! Details opened in a new tab.");
+                        // ✅ تنبيه احترافي للخطأ
+                        this.showToast(this.isArabic ? "خطأ في السيرفر! راجع النافذة الجديدة." : "Server Error! Check the new tab.", 'error');
                     } else {
-                        alert(this.isArabic ? "فشل الحفظ: " + errorResponse : "Save failed: " + errorResponse);
+                        this.showToast(this.isArabic ? "فشل الحفظ: " + errorResponse : "Save failed: " + errorResponse, 'error');
                     }
                 }
             } catch (error) {
                 console.error("Submit Error:", error);
-                alert(this.isArabic ? "حدث خطأ في الشبكة أو السيرفر" : "Network or Server error");
+                this.showToast(this.isArabic ? "حدث خطأ في الشبكة أو السيرفر" : "Network or Server error", 'error');
             } finally {
                 this.loading = false;
             }
