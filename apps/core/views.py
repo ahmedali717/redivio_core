@@ -250,6 +250,7 @@ class OpCoViewSet(viewsets.ModelViewSet):
     serializer_class = OpCoSerializer
 
     def get_queryset(self):
+        # الكود الحالي للبحث (سليم)
         user_all_opcos = OpCo.all_objects.filter(
             Q(owner=self.request.user) | Q(companyuser__user=self.request.user)
         ).distinct()
@@ -272,6 +273,14 @@ class OpCoViewSet(viewsets.ModelViewSet):
             return user_all_opcos.filter(id=active_id)
 
         return user_all_opcos.order_by('-is_holding', 'name')
+
+    # 🚀 أضف هذه الدالة هنا لحل مشكلة الـ IntegrityError
+    def perform_create(self, serializer):
+        """
+        عند إنشاء شركة جديدة، نقوم بربطها تلقائياً بالمستخدم الذي قام بالطلب
+        ليكون هو الـ owner الخاص بها في قاعدة البيانات.
+        """
+        serializer.save(owner=self.request.user)
            
 class PlantViewSet(viewsets.ModelViewSet):
     serializer_class = PlantSerializer
