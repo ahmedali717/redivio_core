@@ -49,6 +49,7 @@ class Material(models.Model):
     
     # التزامن مع القابضة
     is_template = models.BooleanField(default=False) # هل هذا صنف مرجعي للقابضة؟
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
     
     class Meta:
         unique_together = ('opco', 'sku') # SKU فريد لكل شركة
