@@ -1,6 +1,5 @@
 from django.contrib import admin
-# لاحظ: نستدعي الموديلات من models.py ولا نكتبها هنا
-from .models import Material, Category, FieldDefinition
+from .models import Material, Category
 
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
@@ -10,6 +9,7 @@ class MaterialAdmin(admin.ModelAdmin):
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('code', 'name')
 
-@admin.register(FieldDefinition)
-class FieldDefinitionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'target_model', 'field_type')
+# قمنا بإيقاف هذا الجزء مؤقتاً حتى لا يسبب خطأ
+# @admin.register(FieldDefinition)
+# class FieldDefinitionAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'target_model', 'field_type')

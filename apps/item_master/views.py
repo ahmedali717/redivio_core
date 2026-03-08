@@ -1,6 +1,8 @@
 from rest_framework import viewsets, exceptions
-from .models import Category, Material, FieldDefinition
-from .serializers import CategorySerializer, MaterialSerializer, FieldDefinitionSerializer
+# 👈 1. مسحنا FieldDefinition من السطر التالي
+from .models import Category, Material
+# 👈 2. مسحنا FieldDefinitionSerializer من السطر التالي
+from .serializers import CategorySerializer, MaterialSerializer
 
 # =========================================================
 #  1. Mixins (لإعادة الاستخدام)
@@ -18,14 +20,13 @@ class OpcoAwareMixin:
             return
 
         # 2. الخيار الثاني: هل هناك active_opco في الجلسة/الطلب؟
-        # (يفترض وجود Middleware يضيف هذا، أو يمكن جلبه من الـ session)
         active_opco_id = self.request.session.get('active_opco_id')
         
         if active_opco_id:
             serializer.save(opco_id=active_opco_id)
             return
 
-        # 3. إذا فشل كل شيء (يسمح بالحفظ بدون opco إذا كان الحقل null=True في الموديل، وإلا سيرمي خطأ من قاعدة البيانات)
+        # 3. إذا فشل كل شيء
         serializer.save()
 
 # =========================================================
@@ -49,14 +50,14 @@ class MaterialViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         if active_opco_id:
             return Material.objects.filter(opco_id=active_opco_id).order_by('-created_at')
         
-        # إذا لم تكن هناك شركة مختارة (أو مستخدم superuser يريد رؤية الكل)
-        # يمكنك إرجاع فارغ أو كل الأصناف حسب رغبتك
         return Material.objects.all().order_by('-created_at')
 
-class FieldDefinitionViewSet(viewsets.ModelViewSet):
-    """ 
-    إدارة الحقول المخصصة (Customize Forms)
-    هذا هو الجزء الذي كان ناقصاً
-    """
-    queryset = FieldDefinition.objects.all()
-    serializer_class = FieldDefinitionSerializer
+# =========================================================
+# ⛔ 3. قمنا بتعطيل FieldDefinitionViewSet مؤقتاً
+# =========================================================
+# class FieldDefinitionViewSet(viewsets.ModelViewSet):
+#     """ 
+#     إدارة الحقول المخصصة (Customize Forms)
+#     """
+#     queryset = FieldDefinition.objects.all()
+#     serializer_class = FieldDefinitionSerializer

@@ -1,79 +1,82 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
-# 1. الحقول المخصصة (يجب أن يكون في البداية)
-class FieldDefinition(models.Model):
-    TARGET_MODELS = [
-        ('material', 'Material'), 
-        ('vendor', 'Vendor'), 
-        ('po', 'PO'), 
-        ('location', 'Location')
-    ]
-    FIELD_TYPES = [
-        ('text', 'Text'), 
-        ('number', 'Number'), 
-        ('date', 'Date'), 
-        ('bool', 'Checkbox'), 
-        ('select', 'Select')
-    ]
-    
-    target_model = models.CharField(max_length=20, choices=TARGET_MODELS)
-    name = models.CharField(max_length=50)
-    label = models.CharField(max_length=100)
-    field_type = models.CharField(max_length=20, choices=FIELD_TYPES, default='text')
-    is_active = models.BooleanField(default=False)
-    options = models.JSONField(default=list, blank=True)
-    
-    class Meta: 
-        unique_together = ('target_model', 'name')
-    
-    def __str__(self): 
-        return f"{self.target_model} -> {self.label}"
-
-# 2. فئات الأصناف
+# 1. فئات الأصناف (Category)
 class Category(models.Model):
-    code = models.CharField(max_length=50)
+    code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
     
-    class Meta:
-        verbose_name_plural = "Categories"
+    # استراتيجية الـ Putaway الافتراضية للفئة (مثل أودو)
+    PUTAWAY_STRATEGIES = [
+        ('fixed', 'Fixed Bin (الرف الثابت)'),
+        ('closest', 'Closest Location (الأقرب)'),
+        ('fifo', 'FIFO (الأقدم أولاً)'),
+    ]
+    default_putaway_strategy = models.CharField(max_length=20, choices=PUTAWAY_STRATEGIES, default='fixed')
 
-    def __str__(self): 
+    def __str__(self):
         return self.name
 
-# 3. الأصناف الرئيسية
+# 2. الموديل الأساسي للصنف (Material / Product)
 class Material(models.Model):
+    # ✅ تفضل core.OpCo لأن تطبيق core هو اللي فيه الشركة
     opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE, related_name='materials')
+    
+    # البيانات الأساسية
     sku = models.CharField(max_length=50)
     name = models.CharField(max_length=200)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
-    base_uom = models.CharField(max_length=10, default='PCS')
-    barcode = models.CharField(max_length=100, unique=True, null=True, blank=True)
-    image = models.ImageField(upload_to='materials/', null=True, blank=True) # أضف هذا السطر
-    # ربط المواقع المتعددة
-    storage_locations = models.ManyToManyField(
-        'wms.StorageBin', 
-        through='MaterialLocation', 
-        related_name='materials'
-    )
+    barcode = models.CharField(max_length=100, null=True, blank=True)
+    image = models.ImageField(upload_to='materials/', null=True, blank=True)
     
-    extra_data = models.JSONField(default=dict, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    reorder_level = models.DecimalField(max_digits=10, decimal_places=2, default=0) # أضف هذا
-    max_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)     # أضف هذا
-
+    # --- 🚀 حقول الـ Advanced Mode (Odoo 19 Style) ---
+    TRACKING_CHOICES = [
+        ('none', 'No Tracking (بدون تتبع)'),
+        ('serial', 'By Unique Serial (سيريال رقمي)'),
+        ('lot', 'By Lots/Batch (رقم التشغيلة)'),
+    ]
+    tracking = models.CharField(max_length=10, choices=TRACKING_CHOICES, default='none')
+    
+    # القياسات والأوزان (للحسابات المتقدمة في الشحن والتخزين)
+    weight = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    volume = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    # حدود المخزون الذكية
+    reorder_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    max_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    # التزامن مع القابضة
+    is_template = models.BooleanField(default=False) # هل هذا صنف مرجعي للقابضة؟
+    
     class Meta:
-        unique_together = ('opco', 'sku')
+        unique_together = ('opco', 'sku') # SKU فريد لكل شركة
 
-    def __str__(self): 
+    def __str__(self):
         return f"[{self.sku}] {self.name}"
 
-# 4. الجدول الوسيط لمواقع التخزين
+# 3. 🛡️ محرك قواعد التوجيه (Putaway Rules / MaterialLocation)
 class MaterialLocation(models.Model):
     material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name='material_bins')
+    # 🚀 التعديل الأخير: دي رجعت wms.StorageBin لأن الرفوف موجودة في تطبيق المخازن
     storage_bin = models.ForeignKey('wms.StorageBin', on_delete=models.CASCADE)
+    
+    # منطق الأولوية (Sequence)
+    sequence = models.PositiveIntegerField(default=10)
+    
+    # هل هذا هو الرف الرئيسي (النجمة)؟
     is_primary = models.BooleanField(default=False)
 
     class Meta:
+        ordering = ['sequence'] # الترتيب التلقائي حسب الأولوية
         unique_together = ('material', 'storage_bin')
+
+    def clean(self):
+        """ منع ربط صنف برف يتبع شركة أخرى """
+        bin_opco = self.storage_bin.storage_location.plant.opco
+        if self.material.opco != bin_opco:
+            raise ValidationError(f"خطأ: الرف {self.storage_bin.code} يتبع شركة {bin_opco.name} وليس شركة الصنف!")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

@@ -13,7 +13,8 @@ from apps.core.views import (
     DashboardDataViewSet,
     logout_view
 )
-from apps.item_master.views import MaterialViewSet, CategoryViewSet, FieldDefinitionViewSet
+# 👈 مسحنا FieldDefinitionViewSet من السطر ده
+from apps.item_master.views import MaterialViewSet, CategoryViewSet
 from apps.wms.views import StockQuantViewSet, StockMoveViewSet
 from apps.procurement.views import VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, print_po_pdf
 from apps.sales.views import CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet
@@ -30,7 +31,7 @@ router.register(r'bins', StorageBinViewSet, basename='bin')
 
 router.register(r'materials', MaterialViewSet, basename='material')
 router.register(r'categories', CategoryViewSet, basename='category')
-router.register(r'fields', FieldDefinitionViewSet, basename='fielddefinition')
+# 👈 مسحنا سطر تسجيل الـ fields من هنا
 
 router.register(r'inventory', StockQuantViewSet, basename='stockquant')
 router.register(r'moves', StockMoveViewSet, basename='stockmove')

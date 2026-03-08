@@ -14,6 +14,7 @@ createApp({
             sidebarCollapsed: false,
             isArabic: true,
             isEditing: false,
+            isAdvancedMode: false, // 👈 متغير جديد لتشغيل زر (Advanced / Plug & Play) في الواجهة
             confirmModal: {
                 show: false,
                 onConfirm: null,
@@ -96,7 +97,8 @@ createApp({
                 bin: { id: null, storage_location: null, code: '' },
                 material: { 
                     id: null, sku: '', name: '', category: '', 
-                    base_uom: 'PCS', barcode: '', opco: null, assigned_bins: [] 
+                    base_uom: 'PCS', barcode: '', opco: null, assigned_bins: [], 
+                    primary_bin: null, tracking: 'none', reorder_level: 0, max_level: 0 // 👈 إضافة حقول الـ Advanced mode لمنع أي خطأ في الواجهة
                 }
             }
         };
@@ -320,6 +322,7 @@ createApp({
                     opco: itemData.opco,
                     base_uom: itemData.base_uom,
                     barcode: itemData.barcode,
+                    tracking: itemData.tracking || 'none', // 👈 جلب قيمة التتبع إن وجدت
                     reorder_level: itemData.reorder_level || 0,
                     max_level: itemData.max_level || 0,
                     // 🚀 ربط الرفوف المختارة من الحقل الجديد
@@ -761,7 +764,8 @@ createApp({
             else if(type === 'material') {
                 this.forms.material = {
                     id: null, sku: '', name: '', category: '', 
-                    base_uom: 'PCS', barcode: '', opco: this.activeOpcoId, assigned_bins: [], primary_bin: null
+                    base_uom: 'PCS', barcode: '', opco: this.activeOpcoId, assigned_bins: [], 
+                    primary_bin: null, tracking: 'none', reorder_level: 0, max_level: 0 // 👈 تصفير الحقول لضمان عدم حدوث خطأ عند إضافة جديد
                 };
             }
             else if(type === 'stock_entry') {
