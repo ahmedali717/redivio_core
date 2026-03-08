@@ -27,6 +27,7 @@ class Material(models.Model):
     sku = models.CharField(max_length=50)
     name = models.CharField(max_length=200)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    base_uom = models.CharField(max_length=50, default='PCS')
     barcode = models.CharField(max_length=100, null=True, blank=True)
     image = models.ImageField(upload_to='materials/', null=True, blank=True)
     
