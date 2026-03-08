@@ -48,9 +48,9 @@ class MaterialViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         
         # إذا كان هناك شركة مختارة، أظهر أصنافها فقط
         if active_opco_id:
-            return Material.objects.filter(opco_id=active_opco_id).order_by('-created_at')
+            return Material.objects.filter(opco_id=active_opco_id).order_by('-id')
         
-        return Material.objects.all().order_by('-created_at')
+        return Material.objects.filter(opco_id=active_opco_id).order_by('-id')
 
 # =========================================================
 # ⛔ 3. قمنا بتعطيل FieldDefinitionViewSet مؤقتاً
