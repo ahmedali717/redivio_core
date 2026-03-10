@@ -9,28 +9,42 @@ createApp({
     delimiters: ['[[', ']]'],
     data() {
         return {
-            view: 'org_builder', 
+            // 1. جعل الموديول الموحد هو الشاشة الافتراضية (اختياري)
+            view: 'inventory_module', 
+            
+            // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
+            inventoryTab: 'levels', 
+
             loading: false, 
             sidebarCollapsed: false,
             isArabic: true,
             isEditing: false,
-            isAdvancedMode: false, // 👈 متغير جديد لتشغيل زر (Advanced / Plug & Play) في الواجهة
+            isAdvancedMode: false,
+            
             confirmModal: {
                 show: false,
                 onConfirm: null,
                 onCancel: null
             },
+
+            // 2. تحديث القائمة الجانبية لتكون "موديولات" بدلاً من شاشات
             sidebarGroups: {
                 settings: [
                     { id: 'global_config', name: { ar: 'الإعدادات العامة', en: 'Global Config' }, icon: 'fas fa-cogs' },
-                    { id: 'users', name: { ar: 'المستخدمين', en: 'Users' }, icon: 'fas fa-users' },
-                    { id: 'customize_form', name: { ar: 'تخصيص النماذج', en: 'Customize Form' }, icon: 'fas fa-edit' }
+                    { id: 'users', name: { ar: 'المستخدمين', en: 'Users' }, icon: 'fas fa-users' }
                 ],
                 operations: [
                     { id: 'org_builder', name: { ar: 'بناء الهيكل', en: 'Org Builder' }, icon: 'fas fa-sitemap' },
-                    { id: 'inventory', name: { ar: 'المخزون', en: 'Inventory' }, icon: 'fas fa-boxes' },
-                    { id: 'item_master', name: { ar: 'سجل الأصناف', en: 'Item Master' }, icon: 'fas fa-barcode' }
+                    // موديول واحد شامل للمخزون
+                    { id: 'inventory_module', name: { ar: 'إدارة المستودعات', en: 'Inventory WMS' }, icon: 'fas fa-boxes-stacked' }
                 ]
+            },
+
+            kpis: { 
+                materials: 0,        // عدد الأصناف
+                total_stock_value: 0, // إجمالي قيمة المخزون (الجديدة)
+                low_stock_count: 0,   // أصناف تحت حد إعادة الطلب (الجديدة)
+                active_bins: 0        // عدد الرفوف المستغلة (الجديدة)
             },
 
             ...(utils.state || {}),
