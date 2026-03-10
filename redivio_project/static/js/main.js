@@ -379,7 +379,6 @@ createApp({
             this.showModal = true;
 
             if (type === 'material') {
-                // نأخذ نسخة عميقة من البيانات
                 const itemData = JSON.parse(JSON.stringify(item));
                 
                 this.forms.material = {
@@ -387,15 +386,21 @@ createApp({
                     sku: itemData.sku,
                     name: itemData.name,
                     category: itemData.category,
-                    opco: itemData.opco,
                     base_uom: itemData.base_uom,
                     barcode: itemData.barcode,
-                    tracking: itemData.tracking || 'none', // 👈 جلب قيمة التتبع إن وجدت
+                    tracking: itemData.tracking || 'none',
                     reorder_level: itemData.reorder_level || 0,
                     max_level: itemData.max_level || 0,
-                    // 🚀 ربط الرفوف المختارة من الحقل الجديد
-                    assigned_bins: itemData.storage_locations_ids || [], // الربط مع حقل القراءة الجديد
-                    primary_bin: itemData.current_primary_bin || null
+                    
+                    // 🚀 التعديل الجوهري هنا لملء الجدول الديناميكي عند التعديل
+                    // نحول البيانات المسطحة القادمة من السيرفر إلى مصفوفة الـ Assignments
+                    company_assignments: itemData.company_assignments || [
+                        { 
+                            opco_id: itemData.opco, 
+                            bins: itemData.storage_locations_ids || [], 
+                            primary_bin: itemData.current_primary_bin || null 
+                        }
+                    ]
                 };
 
                 if (item.image) {
