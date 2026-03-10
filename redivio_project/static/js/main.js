@@ -875,6 +875,11 @@ createApp({
             }
         }
     },
+        getOpcoName(opcoId) {
+        const opco = this.allOpcos.find(o => o.id === opcoId);
+        return opco ? opco.name : '...';
+    },
+    
     mounted() {
         this.checkAuth();
         this.startClock();
