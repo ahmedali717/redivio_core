@@ -14,16 +14,44 @@
                 {% include "components/org_builder.html" %}
             </div>
 
-            <div v-if="['inventory', 'wms'].includes(view)">
-                {% include "wms/dashboard.html" %}
-            </div>
+            <div v-if="view === 'inventory_module'" class="flex flex-col h-full space-y-4 animate-in fade-in duration-500">
+    
+    <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl">
+            <button @click="inventoryTab = 'levels'; getListData()" 
+                    :class="inventoryTab === 'levels' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500 hover:text-slate-700'"
+                    class="px-6 py-2 rounded-xl font-bold transition-all text-sm flex items-center gap-2">
+                <i class="fas fa-boxes-stacked text-xs"></i>
+                [[ isArabic ? 'الأرصدة الحالية' : 'Stock Levels' ]]
+            </button>
+            <button @click="inventoryTab = 'items'; fetchMaterialsList()" 
+                    :class="inventoryTab === 'items' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500 hover:text-slate-700'"
+                    class="px-6 py-2 rounded-xl font-bold transition-all text-sm flex items-center gap-2">
+                <i class="fas fa-barcode text-xs"></i>
+                [[ isArabic ? 'سجل الأصناف' : 'Item Master' ]]
+            </button>
+        </div>
+
+        <div class="flex gap-2">
+            <button @click="openModal('stock_entry')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all flex items-center gap-2">
+                <i class="fas fa-plus-circle"></i> [[ isArabic ? 'حركة مخزنية' : 'Stock Entry' ]]
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-hidden relative">
+        <div v-if="inventoryTab === 'levels'" class="h-full animate-in zoom-in-95 duration-300">
+            {% include "wms/dashboard.html" %}
+        </div>
+        
+        <div v-if="inventoryTab === 'items'" class="h-full animate-in zoom-in-95 duration-300">
+            {% include "components/item_master_list.html" %}
+        </div>
+    </div>
+</div>
 
             <div v-if="view === 'procurement'">
                 <div class="p-10 text-center text-slate-400">[[ isArabic ? 'واجهة المشتريات قيد التطوير...' : 'Procurement module is under development...' ]]</div>
-            </div>
-
-            <div v-if="view === 'item_master'" class="animate-in slide-in-from-bottom-4 duration-500 h-full">
-                {% include "components/item_master_list.html" %}
             </div>
 
             <div v-if="view === 'global_config'" class="animate-in fade-in duration-500">
