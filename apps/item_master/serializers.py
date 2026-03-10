@@ -9,6 +9,78 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class MaterialSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
+    
+    # 🚀 هذا الحقل هو "الزتونة" لربط الواجهة بالباك إند
+    company_assignments = serializers.SerializerMethodField()
+
+    # حقول الكتابة (للتوافق مع الفورم)
+    # ملاحظة: يمكنك الاستمرار في استخدام assigned_bins للـ Plug & Play 
+    # ولكن للتعدد سنعتمد على معالجة البيانات القادمة من الواجهة
+    
+    class Meta:
+        model = Material
+        fields = [
+            'id', 'sku', 'name', 'category', 'category_name', 
+            'base_uom', 'barcode', 'company_assignments',
+            'image', 'tracking', 'reorder_level', 'max_level'
+        ]
+
+    def get_company_assignments(self, obj):
+        """
+        تقوم هذه الدالة بتجهيز البيانات للجدول الديناميكي في Vue.js
+        ترجع قائمة بكل الشركات المربوطة بهذا الـ SKU ورفوفها
+        """
+        # إذا كان الموديل يعتمد على أن الـ SKU يتكرر لكل شركة:
+        assignments = []
+        # جلب كل الأصناف التي تحمل نفس الـ SKU (أسلوب Odoo)
+        related_materials = Material.objects.filter(sku=obj.sku)
+        
+        for mat in related_materials:
+            assignments.append({
+                'opco_id': mat.opco_id,
+                'bins': list(mat.material_bins.values_list('storage_bin_id', flat=True)),
+                'primary_bin': mat.material_bins.filter(is_primary=True).values_list('storage_bin_id', flat=True).first()
+            })
+        return assignments
+
+    def create(self, validated_data):
+        # استلام مصفوفة الربط من الـ context (القادمة من request.data)
+        request = self.context.get('request')
+        assignments = request.data.get('company_assignments', [])
+        
+        material = None
+        # إنشاء سجل لكل شركة تم اختيارها في الجدول
+        for assign in assignments:
+            opco_id = assign.get('opco_id')
+            if not opco_id: continue
+            
+            # إنشاء أو تحديث الصنف لهذه الشركة
+            mat, created = Material.objects.update_or_create(
+                sku=validated_data.get('sku'),
+                opco_id=opco_id,
+                defaults={
+                    'name': validated_data.get('name'),
+                    'category': validated_data.get('category'),
+                    'base_uom': validated_data.get('base_uom'),
+                    'barcode': validated_data.get('barcode'),
+                    'tracking': validated_data.get('tracking', 'none'),
+                }
+            )
+            
+            # ربط الرفوف لهذه الشركة
+            bins = assign.get('bins', [])
+            primary = assign.get('primary_bin')
+            mat.material_bins.all().delete()
+            for bin_id in bins:
+                MaterialLocation.objects.create(
+                    material=mat,
+                    storage_bin_id=bin_id,
+                    is_primary=(str(bin_id) == str(primary))
+                )
+            material = mat # إرجاع آخر واحد تم إنشاؤه للـ Serializer
+            
+        return material or super().create(validated_data)
+    category_name = serializers.CharField(source='category.name', read_only=True)
     opco_name = serializers.CharField(source='opco.name', read_only=True)
     
     # حقول الكتابة (تستخدم عند إرسال البيانات من الواجهة)
