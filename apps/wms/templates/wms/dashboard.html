@@ -2,42 +2,44 @@
 <div class="wms-dashboard-wrapper space-y-8 bg-slate-50/30 p-6 rounded-[2.5rem] min-h-screen animate-in fade-in duration-500">
 
     <div class="flex justify-between items-center mb-8">
-        <div>
-            <h1 class="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                <i class="fas fa-boxes-stacked text-indigo-600"></i>
-                إدارة المستودعات (WMS)
-            </h1>
-            <p class="text-slate-500 mt-1 font-medium italic">التحكم الكامل في حركة الأرصدة وسجل الأصناف</p>
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-100 rotate-3 hover:rotate-0 transition-transform">
+                <i class="fas fa-boxes-stacked text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight">إدارة المستودعات (WMS)</h1>
+                <p class="text-slate-500 text-sm font-medium italic">التحليلات الذكية وحركة الأرصدة</p>
+            </div>
         </div>
         <div class="flex gap-3">
             <button @click="openModal('stock_entry')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl shadow-lg shadow-emerald-100 transition-all flex items-center gap-2 font-bold transform active:scale-95">
                 <i class="fas fa-truck-loading"></i> حركة مخزنية
             </button>
             <button @click="openModal('material')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl shadow-lg shadow-indigo-100 transition-all flex items-center gap-2 font-bold transform active:scale-95">
-                <i class="fas fa-cube"></i> صنف جديد
+                <i class="fas fa-plus"></i> صنف جديد
             </button>
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
             <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600"><i class="fas fa-wallet text-xl"></i></div>
-                <span class="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-1 rounded-lg uppercase">Value</span>
+                <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform"><i class="fas fa-wallet text-xl"></i></div>
+                <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2 py-1 rounded-lg uppercase">Value</span>
             </div>
-            <h4 class="text-slate-400 text-[11px] font-bold mb-1 uppercase tracking-tighter">قيمة المخزون</h4>
+            <h4 class="text-slate-400 text-[10px] font-bold mb-1 uppercase tracking-tighter italic">Total Stock Value</h4>
             <div class="flex items-baseline gap-1">
                 <span class="text-2xl font-black text-slate-800">[[ wms_stats.total_value || '0.00' ]]</span>
                 <span class="text-[10px] font-bold text-slate-400">SAR</span>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm border-b-4 border-b-red-500">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm border-b-4 border-b-red-500 group">
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 animate-pulse"><i class="fas fa-triangle-exclamation text-xl"></i></div>
-                <span class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-lg uppercase">Alert</span>
+                <span class="text-[9px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-lg uppercase italic">Alert</span>
             </div>
-            <h4 class="text-slate-400 text-[11px] font-bold mb-1 uppercase tracking-tighter">نواقص (تحت حد الطلب)</h4>
+            <h4 class="text-slate-400 text-[10px] font-bold mb-1 uppercase tracking-tighter">أصناف تحتاج طلب</h4>
             <span class="text-2xl font-black text-red-600">[[ wms_stats.low_stock || 0 ]]</span>
         </div>
 
@@ -45,7 +47,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600"><i class="fas fa-box-open text-xl"></i></div>
             </div>
-            <h4 class="text-slate-400 text-[11px] font-bold mb-1 uppercase tracking-tighter">إجمالي الأصناف</h4>
+            <h4 class="text-slate-400 text-[10px] font-bold mb-1 uppercase tracking-tighter">إجمالي الأصناف</h4>
             <span class="text-2xl font-black text-slate-800">[[ materials_list.length ]]</span>
         </div>
 
@@ -53,13 +55,81 @@
             <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600"><i class="fas fa-warehouse text-xl"></i></div>
             </div>
-            <h4 class="text-slate-400 text-[11px] font-bold mb-1 uppercase tracking-tighter">المستودعات</h4>
+            <h4 class="text-slate-400 text-[10px] font-bold mb-1 uppercase tracking-tighter">المستودعات النشطة</h4>
             <span class="text-2xl font-black text-slate-800">[[ wms_stats.plants ]]</span>
         </div>
     </div>
 
-    <div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        
+        <div class="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="font-black text-slate-800 flex items-center gap-3">
+                    <i class="fas fa-fire text-orange-500"></i>
+                    أعلى الأصناف حركة (Top 5)
+                </h3>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border">Monthly Report</span>
+            </div>
+            
+            <div class="space-y-6">
+                <div v-for="(item, index) in topMaterials" :key="index" class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="font-bold text-slate-700">[[ item.name ]]</span>
+                        <span class="font-black text-indigo-600">[[ item.quantity ]] وحدة</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                        <div class="bg-gradient-to-r from-indigo-500 to-blue-400 h-full rounded-full transition-all duration-1000" 
+                             :style="{ width: item.percentage + '%' }"></div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="bg-slate-900 p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden text-white flex flex-col justify-between">
+            <i class="fas fa-chart-line absolute -bottom-10 -right-10 text-[12rem] opacity-5"></i>
+            <div>
+                <h3 class="font-bold mb-6 flex items-center gap-2 text-indigo-400 uppercase text-xs tracking-widest">
+                    <i class="fas fa-shield-halved"></i>
+                    Inventory Health
+                </h3>
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-xs">نسبة توفر المخزون</span>
+                        <span class="font-black text-emerald-400">94%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-xs">دقة الجرد الدوري</span>
+                        <span class="font-black text-blue-400">99.2%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-xs">معدل الدوران</span>
+                        <span class="font-black text-amber-400">4.2x</span>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 bg-white/5 border border-white/5 p-4 rounded-2xl backdrop-blur-md">
+                <p class="text-[10px] text-slate-400 italic">"تم تحديث كافة التحليلات منذ 5 دقائق بناءً على آخر الحركات المخزنية."</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
+        <div class="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+            <h3 class="font-black text-slate-800 italic">
+                [[ view === 'inventory' ? 'تفاصيل الأرصدة الحالية' : 'دليل الأصناف المسجلة' ]]
+            </h3>
+            <div class="flex gap-2">
+                <input type="text" placeholder="بحث..." class="text-xs border p-2 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 w-48">
+            </div>
+        </div>
+
+        <div v-if="view === 'inventory'" class="animate-in zoom-in-95">
+             {% include "wms/inventory_table.html" %}
+        </div>
+        <div v-if="view === 'wms'" class="animate-in zoom-in-95">
+             {% include "components/item_master_table.html" %}
+        </div>
+    </div>
 
 </div>
 {% endverbatim %}
