@@ -60,6 +60,7 @@ createApp({
                 companyName: '...',
                 isExpired: false
             },
+            topMaterials: [],
 
             kpis: { 
                 materials: 0,         // عدد الأصناف
