@@ -21,7 +21,7 @@
                 <button @click="isAdvancedMode = true" 
                         :class="isAdvancedMode ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'"
                         class="px-3 py-1 text-xs font-bold rounded-md transition-all">
-                    Advanced (Odoo)
+                    Advanced
                 </button>
             </div>
         </div>
@@ -106,60 +106,73 @@
                 </div>
             </div>
 
-            <div v-show="materialTab === 'inventory'">
-                <div class="space-y-6">
-                    <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                        <label class="block text-xs font-bold text-indigo-700 mb-2">[[ isArabic ? 'الشركة المسؤولة عن الصنف' : 'Responsible Company' ]]</label>
-                        <select v-model="forms.material.opco" 
-                                @change="forms.material.assigned_bins = []; forms.material.primary_bin = null"
-                                class="w-full md:w-1/3 px-4 py-2 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 shadow-sm">
-                            <option v-for="op in allOpcos" :key="op.id" :value="op.id">[[ op.name ]]</option>
-                        </select>
-                        <p class="text-[10px] text-indigo-500 mt-2">💡 [[ isArabic ? 'سيتم تصفية الرفوف المتاحة بناءً على اختيارك للشركة أعلاه' : 'Available bins will be filtered based on the selected company.' ]]</p>
-                    </div>
-
-                    <div class="border rounded-xl overflow-hidden shadow-sm">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-slate-50 text-slate-600 text-[10px] uppercase font-bold">
-                                <tr>
-                                    <th class="px-6 py-3 text-right">[[ isArabic ? 'اختيار' : 'Assign' ]]</th>
-                                    <th class="px-6 py-3 text-right">[[ isArabic ? 'كود الرف' : 'Bin Code' ]]</th>
-                                    <th class="px-6 py-3 text-right">[[ isArabic ? 'الموقع' : 'Location' ]]</th>
-                                    <th class="px-6 py-3 text-center">[[ isArabic ? 'الرف الرئيسي (Putaway)' : 'Primary (Putaway)' ]]</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-100">
-                                <tr v-for="bin in availableBinsForMaterial" :key="bin.id" 
-                                    class="hover:bg-slate-50 transition-colors"
-                                    :class="forms.material.assigned_bins.includes(bin.id) ? 'bg-indigo-50/30' : ''">
-                                    <td class="px-6 py-3">
-                                        <input type="checkbox" 
-                                               :checked="forms.material.assigned_bins.includes(bin.id)"
-                                               @change="toggleBinSelection(bin.id, $this)"
-                                               class="w-4 h-4 text-indigo-600 rounded">
-                                    </td>
-                                    <td class="px-6 py-3 font-mono text-sm">[[ bin.code ]]</td>
-                                    <td class="px-6 py-3 text-xs text-slate-500">[[ getBinLocationName(bin.id) ]]</td>
-                                    <td class="px-6 py-3 text-center">
-                                        <div v-if="forms.material.assigned_bins.includes(bin.id)"
-                                             @click.stop="setPrimaryBin(bin.id, $this)" 
-                                             class="inline-flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-all shadow-sm border"
-                                             :class="forms.material.primary_bin === bin.id ? 'bg-yellow-400 border-yellow-500 text-white' : 'bg-white text-slate-300 border-slate-200 hover:text-yellow-400'">
-                                            <i class="fas fa-star text-sm"></i>
-                                        </div>
-                                        <span v-else class="text-[10px] text-slate-300 italic">[[ isArabic ? 'اختر الرف أولاً' : 'Select bin first' ]]</span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div v-if="availableBinsForMaterial.length === 0" class="p-10 text-center bg-slate-50">
-                            <i class="fas fa-search-location text-3xl text-slate-300 mb-2"></i>
-                            <p class="text-sm text-slate-500">[[ isArabic ? 'لا توجد رفوف معرفة لهذه الشركة حالياً' : 'No bins found for this company' ]]</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div v-show="materialTab === 'inventory'" class="space-y-6">
+    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div class="flex justify-between items-center mb-4">
+            <h4 class="text-xs font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-sitemap"></i>
+                [[ isArabic ? 'ربط الصنف بالشركات والمستودعات' : 'Company & Bin Assignments' ]]
+            </h4>
+            <button @click="addCompanyRow" type="button" 
+                    class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-1">
+                <i class="fas fa-plus"></i> [[ isArabic ? 'إضافة شركة' : 'Add Company' ]]
+            </button>
         </div>
+
+        <div class="border rounded-xl overflow-hidden bg-white shadow-sm">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-slate-100 text-slate-600 text-[10px] font-black uppercase">
+                    <tr>
+                        <th class="px-4 py-3 text-right w-1/3">[[ isArabic ? 'الشركة' : 'Operating Company' ]]</th>
+                        <th class="px-4 py-3 text-right">[[ isArabic ? 'الرفوف المختارة' : 'Assigned Bins' ]]</th>
+                        <th class="px-4 py-3 text-center w-20">[[ isArabic ? 'حذف' : 'Action' ]]</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr v-for="(row, index) in forms.material.company_assignments" :key="index" class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-4 py-3 align-top">
+                            <select v-model="row.opco_id" @change="row.bins = []; row.primary_bin = null"
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500">
+                                <option value="">[[ isArabic ? '-- اختر الشركة --' : '-- Select OpCo --' ]]</option>
+                                <option v-for="op in allOpcos" :key="op.id" :value="op.id">[[ op.name ]]</option>
+                            </select>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div v-if="row.opco_id">
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <span v-for="binId in row.bins" :key="binId" 
+                                          class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 text-[10px] font-bold">
+                                        [[ getBinCodeById(binId) ]]
+                                        <i @click="removeBinFromRow(index, binId)" class="fas fa-times cursor-pointer hover:text-red-500"></i>
+                                    </span>
+                                </div>
+                                <select @change="addBinToRow(index, $event)" class="w-full px-3 py-1.5 border border-dashed border-slate-300 rounded text-[10px] bg-slate-50">
+                                    <option value="">[[ isArabic ? '+ إضافة رف من هذه الشركة' : '+ Add Bin' ]]</option>
+                                    <option v-for="bin in getBinsByOpco(row.opco_id)" :key="bin.id" :value="bin.id">
+                                        [[ bin.code ]] ([[ getBinLocationName(bin.id) ]])
+                                    </option>
+                                </select>
+                            </div>
+                            <div v-else class="text-[10px] text-slate-400 italic py-2">
+                                [[ isArabic ? 'يجب اختيار الشركة أولاً لتحديد الرفوف' : 'Select company to view bins' ]]
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center align-top">
+                            <button @click="forms.material.company_assignments.splice(index, 1)" 
+                                    class="text-slate-300 hover:text-red-500 transition-colors">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="text-[9px] text-slate-400 mt-3 italic font-medium">
+            <i class="fas fa-info-circle ml-1"></i>
+            [[ isArabic ? 'هذا التصميم يسمح لك بتعريف نفس الصنف (SKU) في عدة شركات مختلفة بمستودعات مستقلة.' : 'This allows you to link the same SKU across multiple companies with independent bins.' ]]
+        </p>
+    </div>
+</div>
 
         <div class="px-6 py-4 bg-slate-50 border-t border-gray-100 flex justify-end space-x-3 rtl:space-x-reverse">
             <button @click="showModal = false" class="px-6 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
