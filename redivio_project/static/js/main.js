@@ -179,6 +179,11 @@ createApp({
 
         // أضف هذه الدوال داخل methods
         addCompanyRow() {
+            // التأكد من وجود الكائن والمصفوفة أولاً لتجنب الـ TypeError
+            if (!this.forms.material.company_assignments) {
+                this.forms.material.company_assignments = [];
+            }
+            
             this.forms.material.company_assignments.push({
                 opco_id: '',
                 bins: [],
