@@ -537,40 +537,29 @@ createApp({
                 // 4. الأصناف والشركات تحتاج FormData لدعم رفع الصور (Image/Logo)
                 const useFormData = (type === 'material' || type === 'opco');
 
+                // ابحث عن السطر الذي يبدأ بـ if (useFormData) داخل submitForm
                 if (useFormData) {
                     payload = new FormData();
                     const data = this.forms[type];
                     
                     Object.keys(data).forEach(key => {
-                        // 🚀 الجزء الأهم: إرسال قائمة الرفوف بشكل يفهمه Django
-                        if (key === 'assigned_bins' && Array.isArray(data[key])) {
-    data[key].forEach(binId => {
-        if (binId) payload.append('assigned_bins', binId); // إرسال IDs الرفوف
-    });
-                        } else if (key === 'primary_bin') {
-                            if (data[key] !== null) payload.append('primary_bin', data[key]); // إرسال النجمة
+                        if (type === 'material' && key === 'company_assignments') {
+                            // 🚀 الزتونة: تحويل مصفوفة الشركات والرفوف لنص JSON ليتمكن json.loads في بايثون من قراءتها
+                            payload.append('company_assignments', JSON.stringify(data[key]));
                         } 
-                        // 🚀 إرسال الرف الرئيسي (النجمة)
-                        else if (key === 'primary_bin') {
-                            if (data[key] !== null) payload.append('primary_bin', data[key]);
-                        } 
-                        // منع إرسال حقول الصور كـ String (سيتم إرسالها كملفات لاحقاً)
-                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins'].includes(key)) {
+                        // استمر في إرسال الحقول الأخرى عدا الحقول التي أصبحت قديمة
+                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin'].includes(key)) {
                             let val = data[key];
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             payload.append(key, val);
                         }
                     });
 
-                    // 5. إرفاق الملف الفعلي (الصورة) إذا تم اختيارها
+                    // إرفاق الصورة
                     if (this.selectedFile) {
                         const fileKey = (type === 'material') ? 'image' : 'logo';
                         payload.append(fileKey, this.selectedFile);
                     }
-                } else {
-                    // بقية الموديلات (Plant, Location, Bin) ترسل كـ JSON عادي
-                    headers['Content-Type'] = 'application/json';
-                    payload = JSON.stringify(this.forms[type]);
                 }
 
                 // 6. تنفيذ طلب الـ Fetch
