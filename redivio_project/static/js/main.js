@@ -178,6 +178,11 @@ createApp({
         ...utils.methods,
         ...itemMasterModule.methods,
 
+        getOpcoName(opcoId) {
+            const opco = this.allOpcos.find(o => o.id === opcoId);
+            return opco ? opco.name : '...';
+        },
+
         // أضف هذه الدوال داخل methods
         addCompanyRow() {
             // التأكد من وجود الكائن والمصفوفة أولاً لتجنب الـ TypeError
@@ -875,11 +880,7 @@ createApp({
             }
         }
     },
-        getOpcoName(opcoId) {
-        const opco = this.allOpcos.find(o => o.id === opcoId);
-        return opco ? opco.name : '...';
-    },
-    
+
     mounted() {
         this.checkAuth();
         this.startClock();
