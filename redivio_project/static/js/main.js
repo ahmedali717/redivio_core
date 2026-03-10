@@ -544,18 +544,21 @@ createApp({
                     
                     Object.keys(data).forEach(key => {
                         if (type === 'material' && key === 'company_assignments') {
-                            // 🚀 الزتونة: تحويل مصفوفة الشركات والرفوف لنص JSON ليتمكن json.loads في بايثون من قراءتها
-                            payload.append('company_assignments', JSON.stringify(data[key]));
+                            // 🚀 تحويل المصفوفة لنص JSON (ضروري جداً لنجاح json.loads في بايثون)
+                            // قمنا بإضافة فلترة بسيطة لضمان عدم إرسال أسطر "فارغة" بدون شركة مختارة
+                            const validAssignments = data[key].filter(assign => assign.opco_id);
+                            payload.append('company_assignments', JSON.stringify(validAssignments));
                         } 
-                        // استمر في إرسال الحقول الأخرى عدا الحقول التي أصبحت قديمة
-                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin'].includes(key)) {
+                        // 🛡️ منع إرسال الحقول القديمة (assigned_bins) لأننا استبدلناها بـ company_assignments
+                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments'].includes(key)) {
                             let val = data[key];
+                            // تحويل البوليان لنص يفهمه بايثون
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             payload.append(key, val);
                         }
                     });
 
-                    // إرفاق الصورة
+                    // 📸 إرفاق الصورة أو اللوجو
                     if (this.selectedFile) {
                         const fileKey = (type === 'material') ? 'image' : 'logo';
                         payload.append(fileKey, this.selectedFile);
@@ -819,7 +822,7 @@ createApp({
             return loc ? loc.name : '...';
         },
 
-        openModal(type , data = null) {
+        openModal(type, data = null) {
             this.isEditing = false;
             this.modalType = type;
             this.materialTab = 'general';
@@ -827,23 +830,40 @@ createApp({
             this.imagePreview = null;
             this.selectedFile = null;
 
-            if(type === 'plant') this.forms.plant = { id: null, opco: this.activeOpcoId, code: '', name: '' };
-            else if(type === 'location') this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
-            else if(type === 'bin') this.forms.bin = { id: null, storage_location: this.activeLocationId, code: '' };
-            else if(type === 'material') {
+            if (type === 'plant') this.forms.plant = { id: null, opco: this.activeOpcoId, code: '', name: '' };
+            else if (type === 'location') this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
+            else if (type === 'bin') this.forms.bin = { id: null, storage_location: this.activeLocationId, code: '' };
+            else if (type === 'material') {
                 this.forms.material = {
-                    id: null, sku: '', name: '', category: '', 
-                    base_uom: 'PCS', barcode: '', opco: this.activeOpcoId, assigned_bins: [], 
-                    primary_bin: null, tracking: 'none', reorder_level: 0, max_level: 0 // 👈 تصفير الحقول لضمان عدم حدوث خطأ عند إضافة جديد
+                    id: null, 
+                    sku: '', 
+                    name: '', 
+                    category: '', 
+                    base_uom: 'PCS', 
+                    barcode: '', 
+                    // 🚀 التحديث هنا: تهيئة المصفوفة الجديدة بدلاً من الحقل القديم
+                    company_assignments: [
+                        { 
+                            opco_id: this.activeOpcoId, // تعيين الشركة النشطة حالياً كخيار افتراضي
+                            bins: [], 
+                            primary_bin: null 
+                        }
+                    ],
+                    tracking: 'none', 
+                    reorder_level: 0, 
+                    max_level: 0 
                 };
             }
-            else if(type === 'stock_entry') {
+            else if (type === 'stock_entry') {
                 this.forms.stock_entry = { 
-                    receipt_type: 'PURCHASE', items: [{ material_id: '', quantity: 1, unit_cost: 0 }],
-                    target_plant: this.activePlantId || '', bin_id: '', quantity: 1
+                    receipt_type: 'PURCHASE', 
+                    items: [{ material_id: '', quantity: 1, unit_cost: 0 }],
+                    target_plant: this.activePlantId || '', 
+                    bin_id: '', 
+                    quantity: 1
                 };
             }
-            else if(type === 'opco') {
+            else if (type === 'opco') {
                 this.forms.opco = { 
                     id: null, 
                     code: data ? data.code : '', 
