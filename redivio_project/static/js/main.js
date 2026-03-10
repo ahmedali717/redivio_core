@@ -40,12 +40,6 @@ createApp({
                 ]
             },
 
-            kpis: { 
-                materials: 0,        // عدد الأصناف
-                total_stock_value: 0, // إجمالي قيمة المخزون (الجديدة)
-                low_stock_count: 0,   // أصناف تحت حد إعادة الطلب (الجديدة)
-                active_bins: 0        // عدد الرفوف المستغلة (الجديدة)
-            },
 
             ...(utils.state || {}),
             ...(inventoryModule.state || {}),
@@ -67,8 +61,14 @@ createApp({
                 isExpired: false
             },
 
-            kpis: { materials: 0, stock_qty: 0, vendors: 0, pending_pos: 0 },
-            
+            kpis: { 
+                materials: 0,         // عدد الأصناف
+                total_stock_value: 0,  // إجمالي قيمة المخزون
+                low_stock_count: 0,    // أصناف تحت حد الطلب
+                active_bins: 0,        // الرفوف المستغلة
+                stock_qty: 0,          // إجمالي القطع
+                pending_pos: 0         // المشتريات المعلقة
+            },
             allOpcos: [], 
             opcos: [],    
             
@@ -110,9 +110,19 @@ createApp({
                 location: { id: null, plant: null, code: '', name: '' },
                 bin: { id: null, storage_location: null, code: '' },
                 material: { 
-                    id: null, sku: '', name: '', category: '', 
-                    base_uom: 'PCS', barcode: '', opco: null, assigned_bins: [], 
-                    primary_bin: null, tracking: 'none', reorder_level: 0, max_level: 0 // 👈 إضافة حقول الـ Advanced mode لمنع أي خطأ في الواجهة
+                    id: null, 
+                    sku: '', 
+                    name: '', 
+                    category: '', 
+                    base_uom: 'PCS', 
+                    barcode: '', 
+                    // 🚀 الهيكل الجديد لدعم تعدد الشركات
+                    company_assignments: [
+                        { opco_id: null, bins: [], primary_bin: null } 
+                    ],
+                    tracking: 'none', 
+                    reorder_level: 0, 
+                    max_level: 0 
                 }
             }
         };
@@ -166,6 +176,45 @@ createApp({
     methods: {
         ...utils.methods,
         ...itemMasterModule.methods,
+
+        // أضف هذه الدوال داخل methods
+        addCompanyRow() {
+            this.forms.material.company_assignments.push({
+                opco_id: '',
+                bins: [],
+                primary_bin: null
+            });
+        },
+
+        getBinsByOpco(opcoId) {
+            if (!opcoId) return [];
+            return this.bins.filter(bin => {
+                const location = this.locations.find(l => l.id === bin.storage_location);
+                const plant = location ? this.plants.find(p => p.id === location.plant) : null;
+                return plant && parseInt(plant.opco) === parseInt(opcoId);
+            });
+        },
+
+        addBinToRow(index, event) {
+            const binId = parseInt(event.target.value);
+            if (!binId) return;
+            const row = this.forms.material.company_assignments[index];
+            if (!row.bins.includes(binId)) {
+                row.bins.push(binId);
+            }
+            event.target.value = ""; // تصفير الاختيار بعد الإضافة
+        },
+
+        removeBinFromRow(rowIndex, binId) {
+            const row = this.forms.material.company_assignments[rowIndex];
+            row.bins = row.bins.filter(id => id !== binId);
+            if (row.primary_bin === binId) row.primary_bin = null;
+        },
+
+        getBinCodeById(binId) {
+            const bin = this.bins.find(b => b.id === binId);
+            return bin ? bin.code : '...';
+        },
 
         // 🚀 نظام التنبيهات الاحترافي في منتصف الشاشة
         showToast(message, type = 'success') {
@@ -722,7 +771,12 @@ createApp({
             try {
                 const url = this.activeOpcoId ? `/api/wms/stats/?opco=${this.activeOpcoId}` : '/api/wms/stats/';
                 const res = await fetch(url);
-                if (res.ok) this.wms_stats = await res.json();
+                if (res.ok) {
+                    this.wms_stats = await res.json();
+                    // تحديث قيم الـ KPIs من بيانات الـ WMS
+                    this.kpis.total_stock_value = this.wms_stats.total_value;
+                    this.kpis.low_stock_count = this.wms_stats.low_stock;
+                }
             } catch (e) { console.error("Stats Error", e); }
         },
 
