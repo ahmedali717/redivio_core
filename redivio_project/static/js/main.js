@@ -206,6 +206,31 @@ createApp({
         ...utils.methods,
         ...itemMasterModule.methods,
 
+        // 🚀 دالة تحميل قالب الاستيراد (Template)
+        downloadTemplate() {
+            // أسماء الأعمدة (لازم الباك-إند يكون متبرمج يقرأ الأسماء دي بالظبط)
+            const headers = ['SKU*', 'Name*', 'Category', 'Base_UOM', 'Barcode', 'Tracking'];
+            
+            // صف تجريبي عشان المستخدم يفهم الفورمات
+            const exampleRow = ['ITEM-001', 'مثال: أسمنت بورتلاندي', 'Raw Materials', 'BAG', '123456789012', 'none'];
+            
+            // تجميع الملف
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+                + headers.join(",") + "\n" 
+                + exampleRow.join(",");
+
+            // إنشاء الرابط وتنزيل الملف
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Item_Import_Template.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            
+            this.showToast(this.isArabic ? "تم تحميل قالب الاستيراد" : "Template downloaded", "success");
+        },
+
         exportToExcel() {
             const list = this.filteredMaterials || [];
             if (list.length === 0) {
