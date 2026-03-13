@@ -183,6 +183,25 @@ createApp({
             return opco ? opco.name : '...';
         },
 
+        getOperationTitle() {
+            const titles = {
+                'po_receipt': this.isArabic ? 'إضافة من أمر توريد' : 'Purchase Receipt',
+                'mrp_receipt': this.isArabic ? 'إضافة من أمر تصنيع' : 'Production Receipt',
+                'so_return': this.isArabic ? 'مرتجع من أمر بيع' : 'Sales Return',
+                'incoming_transfer': this.isArabic ? 'استلام تحويل مخزني' : 'Incoming Transfer',
+                'so_delivery': this.isArabic ? 'صرف لأمر بيع' : 'Sales Delivery',
+                'internal_transfer': this.isArabic ? 'تحويل مخزني داخلي' : 'Internal Transfer',
+                'mrp_issue': this.isArabic ? 'صرف لأمر تصنيع' : 'Material Issue for Production',
+                'scrap': this.isArabic ? 'تسجيل هالك' : 'Scrap Entry',
+                'po_return': this.isArabic ? 'مردودات مشتريات' : 'Purchase Return'
+            };
+            return titles[this.activeOperation] || (this.isArabic ? 'عملية مخزنية' : 'Stock Operation');
+        },
+        
+        startOperation(type) {
+            this.activeOperation = type;
+        },
+    
         // أضف هذه الدوال داخل methods
         addCompanyRow() {
             // التأكد من وجود الكائن والمصفوفة أولاً لتجنب الـ TypeError

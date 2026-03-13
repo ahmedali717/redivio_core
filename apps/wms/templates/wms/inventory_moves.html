@@ -1,112 +1,80 @@
-<div class="h-full flex flex-col space-y-6 animate-in fade-in duration-500">
+<div class="h-full flex flex-col space-y-8 p-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
     
-    <div v-if="!activeOperation" class="grid grid-cols-1 md:grid-cols-2 gap-8 pb-10">
+    <div v-if="!activeOperation" class="grid grid-cols-1 md:grid-cols-2 gap-10">
         
-        <div class="space-y-4">
-            <h3 class="flex items-center gap-2 text-slate-800 font-black px-2 uppercase tracking-tighter">
-                <i class="fas fa-arrow-down text-emerald-500 bg-emerald-50 p-2 rounded-lg"></i>
-                [[ isArabic ? 'عمليات الإضافة (وارد)' : 'Incoming Operations' ]]
-            </h3>
-            <div class="grid grid-cols-1 gap-3">
-                <button @click="startOperation('po_receipt')" class="group operation-card">
-                    <div class="op-info">
-                        <div class="op-icon bg-emerald-500"><i class="fas fa-file-invoice"></i></div>
-                        <span class="op-label">[[ isArabic ? 'إضافة من أمر توريد' : 'Receipt from PO' ]]</span>
+        <div class="space-y-6">
+            <div class="flex items-center gap-3 mb-2 px-2">
+                <div class="w-2 h-8 bg-emerald-500 rounded-full"></div>
+                <h3 class="text-xl font-black text-slate-800 tracking-tight">[[ isArabic ? 'عمليات الإضافة' : 'Incoming' ]]</h3>
+            </div>
+            
+            <div class="grid gap-4">
+                <button v-for="op in [{id:'po_receipt', ar:'إضافة من أمر توريد', en:'PO Receipt', icon:'fa-file-import'}, {id:'mrp_receipt', ar:'إضافة من أمر تصنيع', en:'Production Receipt', icon:'fa-industry'}, {id:'so_return', ar:'مرتجع من أمر بيع', en:'Sales Return', icon:'fa-undo-alt'}]"
+                        @click="startOperation(op.id)"
+                        class="group relative flex items-center justify-between p-5 bg-white border border-slate-100 rounded-[1.8rem] hover:border-emerald-200 hover:shadow-[0_20px_40px_-15px_rgba(16,185,129,0.15)] transition-all duration-500 hover:-translate-y-1">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl group-hover:bg-emerald-500 group-hover:text-white group-hover:rotate-[360deg] transition-all duration-700">
+                            <i :class="'fas ' + op.icon"></i>
+                        </div>
+                        <div class="text-right">
+                            <span class="block font-bold text-slate-700 group-hover:text-emerald-700 transition-colors">[[ isArabic ? op.ar : op.en ]]</span>
+                            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Operation Mode</span>
+                        </div>
                     </div>
-                    <i class="fas fa-chevron-left op-arrow"></i>
-                </button>
-
-                <button @click="startOperation('mrp_receipt')" class="group operation-card">
-                    <div class="op-info">
-                        <div class="op-icon bg-emerald-500"><i class="fas fa-industry"></i></div>
-                        <span class="op-label">[[ isArabic ? 'إضافة من أمر تصنيع' : 'Manufacturing Receipt' ]]</span>
+                    <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-all">
+                        <i class="fas fa-arrow-left text-xs"></i>
                     </div>
-                    <i class="fas fa-chevron-left op-arrow"></i>
-                </button>
-
-                <button @click="startOperation('so_return')" class="group operation-card">
-                    <div class="op-info">
-                        <div class="op-icon bg-emerald-500"><i class="fas fa-undo"></i></div>
-                        <span class="op-label">[[ isArabic ? 'مرتجع من أمر بيع' : 'Sales Return' ]]</span>
-                    </div>
-                    <i class="fas fa-chevron-left op-arrow"></i>
-                </button>
-
-                <button @click="startOperation('incoming_transfer')" class="group operation-card border-dashed">
-                    <div class="op-info">
-                        <div class="op-icon bg-blue-500"><i class="fas fa-truck-moving"></i></div>
-                        <span class="op-label">[[ isArabic ? 'تحويل وارد' : 'Incoming Transfer' ]]</span>
-                    </div>
-                    <i class="fas fa-chevron-left op-arrow"></i>
                 </button>
             </div>
         </div>
 
-        <div class="space-y-4">
-            <h3 class="flex items-center gap-2 text-slate-800 font-black px-2 uppercase tracking-tighter">
-                <i class="fas fa-arrow-up text-rose-500 bg-rose-50 p-2 rounded-lg"></i>
-                [[ isArabic ? 'عمليات الصرف (صادر)' : 'Outgoing Operations' ]]
-            </h3>
-            <div class="grid grid-cols-1 gap-3">
-                <button @click="startOperation('so_delivery')" class="group operation-card">
-                    <div class="op-info">
-                        <div class="op-icon bg-rose-500"><i class="fas fa-shipping-fast"></i></div>
-                        <span class="op-label">[[ isArabic ? 'صرف على أمر بيع' : 'Sales Delivery' ]]</span>
+        <div class="space-y-6">
+            <div class="flex items-center gap-3 mb-2 px-2">
+                <div class="w-2 h-8 bg-rose-500 rounded-full"></div>
+                <h3 class="text-xl font-black text-slate-800 tracking-tight">[[ isArabic ? 'عمليات الصرف' : 'Outgoing' ]]</h3>
+            </div>
+            
+            <div class="grid gap-4">
+                <button v-for="op in [{id:'so_delivery', ar:'صرف لأمر بيع', en:'Sales Delivery', icon:'fa-shipping-fast'}, {id:'internal_transfer', ar:'تحويل داخلي', en:'Internal Transfer', icon:'fa-exchange-alt'}, {id:'scrap', ar:'تسجيل هالك', en:'Scrap Management', icon:'fa-dumpster'}]"
+                        @click="startOperation(op.id)"
+                        class="group relative flex items-center justify-between p-5 bg-white border border-slate-100 rounded-[1.8rem] hover:border-rose-200 hover:shadow-[0_20px_40px_-15px_rgba(244,63,94,0.15)] transition-all duration-500 hover:-translate-y-1">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl group-hover:bg-rose-500 group-hover:text-white group-hover:rotate-[360deg] transition-all duration-700">
+                            <i :class="'fas ' + op.icon"></i>
+                        </div>
+                        <div class="text-right">
+                            <span class="block font-bold text-slate-700 group-hover:text-rose-700 transition-colors">[[ isArabic ? op.ar : op.en ]]</span>
+                            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Inventory Issue</span>
+                        </div>
                     </div>
-                    <i class="fas fa-chevron-left op-arrow"></i>
-                </button>
-
-                <button @click="startOperation('internal_transfer')" class="group operation-card">
-                    <div class="op-info">
-                        <div class="op-icon bg-blue-500"><i class="fas fa-exchange-alt"></i></div>
-                        <span class="op-label">[[ isArabic ? 'تحويل داخلي' : 'Internal Transfer' ]]</span>
+                    <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-rose-50 group-hover:text-rose-500 transition-all">
+                        <i class="fas fa-arrow-left text-xs"></i>
                     </div>
-                    <i class="fas fa-chevron-left op-arrow"></i>
-                </button>
-
-                <button @click="startOperation('mrp_issue')" class="group operation-card">
-                    <div class="op-info">
-                        <div class="op-icon bg-rose-500"><i class="fas fa-tools"></i></div>
-                        <span class="op-label">[[ isArabic ? 'صرف لأمر تصنيع' : 'Issue for Manufacturing' ]]</span>
-                    </div>
-                    <i class="fas fa-chevron-left op-arrow"></i>
-                </button>
-
-                <button @click="startOperation('scrap')" class="group operation-card">
-                    <div class="op-info">
-                        <div class="op-icon bg-slate-700"><i class="fas fa-trash-alt"></i></div>
-                        <span class="op-label">[[ isArabic ? 'هالك' : 'Scrap' ]]</span>
-                    </div>
-                    <i class="fas fa-chevron-left op-arrow"></i>
-                </button>
-
-                <button @click="startOperation('po_return')" class="group operation-card border-dashed">
-                    <div class="op-info">
-                        <div class="op-icon bg-rose-500"><i class="fas fa-undo-alt"></i></div>
-                        <span class="op-label">[[ isArabic ? 'مردودات مشتريات' : 'Purchase Return' ]]</span>
-                    </div>
-                    <i class="fas fa-chevron-left op-arrow"></i>
                 </button>
             </div>
         </div>
     </div>
 
-    <div v-if="activeOperation" class="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden flex-1 animate-in zoom-in-95 duration-300">
+    <transition enter-active-class="animate-in zoom-in-95 duration-500" leave-active-class="animate-out zoom-out-95 duration-300">
+        <div v-if="activeOperation" class="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden flex-1 flex flex-col">
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
+                <div class="flex items-center gap-4">
+                    <button @click="activeOperation = null" class="w-11 h-11 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-500 hover:bg-slate-900 hover:text-white hover:rotate-12 transition-all duration-500 shadow-sm">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-lg">[[ getOperationTitle() ]]</h3>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Draft Operation • [[ activeOperation ]]</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex-1 p-12 flex flex-col items-center justify-center text-center space-y-4">
+                <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center animate-bounce">
+                    <i class="fas fa-edit text-3xl text-slate-200"></i>
+                </div>
+                <p class="text-slate-400 font-medium italic">[[ isArabic ? 'جاري تجهيز حقول الإدخال الذكية...' : 'Preparing smart input fields...' ]]</p>
+            </div>
         </div>
-
+    </transition>
 </div>
-
-<style>
-.operation-card {
-    @apply flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl transition-all text-right w-full;
-}
-.operation-card:hover {
-    @apply border-indigo-400 shadow-lg shadow-indigo-50;
-}
-.op-info { @apply flex items-center gap-4; }
-.op-icon { 
-    @apply w-10 h-10 rounded-xl flex items-center justify-center text-white transition-transform group-hover:scale-110; 
-}
-.op-label { @apply font-bold text-slate-700 text-sm; }
-.op-arrow { @apply text-slate-300 group-hover:translate-x-[-5px] transition-transform; }
-</style>
