@@ -71,14 +71,30 @@
         </td>
 
         <td class="px-6 py-4 text-center">
-            <div v-if="item.company_assignments && item.company_assignments.length" class="flex justify-center -space-x-2 rtl:space-x-reverse overflow-hidden">
-                <span v-for="(assign, idx) in item.company_assignments" :key="idx"
-                      class="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-bold">
-                    <i class="fas fa-warehouse text-[8px]"></i>
+    <div class="flex justify-center items-center gap-1">
+        <template v-if="item.company_assignments && item.company_assignments.length">
+            <div v-for="(assign, idx) in item.company_assignments" :key="idx" class="flex gap-1">
+                <span v-for="binId in assign.bins" :key="binId"
+                      class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold border border-indigo-100">
+                    [[ getBinCodeById(binId) ]]
                 </span>
             </div>
-            <span v-else class="text-[10px] text-slate-300 italic">[[ isArabic ? 'غير مربوط' : 'No bins' ]]</span>
-        </td>
+        </template>
+        <span v-else class="text-[10px] text-slate-300 italic">[[ isArabic ? 'غير مربوط' : 'No bins' ]]</span>
+    </div>
+</td>
+
+<td class="px-6 py-4">
+    <div class="flex flex-wrap gap-1">
+        <template v-if="item.company_assignments && item.company_assignments.length">
+            <span v-for="assign in item.company_assignments" :key="assign.opco_id"
+                  class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold border border-slate-200">
+                [[ getOpcoName(assign.opco_id) ]]
+            </span>
+        </template>
+        <span v-else class="text-xs text-slate-400">[[ item.opco_name || '---' ]]</span>
+    </div>
+</td>
 
         <td class="px-6 py-4">
             <span class="text-xs font-bold text-slate-500 flex items-center gap-1">
