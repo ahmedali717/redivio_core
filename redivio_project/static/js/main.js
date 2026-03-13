@@ -9,6 +9,9 @@ createApp({
     delimiters: ['[[', ']]'],
     data() {
         return {
+            // 🚀 ضيف المتغير ده هنا في أول سطر
+            activeOperation: null,
+            
             // 1. جعل الموديول الموحد هو الشاشة الافتراضية (اختياري)
             view: 'inventory_module', 
             
