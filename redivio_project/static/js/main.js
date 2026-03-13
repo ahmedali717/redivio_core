@@ -200,6 +200,64 @@ createApp({
         
         startOperation(type) {
             this.activeOperation = type;
+            // تهيئة الفورم عند فتح عملية جديدة
+            if (!this.forms.stock_entry) {
+                this.forms.stock_entry = { items: [], po_id: '' };
+            } else {
+                this.forms.stock_entry.items = [];
+                this.forms.stock_entry.po_id = '';
+            }
+        },
+        
+        goBackToOperations() {
+            this.activeOperation = null;
+        },
+
+        // 🚀 إضافة اللوجيك الذكي لجلب الـ PO وتحديد الرف بناءً على الشركة
+        async fetchPODetails() {
+            const poId = this.forms.stock_entry.po_id;
+            if (!poId) return;
+
+            try {
+                this.loading = true;
+                // افتراضاً هذا هو رابط الـ API
+                const res = await fetch(`/api/purchase-orders/${poId}/`);
+                const data = await res.json();
+                
+                const currentOpcoId = parseInt(this.activeOpcoId);
+
+                this.forms.stock_entry.items = data.items.map(i => {
+                    const material = this.materials_list.find(m => m.id === i.material);
+                    let autoSelectedBin = '';
+
+                    // اللوجيك الذكي للبحث عن الرف للشركة المحددة
+                    if (material && material.company_assignments) {
+                        const assignment = material.company_assignments.find(a => parseInt(a.opco_id) === currentOpcoId);
+                        if (assignment) {
+                            autoSelectedBin = assignment.primary_bin || (assignment.bins.length > 0 ? assignment.bins[0] : '');
+                        }
+                    }
+
+                    return {
+                        material_id: i.material,
+                        material_name: i.material_name || material?.name || 'Unknown',
+                        sku: i.sku || material?.sku || 'N/A',
+                        ordered_qty: i.quantity,
+                        received_qty: i.quantity, 
+                        bin_id: autoSelectedBin 
+                    };
+                });
+
+                if (this.forms.stock_entry.items.some(i => i.bin_id)) {
+                    this.showToast(this.isArabic ? "تم تحديد الرفوف المخصصة لشركتك تلقائياً" : "Bins auto-assigned based on your OpCo", 'success');
+                }
+
+            } catch (e) {
+                console.error(e);
+                this.showToast(this.isArabic ? "خطأ في جلب أمر التوريد" : "Error fetching PO details", 'error');
+            } finally {
+                this.loading = false;
+            }
         },
     
         // أضف هذه الدوال داخل methods
