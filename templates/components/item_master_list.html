@@ -12,12 +12,17 @@
         </div>
         
         <div class="flex items-center gap-3">
-            <button @click="exportToExcel" class="bg-slate-50 border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all font-bold text-sm flex items-center gap-2 shadow-sm" title="Export to Excel">
-                <i class="fas fa-file-export"></i>
+            
+            <button @click="downloadTemplate" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 underline underline-offset-4 mr-2">
+                <i class="fas fa-download"></i> [[ isArabic ? 'تحميل قالب الاستيراد' : 'Download Template' ]]
+            </button>
+
+            <button @click="exportToExcel" class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-xl hover:bg-emerald-500 hover:text-white transition-all font-bold text-sm flex items-center gap-2 shadow-sm" title="Export to Excel">
+                <i class="fas fa-file-excel text-lg"></i> <span class="hidden md:inline">[[ isArabic ? 'تصدير' : 'Export' ]]</span>
             </button>
             
-            <button @click="triggerImport" class="bg-slate-50 border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all font-bold text-sm flex items-center gap-2 shadow-sm" title="Import from Excel">
-                <i class="fas fa-file-import"></i>
+            <button @click="triggerImport" class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2.5 rounded-xl hover:bg-blue-500 hover:text-white transition-all font-bold text-sm flex items-center gap-2 shadow-sm" title="Import from Excel">
+                <i class="fas fa-file-import text-lg"></i> <span class="hidden md:inline">[[ isArabic ? 'استيراد' : 'Import' ]]</span>
             </button>
             
             <input type="file" ref="excelInput" @change="handleExcelImport" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="hidden">
