@@ -9,6 +9,7 @@ createApp({
     delimiters: ['[[', ']]'],
     data() {
         return {
+            searchQuery: '',
             // 🚀 ضيف المتغير ده هنا في أول سطر
             activeOperation: null,
 
@@ -134,6 +135,29 @@ createApp({
     },
 
     computed: {
+
+        filteredMaterials() {
+            let list = this.materials_list || [];
+            
+            // 1. فلترة بالشركة الحالية
+            if (this.activeOpcoId) {
+                list = list.filter(item => {
+                    if (!item.company_assignments) return true; 
+                    return item.company_assignments.some(a => parseInt(a.opco_id) === parseInt(this.activeOpcoId));
+                });
+            }
+
+            // 2. فلترة بنص البحث (لو المستخدم كتب حاجة)
+            if (!this.searchQuery) return list;
+            
+            const query = this.searchQuery.toLowerCase();
+            return list.filter(item => 
+                (item.name && item.name.toLowerCase().includes(query)) ||
+                (item.sku && item.sku.toLowerCase().includes(query)) ||
+                (item.barcode && item.barcode.toLowerCase().includes(query))
+            );
+        },
+
         availableBinsForMaterial() {
             if (!this.activeOpcoId) return this.bins;
             return this.bins.filter(bin => {
@@ -181,6 +205,76 @@ createApp({
     methods: {
         ...utils.methods,
         ...itemMasterModule.methods,
+
+        exportToExcel() {
+            const list = this.filteredMaterials || [];
+            if (list.length === 0) {
+                this.showToast(this.isArabic ? "لا توجد بيانات لتصديرها" : "No data to export", "error");
+                return;
+            }
+
+            const headers = this.isArabic 
+                ? ['المعرف', 'الكود (SKU)', 'اسم الصنف', 'التصنيف', 'وحدة القياس']
+                : ['ID', 'SKU', 'Name', 'Category', 'UOM'];
+
+            const rows = list.map(item => [
+                item.id,
+                item.sku || '---',
+                item.name || '---',
+                item.category || '---',
+                item.base_uom || 'PCS'
+            ]);
+
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+                + headers.join(",") + "\n" 
+                + rows.map(e => e.join(",")).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Items_Export.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            
+            this.showToast(this.isArabic ? "تم التصدير بنجاح" : "Exported successfully", "success");
+        },
+
+        triggerImport() {
+            this.$refs.excelInput.click();
+        },
+
+        async handleExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('opco_id', this.activeOpcoId);
+
+            try {
+                this.loading = true;
+                this.showToast(this.isArabic ? "جاري المعالجة..." : "Processing...", "success");
+
+                const res = await fetch('/api/materials/import/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    await this.fetchMaterialsList(); // تحديث الداتا
+                    this.showToast(this.isArabic ? "تم الاستيراد بنجاح" : "Imported successfully", "success");
+                } else {
+                    this.showToast(this.isArabic ? "فشل الاستيراد، تأكد من الملف" : "Import failed", "error");
+                }
+            } catch (e) {
+                this.showToast("Network Error", "error");
+            } finally {
+                this.loading = false;
+                event.target.value = ''; 
+            }
+        },
 
         getOpcoName(opcoId) {
             const opco = this.allOpcos.find(o => o.id === opcoId);
