@@ -11,7 +11,7 @@ createApp({
         return {
             // 🚀 ضيف المتغير ده هنا في أول سطر
             activeOperation: null,
-            
+
             // 1. جعل الموديول الموحد هو الشاشة الافتراضية (اختياري)
             view: 'inventory_module', 
             
@@ -85,6 +85,7 @@ createApp({
             wms_stats: {},
             selectedItemCard: null,
             vendors: [],
+            pending_pos: [],
 
             showModal: false, 
             materialTab: 'general',

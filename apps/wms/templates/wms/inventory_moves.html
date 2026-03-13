@@ -93,7 +93,7 @@
                     <div class="space-y-2">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'المستودع' : 'Warehouse' ]]</label>
                         <div class="w-full bg-slate-100 border border-slate-200 rounded-2xl p-3 text-sm font-bold text-slate-500">
-                            [[ activePlantId ? getPlantNameById(activePlantId) : (isArabic ? 'المستودع الرئيسي' : 'Main Warehouse') ]]
+                            [[ getPlantsForOpco(activeOpcoId).length > 0 ? getPlantsForOpco(activeOpcoId)[0].name : (isArabic ? 'مستودع غير محدد' : 'Unassigned Warehouse') ]]
                         </div>
                     </div>
                 </div>
