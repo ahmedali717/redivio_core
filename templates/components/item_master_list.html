@@ -1,30 +1,6 @@
 <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full animate-in fade-in duration-500">
     
-    <div class="flex items-center gap-2 mb-6 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/60 w-fit">
-    <button @click="view = 'inventory_dashboard'" 
-            :class="view === 'inventory_dashboard' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:bg-white/50'"
-            class="px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
-        <i class="fas fa-th-large"></i> [[ isArabic ? 'نظرة عامة' : 'Overview' ]]
-    </button>
-
-    <button @click="view = 'inventory_module'" 
-            :class="view === 'inventory_module' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:bg-white/50'"
-            class="px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
-        <i class="fas fa-boxes-stacked"></i> [[ isArabic ? 'سجل الأصناف' : 'Products' ]]
-    </button>
-
-    <button @click="view = 'stock_moves'" 
-            :class="view === 'stock_moves' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:bg-white/50'"
-            class="px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
-        <i class="fas fa-exchange-alt"></i> [[ isArabic ? 'الحركات المخزنية' : 'Operations' ]]
-    </button>
-
-    <button @click="view = 'inventory_reports'" 
-            :class="view === 'inventory_reports' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:bg-white/50'"
-            class="px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
-        <i class="fas fa-chart-pie"></i> [[ isArabic ? 'التقارير المخزنية' : 'Reporting' ]]
-    </button>
-</div>
+    
     <div class="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white">
         <div>
             <h2 class="text-2xl font-bold text-slate-800">
