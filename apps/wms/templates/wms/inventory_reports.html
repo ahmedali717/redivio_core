@@ -1,0 +1,22 @@
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-full overflow-y-auto pb-10">
+    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+        <h3 class="font-black text-slate-800 mb-6 flex items-center gap-2 text-sm uppercase tracking-tighter">
+            <i class="fas fa-chart-line text-indigo-500"></i> Stock Movement Analytics
+        </h3>
+        <div class="h-64 bg-slate-50 rounded-3xl flex items-center justify-center border border-dashed border-slate-200">
+            <p class="text-slate-400 text-xs italic">[[ isArabic ? 'جاري تجهيز الرسم البياني للحركات...' : 'Processing Movement Charts...' ]]</p>
+        </div>
+    </div>
+
+    <div class="bg-slate-900 p-8 rounded-[2.5rem] shadow-xl text-white">
+        <h3 class="font-black mb-6 flex items-center gap-2 text-sm uppercase tracking-tighter text-amber-400">
+            <i class="fas fa-bolt"></i> Fast Moving Items
+        </h3>
+        <div class="space-y-4">
+            <div v-for="n in 4" class="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
+                <span class="text-xs font-bold text-slate-300">Product Line #00[[n]]</span>
+                <span class="text-xs font-black text-emerald-400">[[ 100 - (n*10) ]]% Turn-over</span>
+            </div>
+        </div>
+    </div>
+</div>
