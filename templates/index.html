@@ -118,28 +118,6 @@
                 </div>
             </div>
 
-            <div v-if="view === 'global_config'" class="bg-white rounded-[2rem] border border-slate-200 shadow-sm min-h-[500px] p-6 animate-in fade-in duration-500">
-                <div class="flex justify-between items-center mb-6 pb-6 border-b border-slate-100">
-                    <h2 class="text-xl font-black text-slate-800"><i class="fas fa-cogs text-blue-600 mr-2"></i> الإعدادات العامة للمنشأة</h2>
-                    <button @click="saveGlobalConfig" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold shadow-md hover:bg-blue-700">حفظ التغييرات</button>
-                </div>
-                
-                <div v-if="config" class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase">اسم الشركة</label>
-                        <input type="text" v-model="config.company_name" class="w-full bg-white border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase">الرقم الضريبي</label>
-                        <input type="text" v-model="config.tax_id" class="w-full bg-white border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase">السجل التجاري</label>
-                        <input type="text" v-model="config.cr_number" class="w-full bg-white border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-            </div>
-
             <div v-if="view === 'global_config'" class="animate-in fade-in duration-500">
     <div class="flex items-center justify-between mb-8">
         <div>
