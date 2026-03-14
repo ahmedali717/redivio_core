@@ -39,17 +39,4 @@ urlpatterns = [
     path('api/check-auth/', views.CheckAuthAPI.as_view(), name='api_check_auth'),
     path('api/check-email/', views.check_email_status, name='api_check_email'),
     path('api/switch-company/', views.switch_active_company, name='api_switch_company'),
-
-    # ==========================================
-    # 3. روابط العمليات المخزنية (Missing Endpoints)
-    # ==========================================
-    
-    # رابط استلام المشتريات (اللي كان بيعطي 404)
-    path('api/stock-receipts/', views.StockReceiptAPI.as_view(), name='api_stock_receipts'),
-    
-    # رابط جلب تفاصيل أمر التوريد (عشان الـ SKU يظهر في الجدول)
-    path('api/purchase-orders/<int:po_id>/', views.get_purchase_order_details, name='api_po_details'),
-    
-    # روابط إضافية قد تحتاجها للعمليات الأخرى
-    path('api/inventory-moves/', views.InventoryMoveListAPI.as_view(), name='api_inventory_moves'),
 ]
