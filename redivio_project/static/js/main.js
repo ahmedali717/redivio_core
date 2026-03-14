@@ -909,6 +909,11 @@ createApp({
             let method = isEdit ? 'PATCH' : 'POST'; 
             const csrftoken = this.getCookie('csrftoken');
 
+            // 🚀 التحديث الأول: تصحيح مسار أمر التوريد
+            if (type === 'po') {
+                url = isEdit ? `/api/orders/${id}/` : `/api/orders/`;
+            }
+
             try {
                 this.loading = true;
                 let payload;
@@ -1244,18 +1249,29 @@ createApp({
                 };
             }
             // 🚀 ضيف البلوكة دي هنا الخاصة بأمر التوريد الجديد (PO)
-            else if (type === 'po') {
-                // توليد رقم أمر توريد مقترح أوتوماتيك (زي PO-2026-0001)
-                const autoNumber = `PO-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-                
-                this.forms.po = { 
-                    id: null, 
-                    vendor: '', 
-                    po_number: autoNumber, 
-                    // السطر الافتراضي الأول في جدول الأصناف
-                    lines: [{ material: '', quantity: 1, unit_price: 0 }] 
-                };
-            }
+            // 🚀 التحديث التاني: ضيف البلوكة دي بعد قفلة الـ if (useFormData)
+                else if (type === 'po') {
+                    headers['Content-Type'] = 'application/json';
+                    
+                    payload = JSON.stringify({
+                        opco: this.activeOpcoId,
+                        vendor: this.forms.po.vendor,
+                        po_number: this.forms.po.po_number,
+                        // إرسال الضرائب جوه extra_data
+                        extra_data: {
+                            is_tax_inclusive: this.forms.po.is_tax_inclusive,
+                            tax_rate: this.forms.po.tax_rate,
+                            subtotal: this.poSubtotal,
+                            tax_amount: this.poTaxAmount,
+                            grand_total: this.poGrandTotal
+                        },
+                        lines: this.forms.po.lines.map(line => ({
+                            material: line.material,
+                            quantity: line.quantity,
+                            unit_price: line.unit_price
+                        }))
+                    });
+                }
 
             else if (type === 'opco') {
                 this.forms.opco = { 
