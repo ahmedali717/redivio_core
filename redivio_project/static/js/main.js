@@ -451,16 +451,18 @@ createApp({
         
         async fetchPendingPOs() {
             try {
-                // هنجيب أوامر التوريد اللي حالتها Confirmed (جاهزة للاستلام) للشركة الحالية
+                // 🚀 التعديل هنا: نغير المسار ليكون مطابق للـ API الفعلي
                 const url = this.activeOpcoId 
-                    ? `/api/purchase-orders/?status=CONFIRMED&opco=${this.activeOpcoId}` 
-                    : '/api/purchase-orders/?status=CONFIRMED';
+                    ? `/api/orders/?status=CONFIRMED&opco=${this.activeOpcoId}` 
+                    : '/api/orders/?status=CONFIRMED';
                     
                 const res = await fetch(url);
+                
                 if (res.ok) {
                     const data = await res.json();
-                    // تأكد إنك ضايف pending_pos: [] في الـ data() فوق
                     this.pending_pos = Array.isArray(data) ? data : (data.results || []);
+                } else {
+                    console.error("Server responded with error:", res.status);
                 }
             } catch (e) {
                 console.error("Error fetching POs:", e);
