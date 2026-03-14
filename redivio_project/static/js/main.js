@@ -270,16 +270,27 @@ createApp({
         startCameraScan() {
             this.isScanning = true;
             this.$nextTick(() => {
-                // ننشئ النسخة ونخزنها في المرجع بتاعنا
                 this.scannerInstance = new Html5Qrcode("reader");
                 
+                // 🚀 ذكاء اصطناعي للشاشة: لو موبايل صغر المربع، لو كمبيوتر كبره
+                const screenWidth = window.innerWidth;
+                const scanBoxWidth = screenWidth < 500 ? 220 : 300; 
+
+                const config = { 
+                    fps: 15, 
+                    qrbox: { width: scanBoxWidth, height: 120 }, // مربع مريح لعين الموبايل
+                    // شيلنا الـ aspectRatio خالص عشان الكاميرا تفتح بأبعادها الطبيعية
+                };
+                
                 this.scannerInstance.start(
-                    { facingMode: "environment" }, 
-                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    { facingMode: "environment" }, // يفتح الكاميرا الخلفية دائماً
+                    config,
                     (decodedText) => {
-                        this.barcodeQuery = decodedText;
-                        this.scanBarcode(); 
-                        this.stopScanner(); // نقفل بعد ما نلاقي الكود
+                        // أول ما الكاميرا تلقط رقم
+                        if (this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
+                            this.scannerInstance.pause();
+                        }
+                        this.processScannedBarcode(decodedText);
                     }
                 ).catch(err => {
                     console.error("Camera Error:", err);
