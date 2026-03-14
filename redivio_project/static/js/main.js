@@ -430,7 +430,32 @@ createApp({
         },
         
         goBackToOperations() {
+            // 1. إيقاف الكاميرا فوراً وبشكل صحيح
+            if (this.isScanning) {
+                // بننادي على المكتبة عشان توقف المسح وتنظف الـ DOM
+                const html5QrCode = new Html5Qrcode("reader");
+                if (html5QrCode.isScanning) {
+                    html5QrCode.stop().then(() => {
+                        console.log("Camera Stopped");
+                    }).catch(err => {
+                        console.warn("Stop failed:", err);
+                    });
+                }
+            }
+            
+            // 2. تصفير كل الحالات (الـ Variables)
             this.activeOperation = null;
+            this.isScanning = false;
+            this.barcodeQuery = '';
+            
+            // تصفير بيانات الاستلام عشان لو فتحت أمر توريد تاني ميبقاش فيه داتا قديمة
+            this.forms.stock_entry = { 
+                po_id: '', 
+                items: [] 
+            };
+
+            // إخفاء أي رسائل Toast قديمة
+            this.loading = false;
         },
 
         // 🚀 إضافة اللوجيك الذكي لجلب الـ PO وتحديد الرف بناءً على الشركة
