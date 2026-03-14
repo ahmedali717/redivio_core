@@ -15,6 +15,16 @@ createApp({
             barcodeQuery: '',
             // 🚀 ضيف المتغير ده هنا في أول سطر
             activeOperation: null,
+            
+            // 🚀 التعديل الأول: ضيف السطرين دول هنا بالظبط
+            showQtyModal: false, 
+            scannedItemData: {
+                material_id: null,
+                material_name: '',
+                sku: '',
+                ordered_qty: 0,
+                scan_qty: 1
+            },
 
             // 1. جعل الموديول الموحد هو الشاشة الافتراضية (اختياري)
             view: 'inventory_module', 
@@ -277,7 +287,102 @@ createApp({
                 });
             });
         },
+        // 1. الدالة المربوطة بزرار الـ Enter في حقل الباركود
+        processBarcodeManual() {
+            if(!this.barcodeQuery) return;
+            this.processScannedBarcode(this.barcodeQuery.trim());
+        },
 
+        // 2. دالة تشغيل الكاميرا المحدثة
+        startCameraScan() {
+            this.isScanning = true;
+            this.$nextTick(() => {
+                this.scannerInstance = new Html5Qrcode("reader");
+                this.scannerInstance.start(
+                    { facingMode: "environment" }, 
+                    { fps: 15, qrbox: { width: 280, height: 150 } }, // كبرنا المربع هنا
+                    (decodedText) => {
+                        // أول ما يلقط كود: يوقف الكاميرا مؤقتاً ويفتح الـ Modal
+                        if (this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
+                            this.scannerInstance.pause();
+                        }
+                        this.processScannedBarcode(decodedText);
+                    }
+                ).catch(err => {
+                    console.error("Camera Error:", err);
+                    this.isScanning = false;
+                });
+            });
+        },
+
+        // 3. الدالة الأساسية اللي بتبحث عن الصنف وتفتح النافذة
+        processScannedBarcode(barcode) {
+            if (!this.forms.stock_entry.items || this.forms.stock_entry.items.length === 0) {
+                this.showToast(this.isArabic ? "برجاء اختيار أمر التوريد أولاً" : "Select PO first", 'error');
+                if(this.scannerInstance && this.isScanning) this.scannerInstance.resume();
+                return;
+            }
+
+            // البحث عن الصنف
+            const foundItem = this.forms.stock_entry.items.find(
+                item => item.sku.toLowerCase() === barcode.toLowerCase() || item.material_id.toString() === barcode
+            );
+
+            if (foundItem) {
+                // تجهيز البيانات وفتح النافذة
+                this.scannedItemData = {
+                    material_id: foundItem.material_id,
+                    material_name: foundItem.material_name,
+                    sku: foundItem.sku,
+                    ordered_qty: foundItem.ordered_qty,
+                    scan_qty: 1 // الافتراضي 1
+                };
+                this.showQtyModal = true;
+                this.barcodeQuery = ''; // تفريغ حقل البحث
+
+                // التركيز على حقل الكمية عشان يكتب على طول
+                setTimeout(() => {
+                    if(this.$refs.qtyInput) {
+                        this.$refs.qtyInput.focus();
+                        this.$refs.qtyInput.select();
+                    }
+                }, 400);
+
+            } else {
+                this.showToast(this.isArabic ? `الصنف (${barcode}) غير موجود` : `Item not found`, 'error');
+                this.barcodeQuery = '';
+                if(this.scannerInstance && this.isScanning) {
+                    setTimeout(() => this.scannerInstance.resume(), 1500);
+                }
+            }
+        },
+
+        // 4. دالة تأكيد الكمية (لما يدوس انتر جوا الـ Modal)
+        confirmScannedQty() {
+            const itemIndex = this.forms.stock_entry.items.findIndex(
+                i => i.material_id === this.scannedItemData.material_id
+            );
+
+            if (itemIndex !== -1) {
+                let currentQty = parseFloat(this.forms.stock_entry.items[itemIndex].received_qty) || 0;
+                let addedQty = parseFloat(this.scannedItemData.scan_qty) || 1;
+                
+                this.forms.stock_entry.items[itemIndex].received_qty = currentQty + addedQty;
+                this.showToast(this.isArabic ? `تم إضافة ${addedQty} لـ ${this.scannedItemData.material_name}` : `Added ${addedQty}`, 'success');
+            }
+
+            this.closeQtyModal();
+        },
+
+        // 5. قفل النافذة وإرجاع الكاميرا للعمل
+        closeQtyModal() {
+            this.showQtyModal = false;
+            if(this.scannerInstance && this.isScanning) {
+                if (this.scannerInstance.getState() === Html5QrcodeScannerState.PAUSED) {
+                    this.scannerInstance.resume();
+                }
+            }
+        },
         // دالة البحث بالباركود
         scanBarcode() {
             const item = this.forms.stock_entry.items.find(i => i.sku === this.barcodeQuery);
