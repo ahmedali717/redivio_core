@@ -73,13 +73,14 @@ class StockReceiptAPI(APIView):
                     quant.save()
 
                     # تسجيل حركة مخزنية في السجل التاريخي
+                    # تسجيل حركة مخزنية (داخل الـ loop)
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
                         quantity=item.get('quantity', 0),
                         move_type='RECEIPT',
                         reference=f"PO Receipt: {po.po_number}",
-                        storage_bin_id=item['bin_id']
+                        dest_bin_id=item['bin_id']  # <--- غيرنا storage_bin_id لـ dest_bin_id ليتوافق مع الموديل
                     )
 
                 # تحديث حالة أمر التوريد (حسب نظامك)
