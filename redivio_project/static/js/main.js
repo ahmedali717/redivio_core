@@ -267,6 +267,13 @@ createApp({
         ...utils.methods,
         ...itemMasterModule.methods,
 
+    // 🚀 1. الدالة اللي كانت مفقودة وعاملة الإيرور (ربط الانتر)
+        processBarcodeManual() {
+            if(!this.barcodeQuery) return;
+            this.processScannedBarcode(this.barcodeQuery.trim());
+        },
+
+        // 🚀 2. دالة تشغيل الكاميرا (النسخة الذكية لـ EAN-13)
         startCameraScan() {
             this.isScanning = true;
             this.$nextTick(() => {
@@ -274,14 +281,13 @@ createApp({
                     try { this.scannerInstance.clear(); } catch(e) {}
                 }
 
-                // 🚀 التركيز حصرياً على باركود المنتجات (EAN-13) عشان نضاعف سرعة القراءة
                 this.scannerInstance = new Html5Qrcode("reader", {
                     formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13 ]
                 });
                 
                 const config = { 
                     fps: 10,
-                    qrbox: { width: 300, height: 120 }, // مربع مستطيل عشان يجبره يركز في مساحة محددة
+                    qrbox: { width: 300, height: 120 },
                     experimentalFeatures: {
                         useBarCodeDetectorIfSupported: true
                     }
@@ -291,16 +297,10 @@ createApp({
                     { facingMode: "environment" }, 
                     config,
                     (decodedText) => {
-                        // نجاح القراءة
                         if (this.scannerInstance && this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
                             this.scannerInstance.pause();
                         }
                         this.processScannedBarcode(decodedText);
-                    },
-                    (errorMessage) => {
-                        // 🔍 السطر ده مخفي: المكتبة بتحاول تقرأ كل 0.1 ثانية بس بتفشل بصمت 
-                        // لو عايز تشوف بعينك إنها بتحاول، شيل الشرطتين (//) من السطر اللي تحت:
-                        // console.log("جاري المحاولة... الصورة غير واضحة للكمبيوتر");
                     }
                 ).catch(err => {
                     console.error("Camera Error:", err);
@@ -308,8 +308,8 @@ createApp({
                 });
             });
         },
-        // 1. الدالة المربوطة بزرار الـ Enter في حقل الباركود
-        // 3. الدالة الذكية للبحث في قاعدة البيانات ثم أمر التوريد
+
+        // 🚀 3. الدالة الذكية للبحث في قاعدة البيانات ثم أمر التوريد
         processScannedBarcode(barcode) {
             if (!this.forms.stock_entry.items || this.forms.stock_entry.items.length === 0) {
                 this.showToast(this.isArabic ? "برجاء اختيار أمر التوريد أولاً" : "Select PO first", 'error');
@@ -317,11 +317,10 @@ createApp({
                 return;
             }
 
-            // البحث في قاعدة البيانات كلها
             const matchedMaterial = this.materials_list.find(
                 m => (m.barcode && m.barcode.toString() === barcode.toString()) || 
-                    (m.sku && m.sku.toLowerCase() === barcode.toLowerCase()) || 
-                    (m.id && m.id.toString() === barcode.toString())
+                     (m.sku && m.sku.toLowerCase() === barcode.toLowerCase()) || 
+                     (m.id && m.id.toString() === barcode.toString())
             );
 
             if (!matchedMaterial) {
@@ -333,13 +332,11 @@ createApp({
                 return;
             }
 
-            // البحث في أمر التوريد الحالي
             const foundItemInPO = this.forms.stock_entry.items.find(
                 item => item.material_id === matchedMaterial.id || item.sku === matchedMaterial.sku
             );
 
             if (foundItemInPO) {
-                // الصنف موجود ومطلوب -> نفتح الشاشة
                 this.scannedItemData = {
                     material_id: foundItemInPO.material_id,
                     material_name: foundItemInPO.material_name,
@@ -358,7 +355,6 @@ createApp({
                 }, 400);
 
             } else {
-                // الصنف مسجل بس مش مطلوب هنا
                 this.showToast(this.isArabic ? `الصنف (${matchedMaterial.name}) غير مطلوب في أمر التوريد الحالي!` : `Item not in this PO!`, 'error');
                 this.barcodeQuery = '';
                 if(this.scannerInstance && this.isScanning) {
@@ -367,71 +363,7 @@ createApp({
             }
         },
 
-        // 2. دالة تشغيل الكاميرا المحدثة
-        startCameraScan() {
-            this.isScanning = true;
-            this.$nextTick(() => {
-                this.scannerInstance = new Html5Qrcode("reader");
-                this.scannerInstance.start(
-                    { facingMode: "environment" }, 
-                    { fps: 15, qrbox: { width: 280, height: 150 } }, // كبرنا المربع هنا
-                    (decodedText) => {
-                        // أول ما يلقط كود: يوقف الكاميرا مؤقتاً ويفتح الـ Modal
-                        if (this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
-                            this.scannerInstance.pause();
-                        }
-                        this.processScannedBarcode(decodedText);
-                    }
-                ).catch(err => {
-                    console.error("Camera Error:", err);
-                    this.isScanning = false;
-                });
-            });
-        },
-
-        // 3. الدالة الأساسية اللي بتبحث عن الصنف وتفتح النافذة
-        processScannedBarcode(barcode) {
-            if (!this.forms.stock_entry.items || this.forms.stock_entry.items.length === 0) {
-                this.showToast(this.isArabic ? "برجاء اختيار أمر التوريد أولاً" : "Select PO first", 'error');
-                if(this.scannerInstance && this.isScanning) this.scannerInstance.resume();
-                return;
-            }
-
-            // البحث عن الصنف
-            const foundItem = this.forms.stock_entry.items.find(
-                item => item.sku.toLowerCase() === barcode.toLowerCase() || item.material_id.toString() === barcode
-            );
-
-            if (foundItem) {
-                // تجهيز البيانات وفتح النافذة
-                this.scannedItemData = {
-                    material_id: foundItem.material_id,
-                    material_name: foundItem.material_name,
-                    sku: foundItem.sku,
-                    ordered_qty: foundItem.ordered_qty,
-                    scan_qty: 1 // الافتراضي 1
-                };
-                this.showQtyModal = true;
-                this.barcodeQuery = ''; // تفريغ حقل البحث
-
-                // التركيز على حقل الكمية عشان يكتب على طول
-                setTimeout(() => {
-                    if(this.$refs.qtyInput) {
-                        this.$refs.qtyInput.focus();
-                        this.$refs.qtyInput.select();
-                    }
-                }, 400);
-
-            } else {
-                this.showToast(this.isArabic ? `الصنف (${barcode}) غير موجود` : `Item not found`, 'error');
-                this.barcodeQuery = '';
-                if(this.scannerInstance && this.isScanning) {
-                    setTimeout(() => this.scannerInstance.resume(), 1500);
-                }
-            }
-        },
-
-        // 4. دالة تأكيد الكمية (لما يدوس انتر جوا الـ Modal)
+        // 🚀 4. تأكيد الكمية
         confirmScannedQty() {
             const itemIndex = this.forms.stock_entry.items.findIndex(
                 i => i.material_id === this.scannedItemData.material_id
@@ -448,7 +380,7 @@ createApp({
             this.closeQtyModal();
         },
 
-        // 5. قفل النافذة وإرجاع الكاميرا للعمل
+        // 🚀 5. إغلاق النافذة
         closeQtyModal() {
             this.showQtyModal = false;
             if(this.scannerInstance && this.isScanning) {
@@ -457,32 +389,19 @@ createApp({
                 }
             }
         },
-        // دالة البحث بالباركود
-        scanBarcode() {
-            const item = this.forms.stock_entry.items.find(i => i.sku === this.barcodeQuery);
-            if (item) {
-                item.received_qty++; // زيادة الكمية لو لقى الصنف
-                this.showToast("تم العثور على الصنف: " + item.material_name, "success");
-            } else {
-                this.showToast("الصنف غير موجود في هذا الأمر", "error");
-            }
-            this.barcodeQuery = '';
-        },
 
+        // 🚀 6. إيقاف الكاميرا
         async stopScanner() {
             if (this.scannerInstance) {
                 try {
                     await this.scannerInstance.stop();
-                    this.scannerInstance = null; // نمسح المرجع
+                    this.scannerInstance = null;
                     this.isScanning = false;
-                    console.log("Camera Off");
                 } catch (err) {
-                    console.warn("Stop failed or already stopped:", err);
+                    console.warn("Stop failed:", err);
                 }
             }
         },
-
-        
 
         // 🚀 دالة تحميل قالب الاستيراد (Template)
         downloadTemplate() {
