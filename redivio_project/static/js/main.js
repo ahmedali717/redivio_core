@@ -1252,7 +1252,7 @@ createApp({
             // 🚀 التحديث التاني: ضيف البلوكة دي بعد قفلة الـ if (useFormData)
                 // 🚀 التحديث التاني: معالجة بيانات أمر التوريد (PO) كـ JSON مع الحماية
                 else if (type === 'po') {
-                    // 1. حماية: التأكد من اختيار الشركة والمورد ورقم الأمر
+                    // 1. حماية: التأكد من البيانات الأساسية
                     if (!this.activeOpcoId) {
                         this.showToast(this.isArabic ? "يرجى اختيار الشركة أولاً" : "Please select OpCo", 'error');
                         this.loading = false; return;
@@ -1266,9 +1266,11 @@ createApp({
                         this.loading = false; return;
                     }
 
+                    // 🚀 التأكيد الصارم على السيرفر إن البيانات مبعوتة كـ JSON
                     headers['Content-Type'] = 'application/json';
+                    headers['Accept'] = 'application/json';
                     
-                    // 2. تجميع البيانات (استخدمنا parseInt عشان نتأكد إن المورد والشركة بيتبعتوا كأرقام مش نصوص)
+                    // 2. تجميع وتأمين البيانات (تحويل كل القيم للأرقام المناسبة)
                     payload = JSON.stringify({
                         opco: parseInt(this.activeOpcoId),
                         vendor: parseInt(this.forms.po.vendor),
@@ -1276,18 +1278,18 @@ createApp({
                         
                         // إرسال الضرائب جوه extra_data
                         extra_data: {
-                            is_tax_inclusive: this.forms.po.is_tax_inclusive || false,
-                            tax_rate: this.forms.po.tax_rate || 15,
-                            subtotal: this.poSubtotal || 0,
-                            tax_amount: this.poTaxAmount || 0,
-                            grand_total: this.poGrandTotal || 0
+                            is_tax_inclusive: Boolean(this.forms.po.is_tax_inclusive),
+                            tax_rate: Number(this.forms.po.tax_rate) || 15,
+                            subtotal: Number(this.poSubtotal) || 0,
+                            tax_amount: Number(this.poTaxAmount) || 0,
+                            grand_total: Number(this.poGrandTotal) || 0
                         },
                         
-                        // الأصناف
+                        // الأصناف (مع التأكد من تحويل الصنف لرقم)
                         lines: this.forms.po.lines.map(line => ({
-                            material: line.material,
-                            quantity: line.quantity || 1,
-                            unit_price: line.unit_price || 0
+                            material: parseInt(line.material), 
+                            quantity: Number(line.quantity) || 1,
+                            unit_price: Number(line.unit_price) || 0
                         }))
                     });
                 }
