@@ -8,22 +8,17 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-# استيراد الـ Mixin والـ Models والـ Serializers
 from apps.core.mixins import OpcoAwareMixin 
 from apps.core.models import OpCo
 from apps.procurement.models import PurchaseOrder
 
-# تأكد أن هذه الموديلات موجودة في نفس تطبيق الـ WMS
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
     PlantSerializer, StorageLocationSerializer, 
     StorageBinSerializer, StockQuantSerializer, StockMoveSerializer
 )
 
-# =========================================================
-#  1. API Functions (إحصائيات الموديول)
-# =========================================================
-
+# 1. إحصائيات المخزن
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def wms_stats(request):
@@ -39,10 +34,7 @@ def wms_stats(request):
         "items": items_count
     })
 
-# =========================================================
-#  2. Stock Receipt Logic (حل مشكلة الـ 404 لزر التأكيد)
-# =========================================================
-
+# 2. منطق استلام البضاعة (Corrected Version)
 class StockReceiptAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -53,77 +45,52 @@ class StockReceiptAPI(APIView):
         active_opco_id = request.session.get('active_opco_id')
 
         if not active_opco_id:
-            return Response({"error": "No active company"}, status=400)
+            return Response({"error": "No active company session"}, status=400)
 
         try:
             with transaction.atomic():
-                # 1. جلب أمر التوريد
-                from apps.procurement.models import PurchaseOrder
                 po = PurchaseOrder.objects.get(id=po_id)
                 
                 for item in items:
-                    # 🚀 التعديل الجوهري: جلب الـ Bin أولاً لمعرفة الـ Plant المرتبط به
-                    target_bin = StorageBin.objects.select_related('storage_location__plant').get(id=item['bin_id'])
-                    target_plant = target_bin.storage_location.plant
+                    target_bin = StorageBin.objects.get(id=item['bin_id'])
 
-                    # 2. تحديث الرصيد الحالي (StockQuant) - أضفنا الـ plant_id هنا
-                    quant, created = StockQuant.objects.get_or_create(
-                        opco_id=active_opco_id,
-                        plant=target_plant, # <--- ده اللي كان ناقص ومسبب الـ 400
-                        material_id=item['material_id'],
-                        storage_bin=target_bin,
-                        defaults={'quantity': 0}
-                    )
-                    quant.quantity += float(item.get('quantity', 0))
-                    quant.save()
-
-                    # 3. تسجيل الحركة التاريخية (StockMove)
-                    # لاحظ: الموديل عندك بيستخدم dest_bin مش storage_bin
+                    # ✅ التعديل الأهم: بنسجل الحركة بس
+                    # دالة save في موديل StockMove (ملف 27) هتحدث الـ StockQuant أوتوماتيك
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
-                        quantity=item.get('quantity', 0),
+                        quantity=float(item.get('quantity', 0)),
                         move_type='RECEIPT',
                         reference=f"PO Receipt: {po.po_number}",
                         dest_bin=target_bin,
-                        vendor_name=getattr(po.vendor, 'name', '') # إضافة اسم المورد لو متاح
+                        vendor_name=getattr(po.vendor, 'name', '')
                     )
 
-                # 4. تحديث حالة الـ PO
                 po.status = 'RECEIVED'
                 po.save()
 
                 return Response({"success": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            # نصيحة: رجع الخطأ الفعلي عشان تظهر لك في الـ Console لو حصلت تاني
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# دالة جلب تفاصيل الـ PO لتعبئة الجدول (تمنع الـ 404 عند اختيار PO)
+# 3. جلب تفاصيل الـ PO (Compatible with Model 29)
 def get_purchase_order_details(request, po_id):
     try:
         po = PurchaseOrder.objects.get(id=po_id)
-        # جلب الأصناف المرتبطة (تأكد من الـ related_name في موديل PurchaseOrder)
-        # سنحاول الوصول إليها بمرونة
-        items_source = getattr(po, 'items', None) or po.purchaseorderitem_set
-        
-        items_data = []
-        for item in items_source.all():
-            items_data.append({
-                'material_id': item.material.id,
-                'material_name': item.material.name,
-                'sku': getattr(item.material, 'sku', item.material.code),
-                'ordered_qty': item.quantity,
-                'received_qty': item.quantity,
-            })
+        # ✅ التصحيح: بنستخدم lines لأن الـ Related Name في الموديل هو 'lines'
+        items_data = [{
+            'material_id': line.material.id,
+            'material_name': line.material.name,
+            'sku': getattr(line.material, 'sku', line.material.code),
+            'ordered_qty': line.quantity,
+            'received_qty': line.quantity,
+        } for line in po.lines.all()]
         
         return JsonResponse({'items': items_data})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=404)
 
-# =========================================================
-#  3. WMS ViewSets (الفلترة التلقائية عبر OpcoAwareMixin)
-# =========================================================
-
+# 4. الـ ViewSets (Corrected Ordering)
 class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = Plant.objects.all()
     serializer_class = PlantSerializer
@@ -141,7 +108,8 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockQuantSerializer
 
 class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StockMove.objects.all().order_by('-date')
+    # ✅ التصحيح: الموديل بيستخدم created_at مش date
+    queryset = StockMove.objects.all().order_by('-created_at')
     serializer_class = StockMoveSerializer
 
 class WMSHomeView(View):
