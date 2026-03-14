@@ -58,9 +58,9 @@
     </div>
 </div>
 
-            <div v-if="view === 'procurement_module'" class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full animate-in fade-in duration-500">
+            <div v-if="view === 'procurement_module'" class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col animate-in fade-in duration-500" style="min-h: 500px;">
                 
-                <div class="px-6 py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white">
+                <div class="px-6 py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-t-[2rem]">
                     <div>
                         <h2 class="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
                             <i class="fas fa-file-invoice-dollar text-emerald-500"></i>
@@ -83,8 +83,8 @@
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-auto p-6 bg-slate-50/30">
-                    <div v-if="purchase_orders.length === 0" class="flex flex-col items-center justify-center h-full space-y-4">
+                <div class="flex-1 p-6 bg-slate-50/30 rounded-b-[2rem]">
+                    <div v-if="!purchase_orders || purchase_orders.length === 0" class="flex flex-col items-center justify-center h-full space-y-4 py-20">
                         <div class="w-24 h-24 bg-white shadow-sm border border-slate-100 rounded-full flex items-center justify-center opacity-60">
                             <i class="fas fa-shopping-cart text-3xl text-emerald-300"></i>
                         </div>
@@ -124,7 +124,7 @@
                                         <div class="flex items-center justify-center gap-2">
                                             <button v-if="po.status === 'DRAFT'" 
                                                     @click="updatePOStatus(po.id, 'CONFIRMED')"
-                                                    class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center border border-emerald-100">
+                                                    class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center border border-emerald-100" title="تأكيد الطلب">
                                                 <i class="fas fa-check"></i>
                                             </button>
                                             <button class="w-8 h-8 rounded-lg bg-slate-50 text-slate-500 hover:bg-slate-800 hover:text-white transition-all shadow-sm flex items-center justify-center border border-slate-100">
@@ -136,6 +136,36 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <div v-if="view === 'vendors_list'" class="p-6 animate-in fade-in bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col" style="min-h: 500px;">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                    <h2 class="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                        <i class="fas fa-truck text-emerald-500"></i> قائمة الموردين
+                    </h2>
+                    <button @click="view = 'procurement_module'" class="bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm hover:bg-slate-700 transition-all font-bold shadow-md">
+                        <i class="fas fa-arrow-right mr-2"></i> عودة للمشتريات
+                    </button>
+                </div>
+                
+                <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden flex-1 p-4">
+                    <table class="w-full text-right">
+                        <thead class="bg-white border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">الكود</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">الاسم</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">الرقم الضريبي</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="v in vendors" :key="v.id" class="hover:bg-white transition-colors">
+                                <td class="px-6 py-4 text-sm font-bold text-slate-700">[[ v.code ]]</td>
+                                <td class="px-6 py-4 text-sm font-semibold">[[ v.name ]]</td>
+                                <td class="px-6 py-4 text-sm text-slate-400 font-mono">[[ v.tax_id || '---' ]]</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
