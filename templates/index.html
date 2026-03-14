@@ -14,9 +14,50 @@
                 {% include "components/org_builder.html" %}
             </div>
 
-            <div v-if="['inventory', 'wms'].includes(view)">
-                {% include "wms/dashboard.html" %}
+            <div v-if="view === 'inventory_module'" class="flex flex-col h-full space-y-4 animate-in fade-in duration-500">
+    
+            <div class="bg-white p-3 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50">
+                    <button @click="inventoryTab = 'levels'" :class="inventoryTab === 'levels' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-6 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
+                        <i class="fas fa-warehouse"></i> [[ isArabic ? 'الأرصدة الحالية' : 'Stock Levels' ]]
+                    </button>
+                    <button @click="inventoryTab = 'items'" :class="inventoryTab === 'items' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-6 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
+                        <i class="fas fa-barcode"></i> [[ isArabic ? 'سجل الأصناف' : 'Item Master' ]]
+                    </button>
+                    <div class="h-6 w-[1px] bg-slate-300 mx-1"></div>
+                    <button @click="inventoryTab = 'moves'" :class="inventoryTab === 'moves' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-4 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
+                        <i class="fas fa-exchange-alt"></i> [[ isArabic ? 'الحركات' : 'Operations' ]]
+                    </button>
+                    <button @click="inventoryTab = 'reports'" :class="inventoryTab === 'reports' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-4 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
+                        <i class="fas fa-chart-pie"></i> [[ isArabic ? 'تقارير' : 'Reporting' ]]
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <button @click="openModal('stock_entry')" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-emerald-100 transition-all flex items-center gap-2">
+                        <i class="fas fa-plus-circle"></i> [[ isArabic ? 'حركة مخزنية' : 'Stock Entry' ]]
+                    </button>
+                </div>
             </div>
+
+            <div class="flex-1 overflow-hidden relative">
+                <div v-if="inventoryTab === 'levels'" class="h-full animate-in zoom-in-95 duration-300">
+                    {% include "wms/dashboard.html" %}
+                </div>
+                
+                <div v-if="inventoryTab === 'items'" class="h-full animate-in zoom-in-95 duration-300">
+                    {% include "components/item_master_list.html" %}
+                </div>
+
+                <div v-if="inventoryTab === 'moves'" class="h-full animate-in slide-in-from-bottom-4 duration-500">
+                    {% include "wms/inventory_moves.html" %}
+                </div>
+
+                <div v-if="inventoryTab === 'reports'" class="h-full animate-in slide-in-from-bottom-4 duration-500">
+                    {% include "wms/inventory_reports.html" %}
+                </div>
+            </div>
+        </div>
+
 
             <div v-if="view === 'procurement'">
                 <div class="p-10 text-center text-slate-400">[[ isArabic ? 'واجهة المشتريات قيد التطوير...' : 'Procurement module is under development...' ]]</div>
