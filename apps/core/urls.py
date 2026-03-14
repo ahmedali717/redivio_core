@@ -1,7 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import receive_stock
 
 # إعداد الراوتر للـ ViewSets
 # تأكد من أن الأسماء هنا تطابق تماماً ما نطلبه في fetch() داخل ملفات الـ JavaScript
