@@ -7,15 +7,14 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from decimal import Decimal # 👈 الحل السحري لمشكلة الأرقام
 
-import traceback
-from decimal import Decimal
-
-# استيراد الـ Mixin والـ Models
+# استيراد الـ Mixin والـ Models والـ Serializers
 from apps.core.mixins import OpcoAwareMixin 
 from apps.core.models import OpCo
 from apps.procurement.models import PurchaseOrder
 
+# تأكد أن هذه الموديلات موجودة في نفس تطبيق الـ WMS
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
     PlantSerializer, StorageLocationSerializer, 
@@ -23,8 +22,9 @@ from .serializers import (
 )
 
 # =========================================================
-#  1. إحصائيات المخزن
+#  1. API Functions (إحصائيات الموديول)
 # =========================================================
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def wms_stats(request):
@@ -41,8 +41,9 @@ def wms_stats(request):
     })
 
 # =========================================================
-#  2. منطق الاستلام (الخالي من الأخطاء)
+#  2. Stock Receipt Logic
 # =========================================================
+
 class StockReceiptAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -57,25 +58,27 @@ class StockReceiptAPI(APIView):
 
         try:
             with transaction.atomic():
+                from apps.procurement.models import PurchaseOrder
                 po = PurchaseOrder.objects.get(id=po_id)
                 
                 for item in items:
-                    target_bin = StorageBin.objects.get(id=item['bin_id'])
+                    target_bin = StorageBin.objects.select_related('storage_location__plant').get(id=item['bin_id'])
                     
-                    # 🚀 تحويل الكمية إلى Decimal بشكل آمن جداً لتجنب الـ Crash
+                    # 🚀 تحويل الكمية إلى Decimal بشكل آمن
                     try:
                         received_qty = Decimal(str(item.get('quantity', 0)))
                     except:
                         received_qty = Decimal('0')
 
                     if received_qty <= 0:
-                        continue # تخطي الأصناف اللي كميتها صفر
+                        continue
 
-                    # 🚀 نكتفي بتسجيل الحركة فقط (لأن موديل StockMove لديك يقوم بتحديث الرصيد تلقائياً)
+                    # ⚠️ نكتفي بإنشاء حركة المخزون فقط
+                    # لأن دالة save() في موديل StockMove تقوم بتحديث الأرصدة تلقائياً
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
-                        quantity=received_qty,
+                        quantity=received_qty, # تمرير الرقم كـ Decimal
                         move_type='RECEIPT',
                         reference=f"PO Receipt: {po.po_number}",
                         dest_bin=target_bin,
@@ -87,36 +90,35 @@ class StockReceiptAPI(APIView):
 
                 return Response({"success": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            error_msg = traceback.format_exc()
-            print("=== ERROR IN STOCK RECEIPT ===")
-            print(error_msg) # للطباعة في سجلات PythonAnywhere
-            return Response({
-                "error": str(e),
-                "trace": error_msg
-            }, status=status.HTTP_400_BAD_REQUEST)
+            import traceback
+            error_details = traceback.format_exc()
+            print(error_details) # للطباعة في الكونسول
+            return Response({"error": str(e), "trace": error_details}, status=status.HTTP_400_BAD_REQUEST)
 
-# =========================================================
-#  3. تفاصيل أمر التوريد
-# =========================================================
+# دالة جلب تفاصيل الـ PO
 def get_purchase_order_details(request, po_id):
     try:
         po = PurchaseOrder.objects.get(id=po_id)
-        # استخدام lines كما هي معرفة في الموديل
-        items_data = [{
-            'material_id': line.material.id,
-            'material_name': line.material.name,
-            'sku': getattr(line.material, 'sku', line.material.code),
-            'ordered_qty': line.quantity,
-            'received_qty': line.quantity,
-        } for line in po.lines.all()]
+        items_source = getattr(po, 'items', None) or po.purchaseorderitem_set
+        
+        items_data = []
+        for item in items_source.all():
+            items_data.append({
+                'material_id': item.material.id,
+                'material_name': item.material.name,
+                'sku': getattr(item.material, 'sku', item.material.code),
+                'ordered_qty': item.quantity,
+                'received_qty': item.quantity,
+            })
         
         return JsonResponse({'items': items_data})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=404)
 
 # =========================================================
-#  4. الـ ViewSets
+#  3. WMS ViewSets 
 # =========================================================
+
 class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = Plant.objects.all()
     serializer_class = PlantSerializer
@@ -134,7 +136,8 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockQuantSerializer
 
 class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StockMove.objects.all().order_by('-created_at')
+    # ✅ رجعناها order_by('-date') زي ما كانت عندك عشان السيرفر ميقعش
+    queryset = StockMove.objects.all().order_by('-date')
     serializer_class = StockMoveSerializer
 
 class WMSHomeView(View):
