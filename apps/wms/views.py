@@ -53,40 +53,49 @@ class StockReceiptAPI(APIView):
         active_opco_id = request.session.get('active_opco_id')
 
         if not active_opco_id:
-            return Response({"error": "No active company found in session"}, status=400)
+            return Response({"error": "No active company"}, status=400)
 
         try:
             with transaction.atomic():
-                # جلب أمر التوريد
+                # 1. جلب أمر التوريد
+                from apps.procurement.models import PurchaseOrder
                 po = PurchaseOrder.objects.get(id=po_id)
                 
                 for item in items:
-                    # 1. تحديث الرصيد الحالي
-                    quant, _ = StockQuant.objects.get_or_create(
+                    # 🚀 التعديل الجوهري: جلب الـ Bin أولاً لمعرفة الـ Plant المرتبط به
+                    target_bin = StorageBin.objects.select_related('storage_location__plant').get(id=item['bin_id'])
+                    target_plant = target_bin.storage_location.plant
+
+                    # 2. تحديث الرصيد الحالي (StockQuant) - أضفنا الـ plant_id هنا
+                    quant, created = StockQuant.objects.get_or_create(
                         opco_id=active_opco_id,
+                        plant=target_plant, # <--- ده اللي كان ناقص ومسبب الـ 400
                         material_id=item['material_id'],
-                        storage_bin_id=item['bin_id'], # تأكد أن StockQuant لديه storage_bin
+                        storage_bin=target_bin,
                         defaults={'quantity': 0}
                     )
                     quant.quantity += float(item.get('quantity', 0))
                     quant.save()
 
-                    # 2. تسجيل الحركة التاريخية (تعديل الحقل لـ dest_bin)
+                    # 3. تسجيل الحركة التاريخية (StockMove)
+                    # لاحظ: الموديل عندك بيستخدم dest_bin مش storage_bin
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
                         quantity=item.get('quantity', 0),
                         move_type='RECEIPT',
-                        reference=f"إذن استلام: {po.po_number}",
-                        dest_bin_id=item['bin_id'] # ✅ تم التعديل هنا
+                        reference=f"PO Receipt: {po.po_number}",
+                        dest_bin=target_bin,
+                        vendor_name=getattr(po.vendor, 'name', '') # إضافة اسم المورد لو متاح
                     )
 
-                # تحديث حالة أمر التوريد (حسب نظامك)
+                # 4. تحديث حالة الـ PO
                 po.status = 'RECEIVED'
                 po.save()
 
-                return Response({"success": True, "message": "تم تحديث المخزون بنجاح"}, status=status.HTTP_201_CREATED)
+                return Response({"success": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
+            # نصيحة: رجع الخطأ الفعلي عشان تظهر لك في الـ Console لو حصلت تاني
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # دالة جلب تفاصيل الـ PO لتعبئة الجدول (تمنع الـ 404 عند اختيار PO)
