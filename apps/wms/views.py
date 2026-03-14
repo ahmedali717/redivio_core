@@ -8,21 +8,17 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-# استيراد الـ Mixin والـ Serializers
+# استيراد الـ Mixin والـ Models والـ Serializers
 from apps.core.mixins import OpcoAwareMixin 
+from apps.core.models import OpCo
+from apps.procurement.models import PurchaseOrder
+
+# تأكد أن هذه الموديلات موجودة في نفس تطبيق الـ WMS
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
     PlantSerializer, StorageLocationSerializer, 
     StorageBinSerializer, StockQuantSerializer, StockMoveSerializer
 )
-
-# محاولة استيراد الموديلات الخارجية بحذر لضمان عدم وقوع السيرفر
-try:
-    from apps.core.models import OpCo
-    from apps.procurement.models import PurchaseOrder
-except ImportError:
-    # أضف هنا تنبيه في السجل إذا فشل الاستيراد
-    pass
 
 # =========================================================
 #  1. API Functions (إحصائيات الموديول)
@@ -44,7 +40,7 @@ def wms_stats(request):
     })
 
 # =========================================================
-#  2. Stock Receipt Logic (الجزئية المسؤولة عن تأكيد الاستلام)
+#  2. Stock Receipt Logic (حل مشكلة الـ 404 لزر التأكيد)
 # =========================================================
 
 class StockReceiptAPI(APIView):
@@ -57,7 +53,7 @@ class StockReceiptAPI(APIView):
         active_opco_id = request.session.get('active_opco_id')
 
         if not active_opco_id:
-            return Response({"error": "لا توجد شركة نشطة"}, status=400)
+            return Response({"error": "No active company found in session"}, status=400)
 
         try:
             with transaction.atomic():
@@ -65,8 +61,8 @@ class StockReceiptAPI(APIView):
                 po = PurchaseOrder.objects.get(id=po_id)
                 
                 for item in items:
-                    # تحديث الرصيد في الرف المختار
-                    # ملاحظة: تأكد أن الحقل في الموديل هو storage_bin_id
+                    # تحديث أو إنشاء الرصيد في الرف المختار
+                    # ملاحظة: تأكد أن الحقول تطابق الـ Model (storage_bin_id)
                     quant, created = StockQuant.objects.get_or_create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
@@ -76,7 +72,7 @@ class StockReceiptAPI(APIView):
                     quant.quantity += float(item.get('quantity', 0))
                     quant.save()
 
-                    # تسجيل الحركة في السجل التاريخي
+                    # تسجيل حركة مخزنية في السجل التاريخي
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
@@ -86,11 +82,11 @@ class StockReceiptAPI(APIView):
                         storage_bin_id=item['bin_id']
                     )
 
-                # تحديث حالة الطلب إلى مستلم
+                # تحديث حالة أمر التوريد (حسب نظامك)
                 po.status = 'RECEIVED'
                 po.save()
 
-                return Response({"success": True, "message": "تم استلام البضاعة وتحديث المخزون"}, status=status.HTTP_201_CREATED)
+                return Response({"success": True, "message": "تم تحديث المخزون بنجاح"}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -98,20 +94,19 @@ class StockReceiptAPI(APIView):
 def get_purchase_order_details(request, po_id):
     try:
         po = PurchaseOrder.objects.get(id=po_id)
-        # جلب الأصناف المرتبطة (تأكد من الـ related_name في موديل PurchaseOrderItem)
-        items_data = []
-        # محاولة الوصول للأصناف (Items) المرتبطة بأمر التوريد
-        related_items = getattr(po, 'items', po.purchaseorderitem_set if hasattr(po, 'purchaseorderitem_set') else None)
+        # جلب الأصناف المرتبطة (تأكد من الـ related_name في موديل PurchaseOrder)
+        # سنحاول الوصول إليها بمرونة
+        items_source = getattr(po, 'items', None) or po.purchaseorderitem_set
         
-        if related_items:
-            for item in related_items.all():
-                items_data.append({
-                    'material_id': item.material.id,
-                    'material_name': item.material.name,
-                    'sku': getattr(item.material, 'sku', item.material.code),
-                    'ordered_qty': item.quantity,
-                    'received_qty': item.quantity, # افتراض استلام كامل قابل للتعديل
-                })
+        items_data = []
+        for item in items_source.all():
+            items_data.append({
+                'material_id': item.material.id,
+                'material_name': item.material.name,
+                'sku': getattr(item.material, 'sku', item.material.code),
+                'ordered_qty': item.quantity,
+                'received_qty': item.quantity,
+            })
         
         return JsonResponse({'items': items_data})
     except Exception as e:
