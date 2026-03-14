@@ -1251,6 +1251,7 @@ createApp({
             // 🚀 ضيف البلوكة دي هنا الخاصة بأمر التوريد الجديد (PO)
             // 🚀 التحديث التاني: ضيف البلوكة دي بعد قفلة الـ if (useFormData)
                 // 🚀 التحديث التاني: معالجة بيانات أمر التوريد (PO) كـ JSON مع الحماية
+                // 🚀 معالجة أمر التوريد بشكل معزول ومؤمن تماماً
                 else if (type === 'po') {
                     // 1. حماية: التأكد من البيانات الأساسية
                     if (!this.activeOpcoId) {
@@ -1266,17 +1267,11 @@ createApp({
                         this.loading = false; return;
                     }
 
-                    // 🚀 التأكيد الصارم على السيرفر إن البيانات مبعوتة كـ JSON
-                    headers['Content-Type'] = 'application/json';
-                    headers['Accept'] = 'application/json';
-                    
-                    // 2. تجميع وتأمين البيانات (تحويل كل القيم للأرقام المناسبة)
-                    payload = JSON.stringify({
+                    // 2. تجميع وتأمين البيانات
+                    const poPayload = JSON.stringify({
                         opco: parseInt(this.activeOpcoId),
                         vendor: parseInt(this.forms.po.vendor),
                         po_number: this.forms.po.po_number,
-                        
-                        // إرسال الضرائب جوه extra_data
                         extra_data: {
                             is_tax_inclusive: Boolean(this.forms.po.is_tax_inclusive),
                             tax_rate: Number(this.forms.po.tax_rate) || 15,
@@ -1284,14 +1279,46 @@ createApp({
                             tax_amount: Number(this.poTaxAmount) || 0,
                             grand_total: Number(this.poGrandTotal) || 0
                         },
-                        
-                        // الأصناف (مع التأكد من تحويل الصنف لرقم)
                         lines: this.forms.po.lines.map(line => ({
                             material: parseInt(line.material), 
                             quantity: Number(line.quantity) || 1,
                             unit_price: Number(line.unit_price) || 0
                         }))
                     });
+
+                    // 3. الإرسال المباشر للباك-إند بـ Headers صريحة وقاطعة
+                    try {
+                        const poResponse = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRFToken': this.getCookie('csrftoken')
+                            },
+                            body: poPayload
+                        });
+
+                        if (poResponse.ok) {
+                            this.showModal = false;
+                            await this.refreshAllData(); // تحديث الداشبورد
+                            this.showToast(this.isArabic ? "تم حفظ أمر التوريد بنجاح" : "PO saved successfully", 'success');
+                        } else {
+                            const errText = await poResponse.text();
+                            try {
+                                const errJson = JSON.parse(errText);
+                                const errMsg = errJson.detail || Object.values(errJson)[0] || errText;
+                                this.showToast(this.isArabic ? "فشل الحفظ: " + errMsg : "Save failed: " + errMsg, 'error');
+                            } catch(e) {
+                                this.showToast("Error: " + errText, 'error');
+                            }
+                        }
+                    } catch (e) {
+                        this.showToast("Network Error", 'error');
+                    } finally {
+                        this.loading = false;
+                    }
+                    
+                    return; // 🛑 مهم جداً: إيقاف الدالة هنا عشان ميكملش لباقي كود الـ submitForm القديم
                 }
 
             else if (type === 'opco') {
