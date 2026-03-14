@@ -8,17 +8,16 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.core.mixins import OpcoAwareMixin 
-from apps.core.models import OpCo
-from apps.procurement.models import PurchaseOrder
-
+# استيراد الموديلات الأساسية في التطبيق نفسه
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
     PlantSerializer, StorageLocationSerializer, 
     StorageBinSerializer, StockQuantSerializer, StockMoveSerializer
 )
 
-# 1. إحصائيات المخزن
+# =========================================================
+#  1. إحصائيات المخزن
+# =========================================================
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def wms_stats(request):
@@ -34,18 +33,26 @@ def wms_stats(request):
         "items": items_count
     })
 
-# 2. منطق استلام البضاعة (Corrected Version)
+# =========================================================
+#  2. تنفيذ استلام المشتريات
+# =========================================================
 class StockReceiptAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        # استيراد داخلي لمنع الـ Circular Import أو وقوع السيرفر
+        try:
+            from apps.procurement.models import PurchaseOrder
+        except ImportError:
+            from procurement.models import PurchaseOrder
+
         data = request.data
         po_id = data.get('po_id')
         items = data.get('items', [])
         active_opco_id = request.session.get('active_opco_id')
 
         if not active_opco_id:
-            return Response({"error": "No active company session"}, status=400)
+            return Response({"error": "No active company"}, status=400)
 
         try:
             with transaction.atomic():
@@ -54,8 +61,7 @@ class StockReceiptAPI(APIView):
                 for item in items:
                     target_bin = StorageBin.objects.get(id=item['bin_id'])
 
-                    # ✅ التعديل الأهم: بنسجل الحركة بس
-                    # دالة save في موديل StockMove (ملف 27) هتحدث الـ StockQuant أوتوماتيك
+                    # ✅ بنسجل الحركة فقط، والموديل (ملف 27) هيحدث الرصيد تلقائياً في الـ save
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
@@ -73,24 +79,38 @@ class StockReceiptAPI(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# 3. جلب تفاصيل الـ PO (Compatible with Model 29)
+# =========================================================
+#  3. جلب تفاصيل الـ PO (المتوافق مع Related Name 'lines')
+# =========================================================
 def get_purchase_order_details(request, po_id):
     try:
+        try:
+            from apps.procurement.models import PurchaseOrder
+        except ImportError:
+            from procurement.models import PurchaseOrder
+
         po = PurchaseOrder.objects.get(id=po_id)
-        # ✅ التصحيح: بنستخدم lines لأن الـ Related Name في الموديل هو 'lines'
-        items_data = [{
-            'material_id': line.material.id,
-            'material_name': line.material.name,
-            'sku': getattr(line.material, 'sku', line.material.code),
-            'ordered_qty': line.quantity,
-            'received_qty': line.quantity,
-        } for line in po.lines.all()]
+        
+        # ✅ بنستخدم lines لأنك معرفها كدة في موديل الـ PurchaseOrderLine
+        items_data = []
+        for line in po.lines.all():
+            items_data.append({
+                'material_id': line.material.id,
+                'material_name': line.material.name,
+                'sku': getattr(line.material, 'sku', line.material.code),
+                'ordered_qty': line.quantity,
+                'received_qty': line.quantity,
+            })
         
         return JsonResponse({'items': items_data})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=404)
 
-# 4. الـ ViewSets (Corrected Ordering)
+# =========================================================
+#  4. الـ ViewSets (مع تصحيح حقل الترتيب)
+# =========================================================
+from apps.core.mixins import OpcoAwareMixin 
+
 class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = Plant.objects.all()
     serializer_class = PlantSerializer
@@ -108,7 +128,7 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockQuantSerializer
 
 class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    # ✅ التصحيح: الموديل بيستخدم created_at مش date
+    # ✅ تم التغيير من date (غير موجود) إلى created_at (موجود)
     queryset = StockMove.objects.all().order_by('-created_at')
     serializer_class = StockMoveSerializer
 
