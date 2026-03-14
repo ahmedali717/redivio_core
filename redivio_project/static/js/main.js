@@ -1116,7 +1116,8 @@ createApp({
                     this.fetchDashboardData(), 
                     this.getListData(), 
                     this.fetchWMSStats(),
-                    this.fetchMaterialsList() 
+                    this.fetchMaterialsList(),
+                    this.fetchPurchaseOrders()
                 ]);
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {
@@ -1215,7 +1216,45 @@ createApp({
                 this.showToast(this.isArabic ? "تم تحديد الرف الافتراضي تلقائياً" : "Default bin selected", 'success');
             }
         },
+        async fetchPurchaseOrders() {
+            try {
+                // هنجيب كل أوامر التوريد الخاصة بالشركة الحالية
+                const url = this.activeOpcoId 
+                    ? `/api/orders/?opco=${this.activeOpcoId}` 
+                    : '/api/orders/';
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.purchase_orders = Array.isArray(data) ? data : (data.results || []);
+                }
+            } catch (e) {
+                console.error("Error fetching POs:", e);
+            }
+        },
 
+        async updatePOStatus(poId, newStatus) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/orders/${poId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تحديث حالة الطلب بنجاح" : "PO Status Updated", 'success');
+                    await this.fetchPurchaseOrders(); // تحديث الجدول فوراً
+                }
+            } catch (e) {
+                this.showToast("Network Error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+        
         async fetchMaterialsList() {
             try {
                 const res = await fetch('/api/materials/');
