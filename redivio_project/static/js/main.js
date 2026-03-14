@@ -270,20 +270,42 @@ createApp({
         startCameraScan() {
             this.isScanning = true;
             this.$nextTick(() => {
-                this.scannerInstance = new Html5Qrcode("reader");
+                // 🚀 1. هنحدد للمكتبة أنواع الباركود الخطي بالظبط عشان متدورش في الفاضي
+                // (EAN_13 ده هو باركود قزازة الماية وكل المنتجات السوبر ماركت)
+                const formatsToSupport = [
+                    Html5QrcodeSupportedFormats.EAN_13, 
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.QR_CODE
+                ];
+
+                // نمرر الصيغ دي وحنا بننشئ الكاميرا
+                this.scannerInstance = new Html5Qrcode("reader", { 
+                    formatsToSupport: formatsToSupport,
+                    verbose: false // عشان ميطبعش رسايل كتير في الكونسول تبطئ المتصفح
+                });
                 
-                // إعدادات مخصصة لاصطياد الباركود الخطي (1D) بسرعة
-                const config = { 
-                    fps: 10, // 10 فريم في الثانية أفضل ثباتاً من 15
-                    qrbox: { width: 280, height: 80 }, // مستطيل عريض ورفيع جداً يناسب الباركود العادي
+                // 🚀 2. إجبار الكاميرا على جودة HD وتشغيل الأوتو فوكس
+                const cameraConfig = { 
+                    facingMode: "environment",
+                    width: { ideal: 1280 }, // جودة عالية عشان الخطوط الرفيعة تبان
+                    height: { ideal: 720 },
+                    advanced: [{ focusMode: "continuous" }] // بيجبر كاميرا الموبايل تعمل Focus لوحدها
+                };
+
+                // 3. إعدادات القراءة
+                const scanConfig = { 
+                    fps: 10, 
+                    qrbox: { width: 300, height: 100 }, // المربع عريض عشان يستوعب الباركود من أوله لآخره
                     experimentalFeatures: {
-                        useBarCodeDetectorIfSupported: true // 🚀 السر هنا: بيشغل حساس الكاميرا الأصلي للموبايل (سريع جداً)
+                        useBarCodeDetectorIfSupported: true
                     }
                 };
                 
                 this.scannerInstance.start(
-                    { facingMode: "environment" }, // الكاميرا الخلفية
-                    config,
+                    cameraConfig, 
+                    scanConfig,
                     (decodedText) => {
                         // أول ما الكاميرا تلقط رقم
                         if (this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
@@ -294,6 +316,7 @@ createApp({
                 ).catch(err => {
                     console.error("Camera Error:", err);
                     this.isScanning = false;
+                    this.showToast(this.isArabic ? "لا يمكن الوصول للكاميرا بجودة عالية" : "Camera error", 'error');
                 });
             });
         },
