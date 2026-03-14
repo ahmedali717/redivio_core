@@ -84,6 +84,64 @@
                 </select>
                 </div>
 
+                <div v-if="modalType === 'po'" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">[[ isArabic ? 'المورد' : 'Vendor' ]] <span class="text-red-500">*</span></label>
+                        <select v-model="forms.po.vendor" required class="w-full border p-2.5 rounded-xl bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="">[[ isArabic ? 'اختر المورد...' : 'Select Vendor...' ]]</option>
+                            <option v-for="v in vendors" :key="v.id" :value="v.id">[[ v.name ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">[[ isArabic ? 'رقم أمر التوريد' : 'PO Number' ]] <span class="text-red-500">*</span></label>
+                        <input type="text" v-model="forms.po.po_number" required class="w-full border p-2.5 rounded-xl font-mono focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="PO-2026-0001">
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 px-3 py-2 border-b border-slate-200">
+                        <h4 class="font-bold text-slate-700 text-xs">[[ isArabic ? 'الأصناف المطلوبة' : 'Requested Items' ]]</h4>
+                    </div>
+                    <table class="w-full text-right">
+                        <thead class="bg-white text-slate-400 text-[10px] uppercase border-b border-slate-100">
+                            <tr>
+                                <th class="p-3 w-1/2">[[ isArabic ? 'الصنف' : 'Item' ]]</th>
+                                <th class="p-3 text-center">[[ isArabic ? 'الكمية' : 'Qty' ]]</th>
+                                <th class="p-3 text-center">[[ isArabic ? 'السعر' : 'Price' ]]</th>
+                                <th class="p-3 text-center w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 bg-white">
+                            <tr v-for="(line, index) in forms.po.lines" :key="index">
+                                <td class="p-2">
+                                    <select v-model="line.material" required class="w-full border p-2 rounded-lg bg-slate-50 text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+                                        <option value="">[[ isArabic ? 'اختر...' : 'Select...' ]]</option>
+                                        <option v-for="m in filteredMaterials" :key="m.id" :value="m.id">[[ m.name ]]</option>
+                                    </select>
+                                </td>
+                                <td class="p-2">
+                                    <input type="number" min="1" v-model="line.quantity" required class="w-full border p-2 rounded-lg bg-slate-50 text-xs text-center focus:ring-2 focus:ring-emerald-500 outline-none">
+                                </td>
+                                <td class="p-2">
+                                    <input type="number" min="0" step="0.01" v-model="line.unit_price" class="w-full border p-2 rounded-lg bg-slate-50 text-xs text-center focus:ring-2 focus:ring-emerald-500 outline-none">
+                                </td>
+                                <td class="p-2 text-center">
+                                    <button type="button" @click="removePOLine(index)" class="text-red-400 hover:text-red-600 p-1.5 rounded hover:bg-red-50 transition-colors">
+                                        <i class="fas fa-trash-alt text-xs"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="p-2 bg-white border-t border-slate-100">
+                        <button type="button" @click="addPOLine" class="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-plus"></i> [[ isArabic ? 'إضافة سطر جديد' : 'Add New Line' ]]
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <button type="submit" class="w-full bg-slate-900 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl mt-6 transition-all shadow-lg flex items-center justify-center gap-2">
                 <i class="fas fa-save"></i>
                 <span>[[ isArabic ? 'حفظ البيانات' : 'Save Data' ]]</span>

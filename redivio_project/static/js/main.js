@@ -87,6 +87,7 @@ createApp({
             wms_stats: {},
             selectedItemCard: null,
             vendors: [],
+            purchase_orders: [],
             pending_pos: [],
 
             showModal: false, 
@@ -107,7 +108,9 @@ createApp({
                 bin: { ar: 'إضافة رف/حاوية', en: 'Add New Bin' },
                 material: { ar: 'تعريف صنف جديد', en: 'Define New Material' },
                 stock_entry: { ar: 'إذن استلام / تحويل مخزني', en: 'Stock Inbound / Transfer' },
+                po: { ar: 'أمر توريد جديد', en: 'New Purchase Order' },
                 opco: { ar: 'إضافة شركة تابعة / مشغلة', en: 'Add Subsidiary / OpCo' }
+
             },
 
             forms: {
@@ -130,7 +133,10 @@ createApp({
                     tracking: 'none', 
                     reorder_level: 0, 
                     max_level: 0 
-                }
+                },
+                po: { id: null, vendor: '', po_number: '', lines: [{ material: '', quantity: 1, unit_price: 0 }] },
+                
+                stock_entry: { items: [], po_id: '' }
             }
         };
     },
@@ -230,6 +236,19 @@ createApp({
             link.remove();
             
             this.showToast(this.isArabic ? "تم تحميل قالب الاستيراد" : "Template downloaded", "success");
+        },
+
+        // 1. دوال التحكم في سطور أمر التوريد
+        addPOLine() {
+            this.forms.po.lines.push({ material: '', quantity: 1, unit_price: 0 });
+        },
+        
+        removePOLine(index) {
+            if (this.forms.po.lines.length > 1) {
+                this.forms.po.lines.splice(index, 1);
+            } else {
+                this.showToast(this.isArabic ? "يجب أن يحتوي الأمر على صنف واحد على الأقل" : "PO must have at least one line", 'error');
+            }
         },
 
         exportToExcel() {
@@ -1141,6 +1160,20 @@ createApp({
                     quantity: 1
                 };
             }
+            // 🚀 ضيف البلوكة دي هنا الخاصة بأمر التوريد الجديد (PO)
+            else if (type === 'po') {
+                // توليد رقم أمر توريد مقترح أوتوماتيك (زي PO-2026-0001)
+                const autoNumber = `PO-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+                
+                this.forms.po = { 
+                    id: null, 
+                    vendor: '', 
+                    po_number: autoNumber, 
+                    // السطر الافتراضي الأول في جدول الأصناف
+                    lines: [{ material: '', quantity: 1, unit_price: 0 }] 
+                };
+            }
+
             else if (type === 'opco') {
                 this.forms.opco = { 
                     id: null, 
