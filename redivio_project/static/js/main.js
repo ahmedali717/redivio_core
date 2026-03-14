@@ -1254,6 +1254,14 @@ createApp({
                 this.loading = false;
             }
         },
+
+        // ضيف دي جوه الـ methods
+        viewPODetails(po) {
+            this.modalType = 'view_po'; // هنحتاج نجهز Modal يعرض البيانات
+            this.forms.po = JSON.parse(JSON.stringify(po)); // نسخ بيانات الأمر للفورم
+            this.showModal = true;
+            this.showToast(this.isArabic ? "جاري عرض تفاصيل الأمر" : "Viewing PO Details", 'success');
+        },
         
         async fetchMaterialsList() {
             try {
