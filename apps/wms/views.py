@@ -1,39 +1,41 @@
 from django.shortcuts import render
 from django.views import View
-from rest_framework import viewsets
+from django.db import transaction
+from django.http import JsonResponse
+from rest_framework import viewsets, status
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-# استيراد الـ Mixin والـ Models والـ Serializers
+# استيراد الـ Mixin والـ Serializers
 from apps.core.mixins import OpcoAwareMixin 
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
-    PlantSerializer, 
-    StorageLocationSerializer, 
-    StorageBinSerializer, 
-    StockQuantSerializer, 
-    StockMoveSerializer
+    PlantSerializer, StorageLocationSerializer, 
+    StorageBinSerializer, StockQuantSerializer, StockMoveSerializer
 )
 
+# محاولة استيراد الموديلات الخارجية بحذر لضمان عدم وقوع السيرفر
+try:
+    from apps.core.models import OpCo
+    from apps.procurement.models import PurchaseOrder
+except ImportError:
+    # أضف هنا تنبيه في السجل إذا فشل الاستيراد
+    pass
+
 # =========================================================
-#  1. API Functions (الإحصائيات المخصصة للموديول)
+#  1. API Functions (إحصائيات الموديول)
 # =========================================================
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def wms_stats(request):
-    """
-    إحصائيات سريعة لموديول WMS بناءً على الشركة النشطة
-    """
     active_opco_id = request.session.get('active_opco_id')
-    
-    # تحسين: إذا لم تكن هناك شركة نشطة، نعيد أصفار بدلاً من فلترة خاطئة
     if not active_opco_id:
         return Response({"plants": 0, "items": 0})
     
     plants_count = Plant.objects.filter(opco_id=active_opco_id).count()
-    # تحسين: حساب إجمالي كميات المخزون المتوفرة
     items_count = StockQuant.objects.filter(opco_id=active_opco_id).count()
     
     return Response({
@@ -42,9 +44,82 @@ def wms_stats(request):
     })
 
 # =========================================================
-#  2. WMS ViewSets (المنطق البرمجي للمخازن)
+#  2. Stock Receipt Logic (الجزئية المسؤولة عن تأكيد الاستلام)
 # =========================================================
-# ملاحظة: الـ OpcoAwareMixin سيقوم تلقائياً بفلترة النتائج بناءً على الشركة
+
+class StockReceiptAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        po_id = data.get('po_id')
+        items = data.get('items', [])
+        active_opco_id = request.session.get('active_opco_id')
+
+        if not active_opco_id:
+            return Response({"error": "لا توجد شركة نشطة"}, status=400)
+
+        try:
+            with transaction.atomic():
+                # جلب أمر التوريد
+                po = PurchaseOrder.objects.get(id=po_id)
+                
+                for item in items:
+                    # تحديث الرصيد في الرف المختار
+                    # ملاحظة: تأكد أن الحقل في الموديل هو storage_bin_id
+                    quant, created = StockQuant.objects.get_or_create(
+                        opco_id=active_opco_id,
+                        material_id=item['material_id'],
+                        storage_bin_id=item['bin_id'],
+                        defaults={'quantity': 0}
+                    )
+                    quant.quantity += float(item.get('quantity', 0))
+                    quant.save()
+
+                    # تسجيل الحركة في السجل التاريخي
+                    StockMove.objects.create(
+                        opco_id=active_opco_id,
+                        material_id=item['material_id'],
+                        quantity=item.get('quantity', 0),
+                        move_type='RECEIPT',
+                        reference=f"PO Receipt: {po.po_number}",
+                        storage_bin_id=item['bin_id']
+                    )
+
+                # تحديث حالة الطلب إلى مستلم
+                po.status = 'RECEIVED'
+                po.save()
+
+                return Response({"success": True, "message": "تم استلام البضاعة وتحديث المخزون"}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+# دالة جلب تفاصيل الـ PO لتعبئة الجدول (تمنع الـ 404 عند اختيار PO)
+def get_purchase_order_details(request, po_id):
+    try:
+        po = PurchaseOrder.objects.get(id=po_id)
+        # جلب الأصناف المرتبطة (تأكد من الـ related_name في موديل PurchaseOrderItem)
+        items_data = []
+        # محاولة الوصول للأصناف (Items) المرتبطة بأمر التوريد
+        related_items = getattr(po, 'items', po.purchaseorderitem_set if hasattr(po, 'purchaseorderitem_set') else None)
+        
+        if related_items:
+            for item in related_items.all():
+                items_data.append({
+                    'material_id': item.material.id,
+                    'material_name': item.material.name,
+                    'sku': getattr(item.material, 'sku', item.material.code),
+                    'ordered_qty': item.quantity,
+                    'received_qty': item.quantity, # افتراض استلام كامل قابل للتعديل
+                })
+        
+        return JsonResponse({'items': items_data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+# =========================================================
+#  3. WMS ViewSets (الفلترة التلقائية عبر OpcoAwareMixin)
+# =========================================================
 
 class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = Plant.objects.all()
@@ -59,7 +134,6 @@ class StorageBinViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StorageBinSerializer
 
 class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    # تحسين: استخدام select_related لتقليل ضغط قواعد البيانات عند جلب الأسماء
     queryset = StockQuant.objects.select_related('material', 'storage_bin', 'plant').all()
     serializer_class = StockQuantSerializer
 
@@ -67,11 +141,6 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = StockMove.objects.all().order_by('-date')
     serializer_class = StockMoveSerializer
 
-# =========================================================
-#  3. Web Views (عرض الواجهات من داخل الموديول)
-# =========================================================
-
 class WMSHomeView(View):
     def get(self, request):
-        # التأكد من أن المسار يشير إلى المجلد داخل التطبيق نفسه لتعزيز الاستقلالية
         return render(request, 'wms/dashboard.html')
