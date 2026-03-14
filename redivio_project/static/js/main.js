@@ -409,10 +409,8 @@ createApp({
 
             try {
                 this.loading = true;
-                // 🚀 التعديل هنا: نغير المسار ليكون /api/orders/
                 const res = await fetch(`/api/orders/${poId}/`);
                 
-                // التحقق من أن الاستجابة JSON فعلاً قبل التحويل
                 const contentType = res.headers.get("content-type");
                 if (!res.ok || !contentType || !contentType.includes("application/json")) {
                     throw new Error("Invalid response from server");
@@ -421,22 +419,34 @@ createApp({
                 const data = await res.json();
                 const currentOpcoId = parseInt(this.activeOpcoId);
                 
-                // باقي اللوجيك بتاع الـ mapping...
-                this.forms.stock_entry.items = data.lines.map(i => { // تأكد إنها lines مش items
+                // 🚀 التعديل الجوهري هنا
+                this.forms.stock_entry.items = data.lines.map(i => {
                     const material = this.materials_list.find(m => m.id === i.material);
-                    let autoSelectedBin = '';
-                    // ... (باقي كود التحديد الذكي للرف)
+                    
+                    // 1. استخراج الرف الافتراضي (لو السيرفر بيبعته أو من بيانات الصنف)
+                    let autoSelectedBin = i.default_bin || ''; 
+                    if (!autoSelectedBin && material?.company_assignments) {
+                        const assign = material.company_assignments.find(a => parseInt(a.opco_id) === currentOpcoId);
+                        autoSelectedBin = assign?.primary_bin || (assign?.bins?.length > 0 ? assign.bins[0] : '');
+                    }
+
                     return {
                         material_id: i.material,
-                        material_name: i.material_name || material?.name,
-                        ordered_qty: i.quantity,
-                        received_qty: i.quantity,
-                        bin_id: autoSelectedBin
+                        material_name: i.material_name || material?.name || 'Unknown',
+                        // 2. إظهار الـ SKU (تأكد إن السيرفر بيبعته باسم material_sku)
+                        sku: i.material_sku || material?.sku || 'N/A', 
+                        // 3. دعم الاستلام الجزئي (Partial)
+                        ordered_qty: parseFloat(i.quantity), // الكمية الأصلية في الطلب
+                        received_qty: parseFloat(i.quantity), // الكمية المستلمة (قابلة للتعديل يدوياً)
+                        bin_id: autoSelectedBin // الرف المربوط تلقائياً
                     };
                 });
+
+                this.showToast(this.isArabic ? "تم تحميل تفاصيل الأصناف" : "Items loaded", 'success');
+
             } catch (e) {
                 console.error(e);
-                this.showToast(this.isArabic ? "خطأ في جلب أمر التوريد" : "Error fetching PO", 'error');
+                this.showToast(this.isArabic ? "خطأ في جلب بيانات الأصناف" : "Error fetching items", 'error');
             } finally {
                 this.loading = false;
             }
