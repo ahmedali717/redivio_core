@@ -33,7 +33,18 @@
         <i class="fas fa-boxes-stacked w-6 text-center text-lg"></i>
         <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'إدارة المستودعات' : 'Inventory Module' ]]</span>
     </a>
+
+    <a href="#" @click.prevent="view = 'procurement_module'" 
+           :class="view === 'procurement_module' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:bg-slate-800'"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
+           :class="{'border-emerald-400': view === 'procurement_module'}">
+            <i class="fas fa-file-invoice-dollar w-6 text-center text-lg"></i>
+            <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'إدارة المشتريات' : 'Procurement' ]]</span>
+        </a>
+        
 </div>
+
+
 
         <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mt-8 mb-2 overflow-hidden">
             <span v-show="!sidebarCollapsed">[[ isArabic ? 'الإعدادات والتهيئة' : 'Configuration' ]]</span>
