@@ -89,7 +89,18 @@
                 </div>
             </div>
 
-            <div v-show="isScanning" id="reader" class="rounded-[2rem] overflow-hidden border-4 border-emerald-500/20 bg-black aspect-video relative"></div>
+            <div v-show="isScanning" class="relative group animate-in zoom-in-95 duration-300">
+    <button @click="stopScanner" 
+            class="absolute top-4 right-4 z-[100] bg-red-500 hover:bg-red-600 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all active:scale-90 border-2 border-white">
+        <i class="fas fa-times text-lg"></i>
+    </button>
+
+    <div id="reader" class="rounded-[2rem] overflow-hidden border-4 border-emerald-500/20 bg-black aspect-video shadow-2xl"></div>
+    
+    <p class="text-center text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-widest">
+        [[ isArabic ? 'ضع الباركود في منتصف المربع' : 'Center barcode within the frame' ]]
+    </p>
+</div>
 
             <div class="rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
                 <table class="w-full text-right bg-white">
