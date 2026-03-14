@@ -8,15 +8,40 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+# استيراد الـ Mixin والـ Models والـ Serializers
 from apps.core.mixins import OpcoAwareMixin 
 from apps.core.models import OpCo
 from apps.procurement.models import PurchaseOrder
 
+# تأكد أن هذه الموديلات موجودة في نفس تطبيق الـ WMS
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
     PlantSerializer, StorageLocationSerializer, 
     StorageBinSerializer, StockQuantSerializer, StockMoveSerializer
 )
+
+# =========================================================
+#  1. API Functions (إحصائيات الموديول)
+# =========================================================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def wms_stats(request):
+    active_opco_id = request.session.get('active_opco_id')
+    if not active_opco_id:
+        return Response({"plants": 0, "items": 0})
+    
+    plants_count = Plant.objects.filter(opco_id=active_opco_id).count()
+    items_count = StockQuant.objects.filter(opco_id=active_opco_id).count()
+    
+    return Response({
+        "plants": plants_count,
+        "items": items_count
+    })
+
+# =========================================================
+#  2. Stock Receipt Logic (حل مشكلة الـ 404 لزر التأكيد)
+# =========================================================
 
 class StockReceiptAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -28,52 +53,73 @@ class StockReceiptAPI(APIView):
         active_opco_id = request.session.get('active_opco_id')
 
         if not active_opco_id:
-            return Response({"error": "لا توجد شركة نشطة"}, status=400)
+            return Response({"error": "No active company"}, status=400)
 
         try:
             with transaction.atomic():
+                # 1. جلب أمر التوريد
+                from apps.procurement.models import PurchaseOrder
                 po = PurchaseOrder.objects.get(id=po_id)
                 
                 for item in items:
-                    # ✅ بناءً على موديل StockMove عندك، الدالة save() بتحدث الرصيد تلقائياً
-                    # إحنا بس محتاجين نسجل الحركة صح
+                    # 🚀 التعديل الجوهري: جلب الـ Bin أولاً لمعرفة الـ Plant المرتبط به
+                    target_bin = StorageBin.objects.select_related('storage_location__plant').get(id=item['bin_id'])
+                    target_plant = target_bin.storage_location.plant
+
+                    # 2. تحديث الرصيد الحالي (StockQuant) - أضفنا الـ plant_id هنا
+                    quant, created = StockQuant.objects.get_or_create(
+                        opco_id=active_opco_id,
+                        plant=target_plant, # <--- ده اللي كان ناقص ومسبب الـ 400
+                        material_id=item['material_id'],
+                        storage_bin=target_bin,
+                        defaults={'quantity': 0}
+                    )
+                    quant.quantity += float(item.get('quantity', 0))
+                    quant.save()
+
+                    # 3. تسجيل الحركة التاريخية (StockMove)
+                    # لاحظ: الموديل عندك بيستخدم dest_bin مش storage_bin
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
-                        quantity=float(item.get('quantity', 0)),
+                        quantity=item.get('quantity', 0),
                         move_type='RECEIPT',
                         reference=f"PO Receipt: {po.po_number}",
-                        dest_bin_id=item['bin_id'], # ✅ تم التصحيح ليتوافق مع الموديل
-                        vendor_name=getattr(po.vendor, 'name', '')
+                        dest_bin=target_bin,
+                        vendor_name=getattr(po.vendor, 'name', '') # إضافة اسم المورد لو متاح
                     )
 
-                # تحديث حالة أمر التوريد
+                # 4. تحديث حالة الـ PO
                 po.status = 'RECEIVED'
                 po.save()
 
                 return Response({"success": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            # إرجاع الخطأ الفعلي للمساعدة في التشخيص
+            # نصيحة: رجع الخطأ الفعلي عشان تظهر لك في الـ Console لو حصلت تاني
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
+# دالة جلب تفاصيل الـ PO لتعبئة الجدول (تمنع الـ 404 عند اختيار PO)
 def get_purchase_order_details(request, po_id):
     try:
         po = PurchaseOrder.objects.get(id=po_id)
-        # ✅ التصحيح: العلاقة في الموديل اسمها 'lines' وليس 'items'
-        items_data = [{
-            'material_id': line.material.id,
-            'material_name': line.material.name,
-            'sku': getattr(line.material, 'sku', line.material.code),
-            'ordered_qty': line.quantity,
-            'received_qty': line.quantity,
-        } for line in po.lines.all()]
+        # جلب الأصناف المرتبطة (تأكد من الـ related_name في موديل PurchaseOrder)
+        # سنحاول الوصول إليها بمرونة
+        items_source = getattr(po, 'items', None) or po.purchaseorderitem_set
+        
+        items_data = []
+        for item in items_source.all():
+            items_data.append({
+                'material_id': item.material.id,
+                'material_name': item.material.name,
+                'sku': getattr(item.material, 'sku', item.material.code),
+                'ordered_qty': item.quantity,
+                'received_qty': item.quantity,
+            })
         
         return JsonResponse({'items': items_data})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=404)
 
-# باقي الـ ViewSets (Plant, Location, etc.) تظل كما هي في ملفك الأصلي
 # =========================================================
 #  3. WMS ViewSets (الفلترة التلقائية عبر OpcoAwareMixin)
 # =========================================================
