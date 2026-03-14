@@ -10,6 +10,7 @@ createApp({
     data() {
         return {
             searchQuery: '',
+            scannerInstance: null,
             isScanning: false, // لازم يتعرف هنا عشان الـ HTML يشوفه
             barcodeQuery: '',
             // 🚀 ضيف المتغير ده هنا في أول سطر
