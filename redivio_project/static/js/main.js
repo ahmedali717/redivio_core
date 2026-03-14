@@ -260,17 +260,21 @@ createApp({
         startCameraScan() {
             this.isScanning = true;
             this.$nextTick(() => {
-                const html5QrCode = new Html5Qrcode("reader");
-                html5QrCode.start(
+                // ننشئ النسخة ونخزنها في المرجع بتاعنا
+                this.scannerInstance = new Html5Qrcode("reader");
+                
+                this.scannerInstance.start(
                     { facingMode: "environment" }, 
                     { fps: 10, qrbox: { width: 250, height: 250 } },
                     (decodedText) => {
                         this.barcodeQuery = decodedText;
-                        this.scanBarcode(); // دالة البحث عن الصنف
-                        html5QrCode.stop();
-                        this.isScanning = false;
+                        this.scanBarcode(); 
+                        this.stopScanner(); // نقفل بعد ما نلاقي الكود
                     }
-                ).catch(err => console.error("Camera Error:", err));
+                ).catch(err => {
+                    console.error("Camera Error:", err);
+                    this.isScanning = false;
+                });
             });
         },
 
@@ -285,6 +289,21 @@ createApp({
             }
             this.barcodeQuery = '';
         },
+
+        async stopScanner() {
+            if (this.scannerInstance) {
+                try {
+                    await this.scannerInstance.stop();
+                    this.scannerInstance = null; // نمسح المرجع
+                    this.isScanning = false;
+                    console.log("Camera Off");
+                } catch (err) {
+                    console.warn("Stop failed or already stopped:", err);
+                }
+            }
+        },
+
+        
 
         // 🚀 دالة تحميل قالب الاستيراد (Template)
         downloadTemplate() {
