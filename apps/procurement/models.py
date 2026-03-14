@@ -21,6 +21,8 @@ class PurchaseOrder(models.Model):
     date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
     
+    extra_data = models.JSONField(default=dict, blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
