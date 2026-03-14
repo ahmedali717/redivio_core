@@ -1,13 +1,12 @@
 <div class="h-full flex flex-col space-y-8 p-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
     
-    <div v-if="!activeOperation" class="grid grid-cols-1 md:grid-cols-2 gap-10">
+    <div v-if="!activeOperation" key="selection-screen" class="grid grid-cols-1 md:grid-cols-2 gap-10">
         
         <div class="space-y-6">
             <div class="flex items-center gap-3 mb-2 px-2">
                 <div class="w-2 h-8 bg-emerald-500 rounded-full"></div>
                 <h3 class="text-xl font-black text-slate-800 tracking-tight">[[ isArabic ? 'عمليات الإضافة' : 'Incoming' ]]</h3>
             </div>
-            
             <div class="grid gap-4">
                 <button v-for="op in [{id:'po_receipt', ar:'إضافة من أمر توريد', en:'PO Receipt', icon:'fa-file-import'}, {id:'mrp_receipt', ar:'إضافة من أمر تصنيع', en:'Production Receipt', icon:'fa-industry'}, {id:'so_return', ar:'مرتجع من أمر بيع', en:'Sales Return', icon:'fa-undo-alt'}]"
                         :key="op.id"
@@ -34,7 +33,6 @@
                 <div class="w-2 h-8 bg-rose-500 rounded-full"></div>
                 <h3 class="text-xl font-black text-slate-800 tracking-tight">[[ isArabic ? 'عمليات الصرف' : 'Outgoing' ]]</h3>
             </div>
-            
             <div class="grid gap-4">
                 <button v-for="op in [{id:'so_delivery', ar:'صرف لأمر بيع', en:'Sales Delivery', icon:'fa-shipping-fast'}, {id:'internal_transfer', ar:'تحويل داخلي', en:'Internal Transfer', icon:'fa-exchange-alt'}, {id:'scrap', ar:'تسجيل هالك', en:'Scrap Management', icon:'fa-dumpster'}]"
                         :key="op.id"
@@ -57,8 +55,8 @@
         </div>
     </div>
 
-    <transition enter-active-class="animate-in zoom-in-95 duration-500" leave-active-class="animate-out zoom-out-95 duration-300">
-        <div v-if="activeOperation" class="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden flex-1 flex flex-col">
+    <transition mode="out-in" enter-active-class="animate-in zoom-in-95 duration-500" leave-active-class="animate-out zoom-out-95 duration-300">
+        <div v-if="activeOperation" :key="activeOperation" class="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden flex-1 flex flex-col">
             
             <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
                 <div class="flex items-center gap-4">
@@ -67,7 +65,7 @@
                     </button>
                     <div>
                         <h3 class="font-black text-slate-800 text-lg">[[ getOperationTitle() ]]</h3>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Draft • [[ activeOperation ]]</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">[[ activeOperation ]]</p>
                     </div>
                 </div>
             </div>
@@ -77,35 +75,35 @@
                     <div class="space-y-3">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'اختيار أمر التوريد' : 'Select PO' ]]</label>
                         <select v-model="forms.stock_entry.po_id" @change="fetchPODetails" 
-                                class="w-full bg-slate-50 border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 shadow-sm appearance-none">
-                            <option value="">[[ isArabic ? 'اختر رقم الأمر...' : 'Select PO...' ]]</option>
+                                class="w-full bg-slate-50 border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-emerald-500 appearance-none">
+                            <option value="">[[ isArabic ? 'اختر رقم الأمر...' : 'Select PO Number...' ]]</option>
                             <option v-for="po in pending_pos" :key="po.id" :value="po.id">[[ po.po_number ]] — [[ po.vendor_name ]]</option>
                         </select>
                     </div>
                     <div class="space-y-3">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'باركود / SKU' : 'Quick Scan' ]]</label>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'مسح باركود / SKU' : 'Barcode Scanner' ]]</label>
                         <div class="flex gap-2">
                             <input v-model="barcodeQuery" @keyup.enter="scanBarcode" class="flex-1 bg-slate-50 border-slate-100 rounded-2xl py-4 px-5 font-bold" placeholder="Scan SKU...">
-                            <button @click="startCameraScan" class="bg-slate-900 text-white w-14 rounded-2xl hover:bg-emerald-600 shadow-lg transition-all"><i class="fas fa-camera text-lg"></i></button>
+                            <button @click="startCameraScan" class="bg-slate-900 text-white w-14 rounded-2xl shadow-lg hover:bg-emerald-600 transition-all"><i class="fas fa-camera text-lg"></i></button>
                         </div>
                     </div>
                 </div>
 
-                <div v-show="isScanning" id="reader" class="rounded-[2rem] overflow-hidden border-4 border-emerald-500/20 bg-black aspect-video relative shadow-inner"></div>
+                <div v-show="isScanning" id="reader" class="rounded-[2rem] overflow-hidden border-4 border-emerald-500/20 bg-black aspect-video relative"></div>
 
-                <div class="rounded-3xl border border-slate-100 overflow-hidden shadow-sm bg-slate-50/30">
-                    <table class="w-full text-right">
-                        <thead class="bg-white border-b border-slate-100">
+                <div class="rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
+                    <table class="w-full text-right bg-white">
+                        <thead class="bg-slate-50 border-b border-slate-100">
                             <tr>
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">SKU</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">[[ isArabic ? 'الصنف' : 'Material' ]]</th>
+                                <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase">SKU</th>
+                                <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase">[[ isArabic ? 'الصنف' : 'Material' ]]</th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase text-center">[[ isArabic ? 'المطلوب' : 'Ordered' ]]</th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase text-center">[[ isArabic ? 'المستلم' : 'Received' ]]</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">[[ isArabic ? 'الرف' : 'Bin' ]]</th>
+                                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase text-center">[[ isArabic ? 'الرف' : 'Bin' ]]</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="(item, index) in forms.stock_entry.items" :key="index" :class="{'bg-emerald-50/50': barcodeQuery === item.sku}" class="bg-white transition-colors">
+                        <tbody class="divide-y divide-slate-50">
+                            <tr v-for="(item, index) in forms.stock_entry.items" :key="index" :class="{'bg-emerald-50/50': barcodeQuery === item.sku}" class="transition-colors">
                                 <td class="px-6 py-4"><span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-mono text-xs font-black">[[ item.sku ]]</span></td>
                                 <td class="px-6 py-4 font-bold text-slate-800 text-sm">[[ item.material_name ]]</td>
                                 <td class="px-6 py-4 text-center font-bold text-slate-400">[[ item.ordered_qty ]]</td>
@@ -113,7 +111,7 @@
                                     <input type="number" v-model="item.received_qty" class="w-24 bg-emerald-50 border border-emerald-100 rounded-xl py-2 px-3 text-center font-black text-emerald-700">
                                 </td>
                                 <td class="px-6 py-4">
-                                    <select v-model="item.bin_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold py-2">
+                                    <select v-model="item.bin_id" class="w-full bg-slate-50 border-slate-200 rounded-xl text-[10px] font-bold py-2">
                                         <option value="">Bin...</option>
                                         <option v-for="bin in bins" :key="bin.id" :value="bin.id">[[ bin.code ]]</option>
                                     </select>
