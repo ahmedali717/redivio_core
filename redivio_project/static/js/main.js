@@ -272,18 +272,17 @@ createApp({
             this.$nextTick(() => {
                 this.scannerInstance = new Html5Qrcode("reader");
                 
-                // 🚀 ذكاء اصطناعي للشاشة: لو موبايل صغر المربع، لو كمبيوتر كبره
-                const screenWidth = window.innerWidth;
-                const scanBoxWidth = screenWidth < 500 ? 220 : 300; 
-
+                // إعدادات مخصصة لاصطياد الباركود الخطي (1D) بسرعة
                 const config = { 
-                    fps: 15, 
-                    qrbox: { width: scanBoxWidth, height: 120 }, // مربع مريح لعين الموبايل
-                    // شيلنا الـ aspectRatio خالص عشان الكاميرا تفتح بأبعادها الطبيعية
+                    fps: 10, // 10 فريم في الثانية أفضل ثباتاً من 15
+                    qrbox: { width: 280, height: 80 }, // مستطيل عريض ورفيع جداً يناسب الباركود العادي
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true // 🚀 السر هنا: بيشغل حساس الكاميرا الأصلي للموبايل (سريع جداً)
+                    }
                 };
                 
                 this.scannerInstance.start(
-                    { facingMode: "environment" }, // يفتح الكاميرا الخلفية دائماً
+                    { facingMode: "environment" }, // الكاميرا الخلفية
                     config,
                     (decodedText) => {
                         // أول ما الكاميرا تلقط رقم
