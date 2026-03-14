@@ -1,18 +1,16 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
+from .views import receive_stock
 
-# 1. إعداد الراوتر للـ ViewSets (العناوين التلقائية)
+# إعداد الراوتر للـ ViewSets
+# تأكد من أن الأسماء هنا تطابق تماماً ما نطلبه في fetch() داخل ملفات الـ JavaScript
 router = DefaultRouter()
 router.register(r'dashboard-data', views.DashboardDataViewSet, basename='dashboard-data')
 router.register(r'opcos', views.OpCoViewSet, basename='opcos')
 router.register(r'plants', views.PlantViewSet, basename='plants')
 router.register(r'locations', views.LocationViewSet, basename='locations')
 router.register(r'bins', views.StorageBinViewSet, basename='bins')
-
-# 🚀 تسجيل راوتر أوامر التوريد (المشتريات) - لخدمة /api/orders/
-router.register(r'orders', views.PurchaseOrderViewSet, basename='purchaseorder')
-router.register(r'vendors', views.VendorViewSet, basename='vendors')
 
 urlpatterns = [
     # ==========================================
@@ -33,13 +31,9 @@ urlpatterns = [
     # 2. روابط الـ API والـ Router
     # ==========================================
     
-    # روابط الراوتر التلقائية (ViewSets) تحت مسار /api/
+    # روابط الراوتر التلقائية (ViewSets)
     path('api/', include(router.urls)), 
     
-    # 🚀 رابط استلام البضاعة (المخازن) - لخدمة /api/stock-receipts/
-    # تأكد أن اسم الدالة في views.py هو receive_stock
-    path('api/stock-receipts/', views.receive_stock, name='api_stock_receipts'),
-
     # روابط المصادقة والتحكم (Custom API Views)
     path('api/login/', views.LoginAPI.as_view(), name='api_login'),
     path('api/signup/', views.TenantSignupAPI.as_view(), name='api_signup'),
