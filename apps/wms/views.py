@@ -7,8 +7,14 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+import traceback  # 👈 أضفنا المكتبة دي عشان تصطاد العطل بالظبط
 
-# استيراد الموديلات الأساسية في التطبيق نفسه
+# استيراد الـ Mixin والـ Models والـ Serializers
+from apps.core.mixins import OpcoAwareMixin 
+from apps.core.models import OpCo
+from apps.procurement.models import PurchaseOrder
+
+# تأكد أن هذه الموديلات موجودة في نفس تطبيق الـ WMS
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
     PlantSerializer, StorageLocationSerializer, 
@@ -16,8 +22,9 @@ from .serializers import (
 )
 
 # =========================================================
-#  1. إحصائيات المخزن
+#  1. API Functions (إحصائيات الموديول)
 # =========================================================
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def wms_stats(request):
@@ -34,18 +41,13 @@ def wms_stats(request):
     })
 
 # =========================================================
-#  2. تنفيذ استلام المشتريات
+#  2. Stock Receipt Logic
 # =========================================================
+
 class StockReceiptAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # استيراد داخلي لمنع الـ Circular Import أو وقوع السيرفر
-        try:
-            from apps.procurement.models import PurchaseOrder
-        except ImportError:
-            from procurement.models import PurchaseOrder
-
         data = request.data
         po_id = data.get('po_id')
         items = data.get('items', [])
@@ -59,17 +61,35 @@ class StockReceiptAPI(APIView):
                 po = PurchaseOrder.objects.get(id=po_id)
                 
                 for item in items:
-                    target_bin = StorageBin.objects.get(id=item['bin_id'])
+                    # 1. التأكد من وجود الـ Bin
+                    bin_id = item.get('bin_id')
+                    if not bin_id:
+                        raise ValueError(f"الرف غير محدد للصنف {item.get('material_id')}")
 
-                    # ✅ بنسجل الحركة فقط، والموديل (ملف 27) هيحدث الرصيد تلقائياً في الـ save
+                    target_bin = StorageBin.objects.select_related('storage_location__plant').get(id=bin_id)
+                    target_plant = target_bin.storage_location.plant
+
+                    # 2. تحديث الرصيد (StockQuant)
+                    quant, created = StockQuant.objects.get_or_create(
+                        opco_id=active_opco_id,
+                        plant=target_plant, 
+                        material_id=item['material_id'],
+                        storage_bin=target_bin,
+                        defaults={'quantity': 0}
+                    )
+                    quant.quantity += float(item.get('quantity', 0))
+                    quant.save()
+
+                    # 3. تسجيل الحركة التاريخية (StockMove)
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
                         quantity=float(item.get('quantity', 0)),
-                        move_type='RECEIPT',
+                        move_type='RECEIPT', # ⚠️ لو الـ DB رافضة الكلمة دي، الخطأ هيظهرلنا
                         reference=f"PO Receipt: {po.po_number}",
                         dest_bin=target_bin,
-                        vendor_name=getattr(po.vendor, 'name', '')
+                        # أوقفنا حقل المورد مؤقتاً لاحتمال عدم وجوده في قاعدة البيانات
+                        # vendor_name=getattr(po.vendor, 'name', '') 
                     )
 
                 po.status = 'RECEIVED'
@@ -77,29 +97,27 @@ class StockReceiptAPI(APIView):
 
                 return Response({"success": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            # 🚀 هنا السحر: هنرجع تفاصيل المشكلة (Traceback) كاملة للفرونت إند!
+            error_details = traceback.format_exc()
+            return Response({
+                "error": str(e),
+                "trace": error_details
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-# =========================================================
-#  3. جلب تفاصيل الـ PO (المتوافق مع Related Name 'lines')
-# =========================================================
+# دالة جلب تفاصيل الـ PO
 def get_purchase_order_details(request, po_id):
     try:
-        try:
-            from apps.procurement.models import PurchaseOrder
-        except ImportError:
-            from procurement.models import PurchaseOrder
-
         po = PurchaseOrder.objects.get(id=po_id)
+        items_source = getattr(po, 'items', None) or po.purchaseorderitem_set
         
-        # ✅ بنستخدم lines لأنك معرفها كدة في موديل الـ PurchaseOrderLine
         items_data = []
-        for line in po.lines.all():
+        for item in items_source.all():
             items_data.append({
-                'material_id': line.material.id,
-                'material_name': line.material.name,
-                'sku': getattr(line.material, 'sku', line.material.code),
-                'ordered_qty': line.quantity,
-                'received_qty': line.quantity,
+                'material_id': item.material.id,
+                'material_name': item.material.name,
+                'sku': getattr(item.material, 'sku', item.material.code),
+                'ordered_qty': item.quantity,
+                'received_qty': item.quantity,
             })
         
         return JsonResponse({'items': items_data})
@@ -107,9 +125,8 @@ def get_purchase_order_details(request, po_id):
         return JsonResponse({'error': str(e)}, status=404)
 
 # =========================================================
-#  4. الـ ViewSets (مع تصحيح حقل الترتيب)
+#  3. WMS ViewSets 
 # =========================================================
-from apps.core.mixins import OpcoAwareMixin 
 
 class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = Plant.objects.all()
@@ -128,8 +145,7 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockQuantSerializer
 
 class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    # ✅ تم التغيير من date (غير موجود) إلى created_at (موجود)
-    queryset = StockMove.objects.all().order_by('-created_at')
+    queryset = StockMove.objects.all().order_by('-date')
     serializer_class = StockMoveSerializer
 
 class WMSHomeView(View):
