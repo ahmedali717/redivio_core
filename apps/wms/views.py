@@ -61,26 +61,24 @@ class StockReceiptAPI(APIView):
                 po = PurchaseOrder.objects.get(id=po_id)
                 
                 for item in items:
-                    # تحديث أو إنشاء الرصيد في الرف المختار
-                    # ملاحظة: تأكد أن الحقول تطابق الـ Model (storage_bin_id)
-                    quant, created = StockQuant.objects.get_or_create(
+                    # 1. تحديث الرصيد الحالي
+                    quant, _ = StockQuant.objects.get_or_create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
-                        storage_bin_id=item['bin_id'],
+                        storage_bin_id=item['bin_id'], # تأكد أن StockQuant لديه storage_bin
                         defaults={'quantity': 0}
                     )
                     quant.quantity += float(item.get('quantity', 0))
                     quant.save()
 
-                    # تسجيل حركة مخزنية في السجل التاريخي
-                    # تسجيل حركة مخزنية (داخل الـ loop)
+                    # 2. تسجيل الحركة التاريخية (تعديل الحقل لـ dest_bin)
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
                         quantity=item.get('quantity', 0),
                         move_type='RECEIPT',
-                        reference=f"PO Receipt: {po.po_number}",
-                        dest_bin_id=item['bin_id']  # <--- غيرنا storage_bin_id لـ dest_bin_id ليتوافق مع الموديل
+                        reference=f"إذن استلام: {po.po_number}",
+                        dest_bin_id=item['bin_id'] # ✅ تم التعديل هنا
                     )
 
                 # تحديث حالة أمر التوريد (حسب نظامك)

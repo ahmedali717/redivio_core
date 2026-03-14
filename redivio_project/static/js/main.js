@@ -566,7 +566,7 @@ createApp({
                 this.showToast(this.isArabic ? "جاري معالجة الاستلام..." : "Processing receipt...", 'success');
 
                 // هنبعت الداتا للباك-إند (لازم تكون مجهز Endpoint يستقبل ده في Django)
-                const res = await fetch('/api/stock-receipts/', {
+                const response = await fetch('/api/wms/stock-receipts/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
