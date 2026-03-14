@@ -58,9 +58,41 @@
     </div>
 </div>
 
-            <div v-if="view === 'procurement'">
-                <div class="p-10 text-center text-slate-400">[[ isArabic ? 'واجهة المشتريات قيد التطوير...' : 'Procurement module is under development...' ]]</div>
-            </div>
+            <div v-if="view === 'procurement_module'" class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full animate-in fade-in duration-500">
+    
+    <div class="px-6 py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white">
+        <div>
+            <h2 class="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                <i class="fas fa-file-invoice-dollar text-emerald-500"></i>
+                [[ isArabic ? 'إدارة المشتريات' : 'Procurement Management' ]]
+            </h2>
+            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-widest mt-1">
+                [[ isArabic ? 'أوامر التوريد والموردين' : 'Purchase Orders & Vendors' ]]
+            </p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button class="bg-slate-50 border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all font-bold text-sm flex items-center gap-2 shadow-sm">
+                <i class="fas fa-truck-loading"></i> <span class="hidden md:inline">[[ isArabic ? 'الموردين' : 'Vendors' ]]</span>
+            </button>
+
+            <button @click="openModal('po')" 
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 text-xs shadow-lg shadow-emerald-200">
+                <i class="fas fa-plus"></i>
+                [[ isArabic ? 'أمر توريد جديد' : 'New PO' ]]
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 p-12 flex flex-col items-center justify-center text-center space-y-4 bg-slate-50/30">
+        <div class="w-24 h-24 bg-white shadow-sm border border-slate-100 rounded-full flex items-center justify-center animate-bounce">
+            <i class="fas fa-shopping-cart text-3xl text-emerald-300"></i>
+        </div>
+        <h4 class="font-bold text-slate-600 text-lg">[[ isArabic ? 'لا توجد أوامر توريد' : 'No Purchase Orders' ]]</h4>
+        <p class="text-slate-400 text-sm">[[ isArabic ? 'اضغط على "أمر توريد جديد" لإنشاء طلب شراء للموردين' : 'Click "New PO" to create a purchase request' ]]</p>
+    </div>
+
+</div>
 
             <div v-if="view === 'global_config'" class="animate-in fade-in duration-500">
     <div class="flex items-center justify-between mb-8">

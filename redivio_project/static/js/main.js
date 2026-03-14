@@ -40,7 +40,8 @@ createApp({
                 operations: [
                     { id: 'org_builder', name: { ar: 'بناء الهيكل', en: 'Org Builder' }, icon: 'fas fa-sitemap' },
                     // موديول واحد شامل للمخزون
-                    { id: 'inventory_module', name: { ar: 'إدارة المستودعات', en: 'Inventory WMS' }, icon: 'fas fa-boxes-stacked' }
+                    { id: 'inventory_module', name: { ar: 'إدارة المستودعات', en: 'Inventory WMS' }, icon: 'fas fa-boxes-stacked' },
+                    { id: 'procurement_module', name: { ar: 'إدارة المشتريات', en: 'Procurement' }, icon: 'fas fa-file-invoice-dollar' }
                 ]
             },
 
@@ -382,7 +383,79 @@ createApp({
                 this.loading = false;
             }
         },
-    
+        
+        async fetchPendingPOs() {
+            try {
+                // هنجيب أوامر التوريد اللي حالتها Confirmed (جاهزة للاستلام) للشركة الحالية
+                const url = this.activeOpcoId 
+                    ? `/api/purchase-orders/?status=CONFIRMED&opco=${this.activeOpcoId}` 
+                    : '/api/purchase-orders/?status=CONFIRMED';
+                    
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    // تأكد إنك ضايف pending_pos: [] في الـ data() فوق
+                    this.pending_pos = Array.isArray(data) ? data : (data.results || []);
+                }
+            } catch (e) {
+                console.error("Error fetching POs:", e);
+            }
+        },
+
+        async validateReceipt() {
+            const entry = this.forms.stock_entry;
+            
+            // تحقق إن المستخدم اختار PO
+            if (!entry.po_id) {
+                this.showToast(this.isArabic ? "برجاء اختيار أمر توريد" : "Please select a PO", 'error');
+                return;
+            }
+
+            // تحقق إن كل صنف تم تحديد رف له وكمية
+            const invalidItems = entry.items.filter(i => !i.bin_id || i.received_qty <= 0);
+            if (invalidItems.length > 0) {
+                this.showToast(this.isArabic ? "برجاء تحديد الرف والكمية لكل الأصناف" : "Please select bin and valid quantity for all items", 'error');
+                return;
+            }
+
+            try {
+                this.loading = true;
+                this.showToast(this.isArabic ? "جاري معالجة الاستلام..." : "Processing receipt...", 'success');
+
+                // هنبعت الداتا للباك-إند (لازم تكون مجهز Endpoint يستقبل ده في Django)
+                const res = await fetch('/api/stock-receipts/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        po_id: entry.po_id,
+                        opco_id: this.activeOpcoId,
+                        items: entry.items.map(item => ({
+                            material_id: item.material_id,
+                            quantity: item.received_qty,
+                            bin_id: item.bin_id
+                        }))
+                    })
+                });
+
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم استلام البضاعة وتحديث الأرصدة بنجاح" : "Stock received and updated successfully", 'success');
+                    this.goBackToOperations(); // نرجع للشاشة الرئيسية
+                    await this.refreshAllData(); // نحدث الأرصدة في الداشبورد
+                } else {
+                    const error = await res.json();
+                    this.showToast(error.detail || (this.isArabic ? "فشل الاستلام" : "Receipt failed"), 'error');
+                }
+            } catch (e) {
+                this.showToast("Network Error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+
         // أضف هذه الدوال داخل methods
         addCompanyRow() {
             // التأكد من وجود الكائن والمصفوفة أولاً لتجنب الـ TypeError
