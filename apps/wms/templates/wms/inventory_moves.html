@@ -83,8 +83,8 @@
                 <div class="space-y-3">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'باركود / SKU' : 'Barcode' ]]</label>
                     <div class="flex gap-2">
-                        <input v-model="barcodeQuery" class="flex-1 bg-slate-50 border-slate-100 rounded-2xl py-4 px-5 font-bold" placeholder="Scan SKU...">
-                        <button @click="startCameraScan" class="bg-slate-900 text-white w-14 rounded-2xl shadow-lg"><i class="fas fa-camera"></i></button>
+                        <input v-model="barcodeQuery" @keyup.enter="processBarcodeManual" class="flex-1 bg-slate-50 border-slate-100 rounded-2xl py-4 px-5 font-bold focus:border-emerald-400 focus:ring focus:ring-emerald-200 transition-all" placeholder="Scan SKU...">
+                        <button @click="startCameraScan" class="bg-slate-900 text-white w-14 rounded-2xl shadow-lg hover:bg-slate-800 transition-all active:scale-95"><i class="fas fa-camera"></i></button>
                     </div>
                 </div>
             </div>
@@ -144,6 +144,47 @@
                 <i class="fas fa-tools text-3xl text-slate-200"></i>
             </div>
             <p class="text-slate-400 font-medium italic">[[ isArabic ? 'جاري تجهيز حقول الإدخال الذكية...' : 'Preparing fields...' ]]</p>
+        </div>
+    </div>
+    <div v-if="showQtyModal" class="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+    <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 mx-4">
+        <div class="bg-emerald-500 p-6 text-center relative">
+            <h3 class="text-white text-xl font-black tracking-tight">[[ isArabic ? 'تم التقاط الصنف بنجاح' : 'Item Scanned' ]]</h3>
+            <button @click="closeQtyModal" class="absolute top-6 right-6 text-white/80 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="p-8 text-center space-y-5">
+            <div class="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto text-4xl mb-2 shadow-inner">
+                <i class="fas fa-box-open"></i>
+            </div>
+            
+            <div>
+                <h4 class="text-2xl font-black text-slate-800 mb-1">[[ scannedItemData.material_name ]]</h4>
+                <p class="text-xs font-bold text-slate-400 font-mono tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-100">SKU: [[ scannedItemData.sku ]]</p>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-4 flex justify-between items-center border border-slate-100">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'المطلوب في الأمر' : 'Ordered' ]]</span>
+                <span class="text-xl font-black text-slate-700">[[ scannedItemData.ordered_qty ]]</span>
+            </div>
+            
+            <div class="pt-2">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">[[ isArabic ? 'الكمية المستلمة (تلقائي 1)' : 'Received Qty' ]]</label>
+                <div class="flex items-center justify-center gap-3">
+                    <button @click="scannedItemData.scan_qty > 1 ? scannedItemData.scan_qty-- : null" class="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 text-slate-600 font-black text-2xl hover:bg-slate-100 active:scale-95 transition-all">-</button>
+                    
+                    <input type="number" v-model.number="scannedItemData.scan_qty" ref="qtyInput" @keyup.enter="confirmScannedQty" class="w-28 h-14 bg-white border-2 border-emerald-100 rounded-2xl text-center font-black text-2xl text-emerald-600 focus:outline-none focus:border-emerald-500 shadow-sm transition-all">
+                    
+                    <button @click="scannedItemData.scan_qty++" class="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 text-slate-600 font-black text-2xl hover:bg-slate-100 active:scale-95 transition-all">+</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-6 border-t border-slate-50 flex gap-4 bg-slate-50/50">
+            <button @click="closeQtyModal" class="flex-1 py-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-2xl font-black transition-all active:scale-95">[[ isArabic ? 'إلغاء' : 'Cancel' ]]</button>
+            <button @click="confirmScannedQty" class="flex-[2] py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black shadow-lg shadow-emerald-600/20 transition-all active:scale-95">[[ isArabic ? 'تأكيد الإضافة' : 'Confirm' ]]</button>
         </div>
     </div>
 </div>
