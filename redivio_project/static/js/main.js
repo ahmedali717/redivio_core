@@ -270,45 +270,37 @@ createApp({
         startCameraScan() {
             this.isScanning = true;
             this.$nextTick(() => {
-                // 🚀 1. هنحدد للمكتبة أنواع الباركود الخطي بالظبط عشان متدورش في الفاضي
-                // (EAN_13 ده هو باركود قزازة الماية وكل المنتجات السوبر ماركت)
-                const formatsToSupport = [
-                    Html5QrcodeSupportedFormats.EAN_13, 
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.QR_CODE
-                ];
+                // تنظيف أي نسخة قديمة متعلقة
+                if (this.scannerInstance) {
+                    try { this.scannerInstance.clear(); } catch(e) {}
+                }
 
-                // نمرر الصيغ دي وحنا بننشئ الكاميرا
-                this.scannerInstance = new Html5Qrcode("reader", { 
-                    formatsToSupport: formatsToSupport,
-                    verbose: false // عشان ميطبعش رسايل كتير في الكونسول تبطئ المتصفح
-                });
+                this.scannerInstance = new Html5Qrcode("reader");
                 
-                // 🚀 2. إجبار الكاميرا على جودة HD وتشغيل الأوتو فوكس
+                // 🚀 السر هنا: شيلنا الـ qrbox خالص وشيلنا تحديد الفورمات 
+                // كده الكاميرا هتقرأ من أي مكان في الشاشة وهتفك تشفير الـ EAN-13 صاروخ
+                const config = { 
+                    fps: 10,
+                    disableFlip: false, // بيمنع عكس الصورة
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true // بيشغل حساس المتصفح لو الموبايل بيدعمه
+                    }
+                    // لاحظ: مفيش qrbox هنا!
+                };
+                
+                // طلب جودة عالية جداً من الكاميرا
                 const cameraConfig = { 
                     facingMode: "environment",
-                    width: { ideal: 1280 }, // جودة عالية عشان الخطوط الرفيعة تبان
-                    height: { ideal: 720 },
-                    advanced: [{ focusMode: "continuous" }] // بيجبر كاميرا الموبايل تعمل Focus لوحدها
+                    width: { ideal: 1920, min: 1280 }, // طلب أعلى جودة ممكنة
+                    advanced: [{ focusMode: "continuous" }]
                 };
 
-                // 3. إعدادات القراءة
-                const scanConfig = { 
-                    fps: 10, 
-                    qrbox: { width: 300, height: 100 }, // المربع عريض عشان يستوعب الباركود من أوله لآخره
-                    experimentalFeatures: {
-                        useBarCodeDetectorIfSupported: true
-                    }
-                };
-                
                 this.scannerInstance.start(
                     cameraConfig, 
-                    scanConfig,
+                    config,
                     (decodedText) => {
-                        // أول ما الكاميرا تلقط رقم
-                        if (this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
+                        // لقط الباركود!
+                        if (this.scannerInstance && this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
                             this.scannerInstance.pause();
                         }
                         this.processScannedBarcode(decodedText);
@@ -316,7 +308,6 @@ createApp({
                 ).catch(err => {
                     console.error("Camera Error:", err);
                     this.isScanning = false;
-                    this.showToast(this.isArabic ? "لا يمكن الوصول للكاميرا بجودة عالية" : "Camera error", 'error');
                 });
             });
         },
