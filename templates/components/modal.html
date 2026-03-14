@@ -163,15 +163,15 @@
                             <div class="w-full md:w-1/3 space-y-2">
                                 <div class="flex justify-between text-xs font-bold text-slate-500">
                                     <span>[[ isArabic ? 'الإجمالي قبل الضريبة' : 'Subtotal' ]]</span>
-                                    <span class="font-mono">[[ poSubtotal.toFixed(2) ]]</span>
+                                    <span class="font-mono">[[ Number(poSubtotal || 0).toFixed(2) ]]</span>
                                 </div>
                                 <div class="flex justify-between text-xs font-bold text-emerald-600">
                                     <span>[[ isArabic ? 'قيمة الضريبة' : 'Tax Amount' ]] ([[ forms.po.tax_rate ]]%)</span>
-                                    <span class="font-mono">+ [[ poTaxAmount.toFixed(2) ]]</span>
+                                    <span class="font-mono">+ [[ Number(poTaxAmount || 0).toFixed(2) ]]</span>
                                 </div>
                                 <div class="flex justify-between text-sm font-black text-slate-800 border-t border-slate-200 pt-2 mt-2">
                                     <span>[[ isArabic ? 'الإجمالي الكلي' : 'Grand Total' ]]</span>
-                                    <span class="font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">[[ poGrandTotal.toFixed(2) ]]</span>
+                                    <span class="font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">[[ Number(poGrandTotal || 0).toFixed(2) ]]</span>
                                 </div>
                             </div>
 

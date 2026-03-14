@@ -207,7 +207,41 @@ createApp({
 
         licenseStatus() {
             return this.license;
-        }
+        },
+
+        // 🚀 حسابات أمر التوريد (الضرائب والإجماليات)
+        poLineTotal() {
+            if(!this.forms.po || !this.forms.po.lines) return 0;
+            return this.forms.po.lines.reduce((sum, line) => sum + ((line.quantity || 0) * (line.unit_price || 0)), 0);
+        },
+        poTaxAmount() {
+            if(!this.forms.po) return 0;
+            const rate = (this.forms.po.tax_rate || 0) / 100;
+            if(this.forms.po.is_tax_inclusive) {
+                // لو السعر شامل الضريبة، بنستخرج الضريبة من الإجمالي
+                return this.poLineTotal - (this.poLineTotal / (1 + rate));
+            } else {
+                // لو غير شامل، بنضرب الإجمالي في النسبة
+                return this.poLineTotal * rate;
+            }
+        },
+        poSubtotal() {
+            if(!this.forms.po) return 0;
+            if(this.forms.po.is_tax_inclusive) {
+                return this.poLineTotal - this.poTaxAmount;
+            } else {
+                return this.poLineTotal;
+            }
+        },
+        poGrandTotal() {
+            if(!this.forms.po) return 0;
+            if(this.forms.po.is_tax_inclusive) {
+                return this.poLineTotal; // الإجمالي هو نفس السعر المكتوب
+            } else {
+                return this.poLineTotal + this.poTaxAmount; // الإجمالي + الضريبة
+            }
+        },
+
     },
 
     watch: {
@@ -258,39 +292,7 @@ createApp({
             }
         },
 
-        // 🚀 حسابات أمر التوريد (الضرائب والإجماليات)
-        poLineTotal() {
-            if(!this.forms.po || !this.forms.po.lines) return 0;
-            return this.forms.po.lines.reduce((sum, line) => sum + ((line.quantity || 0) * (line.unit_price || 0)), 0);
-        },
-        poTaxAmount() {
-            if(!this.forms.po) return 0;
-            const rate = (this.forms.po.tax_rate || 0) / 100;
-            if(this.forms.po.is_tax_inclusive) {
-                // لو السعر شامل الضريبة، بنستخرج الضريبة من الإجمالي
-                return this.poLineTotal - (this.poLineTotal / (1 + rate));
-            } else {
-                // لو غير شامل، بنضرب الإجمالي في النسبة
-                return this.poLineTotal * rate;
-            }
-        },
-        poSubtotal() {
-            if(!this.forms.po) return 0;
-            if(this.forms.po.is_tax_inclusive) {
-                return this.poLineTotal - this.poTaxAmount;
-            } else {
-                return this.poLineTotal;
-            }
-        },
-        poGrandTotal() {
-            if(!this.forms.po) return 0;
-            if(this.forms.po.is_tax_inclusive) {
-                return this.poLineTotal; // الإجمالي هو نفس السعر المكتوب
-            } else {
-                return this.poLineTotal + this.poTaxAmount; // الإجمالي + الضريبة
-            }
-        },
-
+    
         exportToExcel() {
             const list = this.filteredMaterials || [];
             if (list.length === 0) {
