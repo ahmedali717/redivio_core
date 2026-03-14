@@ -1,77 +1,87 @@
 from django.shortcuts import render
 from django.views import View
-from rest_framework import viewsets
+from django.db import transaction  # <--- ضروري جداً لمنع وقوع السيرفر
+from django.http import JsonResponse # <--- ضروري جداً
+from rest_framework import viewsets, status
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-# استيراد الـ Mixin والـ Models والـ Serializers
+# استيراد الـ Mixin والـ Models
 from apps.core.mixins import OpcoAwareMixin 
+from apps.procurement.models import PurchaseOrder  # <--- تأكد من صحة هذا المسار
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
-    PlantSerializer, 
-    StorageLocationSerializer, 
-    StorageBinSerializer, 
-    StockQuantSerializer, 
-    StockMoveSerializer
+    PlantSerializer, StorageLocationSerializer, 
+    StorageBinSerializer, StockQuantSerializer, StockMoveSerializer
 )
 
-# =========================================================
-#  1. API Functions (الإحصائيات المخصصة للموديول)
-# =========================================================
+# ... (اترك الدوال القديمة wms_stats والـ ViewSets كما هي) ...
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def wms_stats(request):
-    """
-    إحصائيات سريعة لموديول WMS بناءً على الشركة النشطة
-    """
-    active_opco_id = request.session.get('active_opco_id')
-    
-    # تحسين: إذا لم تكن هناك شركة نشطة، نعيد أصفار بدلاً من فلترة خاطئة
-    if not active_opco_id:
-        return Response({"plants": 0, "items": 0})
-    
-    plants_count = Plant.objects.filter(opco_id=active_opco_id).count()
-    # تحسين: حساب إجمالي كميات المخزون المتوفرة
-    items_count = StockQuant.objects.filter(opco_id=active_opco_id).count()
-    
-    return Response({
-        "plants": plants_count,
-        "items": items_count
-    })
+# 1. الـ API الذي يستلم البيانات من زرار "تأكيد الاستلام"
+class StockReceiptAPI(APIView):
+    permission_classes = [IsAuthenticated]
 
-# =========================================================
-#  2. WMS ViewSets (المنطق البرمجي للمخازن)
-# =========================================================
-# ملاحظة: الـ OpcoAwareMixin سيقوم تلقائياً بفلترة النتائج بناءً على الشركة
+    def post(self, request):
+        data = request.data
+        po_id = data.get('po_id')
+        items = data.get('items', [])
+        active_opco_id = request.session.get('active_opco_id')
 
-class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = Plant.objects.all()
-    serializer_class = PlantSerializer
+        if not po_id:
+            return Response({"error": "PO ID is required"}, status=400)
 
-class StorageLocationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StorageLocation.objects.all()
-    serializer_class = StorageLocationSerializer
+        try:
+            with transaction.atomic(): # <--- لن تسبب خطأ الآن بسبب الـ Import
+                po = PurchaseOrder.objects.get(id=po_id)
+                
+                for item in items:
+                    # تحديث الرصيد في الرف المختار
+                    quant, created = StockQuant.objects.get_or_create(
+                        opco_id=active_opco_id,
+                        material_id=item['material_id'],
+                        storage_bin_id=item['bin_id'],
+                        defaults={'quantity': 0}
+                    )
+                    quant.quantity += float(item['quantity'])
+                    quant.save()
 
-class StorageBinViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StorageBin.objects.all()
-    serializer_class = StorageBinSerializer
+                    # تسجيل حركة مخزنية
+                    StockMove.objects.create(
+                        opco_id=active_opco_id,
+                        material_id=item['material_id'],
+                        quantity=item['quantity'],
+                        move_type='RECEIPT',
+                        reference=f"PO Receipt: {po.po_number}",
+                        storage_bin_id=item['bin_id']
+                    )
 
-class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    # تحسين: استخدام select_related لتقليل ضغط قواعد البيانات عند جلب الأسماء
-    queryset = StockQuant.objects.select_related('material', 'storage_bin', 'plant').all()
-    serializer_class = StockQuantSerializer
+                # تحديث حالة أمر التوريد
+                po.status = 'RECEIVED'
+                po.save()
 
-class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StockMove.objects.all().order_by('-date')
-    serializer_class = StockMoveSerializer
+                return Response({"success": True}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# =========================================================
-#  3. Web Views (عرض الواجهات من داخل الموديول)
-# =========================================================
-
-class WMSHomeView(View):
-    def get(self, request):
-        # التأكد من أن المسار يشير إلى المجلد داخل التطبيق نفسه لتعزيز الاستقلالية
-        return render(request, 'wms/dashboard.html')
+# 2. الـ API الذي يعرض تفاصيل الـ PO في الجدول
+def get_purchase_order_details(request, po_id):
+    try:
+        # تأكد أن العلاقة في موديل PurchaseOrder تسمى 'items'
+        po = PurchaseOrder.objects.get(id=po_id)
+        items_list = []
+        
+        # افتراض أن PurchaseOrder لديه علاقة items (Related Name)
+        for item in po.items.all():
+            items_list.append({
+                'material_id': item.material.id,
+                'material_name': item.material.name,
+                'sku': item.material.sku or item.material.code,
+                'ordered_qty': item.quantity,
+                'received_qty': item.quantity,
+            })
+        
+        return JsonResponse({'items': items_list})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=404)
