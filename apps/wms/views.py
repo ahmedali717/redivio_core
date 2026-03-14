@@ -7,8 +7,9 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
 import traceback
-from decimal import Decimal  # 👈 1. استيراد Decimal لحل مشكلة الأرقام
+from decimal import Decimal
 
 # استيراد الـ Mixin والـ Models
 from apps.core.mixins import OpcoAwareMixin 
@@ -22,9 +23,8 @@ from .serializers import (
 )
 
 # =========================================================
-#  1. API Functions
+#  1. إحصائيات المخزن
 # =========================================================
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def wms_stats(request):
@@ -41,9 +41,8 @@ def wms_stats(request):
     })
 
 # =========================================================
-#  2. Stock Receipt Logic
+#  2. منطق الاستلام (الخالي من الأخطاء)
 # =========================================================
-
 class StockReceiptAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -61,36 +60,26 @@ class StockReceiptAPI(APIView):
                 po = PurchaseOrder.objects.get(id=po_id)
                 
                 for item in items:
-                    bin_id = item.get('bin_id')
-                    if not bin_id:
-                        raise ValueError(f"الرف غير محدد للصنف {item.get('material_id')}")
-
-                    target_bin = StorageBin.objects.select_related('storage_location__plant').get(id=bin_id)
-                    target_plant = target_bin.storage_location.plant
-
-                    # 🚀 2. تحويل الكمية إلى Decimal بشكل آمن (نحولها لـ String الأول عشان نتجنب أخطاء التقريب)
-                    received_qty = Decimal(str(item.get('quantity', 0)))
-
-                    # تحديث الرصيد
-                    quant, created = StockQuant.objects.get_or_create(
-                        opco_id=active_opco_id,
-                        plant=target_plant, 
-                        material_id=item['material_id'],
-                        storage_bin=target_bin,
-                        defaults={'quantity': Decimal('0.00')}
-                    )
+                    target_bin = StorageBin.objects.get(id=item['bin_id'])
                     
-                    quant.quantity += received_qty # 👈 هنا هيجمع Decimal مع Decimal بأمان
-                    quant.save()
+                    # 🚀 تحويل الكمية إلى Decimal بشكل آمن جداً لتجنب الـ Crash
+                    try:
+                        received_qty = Decimal(str(item.get('quantity', 0)))
+                    except:
+                        received_qty = Decimal('0')
 
-                    # تسجيل الحركة التاريخية
+                    if received_qty <= 0:
+                        continue # تخطي الأصناف اللي كميتها صفر
+
+                    # 🚀 نكتفي بتسجيل الحركة فقط (لأن موديل StockMove لديك يقوم بتحديث الرصيد تلقائياً)
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
-                        quantity=received_qty, # 👈 مررنا الـ Decimal هنا كمان
+                        quantity=received_qty,
                         move_type='RECEIPT',
                         reference=f"PO Receipt: {po.po_number}",
-                        dest_bin=target_bin
+                        dest_bin=target_bin,
+                        vendor_name=getattr(po.vendor, 'name', '')
                     )
 
                 po.status = 'RECEIVED'
@@ -98,35 +87,36 @@ class StockReceiptAPI(APIView):
 
                 return Response({"success": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            error_details = traceback.format_exc()
+            error_msg = traceback.format_exc()
+            print("=== ERROR IN STOCK RECEIPT ===")
+            print(error_msg) # للطباعة في سجلات PythonAnywhere
             return Response({
                 "error": str(e),
-                "trace": error_details
+                "trace": error_msg
             }, status=status.HTTP_400_BAD_REQUEST)
 
+# =========================================================
+#  3. تفاصيل أمر التوريد
+# =========================================================
 def get_purchase_order_details(request, po_id):
     try:
         po = PurchaseOrder.objects.get(id=po_id)
-        items_source = getattr(po, 'items', None) or po.purchaseorderitem_set
-        
-        items_data = []
-        for item in items_source.all():
-            items_data.append({
-                'material_id': item.material.id,
-                'material_name': item.material.name,
-                'sku': getattr(item.material, 'sku', item.material.code),
-                'ordered_qty': item.quantity,
-                'received_qty': item.quantity,
-            })
+        # استخدام lines كما هي معرفة في الموديل
+        items_data = [{
+            'material_id': line.material.id,
+            'material_name': line.material.name,
+            'sku': getattr(line.material, 'sku', line.material.code),
+            'ordered_qty': line.quantity,
+            'received_qty': line.quantity,
+        } for line in po.lines.all()]
         
         return JsonResponse({'items': items_data})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=404)
 
 # =========================================================
-#  3. WMS ViewSets 
+#  4. الـ ViewSets
 # =========================================================
-
 class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = Plant.objects.all()
     serializer_class = PlantSerializer
@@ -144,7 +134,7 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockQuantSerializer
 
 class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StockMove.objects.all().order_by('-date')
+    queryset = StockMove.objects.all().order_by('-created_at')
     serializer_class = StockMoveSerializer
 
 class WMSHomeView(View):
