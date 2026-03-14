@@ -134,7 +134,14 @@ createApp({
                     reorder_level: 0, 
                     max_level: 0 
                 },
-                po: { id: null, vendor: '', po_number: '', lines: [{ material: '', quantity: 1, unit_price: 0 }] },
+                po: { 
+                    id: null, 
+                    vendor: '', 
+                    po_number: '', 
+                    is_tax_inclusive: false, // شامل الضريبة؟
+                    tax_rate: 15, // نسبة الضريبة الافتراضية
+                    lines: [{ material: '', quantity: 1, unit_price: 0 }] 
+                },
                 
                 stock_entry: { items: [], po_id: '' }
             }
@@ -248,6 +255,39 @@ createApp({
                 this.forms.po.lines.splice(index, 1);
             } else {
                 this.showToast(this.isArabic ? "يجب أن يحتوي الأمر على صنف واحد على الأقل" : "PO must have at least one line", 'error');
+            }
+        },
+
+        // 🚀 حسابات أمر التوريد (الضرائب والإجماليات)
+        poLineTotal() {
+            if(!this.forms.po || !this.forms.po.lines) return 0;
+            return this.forms.po.lines.reduce((sum, line) => sum + ((line.quantity || 0) * (line.unit_price || 0)), 0);
+        },
+        poTaxAmount() {
+            if(!this.forms.po) return 0;
+            const rate = (this.forms.po.tax_rate || 0) / 100;
+            if(this.forms.po.is_tax_inclusive) {
+                // لو السعر شامل الضريبة، بنستخرج الضريبة من الإجمالي
+                return this.poLineTotal - (this.poLineTotal / (1 + rate));
+            } else {
+                // لو غير شامل، بنضرب الإجمالي في النسبة
+                return this.poLineTotal * rate;
+            }
+        },
+        poSubtotal() {
+            if(!this.forms.po) return 0;
+            if(this.forms.po.is_tax_inclusive) {
+                return this.poLineTotal - this.poTaxAmount;
+            } else {
+                return this.poLineTotal;
+            }
+        },
+        poGrandTotal() {
+            if(!this.forms.po) return 0;
+            if(this.forms.po.is_tax_inclusive) {
+                return this.poLineTotal; // الإجمالي هو نفس السعر المكتوب
+            } else {
+                return this.poLineTotal + this.poTaxAmount; // الإجمالي + الضريبة
             }
         },
 
@@ -469,6 +509,47 @@ createApp({
                 }
             } catch (e) {
                 this.showToast("Network Error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchVendors() {
+            try {
+                const res = await fetch(`/api/vendors/?opco=${this.activeOpcoId || ''}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.vendors = Array.isArray(data) ? data : (data.results || []);
+                }
+            } catch (e) { console.error(e); }
+        },
+
+        async quickAddVendor() {
+            const vendorName = prompt(this.isArabic ? "أدخل اسم المورد الجديد:" : "Enter new vendor name:");
+            if (!vendorName) return;
+            
+            // إنشاء كود مبدئي للمورد
+            const vendorCode = "V-" + Math.floor(Math.random() * 10000);
+            
+            try {
+                this.loading = true;
+                const res = await fetch('/api/vendors/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ name: vendorName, code: vendorCode, opco: this.activeOpcoId })
+                });
+
+                if (res.ok) {
+                    const newVendor = await res.json();
+                    this.vendors.push(newVendor); // إضافته للقائمة فوراً
+                    this.forms.po.vendor = newVendor.id; // اختياره تلقائياً في الفورم
+                    this.showToast(this.isArabic ? "تم إضافة المورد بنجاح" : "Vendor added", "success");
+                }
+            } catch(e) {
+                 this.showToast("Error adding vendor", "error");
             } finally {
                 this.loading = false;
             }
