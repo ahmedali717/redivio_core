@@ -1250,25 +1250,44 @@ createApp({
             }
             // 🚀 ضيف البلوكة دي هنا الخاصة بأمر التوريد الجديد (PO)
             // 🚀 التحديث التاني: ضيف البلوكة دي بعد قفلة الـ if (useFormData)
+                // 🚀 التحديث التاني: معالجة بيانات أمر التوريد (PO) كـ JSON مع الحماية
                 else if (type === 'po') {
+                    // 1. حماية: التأكد من اختيار الشركة والمورد ورقم الأمر
+                    if (!this.activeOpcoId) {
+                        this.showToast(this.isArabic ? "يرجى اختيار الشركة أولاً" : "Please select OpCo", 'error');
+                        this.loading = false; return;
+                    }
+                    if (!this.forms.po.vendor) {
+                        this.showToast(this.isArabic ? "يرجى اختيار المورد" : "Please select a vendor", 'error');
+                        this.loading = false; return;
+                    }
+                    if (!this.forms.po.po_number) {
+                        this.showToast(this.isArabic ? "يرجى إدخال رقم أمر التوريد" : "Please enter PO number", 'error');
+                        this.loading = false; return;
+                    }
+
                     headers['Content-Type'] = 'application/json';
                     
+                    // 2. تجميع البيانات (استخدمنا parseInt عشان نتأكد إن المورد والشركة بيتبعتوا كأرقام مش نصوص)
                     payload = JSON.stringify({
-                        opco: this.activeOpcoId,
-                        vendor: this.forms.po.vendor,
+                        opco: parseInt(this.activeOpcoId),
+                        vendor: parseInt(this.forms.po.vendor),
                         po_number: this.forms.po.po_number,
+                        
                         // إرسال الضرائب جوه extra_data
                         extra_data: {
-                            is_tax_inclusive: this.forms.po.is_tax_inclusive,
-                            tax_rate: this.forms.po.tax_rate,
-                            subtotal: this.poSubtotal,
-                            tax_amount: this.poTaxAmount,
-                            grand_total: this.poGrandTotal
+                            is_tax_inclusive: this.forms.po.is_tax_inclusive || false,
+                            tax_rate: this.forms.po.tax_rate || 15,
+                            subtotal: this.poSubtotal || 0,
+                            tax_amount: this.poTaxAmount || 0,
+                            grand_total: this.poGrandTotal || 0
                         },
+                        
+                        // الأصناف
                         lines: this.forms.po.lines.map(line => ({
                             material: line.material,
-                            quantity: line.quantity,
-                            unit_price: line.unit_price
+                            quantity: line.quantity || 1,
+                            unit_price: line.unit_price || 0
                         }))
                     });
                 }
