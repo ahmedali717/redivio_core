@@ -10,6 +10,8 @@ createApp({
     data() {
         return {
             searchQuery: '',
+            isScanning: false, // لازم يتعرف هنا عشان الـ HTML يشوفه
+            barcodeQuery: '',
             // 🚀 ضيف المتغير ده هنا في أول سطر
             activeOperation: null,
 
@@ -253,6 +255,35 @@ createApp({
     methods: {
         ...utils.methods,
         ...itemMasterModule.methods,
+
+        startCameraScan() {
+            this.isScanning = true;
+            this.$nextTick(() => {
+                const html5QrCode = new Html5Qrcode("reader");
+                html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    (decodedText) => {
+                        this.barcodeQuery = decodedText;
+                        this.scanBarcode(); // دالة البحث عن الصنف
+                        html5QrCode.stop();
+                        this.isScanning = false;
+                    }
+                ).catch(err => console.error("Camera Error:", err));
+            });
+        },
+
+        // دالة البحث بالباركود
+        scanBarcode() {
+            const item = this.forms.stock_entry.items.find(i => i.sku === this.barcodeQuery);
+            if (item) {
+                item.received_qty++; // زيادة الكمية لو لقى الصنف
+                this.showToast("تم العثور على الصنف: " + item.material_name, "success");
+            } else {
+                this.showToast("الصنف غير موجود في هذا الأمر", "error");
+            }
+            this.barcodeQuery = '';
+        },
 
         // 🚀 دالة تحميل قالب الاستيراد (Template)
         downloadTemplate() {
