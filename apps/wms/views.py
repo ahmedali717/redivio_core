@@ -16,6 +16,9 @@ from .serializers import (
     StockMoveSerializer
 )
 
+from django.db import transaction  # عشان الـ transaction.atomic تشتغل
+from django.http import JsonResponse # عشان دالة get_purchase_order_details
+from apps.procurement.models import PurchaseOrder # عشان نقدر نوصل لأوامر التوريد
 # =========================================================
 #  1. API Functions (الإحصائيات المخصصة للموديول)
 # =========================================================
@@ -75,3 +78,63 @@ class WMSHomeView(View):
     def get(self, request):
         # التأكد من أن المسار يشير إلى المجلد داخل التطبيق نفسه لتعزيز الاستقلالية
         return render(request, 'wms/dashboard.html')
+
+# 1. الـ API اللي بيستلم البيانات من زرار "تأكيد الاستلام"
+class StockReceiptAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        po_id = data.get('po_id')
+        items = data.get('items', [])
+        active_opco_id = request.session.get('active_opco_id')
+
+        try:
+            with transaction.atomic():
+                po = PurchaseOrder.objects.get(id=po_id)
+                
+                for item in items:
+                    # تحديث الرصيد في الرف المختار
+                    quant, created = StockQuant.objects.get_or_create(
+                        opco_id=active_opco_id,
+                        material_id=item['material_id'],
+                        storage_bin_id=item['bin_id'],
+                        defaults={'quantity': 0}
+                    )
+                    quant.quantity += float(item['quantity'])
+                    quant.save()
+
+                    # تسجيل حركة مخزنية
+                    StockMove.objects.create(
+                        opco_id=active_opco_id,
+                        material_id=item['material_id'],
+                        quantity=item['quantity'],
+                        move_type='RECEIPT',
+                        reference=f"PO Receipt: {po.po_number}",
+                        storage_bin_id=item['bin_id']
+                    )
+
+                # تحديث حالة أمر التوريد (اختياري)
+                po.status = 'RECEIVED'
+                po.save()
+
+                return Response({"success": True}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+# 2. الـ API اللي بيدي بيانات الـ PO للجدول عشان الـ SKU يظهر
+def get_purchase_order_details(request, po_id):
+    try:
+        po = PurchaseOrder.objects.get(id=po_id)
+        # تأكد إن الـ PurchaseOrder عنده relation اسمها items
+        items = [{
+            'material_id': item.material.id,
+            'material_name': item.material.name,
+            'sku': item.material.sku, # أو الكود اللي بتستخدمه كباركود
+            'ordered_qty': item.quantity,
+            'received_qty': item.quantity,
+        } for item in po.items.all()]
+        
+        return JsonResponse({'items': items})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=404)
