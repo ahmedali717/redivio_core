@@ -140,6 +140,32 @@
         </div>
     </div>
 
+    <div v-if="view === 'vendors_list'" class="p-6 animate-in fade-in">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold"><i class="fas fa-truck text-emerald-500 me-2"></i> قائمة الموردين</h2>
+        <button @click="view = 'procurement_module'" class="btn btn-sm btn-dark">عودة للمشتريات</button>
+    </div>
+    
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <table class="w-full text-right">
+            <thead class="bg-slate-50">
+                <tr>
+                    <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase">الكود</th>
+                    <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase">الاسم</th>
+                    <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase">الرقم الضريبي</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <tr v-for="v in vendors" :key="v.id">
+                    <td class="px-6 py-4 text-sm font-bold">[[ v.code ]]</td>
+                    <td class="px-6 py-4 text-sm">[[ v.name ]]</td>
+                    <td class="px-6 py-4 text-sm text-slate-400">[[ v.tax_id || '---' ]]</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 </div>
 
             <div v-if="view === 'global_config'" class="animate-in fade-in duration-500">
