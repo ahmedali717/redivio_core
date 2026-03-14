@@ -950,6 +950,32 @@ createApp({
                     }
                 }
 
+                // 🚀 التعديل الجوهري هنا لأمر التوريد
+                else if (type === 'po') {
+                    headers['Content-Type'] = 'application/json'; // لازم نعرف السيرفر إننا بنبعت JSON
+                    payload = JSON.stringify({
+                        opco: this.activeOpcoId,
+                        vendor: this.forms.po.vendor,
+                        po_number: this.forms.po.po_number,
+                        extra_data: {
+                            is_tax_inclusive: this.forms.po.is_tax_inclusive,
+                            tax_rate: this.forms.po.tax_rate,
+                            subtotal: this.poSubtotal,
+                            tax_amount: this.poTaxAmount,
+                            grand_total: this.poGrandTotal
+                        },
+                        lines: this.forms.po.lines.map(line => ({
+                            material: line.material,
+                            quantity: line.quantity,
+                            unit_price: line.unit_price
+                        }))
+                    });
+                }
+                else {
+                    headers['Content-Type'] = 'application/json';
+                    payload = JSON.stringify(this.forms[type]);
+                }
+
                 // 6. تنفيذ طلب الـ Fetch
                 const response = await fetch(url, {
                     method: method,
@@ -1248,78 +1274,21 @@ createApp({
                     quantity: 1
                 };
             }
-            // 🚀 ضيف البلوكة دي هنا الخاصة بأمر التوريد الجديد (PO)
-            // 🚀 التحديث التاني: ضيف البلوكة دي بعد قفلة الـ if (useFormData)
-                // 🚀 التحديث التاني: معالجة بيانات أمر التوريد (PO) كـ JSON مع الحماية
-                // 🚀 معالجة أمر التوريد بشكل معزول ومؤمن تماماً
-                else if (type === 'po') {
-                    // 1. حماية: التأكد من البيانات الأساسية
-                    if (!this.activeOpcoId) {
-                        this.showToast(this.isArabic ? "يرجى اختيار الشركة أولاً" : "Please select OpCo", 'error');
-                        this.loading = false; return;
-                    }
-                    if (!this.forms.po.vendor) {
-                        this.showToast(this.isArabic ? "يرجى اختيار المورد" : "Please select a vendor", 'error');
-                        this.loading = false; return;
-                    }
-                    if (!this.forms.po.po_number) {
-                        this.showToast(this.isArabic ? "يرجى إدخال رقم أمر التوريد" : "Please enter PO number", 'error');
-                        this.loading = false; return;
-                    }
-
-                    // 2. تجميع وتأمين البيانات
-                    const poPayload = JSON.stringify({
-                        opco: parseInt(this.activeOpcoId),
-                        vendor: parseInt(this.forms.po.vendor),
-                        po_number: this.forms.po.po_number,
-                        extra_data: {
-                            is_tax_inclusive: Boolean(this.forms.po.is_tax_inclusive),
-                            tax_rate: Number(this.forms.po.tax_rate) || 15,
-                            subtotal: Number(this.poSubtotal) || 0,
-                            tax_amount: Number(this.poTaxAmount) || 0,
-                            grand_total: Number(this.poGrandTotal) || 0
-                        },
-                        lines: this.forms.po.lines.map(line => ({
-                            material: parseInt(line.material), 
-                            quantity: Number(line.quantity) || 1,
-                            unit_price: Number(line.unit_price) || 0
-                        }))
-                    });
-
-                    // 3. الإرسال المباشر للباك-إند بـ Headers صريحة وقاطعة
-                    try {
-                        const poResponse = await fetch(url, {
-                            method: method,
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-CSRFToken': this.getCookie('csrftoken')
-                            },
-                            body: poPayload
-                        });
-
-                        if (poResponse.ok) {
-                            this.showModal = false;
-                            await this.refreshAllData(); // تحديث الداشبورد
-                            this.showToast(this.isArabic ? "تم حفظ أمر التوريد بنجاح" : "PO saved successfully", 'success');
-                        } else {
-                            const errText = await poResponse.text();
-                            try {
-                                const errJson = JSON.parse(errText);
-                                const errMsg = errJson.detail || Object.values(errJson)[0] || errText;
-                                this.showToast(this.isArabic ? "فشل الحفظ: " + errMsg : "Save failed: " + errMsg, 'error');
-                            } catch(e) {
-                                this.showToast("Error: " + errText, 'error');
-                            }
-                        }
-                    } catch (e) {
-                        this.showToast("Network Error", 'error');
-                    } finally {
-                        this.loading = false;
-                    }
-                    
-                    return; // 🛑 مهم جداً: إيقاف الدالة هنا عشان ميكملش لباقي كود الـ submitForm القديم
-                }
+            else if (type === 'po') {
+                // توليد رقم أمر توريد تلقائي
+                const autoNo = `PO-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+                
+                this.forms.po = { 
+                    id: null, 
+                    vendor: '', 
+                    po_number: autoNo, 
+                    is_tax_inclusive: false, 
+                    tax_rate: 15, 
+                    lines: [{ material: '', quantity: 1, unit_price: 0 }] 
+                };
+                // جلب الموردين عشان يظهروا في القائمة
+                this.fetchVendors(); 
+            }
 
             else if (type === 'opco') {
                 this.forms.opco = { 
