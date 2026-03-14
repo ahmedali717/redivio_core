@@ -26,25 +26,5 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PurchaseOrder
-        fields = ['id', 'opco', 'vendor', 'vendor_name', 'po_number', 'date', 'status', 'extra_data', 'origin_pr', 'lines']
-
-    def create(self, validated_data):
-        lines_data = validated_data.pop('lines', [])
-        po = PurchaseOrder.objects.create(**validated_data)
-        for line_data in lines_data:
-            line_data.pop('po', None)
-            PurchaseOrderLine.objects.create(po=po, **line_data)
-        return po
-
-    def update(self, instance, validated_data):
-        lines_data = validated_data.pop('lines', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        
-        if lines_data is not None:
-            instance.lines.all().delete()
-            for line_data in lines_data:
-                line_data.pop('po', None)
-                PurchaseOrderLine.objects.create(po=instance, **line_data)
-        return instance
+        # 🚀 تم حذف origin_pr من هنا
+        fields = ['id', 'opco', 'vendor', 'vendor_name', 'po_number', 'date', 'status', 'extra_data', 'lines']
