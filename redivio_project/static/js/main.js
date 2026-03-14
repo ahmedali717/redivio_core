@@ -309,6 +309,7 @@ createApp({
             });
         },
         // 1. الدالة المربوطة بزرار الـ Enter في حقل الباركود
+        // 3. الدالة الذكية للبحث في قاعدة البيانات ثم أمر التوريد
         processScannedBarcode(barcode) {
             if (!this.forms.stock_entry.items || this.forms.stock_entry.items.length === 0) {
                 this.showToast(this.isArabic ? "برجاء اختيار أمر التوريد أولاً" : "Select PO first", 'error');
@@ -316,14 +317,13 @@ createApp({
                 return;
             }
 
-            // 🔍 الخطوة 1: البحث في قاعدة بيانات الأصناف كلها (عن طريق الباركود أو الـ SKU أو الـ ID)
+            // البحث في قاعدة البيانات كلها
             const matchedMaterial = this.materials_list.find(
                 m => (m.barcode && m.barcode.toString() === barcode.toString()) || 
                     (m.sku && m.sku.toLowerCase() === barcode.toLowerCase()) || 
                     (m.id && m.id.toString() === barcode.toString())
             );
 
-            // لو الصنف مش متسجل في السيستم أصلاً
             if (!matchedMaterial) {
                 this.showToast(this.isArabic ? `الباركود (${barcode}) غير مسجل في بيانات الأصناف!` : `Barcode not registered!`, 'error');
                 this.barcodeQuery = '';
@@ -333,25 +333,23 @@ createApp({
                 return;
             }
 
-            // 🔍 الخطوة 2: لقينا الصنف، هندور بقى هل هو مطلوب في أمر التوريد المفتوح ده ولا لأ؟
+            // البحث في أمر التوريد الحالي
             const foundItemInPO = this.forms.stock_entry.items.find(
                 item => item.material_id === matchedMaterial.id || item.sku === matchedMaterial.sku
             );
 
-            // الخطوة 3: التعامل مع النتيجة
             if (foundItemInPO) {
-                // ممتاز! الصنف موجود في أمر التوريد -> نجهز البيانات ونفتح شاشة الكمية
+                // الصنف موجود ومطلوب -> نفتح الشاشة
                 this.scannedItemData = {
                     material_id: foundItemInPO.material_id,
                     material_name: foundItemInPO.material_name,
                     sku: foundItemInPO.sku,
                     ordered_qty: foundItemInPO.ordered_qty,
-                    scan_qty: 1 // الافتراضي 1
+                    scan_qty: 1
                 };
                 this.showQtyModal = true;
-                this.barcodeQuery = ''; // تفريغ حقل البحث
+                this.barcodeQuery = '';
 
-                // التركيز على حقل الكمية عشان الموظف يكتب فوراً
                 setTimeout(() => {
                     if(this.$refs.qtyInput) {
                         this.$refs.qtyInput.focus();
@@ -360,11 +358,11 @@ createApp({
                 }, 400);
 
             } else {
-                // الصنف متسجل في السيستم، بس المورد مبعتوش في الأمر ده!
+                // الصنف مسجل بس مش مطلوب هنا
                 this.showToast(this.isArabic ? `الصنف (${matchedMaterial.name}) غير مطلوب في أمر التوريد الحالي!` : `Item not in this PO!`, 'error');
                 this.barcodeQuery = '';
                 if(this.scannerInstance && this.isScanning) {
-                    setTimeout(() => this.scannerInstance.resume(), 1500); // نرجع نشغل الكاميرا
+                    setTimeout(() => this.scannerInstance.resume(), 1500);
                 }
             }
         },
