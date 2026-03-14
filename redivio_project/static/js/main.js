@@ -385,7 +385,11 @@ createApp({
         
         startOperation(type) {
             this.activeOperation = type;
-            // تهيئة الفورم عند فتح عملية جديدة
+            // 🚀 لو العملية هي استلام من مورد، نادي أوامر التوريد فوراً
+            if (type === 'po_receipt') {
+                this.fetchPendingPOs(); 
+            }
+            
             if (!this.forms.stock_entry) {
                 this.forms.stock_entry = { items: [], po_id: '' };
             } else {
@@ -1262,7 +1266,7 @@ createApp({
             this.showModal = true;
             this.showToast(this.isArabic ? "جاري عرض تفاصيل الأمر" : "Viewing PO Details", 'success');
         },
-        
+
         async fetchMaterialsList() {
             try {
                 const res = await fetch('/api/materials/');
