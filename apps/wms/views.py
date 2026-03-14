@@ -7,14 +7,14 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-import traceback  # 👈 أضفنا المكتبة دي عشان تصطاد العطل بالظبط
+import traceback
+from decimal import Decimal  # 👈 1. استيراد Decimal لحل مشكلة الأرقام
 
-# استيراد الـ Mixin والـ Models والـ Serializers
+# استيراد الـ Mixin والـ Models
 from apps.core.mixins import OpcoAwareMixin 
 from apps.core.models import OpCo
 from apps.procurement.models import PurchaseOrder
 
-# تأكد أن هذه الموديلات موجودة في نفس تطبيق الـ WMS
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
     PlantSerializer, StorageLocationSerializer, 
@@ -22,7 +22,7 @@ from .serializers import (
 )
 
 # =========================================================
-#  1. API Functions (إحصائيات الموديول)
+#  1. API Functions
 # =========================================================
 
 @api_view(['GET'])
@@ -61,7 +61,6 @@ class StockReceiptAPI(APIView):
                 po = PurchaseOrder.objects.get(id=po_id)
                 
                 for item in items:
-                    # 1. التأكد من وجود الـ Bin
                     bin_id = item.get('bin_id')
                     if not bin_id:
                         raise ValueError(f"الرف غير محدد للصنف {item.get('material_id')}")
@@ -69,27 +68,29 @@ class StockReceiptAPI(APIView):
                     target_bin = StorageBin.objects.select_related('storage_location__plant').get(id=bin_id)
                     target_plant = target_bin.storage_location.plant
 
-                    # 2. تحديث الرصيد (StockQuant)
+                    # 🚀 2. تحويل الكمية إلى Decimal بشكل آمن (نحولها لـ String الأول عشان نتجنب أخطاء التقريب)
+                    received_qty = Decimal(str(item.get('quantity', 0)))
+
+                    # تحديث الرصيد
                     quant, created = StockQuant.objects.get_or_create(
                         opco_id=active_opco_id,
                         plant=target_plant, 
                         material_id=item['material_id'],
                         storage_bin=target_bin,
-                        defaults={'quantity': 0}
+                        defaults={'quantity': Decimal('0.00')}
                     )
-                    quant.quantity += float(item.get('quantity', 0))
+                    
+                    quant.quantity += received_qty # 👈 هنا هيجمع Decimal مع Decimal بأمان
                     quant.save()
 
-                    # 3. تسجيل الحركة التاريخية (StockMove)
+                    # تسجيل الحركة التاريخية
                     StockMove.objects.create(
                         opco_id=active_opco_id,
                         material_id=item['material_id'],
-                        quantity=float(item.get('quantity', 0)),
-                        move_type='RECEIPT', # ⚠️ لو الـ DB رافضة الكلمة دي، الخطأ هيظهرلنا
+                        quantity=received_qty, # 👈 مررنا الـ Decimal هنا كمان
+                        move_type='RECEIPT',
                         reference=f"PO Receipt: {po.po_number}",
-                        dest_bin=target_bin,
-                        # أوقفنا حقل المورد مؤقتاً لاحتمال عدم وجوده في قاعدة البيانات
-                        # vendor_name=getattr(po.vendor, 'name', '') 
+                        dest_bin=target_bin
                     )
 
                 po.status = 'RECEIVED'
@@ -97,14 +98,12 @@ class StockReceiptAPI(APIView):
 
                 return Response({"success": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            # 🚀 هنا السحر: هنرجع تفاصيل المشكلة (Traceback) كاملة للفرونت إند!
             error_details = traceback.format_exc()
             return Response({
                 "error": str(e),
                 "trace": error_details
             }, status=status.HTTP_400_BAD_REQUEST)
 
-# دالة جلب تفاصيل الـ PO
 def get_purchase_order_details(request, po_id):
     try:
         po = PurchaseOrder.objects.get(id=po_id)
