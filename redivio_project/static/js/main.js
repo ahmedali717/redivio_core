@@ -565,7 +565,7 @@ createApp({
                 this.loading = true;
                 this.showToast(this.isArabic ? "جاري معالجة الاستلام..." : "Processing receipt...", 'success');
 
-                // هنبعت الداتا للباك-إند (لازم تكون مجهز Endpoint يستقبل ده في Django)
+                // هنبعت الداتا للباك-إند
                 const response = await fetch('/api/wms/stock-receipts/', {
                     method: 'POST',
                     headers: {
@@ -583,16 +583,24 @@ createApp({
                     })
                 });
 
-                if (res.ok) {
+                // 🚀 الإصلاح 1: استخدام 'response' بدلاً من 'res' المجهولة
+                if (response.ok) {
                     this.showToast(this.isArabic ? "تم استلام البضاعة وتحديث الأرصدة بنجاح" : "Stock received and updated successfully", 'success');
                     this.goBackToOperations(); // نرجع للشاشة الرئيسية
                     await this.refreshAllData(); // نحدث الأرصدة في الداشبورد
                 } else {
-                    const error = await res.json();
-                    this.showToast(error.detail || (this.isArabic ? "فشل الاستلام" : "Receipt failed"), 'error');
+                    // 🚀 الإصلاح 2: استخراج رسالة الخطأ الحقيقية من الدجانغو
+                    const errorData = await response.json();
+                    // الدجانغو عندنا بيبعت الخطأ في حقل اسمه "error"
+                    const errorMessage = errorData.error || errorData.detail || (this.isArabic ? "فشل الاستلام لسبب غير معروف" : "Receipt failed");
+                    
+                    // بنرمي الخطأ الحقيقي عشان الـ catch يمسكه
+                    throw new Error(errorMessage); 
                 }
             } catch (e) {
-                this.showToast("Network Error", 'error');
+                // 🚀 الإصلاح 3: طباعة رسالة الخطأ الحقيقية بدلاً من النص الثابت "Network Error"
+                console.error("Receipt Process Error:", e);
+                this.showToast(e.message || "Network Error", 'error');
             } finally {
                 this.loading = false;
             }
