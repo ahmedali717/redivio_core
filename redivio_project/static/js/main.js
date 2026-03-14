@@ -270,40 +270,37 @@ createApp({
         startCameraScan() {
             this.isScanning = true;
             this.$nextTick(() => {
-                // تنظيف أي نسخة قديمة متعلقة
                 if (this.scannerInstance) {
                     try { this.scannerInstance.clear(); } catch(e) {}
                 }
 
-                this.scannerInstance = new Html5Qrcode("reader");
+                // 🚀 التركيز حصرياً على باركود المنتجات (EAN-13) عشان نضاعف سرعة القراءة
+                this.scannerInstance = new Html5Qrcode("reader", {
+                    formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13 ]
+                });
                 
-                // 🚀 السر هنا: شيلنا الـ qrbox خالص وشيلنا تحديد الفورمات 
-                // كده الكاميرا هتقرأ من أي مكان في الشاشة وهتفك تشفير الـ EAN-13 صاروخ
                 const config = { 
                     fps: 10,
-                    disableFlip: false, // بيمنع عكس الصورة
+                    qrbox: { width: 300, height: 120 }, // مربع مستطيل عشان يجبره يركز في مساحة محددة
                     experimentalFeatures: {
-                        useBarCodeDetectorIfSupported: true // بيشغل حساس المتصفح لو الموبايل بيدعمه
+                        useBarCodeDetectorIfSupported: true
                     }
-                    // لاحظ: مفيش qrbox هنا!
-                };
-                
-                // طلب جودة عالية جداً من الكاميرا
-                const cameraConfig = { 
-                    facingMode: "environment",
-                    width: { ideal: 1920, min: 1280 }, // طلب أعلى جودة ممكنة
-                    advanced: [{ focusMode: "continuous" }]
                 };
 
                 this.scannerInstance.start(
-                    cameraConfig, 
+                    { facingMode: "environment" }, 
                     config,
                     (decodedText) => {
-                        // لقط الباركود!
+                        // نجاح القراءة
                         if (this.scannerInstance && this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
                             this.scannerInstance.pause();
                         }
                         this.processScannedBarcode(decodedText);
+                    },
+                    (errorMessage) => {
+                        // 🔍 السطر ده مخفي: المكتبة بتحاول تقرأ كل 0.1 ثانية بس بتفشل بصمت 
+                        // لو عايز تشوف بعينك إنها بتحاول، شيل الشرطتين (//) من السطر اللي تحت:
+                        // console.log("جاري المحاولة... الصورة غير واضحة للكمبيوتر");
                     }
                 ).catch(err => {
                     console.error("Camera Error:", err);
