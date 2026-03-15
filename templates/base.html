@@ -15,6 +15,10 @@
         body { background: #f8fafc; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
         [v-cloak] { display: none; }
         .glass-sidebar { background: #0f172a; color: white; }
+
+
+        .ready-fade-enter-active, .ready-fade-leave-active { transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+        .ready-fade-enter-from, .ready-fade-leave-to { opacity: 0; transform: translate(-50%, 40px) scale(0.9); }
     </style>
 </head>
 <body class="h-screen flex flex-col text-slate-800">
