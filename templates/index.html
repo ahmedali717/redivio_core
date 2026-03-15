@@ -14,11 +14,11 @@
                 {% include "components/org_builder.html" %}
             </div>
 
-            <div v-if="['inventory', 'wms'].includes(view)">
+            <div v-if="['inventory_module', 'wms'].includes(view)">
                 {% include "wms/dashboard.html" %}
             </div>
 
-            <div v-if="view === 'procurement'">
+            <div v-if="view === 'procurement_module'">
                 <div class="p-10 text-center text-slate-400">[[ isArabic ? 'واجهة المشتريات قيد التطوير...' : 'Procurement module is under development...' ]]</div>
             </div>
 
