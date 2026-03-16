@@ -29,17 +29,25 @@
 
     <table class="header-table">
         <tr>
-            <td>
-                {% if po.opco.logo %}
-                    <img src="{{ po.opco.logo.url }}" class="company-logo">
-                {% else %}
-                    <h2 style="color: #10b981;">{{ po.opco.name }}</h2>
-                {% endif %}
+            <td style="width: 60%;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    {% if po.opco.logo %}
+                        <img src="{{ po.opco.logo.url }}" class="company-logo" style="max-height: 100px; width: auto; margin-left: 15px;">
+                    {% endif %}
+                    <div style="display: inline-block; vertical-align: top;">
+                        <h1 style="color: #10b981; margin: 0; font-size: 24px;">{{ po.opco.name }}</h1>
+                        <div style="font-size: 11px; color: #666; margin-top: 5px; line-height: 1.4;">
+                            {% if po.opco.cr_number %}<div>سجل تجاري: {{ po.opco.cr_number }}</div>{% endif %}
+                            {% if po.opco.tax_id %}<div>رقم ضريبي: {{ po.opco.tax_id }}</div>{% endif %}
+                            {% if po.opco.address %}<div>العنوان: {{ po.opco.address }}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
             </td>
-            <td style="text-align: left;">
-                <div class="po-title">أمر توريد (Purchase Order)</div>
-                <div class="value">رقم: {{ po.po_number }}</div>
-                <div class="value">التاريخ: {{ po.created_at|date:"d/m/Y" }}</div>
+            <td style="text-align: left; vertical-align: top;">
+                <div class="po-title">أمر توريد شراء</div>
+                <div class="value" style="font-family: monospace; font-size: 16px;">#{{ po.po_number }}</div>
+                <div class="label" style="margin-top: 5px;">تاريخ الإصدار: {{ po.created_at|date:"d/m/Y" }}</div>
             </td>
         </tr>
     </table>
@@ -77,7 +85,13 @@
                 </td>
                 <td style="text-align: center;">{{ line.quantity }}</td>
                 <td style="text-align: center;">{{ line.unit_price }}</td>
-                <td style="text-align: left;">{{ line.total_price }}</td>
+                <td style="text-align: left; font-weight: bold;">
+                    {{ line.get_total|default:line.total_price }} 
+                    {# أو استخدم العملية الحسابية مباشرة لو مفيش Function في الموديل #}
+                    {% if not line.total_price %}
+                        {% widthratio line.quantity 1 line.unit_price %}
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -116,13 +130,13 @@
 
 <style>
     /* كود يخفي أي حاجة مش عايزينها تطلع في الورقة (زي زرار إغلاق أو طباعة) */
-    @media print {
-        .no-print {
-            display: none !important;
-        }
-        body {
-            background-color: white !important;
-            margin: 0 !important;
-        }
-    }
+    .company-logo {
+    max-width: 180px;
+    max-height: 90px;
+    object-fit: contain;
+}
+@media print {
+    /* لإظهار الألوان واللوجو بوضوح في الطباعة */
+    body { -webkit-print-color-adjust: exact; }
+}
 </style>
