@@ -6,6 +6,7 @@ from rest_framework.response import Response
 # PDF Generation Imports
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from django.shortcuts import render, get_object_or_404
 
 # Models & Serializers
 # الاستيراد النسبي (.) صحيح لأننا داخل نفس التطبيق
@@ -86,50 +87,16 @@ class PurchaseOrderLineViewSet(viewsets.ModelViewSet):
 # =========================================================
 
 def print_po_pdf(request, pk):
-    """ دالة لطباعة أمر الشراء كملف PDF """
+    """ دالة محسنة لطباعة أمر الشراء بتنسيق HTML شيك """
     try:
         po = PurchaseOrder.objects.get(pk=pk)
         
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="PO_{po.po_number}.pdf"'
+        # إذا كنت تريد العرض كـ HTML أولاً للتأكد من الشكل قبل تحويله لـ PDF
+        # ده هيخليك تشوف التصميم في المتصفح وتعدله براحتك
+        return render(request, 'procurement/print_po.html', {'po': po})
         
-        p = canvas.Canvas(response, pagesize=A4)
-        width, height = A4
-        
-        # Header
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(50, height - 50, f"Purchase Order: {po.po_number}")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(50, height - 80, f"Vendor: {po.vendor.name}")
-        p.drawString(50, height - 100, f"Date: {po.created_at.strftime('%Y-%m-%d')}")
-        
-        # Table Header
-        y = height - 150
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(50, y, "Item")
-        p.drawString(300, y, "Qty")
-        p.drawString(400, y, "Price")
-        p.line(50, y-5, 500, y-5)
-        
-        # Lines
-        y -= 25
-        p.setFont("Helvetica", 10)
-        for line in po.lines.all():
-            p.drawString(50, y, line.material.name)
-            p.drawString(300, y, str(line.quantity))
-            p.drawString(400, y, str(line.unit_price))
-            y -= 20
-            
-            if y < 50: # صفحة جديدة إذا انتهت المساحة
-                p.showPage()
-                y = height - 50
-        
-        p.showPage()
-        p.save()
-        return response
+        # ملحوظة: إذا أردت تحويله لـ PDF حقيقي لاحقاً، 
+        # سنستخدم مكتبة مثل weasyprint أو xhtml2pdf هنا.
         
     except PurchaseOrder.DoesNotExist:
-        return HttpResponse("PO not found", status=404)
-    except Exception as e:
-        return HttpResponse(f"Error generating PDF: {str(e)}", status=500)
+        return HttpResponse("أمر التوريد غير موجود", status=404)

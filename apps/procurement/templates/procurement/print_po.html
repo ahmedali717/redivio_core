@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { size: A4; margin: 20px; }
+        body { font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; }
+        .header-table { width: 100%; border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-bottom: 20px; }
+        .company-logo { width: 150px; height: auto; }
+        .po-title { color: #10b981; font-size: 24px; font-weight: bold; }
+        
+        .info-section { width: 100%; margin-bottom: 30px; }
+        .info-box { width: 48%; display: inline-block; vertical-align: top; }
+        .label { color: #666; font-size: 12px; font-weight: bold; display: block; }
+        .value { font-size: 14px; font-weight: bold; }
+
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .items-table th { background: #f8fafc; border-bottom: 2px solid #e2e8f0; padding: 12px; text-align: right; font-size: 12px; }
+        .items-table td { border-bottom: 1px solid #f1f5f9; padding: 12px; font-size: 13px; }
+        
+        .summary-wrapper { width: 300px; float: left; }
+        .summary-row { padding: 5px 0; border-bottom: 1px solid #eee; }
+        .grand-total { background: #10b981; color: white; padding: 10px; border-radius: 8px; margin-top: 10px; }
+        
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <table class="header-table">
+        <tr>
+            <td>
+                {% if po.opco.logo %}
+                    <img src="{{ po.opco.logo.url }}" class="company-logo">
+                {% else %}
+                    <h2 style="color: #10b981;">{{ po.opco.name }}</h2>
+                {% endif %}
+            </td>
+            <td style="text-align: left;">
+                <div class="po-title">أمر توريد (Purchase Order)</div>
+                <div class="value">رقم: {{ po.po_number }}</div>
+                <div class="value">التاريخ: {{ po.created_at|date:"d/m/Y" }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="info-section">
+        <div class="info-box">
+            <span class="label">إلى المورد:</span>
+            <div class="value">{{ po.vendor.name }}</div>
+            <div class="value" style="font-weight: normal;">{{ po.vendor.tax_id|default:"" }}</div>
+        </div>
+        <div class="info-box" style="text-align: left;">
+            <span class="label">جهة الشحن:</span>
+            <div class="value">{{ po.opco.name }}</div>
+            <div class="value" style="font-weight: normal;">{{ po.opco.address|default:"المقر الرئيسي" }}</div>
+        </div>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الصنف (Material)</th>
+                <th style="text-align: center;">الكمية</th>
+                <th style="text-align: center;">سعر الوحدة</th>
+                <th style="text-align: left;">الإجمالي</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in po.lines.all %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                    <strong>{{ line.material.name }}</strong><br>
+                    <small style="color: #666;">SKU: {{ line.material.sku }}</small>
+                </td>
+                <td style="text-align: center;">{{ line.quantity }}</td>
+                <td style="text-align: center;">{{ line.unit_price }}</td>
+                <td style="text-align: left;">{{ line.total_price }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="summary-wrapper">
+        <div class="summary-row">
+            <span style="float: right;">الإجمالي (غير شامل):</span>
+            <span style="float: left;">{{ po.extra_data.subtotal }}</span>
+            <div style="clear: both;"></div>
+        </div>
+        <div class="summary-row">
+            <span style="float: right;">الضريبة ({{ po.extra_data.tax_rate }}%):</span>
+            <span style="float: left;">+ {{ po.extra_data.tax_amount }}</span>
+            <div style="clear: both;"></div>
+        </div>
+        <div class="grand-total">
+            <span style="float: right; font-weight: bold;">الإجمالي النهائي:</span>
+            <span style="float: left; font-weight: bold;">{{ po.extra_data.grand_total }} {{ po.currency }}</span>
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        تم إنشاء هذا المستند آلياً بواسطة نظام REDIVIO ERP - {{ po.created_at }}
+    </div>
+
+</body>
+</html>
