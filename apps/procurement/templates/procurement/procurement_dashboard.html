@@ -35,7 +35,9 @@
                                 </button>
                             </td>
                             <td class="p-4 text-slate-600">[[ po.vendor_name || '---' ]]</td>
-                            <td class="p-4 text-center font-bold text-emerald-700">[[ po.total_value || '0.00' ]] <small class="text-[10px] text-slate-400">[[ po.currency || 'EGP' ]]</small></td>
+                            <td class="p-4 text-center font-bold text-emerald-700">
+                                [[ calculatePOTotal(po) ]] <small class="text-[10px] text-slate-400">[[ po.currency || 'EGP' ]]</small>
+                            </td>
                             <td class="p-4 text-center">
                                 <span :class="{
                                     'bg-emerald-50 text-emerald-600 border-emerald-100': po.status === 'Confirmed' || po.status === 'Received',

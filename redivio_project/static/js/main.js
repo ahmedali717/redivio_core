@@ -287,6 +287,11 @@ createApp({
             }
         },
 
+        calculatePOTotal(po) {
+            if (!po.lines || po.lines.length === 0) return 0;
+            return po.lines.reduce((sum, line) => sum + (line.quantity * line.unit_price), 0).toFixed(2);
+        },
+
         // 🚀 إضافة دالة الطباعة (Print)
         printPO(poId) {
             this.showToast(this.isArabic ? "جاري تحضير ملف الطباعة..." : "Preparing document...", "success");
@@ -978,7 +983,7 @@ createApp({
                 );
                 return;
             }
-            
+
             this.isEditing = true;
             this.modalType = type;
             this.showModal = true;
