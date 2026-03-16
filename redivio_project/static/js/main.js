@@ -288,15 +288,16 @@ createApp({
         },
 
         calculatePOTotal(po) {
-            if (!po.lines || po.lines.length === 0) return 0;
-            return po.lines.reduce((sum, line) => sum + (line.quantity * line.unit_price), 0).toFixed(2);
+            if (!po.lines || po.lines.length === 0) return '0.00';
+            const total = po.lines.reduce((sum, line) => sum + (line.quantity * line.unit_price), 0);
+            return total.toFixed(2);
         },
 
         // 🚀 إضافة دالة الطباعة (Print)
         printPO(poId) {
             this.showToast(this.isArabic ? "جاري تحضير ملف الطباعة..." : "Preparing document...", "success");
             // الرابط ده المفروض يفتح صفحة الـ PDF اللي جانغو بيعملها
-            window.open(`/api/orders/${poId}/print/`, '_blank');
+            window.open(`/print/po/${poId}/`, '_blank');
         },
 
     // 🚀 1. الدالة اللي كانت مفقودة وعاملة الإيرور (ربط الانتر)

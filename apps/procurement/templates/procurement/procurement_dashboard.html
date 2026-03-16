@@ -20,7 +20,7 @@
                     <tr>
                         <th class="p-4 font-bold">رقم الأمر</th>
                         <th class="p-4 font-bold">المورد</th>
-                        <th class="p-4 font-bold text-center">القيمة الإجمالية</th>
+                        <th class="p-4 font-bold text-center">الإجمالي النهائي</th>
                         <th class="p-4 font-bold text-center">الحالة</th>
                         <th class="p-4 font-bold text-left">إجراءات</th>
                     </tr>
@@ -29,39 +29,45 @@
                     <template v-for="po in purchase_orders" :key="po.id">
                         <tr class="hover:bg-slate-50/80 transition-colors group">
                             <td class="p-4">
-                                <button @click="po.showDetails = !po.showDetails" class="flex items-center gap-2 text-slate-700 hover:text-emerald-600 transition-colors">
+                                <button @click="po.showDetails = !po.showDetails" class="flex items-center gap-2 text-slate-700 hover:text-emerald-600 transition-colors font-black">
                                     <i class="fas" :class="po.showDetails ? 'fa-chevron-down' : 'fa-chevron-left'" class="text-[10px] text-slate-400"></i>
-                                    <span class="font-black">[[ po.po_number || '---' ]]</span>
+                                    [[ po.po_number || '---' ]]
                                 </button>
                             </td>
                             <td class="p-4 text-slate-600">[[ po.vendor_name || '---' ]]</td>
-                            <td class="p-4 text-center font-bold text-emerald-700">
-                                [[ calculatePOTotal(po) ]] <small class="text-[10px] text-slate-400">[[ po.currency || 'EGP' ]]</small>
+                            
+                            <td class="p-4 text-center">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-emerald-700 text-base">[[ po.extra_data?.grand_total || calculatePOTotal(po) ]]</span>
+                                    <span class="text-[9px] text-slate-400 font-bold uppercase">[[ po.currency || 'EGP' ]] (NET)</span>
+                                </div>
                             </td>
+
                             <td class="p-4 text-center">
                                 <span :class="{
-                                    'bg-emerald-50 text-emerald-600 border-emerald-100': po.status === 'Confirmed' || po.status === 'Received',
+                                    'bg-emerald-50 text-emerald-600 border-emerald-100': ['Confirmed', 'Received'].includes(po.status),
                                     'bg-blue-50 text-blue-600 border-blue-100': po.status === 'Draft'
                                 }" class="px-2 py-1 rounded-full text-[10px] font-bold border">
                                     [[ po.status || '---' ]]
                                 </span>
                             </td>
+
                             <td class="p-4">
                                 <div class="flex items-center justify-end gap-1">
-                                    <button @click="po.showDetails = !po.showDetails" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="عرض التفاصيل">
+                                    <button @click="po.showDetails = !po.showDetails" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="عرض التفاصيل">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     
                                     <button v-if="!['Received', 'Confirmed'].includes(po.status)" 
                                             @click="editItem('po', po)" 
-                                            class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="تعديل">
+                                            class="p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-all" title="تعديل">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <span v-else class="p-2 text-slate-300 cursor-not-allowed" title="لا يمكن التعديل بعد التأكيد">
                                         <i class="fas fa-lock text-xs"></i>
                                     </span>
 
-                                    <button @click="printPO(po.id)" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all" title="طباعة">
+                                    <button @click="printPO(po.id)" class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all" title="طباعة">
                                         <i class="fas fa-print"></i>
                                     </button>
                                 </div>
@@ -70,26 +76,49 @@
 
                         <tr v-if="po.showDetails" class="bg-slate-100/30 animate-in slide-in-from-top-2 duration-300">
                             <td colspan="5" class="p-6">
-                                <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-inner">
-                                    <h5 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest border-b pb-2">تفاصيل المواد (Line Items)</h5>
+                                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-inner">
+                                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                                        <h5 class="text-xs font-bold text-slate-400 uppercase tracking-widest">تفاصيل المواد (Line Items)</h5>
+                                        <span class="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold text-slate-500">
+                                            [[ po.extra_data?.is_tax_inclusive ? 'الأسعار شاملة الضريبة' : 'الأسعار غير شاملة الضريبة' ]]
+                                        </span>
+                                    </div>
+
                                     <table class="w-full text-xs">
                                         <thead>
-                                            <tr class="text-slate-500">
+                                            <tr class="text-slate-500 border-b">
                                                 <th class="pb-2 text-right">الصنف</th>
                                                 <th class="pb-2 text-center">الكمية</th>
                                                 <th class="pb-2 text-center">سعر الوحدة</th>
                                                 <th class="pb-2 text-left">الإجمالي</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            <tr v-for="line in po.lines" :key="line.id" class="border-t border-slate-50">
-                                                <td class="py-3 font-medium">[[ line.material_name ]]</td>
-                                                <td class="py-3 text-center">[[ line.quantity ]]</td>
+                                        <tbody class="divide-y divide-slate-50">
+                                            <tr v-for="line in po.lines" :key="line.id">
+                                                <td class="py-3 font-medium text-slate-700">[[ line.material_name ]]</td>
+                                                <td class="py-3 text-center font-bold">[[ line.quantity ]]</td>
                                                 <td class="py-3 text-center">[[ line.unit_price ]]</td>
-                                                <td class="py-3 text-left font-bold text-slate-700">[[ line.quantity * line.unit_price ]]</td>
+                                                <td class="py-3 text-left font-bold text-slate-900">[[ (line.quantity * line.unit_price).toFixed(2) ]]</td>
                                             </tr>
                                         </tbody>
                                     </table>
+
+                                    <div class="mt-6 flex justify-end">
+                                        <div class="w-72 bg-slate-50 rounded-xl p-4 space-y-3 border border-slate-100">
+                                            <div class="flex justify-between text-slate-600 text-xs">
+                                                <span>الإجمالي (غير شامل الضريبة):</span>
+                                                <span class="font-bold font-mono">[[ po.extra_data?.subtotal || '0.00' ]]</span>
+                                            </div>
+                                            <div class="flex justify-between text-slate-600 text-xs">
+                                                <span>الضريبة ([[ po.extra_data?.tax_rate || 15 ]]%):</span>
+                                                <span class="font-bold font-mono text-amber-600">+ [[ po.extra_data?.tax_amount || '0.00' ]]</span>
+                                            </div>
+                                            <div class="flex justify-between border-t border-slate-200 pt-3 text-base font-black text-emerald-700">
+                                                <span>الإجمالي النهائي:</span>
+                                                <span>[[ po.extra_data?.grand_total || calculatePOTotal(po) ]] [[ po.currency || 'EGP' ]]</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
