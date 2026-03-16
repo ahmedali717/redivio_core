@@ -12,20 +12,20 @@
             <i class="fas fa-box-open text-4xl text-slate-300 mb-3"></i>
             <h4 class="font-bold text-slate-500">لا توجد أوامر توريد</h4>
         </div>
-        <div v-else class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <table class="w-full text-right">
+        <div v-else class="bg-white rounded-xl border border-slate-200 overflow-hidden text-sm">
+            <table class="w-full text-right" dir="rtl">
                 <thead class="bg-slate-50 border-b border-slate-200">
                     <tr>
-                        <th class="p-4 text-xs font-bold text-slate-500">رقم الأمر</th>
-                        <th class="p-4 text-xs font-bold text-slate-500">المورد</th>
-                        <th class="p-4 text-xs font-bold text-slate-500">الحالة</th>
+                        <th class="p-4 font-bold text-slate-500">رقم الأمر</th>
+                        <th class="p-4 font-bold text-slate-500">المورد</th>
+                        <th class="p-4 font-bold text-slate-500">الحالة</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="po in (purchase_orders || [])" :key="po.id" class="border-b border-slate-50">
-                        <td class="p-4 font-bold text-sm">[[ po.po_number || '---' ]]</td>
-                        <td class="p-4 text-sm">[[ po.vendor_name || '---' ]]</td>
-                        <td class="p-4"><span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-xs font-bold border border-emerald-100">[[ po.status || '---' ]]</span></td>
+                    <tr v-for="po in purchase_orders" :key="po.id" class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td class="p-4 font-bold">[[ po.po_number || '---' ]]</td>
+                        <td class="p-4">[[ po.vendor_name || '---' ]]</td>
+                        <td class="p-4"><span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-[10px] font-bold border border-emerald-100">[[ po.status || '---' ]]</span></td>
                     </tr>
                 </tbody>
             </table>
