@@ -3,8 +3,8 @@
     <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-[2rem]">
         <h2 class="text-xl font-black text-slate-800"><i class="fas fa-file-invoice-dollar text-emerald-500 mr-2"></i> إدارة المشتريات</h2>
         <div class="flex gap-2">
-            <button @click="view = 'vendors_list'" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-200 transition-colors">الموردين</button>
-            <button @click="openModal('po')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-700 transition-colors">+ أمر توريد</button>
+            <button @click="view = 'vendors_list'" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-200 transition-colors text-xs">الموردين</button>
+            <button @click="openModal('po')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-700 transition-colors text-xs shadow-lg shadow-emerald-100">+ أمر توريد</button>
         </div>
     </div>
 
@@ -13,21 +13,85 @@
             <i class="fas fa-box-open text-4xl text-slate-300 mb-3"></i>
             <h4 class="font-bold text-slate-500">لا توجد أوامر توريد</h4>
         </div>
+        
         <div v-else class="bg-white rounded-xl border border-slate-200 overflow-hidden text-sm">
             <table class="w-full text-right" dir="rtl">
-                <thead class="bg-slate-50 border-b border-slate-200">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase">
                     <tr>
-                        <th class="p-4 font-bold text-slate-500">رقم الأمر</th>
-                        <th class="p-4 font-bold text-slate-500">المورد</th>
-                        <th class="p-4 font-bold text-slate-500">الحالة</th>
+                        <th class="p-4 font-bold">رقم الأمر</th>
+                        <th class="p-4 font-bold">المورد</th>
+                        <th class="p-4 font-bold text-center">القيمة الإجمالية</th>
+                        <th class="p-4 font-bold text-center">الحالة</th>
+                        <th class="p-4 font-bold text-left">إجراءات</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr v-for="po in purchase_orders" :key="po.id" class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                        <td class="p-4 font-bold">[[ po.po_number || '---' ]]</td>
-                        <td class="p-4">[[ po.vendor_name || '---' ]]</td>
-                        <td class="p-4"><span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-[10px] font-bold border border-emerald-100">[[ po.status || '---' ]]</span></td>
-                    </tr>
+                <tbody class="divide-y divide-slate-100">
+                    <template v-for="po in purchase_orders" :key="po.id">
+                        <tr class="hover:bg-slate-50/80 transition-colors group">
+                            <td class="p-4">
+                                <button @click="po.showDetails = !po.showDetails" class="flex items-center gap-2 text-slate-700 hover:text-emerald-600 transition-colors">
+                                    <i class="fas" :class="po.showDetails ? 'fa-chevron-down' : 'fa-chevron-left'" class="text-[10px] text-slate-400"></i>
+                                    <span class="font-black">[[ po.po_number || '---' ]]</span>
+                                </button>
+                            </td>
+                            <td class="p-4 text-slate-600">[[ po.vendor_name || '---' ]]</td>
+                            <td class="p-4 text-center font-bold text-emerald-700">[[ po.total_value || '0.00' ]] <small class="text-[10px] text-slate-400">[[ po.currency || 'EGP' ]]</small></td>
+                            <td class="p-4 text-center">
+                                <span :class="{
+                                    'bg-emerald-50 text-emerald-600 border-emerald-100': po.status === 'Confirmed' || po.status === 'Received',
+                                    'bg-blue-50 text-blue-600 border-blue-100': po.status === 'Draft'
+                                }" class="px-2 py-1 rounded-full text-[10px] font-bold border">
+                                    [[ po.status || '---' ]]
+                                </span>
+                            </td>
+                            <td class="p-4">
+                                <div class="flex items-center justify-end gap-1">
+                                    <button @click="po.showDetails = !po.showDetails" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    
+                                    <button v-if="!['Received', 'Confirmed'].includes(po.status)" 
+                                            @click="editItem('po', po)" 
+                                            class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <span v-else class="p-2 text-slate-300 cursor-not-allowed" title="لا يمكن التعديل بعد التأكيد">
+                                        <i class="fas fa-lock text-xs"></i>
+                                    </span>
+
+                                    <button @click="printPO(po.id)" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all" title="طباعة">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr v-if="po.showDetails" class="bg-slate-100/30 animate-in slide-in-from-top-2 duration-300">
+                            <td colspan="5" class="p-6">
+                                <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-inner">
+                                    <h5 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest border-b pb-2">تفاصيل المواد (Line Items)</h5>
+                                    <table class="w-full text-xs">
+                                        <thead>
+                                            <tr class="text-slate-500">
+                                                <th class="pb-2 text-right">الصنف</th>
+                                                <th class="pb-2 text-center">الكمية</th>
+                                                <th class="pb-2 text-center">سعر الوحدة</th>
+                                                <th class="pb-2 text-left">الإجمالي</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="line in po.lines" :key="line.id" class="border-t border-slate-50">
+                                                <td class="py-3 font-medium">[[ line.material_name ]]</td>
+                                                <td class="py-3 text-center">[[ line.quantity ]]</td>
+                                                <td class="py-3 text-center">[[ line.unit_price ]]</td>
+                                                <td class="py-3 text-left font-bold text-slate-700">[[ line.quantity * line.unit_price ]]</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
         </div>
