@@ -107,3 +107,22 @@
 
 </body>
 </html>
+<script>
+    // أول ما الصفحة تفتح، يفتح قائمة الطباعة فوراً
+    window.onload = function() {
+        window.print();
+    };
+</script>
+
+<style>
+    /* كود يخفي أي حاجة مش عايزينها تطلع في الورقة (زي زرار إغلاق أو طباعة) */
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            background-color: white !important;
+            margin: 0 !important;
+        }
+    }
+</style>
