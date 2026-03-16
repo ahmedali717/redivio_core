@@ -1,34 +1,133 @@
-<div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[500px] animate-in fade-in duration-500">
-    <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-[2rem]">
-        <h2 class="text-xl font-black text-slate-800"><i class="fas fa-file-invoice-dollar text-emerald-500 mr-2"></i> إدارة المشتريات</h2>
-        <div class="flex gap-2">
-            <button @click="view = 'vendors_list'" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-200 transition-colors">الموردين</button>
-            <button @click="openModal('po')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-700 transition-colors">+ أمر توريد</button>
+{% extends "base.html" %}
+{% block title %}Procurement Management{% endblock %}
+
+{% block content %}
+<div class="procurement-wrapper space-y-8 animate-in fade-in duration-500">
+    <div class="flex justify-between items-end border-b border-slate-200 pb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800 tracking-tight">
+                <i class="fas fa-file-invoice-dollar text-emerald-500 mr-2"></i>
+                إدارة المشتريات
+            </h1>
+            <p class="text-slate-500 mt-1">متابعة أوامر التوريد، الموردين، وعمليات الشراء</p>
+        </div>
+        <div class="flex gap-3">
+            <button @click="view = 'vendors_list'" class="bg-white border border-slate-200 text-slate-600 px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-all shadow-sm font-medium flex items-center gap-2">
+                <i class="fas fa-truck"></i> دليل الموردين
+            </button>
+            <button @click="openModal('po')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 font-medium">
+                <i class="fas fa-plus"></i> أمر توريد جديد
+            </button>
         </div>
     </div>
 
-    <div class="p-6 flex-1 bg-slate-50/50 rounded-b-[2rem]">
-        <div v-if="(purchase_orders || []).length === 0" class="text-center py-20 bg-white rounded-2xl border border-slate-200">
-            <i class="fas fa-box-open text-4xl text-slate-300 mb-3"></i>
-            <h4 class="font-bold text-slate-500">لا توجد أوامر توريد</h4>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 group hover:border-emerald-200 transition-all">
+            <div class="bg-emerald-50 text-emerald-600 p-4 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                <i class="fas fa-file-contract fa-2x"></i>
+            </div>
+            <div>
+                <span class="text-slate-400 text-sm font-medium">أوامر معلقة</span>
+                <div class="text-3xl font-bold text-slate-800">[[ (purchase_orders || []).filter(o => o.status === 'Draft').length ]]</div>
+            </div>
         </div>
-        <div v-else class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <table class="w-full text-right">
-                <thead class="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                        <th class="p-4 text-xs font-bold text-slate-500">رقم الأمر</th>
-                        <th class="p-4 text-xs font-bold text-slate-500">المورد</th>
-                        <th class="p-4 text-xs font-bold text-slate-500">الحالة</th>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 group hover:border-blue-200 transition-all">
+            <div class="bg-blue-50 text-blue-600 p-4 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <i class="fas fa-check-double fa-2x"></i>
+            </div>
+            <div>
+                <span class="text-slate-400 text-sm font-medium">أوامر مكتملة</span>
+                <div class="text-3xl font-bold text-slate-800">[[ (purchase_orders || []).filter(o => o.status === 'Completed').length ]]</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 group hover:border-amber-200 transition-all">
+            <div class="bg-amber-50 text-amber-600 p-4 rounded-2xl group-hover:bg-amber-600 group-hover:text-white transition-all">
+                <i class="fas fa-users-gear fa-2x"></i>
+            </div>
+            <div>
+                <span class="text-slate-400 text-sm font-medium">إجمالي الموردين</span>
+                <div class="text-3xl font-bold text-slate-800">[[ (vendors || []).length ]]</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                <i class="fas fa-clipboard-list text-slate-400"></i> سجل طلبات الشراء
+            </h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-right" dir="rtl">
+                <thead>
+                    <tr class="text-slate-400 text-xs uppercase tracking-wider bg-slate-50/50 border-b">
+                        <th class="px-6 py-4 font-semibold">رقم الأمر</th>
+                        <th class="px-6 py-4 font-semibold">المورد</th>
+                        <th class="px-6 py-4 font-semibold text-center">التاريخ</th>
+                        <th class="px-6 py-4 font-semibold text-center">الحالة</th>
+                        <th class="px-6 py-4 font-semibold text-left">الإجراءات</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr v-for="po in (purchase_orders || [])" :key="po.id" class="border-b border-slate-50">
-                        <td class="p-4 font-bold text-sm">[[ po.po_number || '---' ]]</td>
-                        <td class="p-4 text-sm">[[ po.vendor_name || '---' ]]</td>
-                        <td class="p-4"><span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-xs font-bold border border-emerald-100">[[ po.status || '---' ]]</span></td>
+                <tbody class="divide-y divide-slate-100">
+                    <tr v-for="po in purchase_orders" :key="po.id" class="hover:bg-slate-50 transition-all group">
+                        <td class="px-6 py-4 font-bold text-slate-800">#[[ po.po_number ]]</td>
+                        <td class="px-6 py-4 text-slate-600">[[ po.vendor_name ]]</td>
+                        <td class="px-6 py-4 text-center text-slate-500 text-xs">[[ po.created_at ]]</td>
+                        <td class="px-6 py-4 text-center">
+                            <span :class="po.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200'" 
+                                  class="px-3 py-1 rounded-full text-[10px] font-bold border">
+                                [[ po.status ]]
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-left">
+                            <button @click="editItem('po', po)" class="text-slate-400 hover:text-blue-600 transition-colors">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+            <div v-if="(purchase_orders || []).length === 0" class="p-20 text-center">
+                <i class="fas fa-file-circle-plus fa-3x text-slate-200 mb-4"></i>
+                <p class="text-slate-400 font-medium">لا توجد سجلات شراء حالياً</p>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // إذا كنت ستفتح هذه الصفحة بشكل مستقل تماماً برابط خاص بها
+    if (!window.VueAppInstance) {
+        const { createApp } = Vue;
+        createApp({
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    purchase_orders: [],
+                    vendors: [],
+                    loading: false
+                }
+            },
+            mounted() {
+                this.fetchProcurementData();
+            },
+            methods: {
+                async fetchProcurementData() {
+                    this.loading = true;
+                    // جلب البيانات من الـ API الخاص بك
+                    const res = await fetch('/api/procurement/summary/');
+                    const data = await res.json();
+                    this.purchase_orders = data.pos;
+                    this.vendors = data.vendors;
+                    this.loading = false;
+                }
+            }
+        }).mount('#app');
+    }
+</script>
+{% endblock %}
