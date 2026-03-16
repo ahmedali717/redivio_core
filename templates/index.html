@@ -14,6 +14,14 @@
                 {% include "components/org_builder.html" %}
             </div>
 
+                        <div v-if="view === 'procurement_module'">
+                {% include "procurement/procurement_dashboard.html" %}
+            </div>
+
+            <div v-if="view === 'vendors_list'">
+                {% include "procurement/vendors_list.html" %}
+            </div>
+
             <div v-if="view === 'global_config'" class="animate-in fade-in duration-500">
             <div class="flex items-center justify-between mb-8">
                 <div>
@@ -321,15 +329,6 @@
                          {% include "wms/inventory_reports.html" %}
                     </div>
                 </div>
-
-            <div v-if="view === 'procurement_module'">
-                {% include "procurement/procurement_dashboard.html" %}
-            </div>
-
-            <div v-if="view === 'vendors_list'">
-                {% include "procurement/vendors_list.html" %}
-            </div>
-
 
             <div v-if="view === 'item_master'" class="animate-in slide-in-from-bottom-4 duration-500 h-full">
                 {% include "components/item_master_list.html" %}
