@@ -1,0 +1,34 @@
+<div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[500px] animate-in fade-in duration-500">
+    <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-[2rem]">
+        <h2 class="text-xl font-black text-slate-800"><i class="fas fa-file-invoice-dollar text-emerald-500 mr-2"></i> إدارة المشتريات</h2>
+        <div class="flex gap-2">
+            <button @click="view = 'vendors_list'" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-200 transition-colors">الموردين</button>
+            <button @click="openModal('po')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-700 transition-colors">+ أمر توريد</button>
+        </div>
+    </div>
+
+    <div class="p-6 flex-1 bg-slate-50/50 rounded-b-[2rem]">
+        <div v-if="(purchase_orders || []).length === 0" class="text-center py-20 bg-white rounded-2xl border border-slate-200">
+            <i class="fas fa-box-open text-4xl text-slate-300 mb-3"></i>
+            <h4 class="font-bold text-slate-500">لا توجد أوامر توريد</h4>
+        </div>
+        <div v-else class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <table class="w-full text-right">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="p-4 text-xs font-bold text-slate-500">رقم الأمر</th>
+                        <th class="p-4 text-xs font-bold text-slate-500">المورد</th>
+                        <th class="p-4 text-xs font-bold text-slate-500">الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="po in (purchase_orders || [])" :key="po.id" class="border-b border-slate-50">
+                        <td class="p-4 font-bold text-sm">[[ po.po_number || '---' ]]</td>
+                        <td class="p-4 text-sm">[[ po.vendor_name || '---' ]]</td>
+                        <td class="p-4"><span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-xs font-bold border border-emerald-100">[[ po.status || '---' ]]</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
