@@ -283,6 +283,82 @@
     </div>
 </div>
 
+<div v-if="view === 'procurement_module'" class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[500px] animate-in fade-in duration-500">
+    <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-[2rem]">
+        <h2 class="text-xl font-black text-slate-800">
+            <i class="fas fa-file-invoice-dollar text-emerald-500 mr-2"></i> 
+            [[ isArabic ? 'إدارة المشتريات' : 'Procurement Management' ]]
+        </h2>
+        <div class="flex gap-2">
+            <button @click="view = 'vendors_list'" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-200 transition-all text-xs">
+                <i class="fas fa-truck"></i> [[ isArabic ? 'الموردين' : 'Vendors' ]]
+            </button>
+            <button @click="openModal('po')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all text-xs">
+                <i class="fas fa-plus"></i> [[ isArabic ? 'أمر توريد جديد' : 'New PO' ]]
+            </button>
+        </div>
+    </div>
+
+    <div class="p-6 flex-1 bg-slate-50/50 rounded-b-[2rem]">
+        <div v-if="(purchase_orders || []).length === 0" class="text-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm">
+            <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-500">
+                <i class="fas fa-shopping-cart text-3xl"></i>
+            </div>
+            <h4 class="font-bold text-slate-600 mb-2">[[ isArabic ? 'لا توجد أوامر توريد حالياً' : 'No Purchase Orders found' ]]</h4>
+            <p class="text-slate-400 text-sm">[[ isArabic ? 'ابدأ بإضافة أول أمر توريد للمنشأة' : 'Start by adding your first PO' ]]</p>
+        </div>
+
+        <div v-else class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <table class="w-full text-right" dir="rtl">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase">
+                    <tr>
+                        <th class="p-4 font-bold">[[ isArabic ? 'رقم الأمر' : 'PO ID' ]]</th>
+                        <th class="p-4 font-bold">[[ isArabic ? 'المورد' : 'Vendor' ]]</th>
+                        <th class="p-4 font-bold">[[ isArabic ? 'التاريخ' : 'Date' ]]</th>
+                        <th class="p-4 font-bold">[[ isArabic ? 'القيمة' : 'Total' ]]</th>
+                        <th class="p-4 font-bold text-center">[[ isArabic ? 'الحالة' : 'Status' ]]</th>
+                        <th class="p-4 font-bold text-left">[[ isArabic ? 'إجراءات' : 'Actions' ]]</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    <tr v-for="po in purchase_orders" :key="po.id" class="hover:bg-slate-50/50 transition-colors">
+                        <td class="p-4 font-bold text-slate-700">#[[ po.po_number ]]</td>
+                        <td class="p-4 text-slate-600">[[ po.vendor_name ]]</td>
+                        <td class="p-4 text-slate-500 text-xs">[[ po.created_at ]]</td>
+                        <td class="p-4 font-bold text-blue-600">[[ po.total_amount ]] [[ config.currency || 'EGP' ]]</td>
+                        <td class="p-4 text-center">
+                            <span :class="po.status === 'Draft' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-600'" 
+                                  class="px-3 py-1 rounded-full text-[10px] font-bold border border-current opacity-80">
+                                [[ po.status ]]
+                            </span>
+                        </td>
+                        <td class="p-4 text-left">
+                            <button @click="editItem('po', po)" class="text-slate-400 hover:text-blue-600 p-2"><i class="fas fa-edit"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div v-if="view === 'vendors_list'" class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[500px] p-6 animate-in fade-in">
+    <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+        <h2 class="text-xl font-black text-slate-800">
+            <i class="fas fa-truck text-emerald-500 mr-2"></i> 
+            [[ isArabic ? 'قائمة الموردين' : 'Vendors List' ]]
+        </h2>
+        <button @click="view = 'procurement_module'" class="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-slate-700 transition-all text-xs">
+            [[ isArabic ? 'عودة للمشتريات' : 'Back to Procurement' ]]
+        </button>
+    </div>
+    
+    <div class="bg-slate-50/50 rounded-2xl border border-slate-200 p-4">
+        <table class="w-full text-right">
+             </table>
+    </div>
+</div>
+
 
             <div v-if="view === 'inventory_module'" class="flex flex-col h-full space-y-4 animate-in fade-in duration-500">
                 <div class="bg-white p-3 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
