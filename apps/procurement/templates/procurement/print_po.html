@@ -86,11 +86,7 @@
                 <td style="text-align: center;">{{ line.quantity }}</td>
                 <td style="text-align: center;">{{ line.unit_price }}</td>
                 <td style="text-align: left; font-weight: bold;">
-                    {{ line.get_total|default:line.total_price }} 
-                    {# أو استخدم العملية الحسابية مباشرة لو مفيش Function في الموديل #}
-                    {% if not line.total_price %}
-                        {% widthratio line.quantity 1 line.unit_price %}
-                    {% endif %}
+                    {% widthratio line.quantity 1 line.unit_price %}
                 </td>
             </tr>
             {% endfor %}
@@ -118,7 +114,24 @@
     <div class="footer">
         تم إنشاء هذا المستند آلياً بواسطة نظام REDIVIO ERP - {{ po.created_at }}
     </div>
-
+        <div style="margin-top: 50px;">
+        <table style="width: 100%;">
+            <tr>
+                <td style="width: 50%; text-align: center;">
+                    <div class="label">توقيع المستلم</div>
+                    <div style="margin-top: 40px; border-bottom: 1px dashed #ccc; width: 150px; margin-right: auto; margin-left: auto;"></div>
+                </td>
+                <td style="width: 50%; text-align: center;">
+                    <div class="label">اعتماد إدارة المشتريات</div>
+                    <div style="margin-top: 10px;">
+                        <span style="border: 2px solid #10b981; color: #10b981; padding: 10px; border-radius: 50%; display: inline-block; font-size: 10px; transform: rotate(-15deg); font-weight: bold;">
+                            APPROVED<br>REDIVIO ERP
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
 </body>
 </html>
 <script>
