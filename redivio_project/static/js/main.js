@@ -267,6 +267,33 @@ createApp({
         ...utils.methods,
         ...itemMasterModule.methods,
 
+        async fetchPurchaseOrders() {
+            try {
+                const url = this.activeOpcoId 
+                    ? `/api/orders/?opco=${this.activeOpcoId}` 
+                    : '/api/orders/';
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    // 🚀 التعديل هنا: إضافة showDetails لكل أمر توريد عشان الـ Expand يشتغل
+                    const list = Array.isArray(data) ? data : (data.results || []);
+                    this.purchase_orders = list.map(po => ({
+                        ...po,
+                        showDetails: false // الحالة الافتراضية للتفاصيل إنها مقفولة
+                    }));
+                }
+            } catch (e) {
+                console.error("Error fetching POs:", e);
+            }
+        },
+
+        // 🚀 إضافة دالة الطباعة (Print)
+        printPO(poId) {
+            this.showToast(this.isArabic ? "جاري تحضير ملف الطباعة..." : "Preparing document...", "success");
+            // الرابط ده المفروض يفتح صفحة الـ PDF اللي جانغو بيعملها
+            window.open(`/api/orders/${poId}/print/`, '_blank');
+        },
+
     // 🚀 1. الدالة اللي كانت مفقودة وعاملة الإيرور (ربط الانتر)
         processBarcodeManual() {
             if(!this.barcodeQuery) return;
@@ -943,6 +970,15 @@ createApp({
         },
 
         editItem(type, item) {
+
+            if (type === 'po' && ['Received', 'Confirmed'].includes(item.status)) {
+                this.showToast(
+                    this.isArabic ? "لا يمكن تعديل أمر توريد تم استلامه أو تأكيده" : "Cannot edit a Received/Confirmed PO", 
+                    "error"
+                );
+                return;
+            }
+            
             this.isEditing = true;
             this.modalType = type;
             this.showModal = true;
