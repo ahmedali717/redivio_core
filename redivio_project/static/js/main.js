@@ -163,6 +163,33 @@ createApp({
 
     computed: {
 
+        poLineTotal() {
+            if(!this.forms.po || !this.forms.po.lines) return 0;
+            return this.forms.po.lines.reduce((sum, line) => {
+                const qty = parseFloat(line.quantity) || 0;
+                const price = parseFloat(line.unit_price) || 0;
+                return sum + (qty * price);
+            }, 0);
+        },
+        poTaxAmount() {
+            if(!this.forms.po) return 0;
+            const rate = (parseFloat(this.forms.po.tax_rate) || 0) / 100;
+            const total = this.poLineTotal;
+            if(this.forms.po.is_tax_inclusive) {
+                // (Total / (1 + rate)) * rate
+                return (total - (total / (1 + rate)));
+            } else {
+                return total * rate;
+            }
+        },
+        poSubtotal() {
+            return this.forms.po.is_tax_inclusive ? (this.poLineTotal - this.poTaxAmount) : this.poLineTotal;
+        },
+        poGrandTotal() {
+                return this.forms.po.is_tax_inclusive ? this.poLineTotal : (this.poLineTotal + this.poTaxAmount);
+            }
+        },
+
         filteredMaterials() {
             let list = this.materials_list || [];
             
