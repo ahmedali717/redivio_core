@@ -283,15 +283,6 @@
     </div>
 </div>
 
-<div v-if="view === 'procurement_module'">
-    {% include "procurement/procurement_main.html" %}
-</div>
-
-<div v-if="view === 'vendors_list'">
-    {% include "procurement/vendors_list.html" %}
-</div>
-
-
             <div v-if="view === 'inventory_module'" class="flex flex-col h-full space-y-4 animate-in fade-in duration-500">
                 <div class="bg-white p-3 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
                     <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50">
@@ -332,8 +323,13 @@
                 </div>
 
             <div v-if="view === 'procurement_module'">
-                <div class="p-10 text-center text-slate-400">[[ isArabic ? 'واجهة المشتريات قيد التطوير...' : 'Procurement module is under development...' ]]</div>
+                {% include "procurement/procurement_dashboard.html" %}
             </div>
+
+            <div v-if="view === 'vendors_list'">
+                {% include "procurement/vendors_list.html" %}
+            </div>
+
 
             <div v-if="view === 'item_master'" class="animate-in slide-in-from-bottom-4 duration-500 h-full">
                 {% include "components/item_master_list.html" %}
