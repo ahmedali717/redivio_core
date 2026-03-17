@@ -679,6 +679,32 @@ createApp({
                 console.error("Error fetching POs:", e);
             }
         },
+        async fetchStockMoves() {
+            try {
+                // 🚀 التأكد من الرابط الصحيح اللي جاب داتا في المتصفح
+                const response = await fetch('/api/wms/moves/'); 
+                if (response.ok) {
+                    const data = await response.json();
+                    // تأكد إن اسم المصفوفة هنا هو نفس الاسم المستخدم في v-for في الـ HTML
+                    this.inventoryMoves = data; 
+                    console.log("Moves loaded:", data);
+                }
+            } catch (error) {
+                console.error("Failed to load moves:", error);
+            }
+        },
+        // دالة لجلب سجل الحركات
+        async fetchInventoryMoves() {
+            try {
+                const response = await fetch('/api/moves/'); // تأكد إن الرابط ده هو اللي في الـ urls.py
+                if (response.ok) {
+                    const data = await response.json();
+                    this.inventoryMoves = data; // تخزين الحركات في مصفوفة لعرضها في الجدول
+                }
+            } catch (error) {
+                console.error("Error fetching moves:", error);
+            }
+        },
 
         async validateReceipt() {
             const entry = this.forms.stock_entry;
