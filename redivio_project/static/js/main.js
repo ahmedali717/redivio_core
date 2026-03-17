@@ -725,27 +725,34 @@ createApp({
                     })
                 });
 
+                // ✅ قراءة الرد مرة واحدة فقط هنا لتجنب خطأ "body stream already read"
                 const data = await response.json();
 
                 if (response.ok) {
-                    const data = await response.json(); // 👈 لازم نتأكد إننا بنقرأ الرد اللي فيه الـ ID
-                    
-                    const receiptId = data.id; // الـ ID اللي السيرفر لسه مكريهه
+                    const receiptId = data.id; 
                     const receiptNo = data.receipt_no;
 
-                    this.showToast(`تم حفظ الحركة رقم ${receiptNo} بنجاح`, 'success');
+                    this.showToast(
+                        this.isArabic ? `تم حفظ الحركة رقم ${receiptNo} بنجاح` : `GRN ${receiptNo} saved successfully`, 
+                        'success'
+                    );
 
-                    if (confirm("هل تريد طباعة مستند الاستلام الآن؟")) {
-                        // 🚀 التعديل هنا: نستخدم receiptId اللي جاي من الـ data
+                    // 4. سؤال المستخدم إذا كان يريد الطباعة فوراً
+                    if (confirm(this.isArabic ? "هل تريد طباعة مستند الاستلام الآن؟" : "Do you want to print the receipt now?")) {
                         if (receiptId) {
                             window.open(`/print/grn/${receiptId}/`, '_blank');
                         } else {
                             console.error("Receipt ID is missing in server response");
                         }
                     }
+
+                    this.goBackToOperations(); // العودة للشاشة الرئيسية
+                    await this.refreshAllData(); // تحديث الأرصدة
                     
-                    this.goBackToOperations();
-                    await this.refreshAllData();
+                } else {
+                    // التعامل مع أخطاء السيرفر (مثل Validation Errors)
+                    const errorMessage = data.error || (this.isArabic ? "فشل الاستلام" : "Receipt failed");
+                    throw new Error(errorMessage);
                 }
             } catch (e) {
                 console.error("Receipt Process Error:", e);
