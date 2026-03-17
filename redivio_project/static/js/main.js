@@ -28,7 +28,7 @@ createApp({
 
             // 1. جعل الموديول الموحد هو الشاشة الافتراضية (اختياري)
             view: 'inventory_module', 
-            
+            inventoryMoves: [],
             // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
             inventoryTab: 'levels', 
 
