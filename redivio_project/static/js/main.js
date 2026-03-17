@@ -728,32 +728,24 @@ createApp({
                 const data = await response.json();
 
                 if (response.ok) {
-                    // 🚀 هنا بقى الشغل الجديد:
-                    // السيرفر هيرجع لنا رقم الحركة المسلسل (مثلاً GRN-2026-001) ورابط الطباعة
-                    const grnNumber = data.receipt_no || '---';
-                    const printUrl = data.print_url;
+                    const data = await response.json(); // 👈 لازم نتأكد إننا بنقرأ الرد اللي فيه الـ ID
+                    
+                    const receiptId = data.id; // الـ ID اللي السيرفر لسه مكريهه
+                    const receiptNo = data.receipt_no;
 
-                    this.showToast(
-                        this.isArabic ? `تم حفظ الحركة رقم ${grnNumber} بنجاح` : `GRN ${grnNumber} saved successfully`, 
-                        'success'
-                    );
+                    this.showToast(`تم حفظ الحركة رقم ${receiptNo} بنجاح`, 'success');
 
-                    // 4. سؤال المستخدم إذا كان يريد الطباعة فوراً
-                    if (confirm(this.isArabic ? "هل تريد طباعة مستند الاستلام الآن؟" : "Do you want to print the receipt now?")) {
-                        if (printUrl) {
-                            window.open(printUrl, '_blank');
+                    if (confirm("هل تريد طباعة مستند الاستلام الآن؟")) {
+                        // 🚀 التعديل هنا: نستخدم receiptId اللي جاي من الـ data
+                        if (receiptId) {
+                            window.open(`/print/grn/${receiptId}/`, '_blank');
                         } else {
-                            // fallback لو الرابط مش جاي من السيرفر
-                            window.open(`/print/grn/${data.id}/`, '_blank');
+                            console.error("Receipt ID is missing in server response");
                         }
                     }
-
-                    this.goBackToOperations(); // العودة للشاشة الرئيسية
-                    await this.refreshAllData(); // تحديث الأرصدة
                     
-                } else {
-                    const errorMessage = data.error || (this.isArabic ? "فشل الاستلام" : "Receipt failed");
-                    throw new Error(errorMessage);
+                    this.goBackToOperations();
+                    await this.refreshAllData();
                 }
             } catch (e) {
                 console.error("Receipt Process Error:", e);
