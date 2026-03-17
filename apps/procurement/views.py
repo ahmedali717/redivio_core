@@ -10,8 +10,8 @@ from django.shortcuts import render, get_object_or_404
 
 # Models & Serializers
 # الاستيراد النسبي (.) صحيح لأننا داخل نفس التطبيق
-from .models import Vendor, PurchaseOrder, PurchaseOrderLine
-from .serializers import VendorSerializer, PurchaseOrderSerializer, PurchaseOrderLineSerializer
+from .models import Vendor, PurchaseOrder, PurchaseOrderLine , StockReceipt
+from .serializers import VendorSerializer, PurchaseOrderSerializer, PurchaseOrderLineSerializer , StockReceiptSerializer
 
 # ✅ التصحيح: يجب استخدام apps.wms بدلاً من wms مباشرة
 from apps.wms.models import StorageBin
@@ -77,6 +77,41 @@ class PurchaseOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             return Response({'error': 'Invalid Bin ID'}, status=404)
         except Exception as e:
             return Response({'error': str(e)}, status=400)
+        
+class StockReceiptViewSet(viewsets.ModelViewSet):
+    """ إدارة حركات الاستلام المخزني (GRN) """
+    queryset = StockReceipt.objects.all().order_by('-date')
+    serializer_class = StockReceiptSerializer
+
+    def create(self, request, *args, **kwargs):
+        # 🚀 هنا بنستقبل الداتا من الـ Vue (الـ validateReceipt اللي عملناها)
+        serializer = self.get_serializer(data=request.data)
+        
+        if serializer.is_valid():
+            # حفظ الحركة (الـ Serializer اللي عملناه هيحدث الـ PO والـ WMS تلقائياً)
+            receipt = serializer.save(created_by=request.user)
+            
+            # تحديث حالة الـ PO لو الاستلام اكتمل
+            po = receipt.po
+            all_received = True
+            for line in po.lines.all():
+                if line.received_quantity < line.quantity:
+                    all_received = False
+                    break
+            
+            if all_received:
+                po.status = 'RECEIVED'
+                po.save()
+
+            # 🚀 نرجع للـ Frontend رقم الـ GRN ورابط الطباعة
+            return Response({
+                'id': receipt.id,
+                'receipt_no': receipt.receipt_number,
+                'print_url': f'/print/grn/{receipt.id}/', # رابط صفحة طباعة الاستلام
+                'status': 'success'
+            }, status=status.HTTP_201_CREATED)
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PurchaseOrderLineViewSet(viewsets.ModelViewSet):
     queryset = PurchaseOrderLine.objects.all()
@@ -100,3 +135,11 @@ def print_po_pdf(request, pk):
         
     except PurchaseOrder.DoesNotExist:
         return HttpResponse("أمر التوريد غير موجود", status=404)
+    
+def print_grn_pdf(request, pk):
+    """ دالة عرض صفحة طباعة مستند الاستلام (GRN) """
+    # جلب بيانات حركة الاستلام بناءً على الـ ID
+    receipt = get_object_or_404(StockReceipt, pk=pk)
+    
+    # استدعاء ملف الـ HTML الخاص بالتصميم
+    return render(request, 'procurement/print_grn.html', {'receipt': receipt})

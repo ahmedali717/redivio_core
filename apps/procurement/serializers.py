@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Vendor, PurchaseOrder, PurchaseOrderLine
+from .models import Vendor, PurchaseOrder, PurchaseOrderLine, StockReceipt, StockReceiptLine
 
 class VendorSerializer(serializers.ModelSerializer):
     extra_data = serializers.JSONField(required=False)
@@ -9,32 +9,71 @@ class VendorSerializer(serializers.ModelSerializer):
 
 class PurchaseOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.CharField(source='material.name', read_only=True)
-    # 🚀 التعديل 1: إضافة الـ SKU عشان يظهر في جدول الاستلام
     material_sku = serializers.CharField(source='material.sku', read_only=True)
+    # 🚀 التعديل: إضافة الحقل الجديد عشان الـ Vue يعرف إحنا استلمنا كام قبل كدة
+    received_qty = serializers.DecimalField(source='received_quantity', max_digits=10, decimal_places=2, read_only=True)
     
-    # 🚀 التعديل 2: إضافة حقل للرف الافتراضي (اختياري لو محتاجه من الـ Item Master)
-    # ملاحظة: هيرجع الـ ID بتاع الرف عشان الـ Vue يختاره تلقائياً
-    default_bin = serializers.SerializerMethodField()
-
     class Meta:
         model = PurchaseOrderLine
-        # ضفنا material_sku و default_bin للقائمة
-        fields = ['id', 'material', 'material_name', 'material_sku', 'quantity', 'unit_price', 'po', 'default_bin']
-        read_only_fields = ['id', 'material_name', 'material_sku', 'po']
+        fields = ['id', 'material', 'material_name', 'material_sku', 'quantity', 'received_qty', 'unit_price', 'po']
+        read_only_fields = ['id', 'material_name', 'material_sku', 'po', 'received_qty']
 
-    def get_default_bin(self, obj):
-        # لو عندك منطق في الموديل بيحدد الرف الرئيسي للصنف، حطه هنا
-        # حالياً هنرجعه None والـ Vue هيدور عليه في الـ company_assignments
-        return None
+# --- 🚀 سيريالايزر الـ GRN الجديد ---
+
+class StockReceiptLineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockReceiptLine
+        fields = ['material', 'quantity', 'storage_bin']
+
+class StockReceiptSerializer(serializers.ModelSerializer):
+    items = StockReceiptLineSerializer(many=True)
+    
+    class Meta:
+        model = StockReceipt
+        fields = ['id', 'receipt_number', 'po', 'opco', 'date', 'items']
+        read_only_fields = ['id', 'receipt_number', 'date']
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        receipt = StockReceipt.objects.create(**validated_data)
+        
+        # ربط الـ Models ديناميكياً لتجنب الـ Circular Import لو حصل
+        from django.apps import apps
+        StockMove = apps.get_model('wms', 'StockMove')
+        
+        for item in items_data:
+            # 1. إنشاء سطر الاستلام
+            StockReceiptLine.objects.create(receipt=receipt, **item)
+            
+            # 2. تحديث التراكمي في الـ PO Line عشان الـ Progress Bar والحسابات
+            po_line = PurchaseOrderLine.objects.get(po=receipt.po, material=item['material'])
+            po_line.received_quantity += item['quantity']
+            po_line.save()
+            
+            # 3. تسجيل حركة مخزنية (Stock Move) لزيادة الأرصدة فوراً
+            StockMove.objects.create(
+                opco=receipt.opco,
+                material=item['material'],
+                quantity=item['quantity'],
+                move_type='IN',
+                dest_bin=item['storage_bin'],
+                reference=f"GRN: {receipt.receipt_number} (PO: {receipt.po.po_number})"
+            )
+            
+        return receipt
+
+# --- 🚀 نهاية سيريالايزر الـ GRN ---
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
     lines = PurchaseOrderLineSerializer(many=True) 
     extra_data = serializers.JSONField(required=False)
+    # لعرض حركات الاستلام المرتبطة بهذا الـ PO
+    receipts = StockReceiptSerializer(many=True, read_only=True)
 
     class Meta:
         model = PurchaseOrder
-        fields = ['id', 'opco', 'vendor', 'vendor_name', 'po_number', 'date', 'status', 'extra_data', 'lines']
+        fields = ['id', 'opco', 'vendor', 'vendor_name', 'po_number', 'date', 'status', 'extra_data', 'lines', 'receipts']
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines', [])
@@ -42,15 +81,3 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         for line_data in lines_data:
             PurchaseOrderLine.objects.create(po=purchase_order, **line_data)
         return purchase_order
-
-    def update(self, instance, validated_data):
-        lines_data = validated_data.pop('lines', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        
-        if lines_data is not None:
-            instance.lines.all().delete()
-            for line_data in lines_data:
-                PurchaseOrderLine.objects.create(po=instance, **line_data)
-        return instance

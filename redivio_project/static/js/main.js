@@ -627,11 +627,11 @@ createApp({
                 const data = await res.json();
                 const currentOpcoId = parseInt(this.activeOpcoId);
                 
-                // 🚀 التعديل الجوهري هنا
+                // 🚀 التعديل الجوهري لضبط الكميات
                 this.forms.stock_entry.items = data.lines.map(i => {
                     const material = this.materials_list.find(m => m.id === i.material);
                     
-                    // 1. استخراج الرف الافتراضي (لو السيرفر بيبعته أو من بيانات الصنف)
+                    // 1. استخراج الرف الافتراضي
                     let autoSelectedBin = i.default_bin || ''; 
                     if (!autoSelectedBin && material?.company_assignments) {
                         const assign = material.company_assignments.find(a => parseInt(a.opco_id) === currentOpcoId);
@@ -641,12 +641,15 @@ createApp({
                     return {
                         material_id: i.material,
                         material_name: i.material_name || material?.name || 'Unknown',
-                        // 2. إظهار الـ SKU (تأكد إن السيرفر بيبعته باسم material_sku)
                         sku: i.material_sku || material?.sku || 'N/A', 
-                        // 3. دعم الاستلام الجزئي (Partial)
-                        ordered_qty: parseFloat(i.quantity), // الكمية الأصلية في الطلب
-                        received_qty: parseFloat(i.quantity), // الكمية المستلمة (قابلة للتعديل يدوياً)
-                        bin_id: autoSelectedBin // الرف المربوط تلقائياً
+                        
+                        // --- الحسابات المطلوبة ---
+                        ordered_qty: parseFloat(i.quantity),      // إجمالي الكمية المطلوبة في أمر الشراء
+                        received_before: parseFloat(i.received_qty || 0), // ما تم استلامه في "حركات سابقة"
+                        received_qty: 0,                         // 0 -> الكمية اللي بيتم استلامها "الآن" في هذه الحركة
+                        // -----------------------
+
+                        bin_id: autoSelectedBin 
                     };
                 });
 
@@ -662,10 +665,10 @@ createApp({
         
         async fetchPendingPOs() {
             try {
-                // 🚀 التعديل هنا: نغير المسار ليكون /api/orders/
+                // نطلب فقط الأوامر المعتمدة Confirmed للشركة النشطة
                 const url = this.activeOpcoId 
-                    ? `/api/orders/?status=CONFIRMED&opco=${this.activeOpcoId}` 
-                    : '/api/orders/?status=CONFIRMED';
+                    ? `/api/orders/?status=Confirmed&opco=${this.activeOpcoId}` 
+                    : '/api/orders/?status=Confirmed';
                     
                 const res = await fetch(url);
                 if (res.ok) {
@@ -680,24 +683,31 @@ createApp({
         async validateReceipt() {
             const entry = this.forms.stock_entry;
             
-            // تحقق إن المستخدم اختار PO
+            // 1. التحقق من اختيار أمر التوريد
             if (!entry.po_id) {
                 this.showToast(this.isArabic ? "برجاء اختيار أمر توريد" : "Please select a PO", 'error');
                 return;
             }
 
-            // تحقق إن كل صنف تم تحديد رف له وكمية
-            const invalidItems = entry.items.filter(i => !i.bin_id || i.received_qty <= 0);
-            if (invalidItems.length > 0) {
-                this.showToast(this.isArabic ? "برجاء تحديد الرف والكمية لكل الأصناف" : "Please select bin and valid quantity for all items", 'error');
+            // 2. فلترة الأصناف التي تم إدخال كمية لها فقط (تجاهل الأصفار)
+            const itemsToReceive = entry.items.filter(i => parseFloat(i.received_qty) > 0);
+
+            if (itemsToReceive.length === 0) {
+                this.showToast(this.isArabic ? "يجب إدخال كمية لواحد من الأصناف على الأقل" : "Enter quantity for at least one item", 'error');
+                return;
+            }
+
+            // 3. التحقق من تحديد الرف لكل صنف مستلم
+            const missingBins = itemsToReceive.filter(i => !i.bin_id);
+            if (missingBins.length > 0) {
+                this.showToast(this.isArabic ? "برجاء تحديد الرف للأصناف المستلمة" : "Please select bin for received items", 'error');
                 return;
             }
 
             try {
                 this.loading = true;
-                this.showToast(this.isArabic ? "جاري معالجة الاستلام..." : "Processing receipt...", 'success');
-
-                // هنبعت الداتا للباك-إند
+                
+                // إرسال البيانات للباك-إند
                 const response = await fetch('/api/wms/stock-receipts/', {
                     method: 'POST',
                     headers: {
@@ -707,7 +717,7 @@ createApp({
                     body: JSON.stringify({
                         po_id: entry.po_id,
                         opco_id: this.activeOpcoId,
-                        items: entry.items.map(item => ({
+                        items: itemsToReceive.map(item => ({
                             material_id: item.material_id,
                             quantity: item.received_qty,
                             bin_id: item.bin_id
@@ -715,24 +725,39 @@ createApp({
                     })
                 });
 
-                // 🚀 الإصلاح 1: استخدام 'response' بدلاً من 'res' المجهولة
+                const data = await response.json();
+
                 if (response.ok) {
-                    this.showToast(this.isArabic ? "تم استلام البضاعة وتحديث الأرصدة بنجاح" : "Stock received and updated successfully", 'success');
-                    this.goBackToOperations(); // نرجع للشاشة الرئيسية
-                    await this.refreshAllData(); // نحدث الأرصدة في الداشبورد
-                } else {
-                    // 🚀 الإصلاح 2: استخراج رسالة الخطأ الحقيقية من الدجانغو
-                    const errorData = await response.json();
-                    // الدجانغو عندنا بيبعت الخطأ في حقل اسمه "error"
-                    const errorMessage = errorData.error || errorData.detail || (this.isArabic ? "فشل الاستلام لسبب غير معروف" : "Receipt failed");
+                    // 🚀 هنا بقى الشغل الجديد:
+                    // السيرفر هيرجع لنا رقم الحركة المسلسل (مثلاً GRN-2026-001) ورابط الطباعة
+                    const grnNumber = data.receipt_no || '---';
+                    const printUrl = data.print_url;
+
+                    this.showToast(
+                        this.isArabic ? `تم حفظ الحركة رقم ${grnNumber} بنجاح` : `GRN ${grnNumber} saved successfully`, 
+                        'success'
+                    );
+
+                    // 4. سؤال المستخدم إذا كان يريد الطباعة فوراً
+                    if (confirm(this.isArabic ? "هل تريد طباعة مستند الاستلام الآن؟" : "Do you want to print the receipt now?")) {
+                        if (printUrl) {
+                            window.open(printUrl, '_blank');
+                        } else {
+                            // fallback لو الرابط مش جاي من السيرفر
+                            window.open(`/print/grn/${data.id}/`, '_blank');
+                        }
+                    }
+
+                    this.goBackToOperations(); // العودة للشاشة الرئيسية
+                    await this.refreshAllData(); // تحديث الأرصدة
                     
-                    // بنرمي الخطأ الحقيقي عشان الـ catch يمسكه
-                    throw new Error(errorMessage); 
+                } else {
+                    const errorMessage = data.error || (this.isArabic ? "فشل الاستلام" : "Receipt failed");
+                    throw new Error(errorMessage);
                 }
             } catch (e) {
-                // 🚀 الإصلاح 3: طباعة رسالة الخطأ الحقيقية بدلاً من النص الثابت "Network Error"
                 console.error("Receipt Process Error:", e);
-                this.showToast(e.message || "Network Error", 'error');
+                this.showToast(e.message, 'error');
             } finally {
                 this.loading = false;
             }

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إيصال استلام بضاعة - {{ receipt.receipt_number }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    <style>
+        @media print { .no-print { display: none; } }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .receipt-header { border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px; }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container border p-4">
+        <div class="row receipt-header">
+            <div class="col-6">
+                <h4>إيصال استلام مخزني (GRN)</h4>
+                <p>رقم الحركة: <strong>{{ receipt.receipt_number }}</strong></p>
+                <p>التاريخ: {{ receipt.date|date:"Y-m-d H:i" }}</p>
+            </div>
+            <div class="col-6 text-start">
+                <h4>شركة الخرسانة الجاهزة</h4>
+                <p>مرجع أمر التوريد: {{ receipt.po.po_number }}</p>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <p><strong>المورد:</strong> {{ receipt.po.vendor.name }}</p>
+        </div>
+
+        <table class="table table-bordered text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>م</th>
+                    <th>كود الصنف</th>
+                    <th>وصف الصنف</th>
+                    <th>الكمية المستلمة</th>
+                    <th>الرف / الموقع</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in receipt.items.all %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.material.sku }}</td>
+                    <td>{{ item.material.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.storage_bin.code }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="row mt-5 pt-4 text-center">
+            <div class="col-4"><p>توقيع أمين المخزن</p><p>....................</p></div>
+            <div class="col-4"><p>توقيع مراقب الجودة</p><p>....................</p></div>
+            <div class="col-4"><p>توقيع السائق / المندوب</p><p>....................</p></div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4 no-print">
+        <button onclick="window.print()" class="btn btn-primary">طباعة المستند</button>
+    </div>
+</body>
+</html>

@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 from django.apps import apps  # ✅ ضروري لاستدعاء الموديلات داخل الدوال
 
@@ -75,5 +76,51 @@ class PurchaseOrderLine(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     
+    received_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    @property
+    def remaining_quantity(self):
+        return self.quantity - self.received_quantity
+
     def __str__(self):
         return f"{self.po.po_number} - {self.material}"
+    
+    def __str__(self):
+        return f"{self.po.po_number} - {self.material}"
+    
+class StockReceipt(models.Model):
+    """ مستند إيصال الاستلام (GRN) """
+    opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
+    # رقم مسلسل تلقائي GRN-2026-0001
+    receipt_number = models.CharField(max_length=50, unique=True, blank=True)
+    po = models.ForeignKey('PurchaseOrder', on_delete=models.CASCADE, related_name='receipts')
+    date = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.receipt_number:
+            year = datetime.date.today().year
+            # البحث عن آخر رقم مسلسل لهذا العام
+            last_receipt = StockReceipt.objects.filter(receipt_number__contains=f'GRN-{year}').order_by('id').last()
+            if last_receipt:
+                # استخراج الرقم الأخير وزيادته
+                last_no = int(last_receipt.receipt_number.split('-')[-1])
+                new_no = last_no + 1
+            else:
+                new_no = 1
+            self.receipt_number = f"GRN-{year}-{new_no:04d}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.receipt_number
+
+class StockReceiptLine(models.Model):
+    """ تفاصيل الأصناف المستلمة في كل حركة """
+    receipt = models.ForeignKey(StockReceipt, related_name='items', on_delete=models.CASCADE)
+    material = models.ForeignKey('item_master.Material', on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=12, decimal_places=2) # الكمية المستلمة "الآن"
+    # الرف الذي تم التخزين فيه
+    storage_bin = models.ForeignKey('wms.StorageBin', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.receipt.receipt_number} - {self.material.name}"
