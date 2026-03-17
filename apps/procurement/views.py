@@ -79,35 +79,27 @@ class PurchaseOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             return Response({'error': str(e)}, status=400)
         
 class StockReceiptViewSet(viewsets.ModelViewSet):
-    """ إدارة حركات الاستلام المخزني (GRN) """
     queryset = StockReceipt.objects.all().order_by('-date')
     serializer_class = StockReceiptSerializer
 
     def create(self, request, *args, **kwargs):
-        # 🚀 هنا بنستقبل الداتا من الـ Vue (الـ validateReceipt اللي عملناها)
         serializer = self.get_serializer(data=request.data)
-        
         if serializer.is_valid():
-            # حفظ الحركة (الـ Serializer اللي عملناه هيحدث الـ PO والـ WMS تلقائياً)
+            # حفظ الحركة
             receipt = serializer.save(created_by=request.user)
             
-            # تحديث حالة الـ PO لو الاستلام اكتمل
+            # تحديث حالة الـ PO (منطقك سليم هنا)
             po = receipt.po
-            all_received = True
-            for line in po.lines.all():
-                if line.received_quantity < line.quantity:
-                    all_received = False
-                    break
-            
-            if all_received:
+            if all(line.received_quantity >= line.quantity for line in po.lines.all()):
                 po.status = 'RECEIVED'
                 po.save()
 
-            # 🚀 نرجع للـ Frontend رقم الـ GRN ورابط الطباعة
+            # 🚀 التعديل الجوهري هنا:
+            # لازم نرجع الـ id والـ receipt_no علشان الـ Vue يفهمهم
             return Response({
-                'id': receipt.id,
+                'id': receipt.id,                           # 👈 ده اللي بيشيل الـ undefined
                 'receipt_no': receipt.receipt_number,
-                'print_url': f'/print/grn/{receipt.id}/', # رابط صفحة طباعة الاستلام
+                'print_url': f'/print/grn/{receipt.id}/',
                 'status': 'success'
             }, status=status.HTTP_201_CREATED)
             
