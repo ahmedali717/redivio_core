@@ -16,7 +16,8 @@ from apps.core.views import (
 # 👈 مسحنا FieldDefinitionViewSet من السطر ده
 from apps.item_master.views import MaterialViewSet, CategoryViewSet
 from apps.wms.views import StockQuantViewSet, StockMoveViewSet
-from apps.procurement.views import VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, print_po_pdf
+# عدل السطر ده ليتضمن الدالة الجديدة
+from apps.procurement.views import VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, print_po_pdf, print_grn_pdf
 from apps.sales.views import CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet
 
 # 2. إعداد الراوتر
@@ -50,6 +51,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/wms/', include('apps.wms.urls')),
     path('print/po/<int:pk>/', print_po_pdf, name='print_po_pdf'),
+    path('print/grn/<int:pk>/', print_grn_pdf, name='print_grn'),
     path('logout/', logout_view, name='logout'), # ✅ رابط الخروج
     path('', include('apps.core.urls')),
 ]
