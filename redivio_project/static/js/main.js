@@ -764,8 +764,9 @@ createApp({
                 const data = await response.json();
 
                 if (response.ok) {
-                    const receiptId = data.id; 
-                    const receiptNo = data.receipt_no;
+                    // 🚀 التعديل السحري هنا عشان يقرأ البيانات أياً كان المسمى اللي جانغو باعته
+                    const receiptId = data.id || data.receipt_id; 
+                    const receiptNo = data.receipt_number || data.receipt_no || "جديدة";
 
                     this.showToast(
                         this.isArabic ? `تم حفظ الحركة رقم ${receiptNo} بنجاح` : `GRN ${receiptNo} saved successfully`, 
@@ -776,6 +777,8 @@ createApp({
                     if (confirm(this.isArabic ? "هل تريد طباعة مستند الاستلام الآن؟" : "Do you want to print the receipt now?")) {
                         if (receiptId) {
                             window.open(`/print/grn/${receiptId}/`, '_blank');
+                        } else if (data.print_url) {
+                            window.open(data.print_url, '_blank');
                         } else {
                             console.error("Receipt ID is missing in server response");
                         }
