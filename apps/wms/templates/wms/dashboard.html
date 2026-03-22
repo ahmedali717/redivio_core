@@ -1,6 +1,8 @@
 {% verbatim %}
 <div class="wms-dashboard-wrapper space-y-8 bg-slate-50/30 p-6 rounded-[2.5rem] min-h-screen animate-in fade-in duration-500">
-
+<div style="background: #ef4444; color: white; padding: 15px; text-align: center; font-weight: 900; font-size: 20px; border-radius: 10px; margin-bottom: 20px;">
+    السيستم دلوقتي قاري إن التابة المفتوحة هي: [[ inventoryTab ]]
+</div>
     <div class="flex justify-between items-center mb-8">
         <div class="flex items-center gap-4">
             <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-100 rotate-3 hover:rotate-0 transition-transform">
@@ -140,6 +142,11 @@
         <div v-if="inventoryTab === 'moves'" class="animate-in slide-in-from-bottom-4 duration-500">
              {% include "wms/inventory_moves.html" %}
         </div>
+
+        <div v-if="inventoryTab === 'item_ledger'" class="p-10 bg-white rounded-3xl border-4 border-red-500 text-center shadow-2xl mt-10">
+            <h1 class="text-4xl font-black text-red-600 mb-4">🚨 التابة فتحت والزرار شغال يا أحمد! 🚨</h1>
+        </div>
+        
     </div>
 
 </div>
