@@ -65,7 +65,7 @@ def wms_stats(request):
         "items": items_count,
         "total_value": round(total_value, 2), # تقريب لرقمين عشريين
         "low_stock": low_stock
-    }),
+    })
 
 # =========================================================
 #  2. Stock Receipt Logic (حل مشكلة الـ 404 لزر التأكيد)
