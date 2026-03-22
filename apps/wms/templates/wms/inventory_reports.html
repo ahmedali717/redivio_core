@@ -1,8 +1,42 @@
-<div class="p-10 bg-white border-2 border-indigo-500 rounded-3xl text-center m-6 shadow-xl">
-    <h1 class="text-3xl font-black text-indigo-600 mb-4">
-        <i class="fas fa-check-circle"></i> شاشة التقارير متصلة بنجاح!
-    </h1>
-    <p class="text-slate-600 font-bold text-lg">
-        عدد الحركات اللي السيرفر جابها: <span class="text-rose-600">[[ inventoryMoves.length ]]</span>
-    </p>
+<div class="h-full flex flex-col space-y-4 p-4 bg-slate-50/50 rounded-[2.5rem] border border-slate-200/60 shadow-inner overflow-hidden animate-in fade-in duration-500">
+    <div class="flex items-center justify-between px-4 mb-4">
+        <div>
+            <h3 class="text-xl font-black text-slate-800 tracking-tight">[[ isArabic ? 'تقرير حركات المخزن التفصيلي' : 'Detailed Stock Movement Report' ]]</h3>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Inventory Intelligence Audit</p>
+        </div>
+        <div class="flex gap-2">
+            <button @click="fetchInventoryMoves" class="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-indigo-600 transition-all shadow-sm">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button @click="inventoryTab = 'levels'" class="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-red-600 transition-all shadow-sm">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+        <table class="w-full text-right border-collapse">
+            <thead class="sticky top-0 z-10 bg-slate-50 border-b border-slate-200">
+                <tr class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                    <th class="px-6 py-5">[[ isArabic ? 'التاريخ' : 'Date' ]]</th>
+                    <th class="px-6 py-5">[[ isArabic ? 'الصنف' : 'Material' ]]</th>
+                    <th class="px-6 py-5 text-center">[[ isArabic ? 'الكمية' : 'Qty' ]]</th>
+                    <th class="px-6 py-5 text-center">[[ isArabic ? 'النوع' : 'Type' ]]</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                <tr v-for="move in inventoryMoves" :key="move.id" class="hover:bg-slate-50/80">
+                    <td class="px-6 py-4 text-xs font-bold">[[ formatDate(move.date) ]]</td>
+                    <td class="px-6 py-4 text-sm font-bold">[[ move.material_name ]]</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-3 py-1 rounded-full bg-slate-100 font-black text-xs">[[ move.quantity ]]</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span v-if="move.move_type === 'IN' || move.move_type === 'RECEIPT'" class="text-emerald-600 font-black text-[10px]">IN</span>
+                        <span v-else class="text-rose-600 font-black text-[10px]">OUT</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
