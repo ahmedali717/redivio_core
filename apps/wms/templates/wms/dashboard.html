@@ -140,8 +140,8 @@
              {% include "wms/inventory_moves.html" %}
         </div>
 
-        <div v-if="inventoryTab === 'reports'" class="animate-in slide-in-from-bottom-4 duration-500">
-             {% include "wms/inventory_reports.html" %}
+        <div v-if="inventoryTab === 'reports'" class="h-full animate-in fade-in">
+            {% include "wms/inventory_item_report.html" %}
         </div>
     </div>
 

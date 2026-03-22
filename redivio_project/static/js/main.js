@@ -697,23 +697,22 @@ createApp({
         // دالة لجلب سجل الحركات
         // الدالة الموحدة لجلب الحركات وعرضها في التقارير
         async fetchInventoryMoves() {
-            try {
-                // 🚀 الرابط الصحيح اللي بيجيب الداتا
-                const response = await fetch('/api/wms/moves/'); 
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    // 🚀 تأمين مهم جداً: لو جانغو مرجع الداتا في results (Pagination)
-                    this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
-                    
-                    console.log("✅ Moves loaded for report:", this.inventoryMoves);
-                } else {
-                    console.error("❌ Failed to load moves, Status:", response.status);
-                }
-            } catch (error) {
-                console.error("Error fetching moves:", error);
-            }
-        },
+    this.loading = true;
+    try {
+        // نربط الفلاتر بالرابط (URL)
+        let url = `/api/wms/moves/?material=${this.reportFilters.material_id}&location=${this.reportFilters.location_id}&from=${this.reportFilters.date_from}&to=${this.reportFilters.date_to}`;
+        
+        const response = await fetch(url);
+        if (response.ok) {
+            const data = await response.json();
+            this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
+        }
+    } catch (error) {
+        console.error("Error fetching report:", error);
+    } finally {
+        this.loading = false;
+    }
+},
 
         async validateReceipt() {
             const entry = this.forms.stock_entry;
