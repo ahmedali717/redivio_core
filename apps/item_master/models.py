@@ -38,6 +38,8 @@ class Material(models.Model):
         ('lot', 'By Lots/Batch (رقم التشغيلة)'),
     ]
     tracking = models.CharField(max_length=10, choices=TRACKING_CHOICES, default='none')
+
+    standard_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     
     # القياسات والأوزان (للحسابات المتقدمة في الشحن والتخزين)
     weight = models.DecimalField(max_digits=10, decimal_places=2, default=0)
