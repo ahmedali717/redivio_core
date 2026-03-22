@@ -28,16 +28,15 @@ createApp({
 
             // 1. جعل الموديول الموحد هو الشاشة الافتراضية (اختياري)
             view: 'inventory_module', 
-            reportFilters: {
-    material_id: '',
-    location_id: '',
-    date_from: '',
-    date_to: ''
-},
             inventoryMoves: [],
             // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
             inventoryTab: 'levels', 
-
+            reportFilters: {
+                material_id: '',
+                location_id: '',
+                date_from: '',
+                date_to: ''
+            },
             loading: false, 
             sidebarCollapsed: false,
             isArabic: true,
