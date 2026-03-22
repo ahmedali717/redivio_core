@@ -40,19 +40,21 @@ def wms_stats(request):
         })
     
     quants = StockQuant.objects.filter(opco_id=active_opco_id)
-    plants_count = StorageLocation.objects.filter(opco_id=active_opco_id).count()
+    
+    # 🚀 التعديل الجوهري هنا: الوصول للشركة عن طريق المنشأة (plant__opco_id)
+    plants_count = StorageLocation.objects.filter(plant__opco_id=active_opco_id).count()
+    
     items_count = quants.values('material_id').distinct().count()
     
-    # 🚀 الحسبة دلوقتي هتشتغل 100% لأن الحقل بقى موجود
     total_value = 0
     try:
         agg = quants.annotate(
-            val=F('quantity') * F('material__standard_price') # 👈 هنا ضربنا الكمية في السعر اللي لسه ضايفينه
+            val=F('quantity') * F('material__standard_price')
         ).aggregate(total=Sum('val'))
         
         total_value = agg['total'] if agg['total'] is not None else 0
     except Exception as e:
-        logger.error(f"Error calculating total_value: {e}")
+        print(f"Error calculating total: {e}")
         total_value = 0
         
     low_stock = quants.filter(quantity__lte=0).count()
@@ -63,7 +65,6 @@ def wms_stats(request):
         "total_value": round(total_value, 2),
         "low_stock": low_stock
     })
-
 
 # =========================================================
 #  2. Stock Receipt Logic (حل مشكلة الـ 404 لزر التأكيد)
