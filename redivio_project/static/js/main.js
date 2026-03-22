@@ -694,12 +694,20 @@ createApp({
             }
         },
         // دالة لجلب سجل الحركات
+        // الدالة الموحدة لجلب الحركات وعرضها في التقارير
         async fetchInventoryMoves() {
             try {
-                const response = await fetch('/api/moves/'); // تأكد إن الرابط ده هو اللي في الـ urls.py
+                // 🚀 الرابط الصحيح اللي بيجيب الداتا
+                const response = await fetch('/api/wms/moves/'); 
                 if (response.ok) {
                     const data = await response.json();
-                    this.inventoryMoves = data; // تخزين الحركات في مصفوفة لعرضها في الجدول
+                    
+                    // 🚀 تأمين مهم جداً: لو جانغو مرجع الداتا في results (Pagination)
+                    this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
+                    
+                    console.log("✅ Moves loaded for report:", this.inventoryMoves);
+                } else {
+                    console.error("❌ Failed to load moves, Status:", response.status);
                 }
             } catch (error) {
                 console.error("Error fetching moves:", error);
