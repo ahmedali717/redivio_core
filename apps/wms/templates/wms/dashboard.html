@@ -143,8 +143,8 @@
              {% include "wms/inventory_moves.html" %}
         </div>
 
-        <div v-if="inventoryTab === 'item_ledger'" class="p-10 bg-white rounded-3xl border-4 border-red-500 text-center shadow-2xl mt-10">
-            <h1 class="text-4xl font-black text-red-600 mb-4">🚨 التابة فتحت والزرار شغال يا أحمد! 🚨</h1>
+        <div v-if="inventoryTab === 'item_ledger'" class="animate-in slide-in-from-bottom-4 duration-500">
+            {% include "wms/inventory_item_report.html" %}
         </div>
         
     </div>
