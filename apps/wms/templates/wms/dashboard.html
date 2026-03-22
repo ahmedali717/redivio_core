@@ -140,29 +140,84 @@
              {% include "wms/inventory_moves.html" %}
         </div>
 
-        <div class="p-8 bg-white rounded-3xl border-2 border-dashed border-indigo-200 shadow-inner">
-    <div class="text-center space-y-4">
-        <div class="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white mx-auto shadow-xl animate-bounce">
-            <i class="fas fa-rocket text-3xl"></i>
+        <div v-if="inventoryTab === 'reports'" class="p-8 bg-white animate-in slide-in-from-bottom-4 duration-500">
+            <div class="max-w-4xl mx-auto space-y-8">
+                
+                <div class="flex items-center gap-4 border-b pb-6">
+                    <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-100 rotate-3">
+                        <i class="fas fa-file-contract text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-800 tracking-tight">تقرير حركات الصنف التفصيلي</h2>
+                        <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Item Movement Ledger</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase mr-2">الصنف</label>
+                        <select v-model="reportFilters.material_id" class="w-full p-3 bg-white rounded-xl border-none shadow-sm font-bold text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option value="">-- اختر الصنف --</option>
+                            <option v-for="m in materials_list" :value="m.id">[[ m.name ]]</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase mr-2">الموقع</label>
+                        <select v-model="reportFilters.location_id" class="w-full p-3 bg-white rounded-xl border-none shadow-sm font-bold text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option value="">-- كل المواقع --</option>
+                            <option v-for="loc in locations" :value="loc.id">[[ loc.name ]]</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase mr-2">من تاريخ</label>
+                        <input type="date" v-model="reportFilters.date_from" class="w-full p-3 bg-white rounded-xl border-none shadow-sm font-bold text-sm">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase mr-2">إلى تاريخ</label>
+                        <input type="date" v-model="reportFilters.date_to" class="w-full p-3 bg-white rounded-xl border-none shadow-sm font-bold text-sm">
+                    </div>
+                </div>
+
+                <div class="flex justify-center">
+                    <button @click="generateItemReport()" class="bg-indigo-600 text-white ...">
+                        تحديث عرض الحركات
+                    </button>
+                </div>
+
+                <div v-if="inventoryMoves.length > 0" class="border rounded-3xl overflow-hidden shadow-sm">
+                    <table class="w-full text-right">
+                        <thead class="bg-slate-50 border-b">
+                            <tr class="text-[10px] font-black text-slate-400 uppercase">
+                                <th class="p-4">التاريخ</th>
+                                <th class="p-4">النوع</th>
+                                <th class="p-4 text-center">الكمية</th>
+                                <th class="p-4">المرجع</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            <tr v-for="move in inventoryMoves" class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4 text-xs font-bold text-slate-600">[[ formatDate(move.date) ]]</td>
+                                <td class="p-4">
+                                    <span :class="move.move_type === 'IN' || move.move_type === 'RECEIPT' ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50'" class="px-2 py-1 rounded text-[9px] font-black border uppercase">
+                                        [[ move.move_type === 'IN' || move.move_type === 'RECEIPT' ? 'إضافة' : 'صرف' ]]
+                                    </span>
+                                </td>
+                                <td class="p-4 text-center font-black text-slate-800">[[ move.quantity ]]</td>
+                                <td class="p-4 text-[10px] font-mono text-slate-400 uppercase">[[ move.reference || '---' ]]</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-else class="text-center py-10 opacity-30">
+                    <i class="fas fa-search text-4xl mb-3"></i>
+                    <p class="font-bold">برجاء اختيار الصنف والضغط على تشغيل</p>
+                </div>
+            </div>
         </div>
-        <h2 class="text-3xl font-black text-slate-800">وصلنا يا أحمد! 🚀</h2>
-        <p class="text-slate-500 font-bold">لو شايف الرسالة دي، يبقى إحنا دلوقت بنعدل في الملف الصح.</p>
-        
-        <div class="flex gap-4 justify-center mt-10">
-            <select v-model="reportFilters.material_id" class="p-4 bg-slate-100 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-indigo-500">
-                <option value="">-- اختر صنف --</option>
-                <option v-for="m in materials_list" :value="m.id">[[ m.name ]]</option>
-            </select>
-            <button @click="generateItemReport()" class="bg-indigo-600 text-white px-8 rounded-2xl font-black shadow-lg hover:scale-105 transition-transform">
-                تشغيل التقرير
-            </button>
-        </div>
-        
-        <div class="mt-6 text-indigo-600 font-black text-xl">
-            عدد الحركات الموجودة: [[ inventoryMoves.length ]]
-        </div>
-    </div>
-</div>
     </div>
 
 </div>

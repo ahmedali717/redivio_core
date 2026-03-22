@@ -275,30 +275,37 @@ createApp({
         ...itemMasterModule.methods,
 
         async generateItemReport() {
-    if (!this.reportFilters.material_id) {
-        this.showToast(this.isArabic ? "برجاء اختيار الصنف أولاً" : "Please select a material", "error");
-        return;
-    }
-    this.loading = true;
-    try {
-        const query = new URLSearchParams({
-            material: this.reportFilters.material_id,
-            location: this.reportFilters.location_id,
-            from: this.reportFilters.date_from,
-            to: this.reportFilters.date_to
-        }).toString();
-
-        const response = await fetch(`/api/wms/moves/?${query}`);
-        if (response.ok) {
-            this.inventoryMoves = await response.json();
-            this.showToast(this.isArabic ? "تم تحديث التقرير" : "Report Updated", "success");
+        // لو مفيش صنف مختار، نطلع تنبيه
+        if (!this.reportFilters.material_id) {
+            this.showToast("برجاء اختيار الصنف أولاً", "error");
+            return;
         }
-    } catch (e) {
-        console.error("Report Error:", e);
-    } finally {
-        this.loading = false;
-    }
-},
+
+        this.loading = true; // عشان يظهر علامة تحميل
+        try {
+            // تجميع الفلاتر من الشاشة وإرسالها للسيرفر
+            const query = new URLSearchParams({
+                material: this.reportFilters.material_id,
+                location: this.reportFilters.location_id,
+                from: this.reportFilters.date_from,
+                to: this.reportFilters.date_to
+            }).toString();
+
+            const response = await fetch(`/api/wms/moves/?${query}`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.inventoryMoves = data; // حط البيانات في الجدول
+                this.showToast("تم تحديث التقرير بنجاح", "success");
+            } else {
+                this.showToast("خطأ في جلب البيانات", "error");
+            }
+        } catch (error) {
+            console.error("Report Error:", error);
+        } finally {
+            this.loading = false;
+        }
+    },
 
         async fetchPurchaseOrders() {
             try {
