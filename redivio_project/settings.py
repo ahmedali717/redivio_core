@@ -213,3 +213,24 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success",
     },
 }
+
+# =========================================================
+# SECURITY HEADERS (Fix for Vue.js Block issues)
+# =========================================================
+
+# السماح للـ Vue.js بتنفيذ العمليات الحسابية (eval) داخل المتصفح
+# ده هيحل مشكلة "Content Security Policy blocks the use of eval"
+CSP_DEFAULT_SRC = ("'self'", "https://unpkg.com", "https://cdnjs.cloudflare.com")
+CSP_SCRIPT_SRC = (
+    "'self'", 
+    "https://unpkg.com", 
+    "https://cdnjs.cloudflare.com", 
+    "'unsafe-inline'", 
+    "'unsafe-eval'"  # السطر ده هو اللي هيخلي الـ Vue يشتغل
+)
+CSP_STYLE_SRC = ("'self'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com", "https://unpkg.com", "'unsafe-inline'")
+CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com")
+
+# إيقاف الحماية الصارمة لنوع المحتوى مؤقتاً لضمان تحميل المكتبات
+SECURE_CONTENT_TYPE_NOSNIFF = False
+X_FRAME_OPTIONS = "SAMEORIGIN"
