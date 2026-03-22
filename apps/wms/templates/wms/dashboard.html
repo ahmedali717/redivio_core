@@ -115,39 +115,5 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
-        <div class="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-            <h3 class="font-black text-slate-800 italic">
-                <span v-if="inventoryTab === 'levels'">[[ isArabic ? 'تفاصيل الأرصدة الحالية' : 'Stock Levels' ]]</span>
-                <span v-if="inventoryTab === 'items'">[[ isArabic ? 'سجل الأصناف المسجلة' : 'Item Master List' ]]</span>
-                <span v-if="inventoryTab === 'moves'">[[ isArabic ? 'سجل العمليات المخزنية' : 'Stock Operations' ]]</span>
-                <span v-if="inventoryTab === 'reports'">[[ isArabic ? 'تحليلات وحركات المخزن' : 'Inventory Analytics' ]]</span>
-                <span v-if="inventoryTab === 'item_ledger'">[[ isArabic ? 'تقرير حركة صنف تفصيلي' : 'Detailed Item Ledger' ]]</span>
-            </h3>
-            
-            <div class="flex gap-2">
-                <input v-model="searchQuery" type="text" :placeholder="isArabic ? 'بحث سريع...' : 'Quick search...'" 
-                       class="text-xs border border-slate-200 p-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 w-64 transition-all">
-            </div>
-        </div>
-
-        <div v-if="inventoryTab === 'levels'" class="animate-in zoom-in-95 duration-300">
-             {% include "wms/inventory_list.html" %}
-        </div>
-
-        <div v-if="inventoryTab === 'items'" class="animate-in zoom-in-95 duration-300">
-             {% include "components/item_master_list.html" %}
-        </div>
-
-        <div v-if="inventoryTab === 'moves'" class="animate-in slide-in-from-bottom-4 duration-500">
-             {% include "wms/inventory_moves.html" %}
-        </div>
-
-        <div v-if="inventoryTab === 'item_ledger'" class="animate-in slide-in-from-bottom-4 duration-500">
-            {% include "wms/inventory_item_report.html" %}
-        </div>
-        
-    </div>
-
 </div>
 {% endverbatim %}
