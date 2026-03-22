@@ -1,3 +1,4 @@
+{% verbatim %}
 <div class="h-full flex flex-col space-y-4 p-4 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
     
     <div class="flex items-center justify-between px-4 mb-2">
@@ -27,7 +28,7 @@
                     </td>
                     <td class="px-4 py-4">
                         <div class="font-bold text-slate-800 text-sm">[[ move.material_name ]]</div>
-                        <div class="text-[10px] text-slate-400">[[ move.reference || 'No Ref' ]]</div>
+                        <div class="text-[10px] text-slate-400 font-mono">[[ move.reference || '---' ]]</div>
                     </td>
                     <td class="px-4 py-4 text-center">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-black text-xs">
@@ -46,10 +47,11 @@
 
                 <tr v-if="inventoryMoves.length === 0">
                     <td colspan="4" class="py-20 text-center opacity-30 font-bold">
-                        [[ isArabic ? 'جاري تحميل البيانات...' : 'Loading Data...' ]]
+                        [[ isArabic ? 'لا توجد حركات لعرضها' : 'No movements found' ]]
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
 </div>
+{% endverbatim %}
