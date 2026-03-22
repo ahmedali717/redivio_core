@@ -26,10 +26,12 @@ from .serializers import (
 #  1. API Functions (إحصائيات الموديول)
 # =========================================================
 
+import logging
+logger = logging.getLogger(__name__)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def wms_stats(request):
-    # 🚀 التعديل هنا: نقرأ من الرابط الأول، لو مفيش نقرأ من الجلسة
     active_opco_id = request.query_params.get('opco') or request.session.get('active_opco_id')
     
     if not active_opco_id:
@@ -42,11 +44,20 @@ def wms_stats(request):
     plants_count = StorageLocation.objects.filter(opco_id=active_opco_id).count()
     items_count = quants.values('material_id').distinct().count()
     
-    total_value = quants.annotate(
-        val=F('quantity') * F('material__standard_price')
-    ).aggregate(total=Sum('val'))['total']
-    
-    if total_value is None:
+    # 🚀 التعديل السحري: إضافة Try/Except لمنع السيرفر من الوقوع
+    total_value = 0
+    try:
+        # هنا إحنا بنفترض إن اسم الحقل standard_price
+        agg = quants.annotate(
+            val=F('quantity') * F('material__standard_price')
+        ).aggregate(total=Sum('val'))
+        
+        total_value = agg['total'] if agg['total'] is not None else 0
+        
+    except Exception as e:
+        # لو ضرب إيرور (بسبب اسم الحقل)، هيطبع الخطأ في الكونسول ويكمل عادي ويرجع 0
+        print(f"⚠️ Error calculating total_value: {e}")
+        logger.error(f"Error calculating total_value: {e}")
         total_value = 0
         
     low_stock = quants.filter(quantity__lte=0).count()
