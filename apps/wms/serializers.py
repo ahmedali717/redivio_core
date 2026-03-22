@@ -80,7 +80,7 @@ class StockMoveSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockMove
         fields = [
-            'id', 'items', 'move_type', 'receipt_type', 'opco', 'reference', 
+            'id', 'date', 'items', 'move_type', 'receipt_type', 'opco', 'reference', # 👈 ضفنا 'date' هنا
             'vendor_name', 'payment_term', 'dest_bin', 'source_bin',
             'material_name', 'source_loc', 'dest_loc', 'material', 'quantity'
         ]

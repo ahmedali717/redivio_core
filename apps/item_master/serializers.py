@@ -15,7 +15,7 @@ class MaterialSerializer(serializers.ModelSerializer):
         model = Material
         fields = [
             'id', 'sku', 'name', 'category', 'category_name', 
-            'base_uom', 'barcode', 'company_assignments',
+            'base_uom', 'barcode', 'company_assignments','standard_price',
             'image', 'tracking', 'reorder_level', 'max_level'
         ]
 
