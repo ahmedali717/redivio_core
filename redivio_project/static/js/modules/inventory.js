@@ -1,69 +1,62 @@
-/**
- * موديول إدارة المخزون (Inventory Module)
- * مسؤول عن: أرصدة المستودعات، سجل الحركات، وأذونات الاستلام/التحويل.
- */
 export const inventoryModule = {
     state: {
-        inventoryList: [],        // أرصدة المخزون الحالية
-        itemLogs: [],             // سجل حركات الصنف المختار
-        selectedItem: null,       // الصنف النشط في بطاقة العرض
-        targetLocations: [],      // المواقع المتاحة للوجهة
-        targetBins: [],           // الأرفف المتاحة للوجهة
-        sourceLocations: [],      // المواقع المتاحة للمصدر
-        sourceBins: [],           // الأرفف المتاحة للمصدر
+        inventoryList: [],
+        inventoryMoves: [], // تأكد إن الاسم ده هو الموحد في كل مكان
+        itemLogs: [],
+        selectedItem: null,
+        reportFilters: {
+            material_id: '',
+            location_id: '',
+            date_from: '',
+            date_to: ''
+        },
         forms: {
             stock_entry: { 
                 receipt_type: 'PURCHASE', 
                 items: [{ material_id: '', quantity: 1, unit_cost: 0 }],
-                so_ref: '', 
                 target_plant: '', 
-                target_location: '', 
-                src_plant: '', 
-                src_location: '', 
-                src_bin: ''
+                target_location: ''
             }
         }
     },
 
     methods: {
-        /**
-         * فتح بطاقة الصنف وجلب سجل حركاته من الـ API
-         */
-        async openItemCard(item, context) {
-            if (!item) return;
+        // الدالة الموحدة لجلب التقارير (بدون تمرير context معقد)
+        async generateItemReport(instance) {
+            const target = instance || this; // عشان يشتغل سواء من داخل الموديول أو من main.js
             
-            const materialId = item.id || item.material_id; // دعم كلا الحقلين
-            if (!materialId) return;
+            if (!target.reportFilters.material_id) {
+                target.showToast(target.isArabic ? "برجاء اختيار الصنف" : "Select Material", "error");
+                return;
+            }
 
-            context.selectedItem = item;
-            context.showItemCard = true;
-            context.loadingLogs = true;
-            context.itemLogs = []; 
-
+            target.loading = true;
             try {
-                // الفلترة باستخدام معرف الصنف الصحيح
-                const url = `/api/moves/?material_id=${materialId}`; 
-                const res = await fetch(url);
-                
+                // توحيد الرابط مع الـ Backend
+                const query = new URLSearchParams({
+                    material: target.reportFilters.material_id,
+                    location: target.reportFilters.location_id,
+                    from: target.reportFilters.date_from,
+                    to: target.reportFilters.date_to
+                }).toString();
+
+                const res = await fetch(`/api/wms/moves/?${query}`);
                 if (res.ok) {
                     const data = await res.json();
-                    context.itemLogs = Array.isArray(data) ? data : (data.results || []);
+                    // تحديث المصفوفة اللي الجدول بيقرأ منها
+                    target.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
+                    target.showToast(target.isArabic ? "تم تحديث البيانات" : "Data Updated", "success");
                 }
             } catch (e) {
-                console.error("Fetch error in inventory logs:", e);
+                console.error("Report Fetch Error:", e);
             } finally {
-                context.loadingLogs = false;
+                target.loading = false;
             }
         },
 
         addItemRow(instance) {
-            instance.forms.stock_entry.items.push({ material_id: '', quantity: 1, unit_cost: 0 });
-        },
-
-        removeItemRow(index, instance) {
-            if (instance.forms.stock_entry.items.length > 1) {
-                instance.forms.stock_entry.items.splice(index, 1);
-            }
+            const target = instance || this;
+            target.forms.stock_entry.items.push({ material_id: '', quantity: 1, unit_cost: 0 });
         }
     }
 };
