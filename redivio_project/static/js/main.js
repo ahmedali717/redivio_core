@@ -1074,7 +1074,7 @@ createApp({
                     tracking: itemData.tracking || 'none',
                     reorder_level: itemData.reorder_level || 0,
                     max_level: itemData.max_level || 0,
-                    
+                    standard_price: itemData.standard_price || 0,
                     // 🚀 التعديل الجوهري هنا لملء الجدول الديناميكي عند التعديل
                     // نحول البيانات المسطحة القادمة من السيرفر إلى مصفوفة الـ Assignments
                     company_assignments: itemData.company_assignments || [
