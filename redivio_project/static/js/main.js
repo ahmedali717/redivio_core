@@ -138,7 +138,8 @@ createApp({
                     name: '', 
                     category: '', 
                     base_uom: 'PCS', 
-                    barcode: '', 
+                    barcode: '',
+                    standard_price: 0, 
                     // 🚀 الهيكل الجديد لدعم تعدد الشركات
                     company_assignments: [
                         { opco_id: null, bins: [], primary_bin: null } 
