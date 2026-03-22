@@ -140,9 +140,29 @@
              {% include "wms/inventory_moves.html" %}
         </div>
 
-        <div v-if="inventoryTab === 'reports'" class="h-full animate-in fade-in">
-            {% include "wms/inventory_item_report.html" %}
+        <div class="p-8 bg-white rounded-3xl border-2 border-dashed border-indigo-200 shadow-inner">
+    <div class="text-center space-y-4">
+        <div class="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white mx-auto shadow-xl animate-bounce">
+            <i class="fas fa-rocket text-3xl"></i>
         </div>
+        <h2 class="text-3xl font-black text-slate-800">وصلنا يا أحمد! 🚀</h2>
+        <p class="text-slate-500 font-bold">لو شايف الرسالة دي، يبقى إحنا دلوقت بنعدل في الملف الصح.</p>
+        
+        <div class="flex gap-4 justify-center mt-10">
+            <select v-model="reportFilters.material_id" class="p-4 bg-slate-100 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-indigo-500">
+                <option value="">-- اختر صنف --</option>
+                <option v-for="m in materials_list" :value="m.id">[[ m.name ]]</option>
+            </select>
+            <button @click="generateItemReport()" class="bg-indigo-600 text-white px-8 rounded-2xl font-black shadow-lg hover:scale-105 transition-transform">
+                تشغيل التقرير
+            </button>
+        </div>
+        
+        <div class="mt-6 text-indigo-600 font-black text-xl">
+            عدد الحركات الموجودة: [[ inventoryMoves.length ]]
+        </div>
+    </div>
+</div>
     </div>
 
 </div>
