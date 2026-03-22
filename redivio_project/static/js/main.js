@@ -28,6 +28,12 @@ createApp({
 
             // 1. جعل الموديول الموحد هو الشاشة الافتراضية (اختياري)
             view: 'inventory_module', 
+            reportFilters: {
+    material_id: '',
+    location_id: '',
+    date_from: '',
+    date_to: ''
+},
             inventoryMoves: [],
             // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
             inventoryTab: 'levels', 
@@ -268,6 +274,32 @@ createApp({
     methods: {
         ...utils.methods,
         ...itemMasterModule.methods,
+
+        async generateItemReport() {
+    if (!this.reportFilters.material_id) {
+        this.showToast(this.isArabic ? "برجاء اختيار الصنف أولاً" : "Please select a material", "error");
+        return;
+    }
+    this.loading = true;
+    try {
+        const query = new URLSearchParams({
+            material: this.reportFilters.material_id,
+            location: this.reportFilters.location_id,
+            from: this.reportFilters.date_from,
+            to: this.reportFilters.date_to
+        }).toString();
+
+        const response = await fetch(`/api/wms/moves/?${query}`);
+        if (response.ok) {
+            this.inventoryMoves = await response.json();
+            this.showToast(this.isArabic ? "تم تحديث التقرير" : "Report Updated", "success");
+        }
+    } catch (e) {
+        console.error("Report Error:", e);
+    } finally {
+        this.loading = false;
+    }
+},
 
         async fetchPurchaseOrders() {
             try {
