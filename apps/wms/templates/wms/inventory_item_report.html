@@ -1,6 +1,81 @@
-<div class="p-10 bg-white rounded-3xl border-4 border-red-500 text-center shadow-2xl mt-10">
-    <h1 class="text-4xl font-black text-red-600 mb-4">🚨 أنا ملف التقرير وموجود يا أحمد! 🚨</h1>
-    <p class="text-xl font-bold text-slate-600">
-        اسم التابة النشطة دلوقتي هو: <span class="text-indigo-600">[[ inventoryTab ]]</span>
-    </p>
+<div class="h-full flex flex-col space-y-6 p-4 animate-in fade-in duration-500">
+    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-4 mb-8 border-b border-slate-50 pb-5">
+            <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3">
+                <i class="fas fa-filter text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-black text-slate-800">استعلام حركات الصنف</h2>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Material Movement Intelligence</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="space-y-2">
+                <label class="text-xs font-black text-slate-500 mr-2">اختيار الصنف</label>
+                <select v-model="reportFilters.material_id" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all outline-none">
+                    <option value="">-- اختر الصنف --</option>
+                    <option v-for="m in materials" :key="m.id" :value="m.id">[[ m.name ]] [[ m.sku ? '('+m.sku+')' : '' ]]</option>
+                </select>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-black text-slate-500 mr-2">الموقع / المستودع</label>
+                <select v-model="reportFilters.location_id" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all outline-none">
+                    <option value="">-- كل المواقع --</option>
+                    <option v-for="loc in plants" :key="loc.id" :value="loc.id">[[ loc.name ]]</option>
+                </select>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-black text-slate-500 mr-2">من تاريخ</label>
+                <input type="date" v-model="reportFilters.date_from" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-black text-slate-500 mr-2">إلى تاريخ</label>
+                <div class="flex gap-2">
+                    <input type="date" v-model="reportFilters.date_to" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button @click="generateItemReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-14 rounded-2xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center active:scale-95">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div class="flex-1 overflow-y-auto">
+            <table class="w-full text-right border-collapse">
+                <thead class="sticky top-0 bg-slate-50 border-b border-slate-100 z-10">
+                    <tr class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                        <th class="px-8 py-5">التاريخ والوقت</th>
+                        <th class="px-8 py-5">نوع الحركة</th>
+                        <th class="px-8 py-5 text-center">الكمية</th>
+                        <th class="px-8 py-5">المرجع / المستند</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    <tr v-for="move in inventoryMoves" :key="move.id" class="hover:bg-slate-50/50 transition-all">
+                        <td class="px-8 py-5 text-xs font-bold text-slate-600">[[ formatDate(move.date) ]]</td>
+                        <td class="px-8 py-5">
+                            <span :class="move.move_type === 'IN' || move.move_type === 'RECEIPT' ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50'" 
+                                  class="px-3 py-1 rounded-lg font-black text-[10px] uppercase border">
+                                [[ move.move_type === 'IN' || move.move_type === 'RECEIPT' ? 'استلام / إضافة' : 'صرف / سحب' ]]
+                            </span>
+                        </td>
+                        <td class="px-8 py-5 text-center font-black text-slate-800 text-lg">[[ move.quantity ]]</td>
+                        <td class="px-8 py-5 text-[10px] font-mono text-slate-400">[[ move.reference || '---' ]]</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div v-if="!inventoryMoves || inventoryMoves.length === 0" class="py-32 text-center">
+                <div class="opacity-10 mb-4">
+                    <i class="fas fa-layer-group text-8xl"></i>
+                </div>
+                <p class="text-slate-400 font-black italic">قم باختيار الصنف والضغط على بحث لعرض الحركات</p>
+            </div>
+        </div>
+    </div>
 </div>

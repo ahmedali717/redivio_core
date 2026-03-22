@@ -304,7 +304,7 @@
             <button @click="inventoryTab = 'moves'" :class="inventoryTab === 'moves' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-4 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
                 <i class="fas fa-exchange-alt"></i> [[ isArabic ? 'الحركات' : 'Operations' ]]
             </button>
-            <button @click="inventoryTab = 'reports'; fetchInventoryMoves()" :class="inventoryTab === 'reports' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-4 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
+            <button @click="inventoryTab = 'reports'" :class="inventoryTab === 'reports' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-4 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
                 <i class="fas fa-chart-pie"></i> [[ isArabic ? 'تقارير' : 'Reporting' ]]
             </button>
             <button @click="inventoryTab = 'item_ledger'" 
