@@ -8,6 +8,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from decimal import Decimal  # 👈 1. إضافة مكتبة حل الأرقام
+from django.db.models import Sum, F
 
 # استيراد الـ Mixin والـ Models والـ Serializers
 from apps.core.mixins import OpcoAwareMixin 
@@ -29,15 +30,32 @@ from .serializers import (
 @permission_classes([IsAuthenticated])
 def wms_stats(request):
     active_opco_id = request.session.get('active_opco_id')
+    
+    # لو مفيش شركة نشطة، نرجع أصفار عشان الفرونت-إند مايضربش
     if not active_opco_id:
-        return Response({"plants": 0, "items": 0})
+        return Response({
+            "plants": 0, "items": 0, "total_value": 0, "low_stock": 0
+        })
+    
+    quants = StockQuant.objects.filter(opco_id=active_opco_id)
     
     plants_count = Plant.objects.filter(opco_id=active_opco_id).count()
-    items_count = StockQuant.objects.filter(opco_id=active_opco_id).count()
+    items_count = quants.count()
     
+    # 🚀 التعديل الجوهري: حساب إجمالي قيمة المخزون (الكمية × السعر)
+    total_value = quants.annotate(
+        val=F('quantity') * F('material__standard_price')
+    ).aggregate(total=Sum('val'))['total'] or 0
+    
+    # حساب النواقص (أصناف كميتها صفر مثلاً كبداية)
+    low_stock = quants.filter(quantity__lte=0).count()
+    
+    # 👈 لازم الرد يكون فيه المفاتيح اللي الـ Vue بيدور عليها
     return Response({
         "plants": plants_count,
-        "items": items_count
+        "items": items_count,
+        "total_value": total_value, 
+        "low_stock": low_stock
     })
 
 # =========================================================
