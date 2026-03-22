@@ -334,6 +334,9 @@
         <div v-if="inventoryTab === 'reports'" class="h-full animate-in slide-in-from-bottom-4 duration-500">
             {% include "wms/inventory_reports.html" %}
         </div>
+        <div v-if="inventoryTab === 'item_ledger'" class="h-full animate-in slide-in-from-bottom-4 duration-500">
+            {% include "wms/inventory_item_report.html" %}
+        </div>
     </div>
 </div>
 
