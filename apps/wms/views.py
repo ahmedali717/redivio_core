@@ -31,7 +31,6 @@ from .serializers import (
 def wms_stats(request):
     active_opco_id = request.session.get('active_opco_id')
     
-    # لو مفيش شركة نشطة، نرجع أصفار عشان الفرونت-إند مايضربش
     if not active_opco_id:
         return Response({
             "plants": 0, "items": 0, "total_value": 0, "low_stock": 0
@@ -39,24 +38,34 @@ def wms_stats(request):
     
     quants = StockQuant.objects.filter(opco_id=active_opco_id)
     
-    plants_count = Plant.objects.filter(opco_id=active_opco_id).count()
-    items_count = quants.count()
+    # 🚀 التصحيح 1: حساب المنشآت (أو المخازن)
+    # هنجيب عدد الـ Locations لأنها تمثل المخازن الفعلية
+    plants_count = StorageLocation.objects.filter(opco_id=active_opco_id).count()
     
-    # 🚀 التعديل الجوهري: حساب إجمالي قيمة المخزون (الكمية × السعر)
+    # لو إنت عايز تعدد الـ Plant مش الـ Location، استخدم دي بدل اللي فوق:
+    # plants_count = Plant.objects.filter(opco_id=active_opco_id).count()
+    
+    # 🚀 التصحيح 2: عدد الأصناف الفريدة (مش إجمالي القطع)
+    items_count = quants.values('material_id').distinct().count()
+    
+    # 🚀 التصحيح 3: حساب الفلوس بأمان
+    # لازم نتأكد إن material__standard_price موجود ومبيعملش error لو القيمة Null
     total_value = quants.annotate(
         val=F('quantity') * F('material__standard_price')
-    ).aggregate(total=Sum('val'))['total'] or 0
+    ).aggregate(total=Sum('val'))['total']
     
-    # حساب النواقص (أصناف كميتها صفر مثلاً كبداية)
+    # لو النتيجة طلعت None، خليها 0
+    if total_value is None:
+        total_value = 0
+        
     low_stock = quants.filter(quantity__lte=0).count()
     
-    # 👈 لازم الرد يكون فيه المفاتيح اللي الـ Vue بيدور عليها
     return Response({
         "plants": plants_count,
         "items": items_count,
-        "total_value": total_value, 
+        "total_value": round(total_value, 2), # تقريب لرقمين عشريين
         "low_stock": low_stock
-    })
+    }),
 
 # =========================================================
 #  2. Stock Receipt Logic (حل مشكلة الـ 404 لزر التأكيد)
