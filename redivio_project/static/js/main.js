@@ -837,6 +837,18 @@ createApp({
             }
         },
 
+        // 🚀 دالة تنسيق التاريخ عشان الجدول يظهر بشكل شيك وميضربش إيرور
+        formatDate(dateStr) {
+            if (!dateStr) return '---';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ar-EG', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        },
 
         // أضف هذه الدوال داخل methods
         addCompanyRow() {

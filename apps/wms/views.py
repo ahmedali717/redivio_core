@@ -29,7 +29,8 @@ from .serializers import (
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def wms_stats(request):
-    active_opco_id = request.session.get('active_opco_id')
+    # 🚀 التعديل هنا: نقرأ من الرابط الأول، لو مفيش نقرأ من الجلسة
+    active_opco_id = request.query_params.get('opco') or request.session.get('active_opco_id')
     
     if not active_opco_id:
         return Response({
@@ -38,23 +39,13 @@ def wms_stats(request):
     
     quants = StockQuant.objects.filter(opco_id=active_opco_id)
     
-    # 🚀 التصحيح 1: حساب المنشآت (أو المخازن)
-    # هنجيب عدد الـ Locations لأنها تمثل المخازن الفعلية
     plants_count = StorageLocation.objects.filter(opco_id=active_opco_id).count()
-    
-    # لو إنت عايز تعدد الـ Plant مش الـ Location، استخدم دي بدل اللي فوق:
-    # plants_count = Plant.objects.filter(opco_id=active_opco_id).count()
-    
-    # 🚀 التصحيح 2: عدد الأصناف الفريدة (مش إجمالي القطع)
     items_count = quants.values('material_id').distinct().count()
     
-    # 🚀 التصحيح 3: حساب الفلوس بأمان
-    # لازم نتأكد إن material__standard_price موجود ومبيعملش error لو القيمة Null
     total_value = quants.annotate(
         val=F('quantity') * F('material__standard_price')
     ).aggregate(total=Sum('val'))['total']
     
-    # لو النتيجة طلعت None، خليها 0
     if total_value is None:
         total_value = 0
         
@@ -63,7 +54,7 @@ def wms_stats(request):
     return Response({
         "plants": plants_count,
         "items": items_count,
-        "total_value": round(total_value, 2), # تقريب لرقمين عشريين
+        "total_value": round(total_value, 2),
         "low_stock": low_stock
     })
 
