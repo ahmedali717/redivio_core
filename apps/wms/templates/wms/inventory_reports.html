@@ -1,65 +1,8 @@
-<div class="h-full flex flex-col space-y-4 p-4 bg-slate-50/50 rounded-[2.5rem] border border-slate-200/60 shadow-inner overflow-hidden">
-    
-    <div class="flex items-center justify-between px-4 mb-4">
-        <div>
-            <h3 class="text-xl font-black text-slate-800 tracking-tight">[[ isArabic ? 'تقرير حركات المخزن التفصيلي' : 'Detailed Stock Movement Report' ]]</h3>
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Inventory Intelligence Audit</p>
-        </div>
-        <div class="flex gap-2">
-            <button @click="fetchInventoryMoves" class="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-indigo-600 transition-all shadow-sm">
-                <i class="fas fa-sync-alt"></i>
-            </button>
-            <button @click="inventoryTab = 'levels'" class="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-red-600 transition-all shadow-sm">
-                <i class="fas fa-arrow-left"></i>
-            </button>
-        </div>
-    </div>
-
-    <div class="flex-1 overflow-y-auto rounded-[2rem] border border-slate-200 bg-white shadow-sm">
-        <table class="w-full text-right border-collapse">
-            <thead class="sticky top-0 z-10 bg-slate-50 border-b border-slate-200">
-                <tr class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                    <th class="px-6 py-5">[[ isArabic ? 'التاريخ' : 'Date' ]]</th>
-                    <th class="px-6 py-5">[[ isArabic ? 'الصنف' : 'Material' ]]</th>
-                    <th class="px-6 py-5 text-center">[[ isArabic ? 'الكمية' : 'Qty' ]]</th>
-                    <th class="px-6 py-5 text-center">[[ isArabic ? 'النوع' : 'Type' ]]</th>
-                    <th class="px-6 py-5">[[ isArabic ? 'المرجع' : 'Reference' ]]</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-50">
-                <tr v-for="move in inventoryMoves" :key="move.id" class="hover:bg-slate-50/80 transition-colors group">
-                    <td class="px-6 py-4">
-                        <div class="text-xs font-bold text-slate-700">[[ formatDate(move.date) ]]</div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="font-bold text-slate-800 text-sm">[[ move.material_name ]]</div>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-black text-xs">
-                            [[ move.quantity ]]
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        <span v-if="move.move_type === 'IN' || move.move_type === 'RECEIPT'" class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-wider border border-emerald-100">
-                            [[ isArabic ? 'إضافة' : 'Inbound' ]]
-                        </span>
-                        <span v-else class="px-3 py-1 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-wider border border-rose-100">
-                            [[ isArabic ? 'صرف' : 'Outbound' ]]
-                        </span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="text-[11px] font-medium text-slate-500 italic">[[ move.reference || '---' ]]</div>
-                    </td>
-                </tr>
-                <tr v-if="!inventoryMoves || inventoryMoves.length === 0">
-                    <td colspan="5" class="py-20 text-center">
-                        <div class="flex flex-col items-center gap-2 opacity-20">
-                            <i class="fas fa-box-open text-5xl"></i>
-                            <p class="font-bold text-sm">[[ isArabic ? 'لا توجد بيانات متاحة للتقارير' : 'No records found' ]]</p>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+<div class="p-10 bg-white border-2 border-indigo-500 rounded-3xl text-center m-6 shadow-xl">
+    <h1 class="text-3xl font-black text-indigo-600 mb-4">
+        <i class="fas fa-check-circle"></i> شاشة التقارير متصلة بنجاح!
+    </h1>
+    <p class="text-slate-600 font-bold text-lg">
+        عدد الحركات اللي السيرفر جابها: <span class="text-rose-600">[[ inventoryMoves.length ]]</span>
+    </p>
 </div>
