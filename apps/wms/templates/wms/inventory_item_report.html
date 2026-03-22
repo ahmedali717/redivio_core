@@ -1,32 +1,6 @@
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="space-y-2">
-                <label class="text-xs font-black text-slate-500 mr-2">اختيار الصنف</label>
-                <select v-model="reportFilters.material_id" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all outline-none">
-                    <option value="">-- اختر الصنف --</option>
-                    <option v-for="m in materials_list" :key="m.id" :value="m.id">[[ m.name ]] ([[ m.sku ]])</option>
-                </select>
-            </div>
-
-            <div class="space-y-2">
-                <label class="text-xs font-black text-slate-500 mr-2">الموقع / المستودع</label>
-                <select v-model="reportFilters.location_id" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all outline-none">
-                    <option value="">-- كل المواقع --</option>
-                    <option v-for="loc in locations" :key="loc.id" :value="loc.id">[[ loc.name ]]</option>
-                </select>
-            </div>
-
-            <div class="space-y-2">
-                <label class="text-xs font-black text-slate-500 mr-2">من تاريخ</label>
-                <input type="date" v-model="reportFilters.date_from" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-
-            <div class="space-y-2">
-                <label class="text-xs font-black text-slate-500 mr-2">إلى تاريخ</label>
-                <div class="flex gap-2">
-                    <input type="date" v-model="reportFilters.date_to" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button @click="generateItemReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-14 rounded-2xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center active:scale-95">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
+<div class="p-10 bg-white rounded-3xl border-4 border-red-500 text-center shadow-2xl mt-10">
+    <h1 class="text-4xl font-black text-red-600 mb-4">🚨 أنا ملف التقرير وموجود يا أحمد! 🚨</h1>
+    <p class="text-xl font-bold text-slate-600">
+        اسم التابة النشطة دلوقتي هو: <span class="text-indigo-600">[[ inventoryTab ]]</span>
+    </p>
+</div>
