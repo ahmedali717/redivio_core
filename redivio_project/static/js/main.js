@@ -274,38 +274,29 @@ createApp({
         ...utils.methods,
         ...itemMasterModule.methods,
 
-        async generateItemReport() {
-        // لو مفيش صنف مختار، نطلع تنبيه
-        if (!this.reportFilters.material_id) {
-            this.showToast("برجاء اختيار الصنف أولاً", "error");
-            return;
-        }
+        // داخل methods في main.js
+async generateItemReport() {
+    // نضمن أننا على التابة الصحيحة
+    this.inventoryTab = 'item_ledger'; 
+    
+    if (!this.reportFilters.material_id) {
+        this.showToast("برجاء اختيار الصنف أولاً", "error");
+        return;
+    }
 
-        this.loading = true; // عشان يظهر علامة تحميل
-        try {
-            // تجميع الفلاتر من الشاشة وإرسالها للسيرفر
-            const query = new URLSearchParams({
-                material: this.reportFilters.material_id,
-                location: this.reportFilters.location_id,
-                from: this.reportFilters.date_from,
-                to: this.reportFilters.date_to
-            }).toString();
-
-            const response = await fetch(`/api/wms/moves/?${query}`);
-            
-            if (response.ok) {
-                const data = await response.json();
-                this.inventoryMoves = data; // حط البيانات في الجدول
-                this.showToast("تم تحديث التقرير بنجاح", "success");
-            } else {
-                this.showToast("خطأ في جلب البيانات", "error");
-            }
-        } catch (error) {
-            console.error("Report Error:", error);
-        } finally {
-            this.loading = false;
+    this.loading = true;
+    try {
+        const query = `?material=${this.reportFilters.material_id}&location=${this.reportFilters.location_id}&from=${this.reportFilters.date_from}&to=${this.reportFilters.date_to}`;
+        const res = await fetch(`/api/wms/moves/${query}`);
+        if (res.ok) {
+            this.inventoryMoves = await res.json();
         }
-    },
+    } catch (e) {
+        console.error(e);
+    } finally {
+        this.loading = false;
+    }
+},
 
         async fetchPurchaseOrders() {
             try {
