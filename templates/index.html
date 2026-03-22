@@ -308,8 +308,7 @@
                 <i class="fas fa-chart-pie"></i> [[ isArabic ? 'تقارير' : 'Reporting' ]]
             </button>
             <button @click="inventoryTab = 'item_ledger'" 
-                    :class="inventoryTab === 'item_ledger' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" 
-                    class="px-4 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
+                    :class="inventoryTab === 'levels' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-6 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
                 <i class="fas fa-file-invoice"></i> [[ isArabic ? 'حركة صنف' : 'Item Ledger' ]]
             </button>
         </div>
