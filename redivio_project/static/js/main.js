@@ -275,28 +275,11 @@ createApp({
         ...itemMasterModule.methods,
 
         // داخل methods في main.js
-async generateItemReport() {
-    // نضمن أننا على التابة الصحيحة
-    this.inventoryTab = 'item_ledger'; 
-    
-    if (!this.reportFilters.material_id) {
-        this.showToast("برجاء اختيار الصنف أولاً", "error");
-        return;
-    }
-
-    this.loading = true;
-    try {
-        const query = `?material=${this.reportFilters.material_id}&location=${this.reportFilters.location_id}&from=${this.reportFilters.date_from}&to=${this.reportFilters.date_to}`;
-        const res = await fetch(`/api/wms/moves/${query}`);
-        if (res.ok) {
-            this.inventoryMoves = await res.json();
-        }
-    } catch (e) {
-        console.error(e);
-    } finally {
-        this.loading = false;
-    }
-},
+        generateItemReport() {
+                console.log("Filters used:", this.reportFilters);
+                // رسالة مؤقتة عشان نتأكد إن الزرار شغال قبل ما نربطه بالباك إند
+                alert("تم استلام الفلاتر! جاري جلب التقرير...");
+            },
 
         async fetchPurchaseOrders() {
             try {
