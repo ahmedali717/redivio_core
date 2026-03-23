@@ -197,7 +197,7 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             qs = qs.filter(date__date__lte=date_to)
             
         return qs
-ٍ    
+     
 class WMSHomeView(View):
     def get(self, request):
         return render(request, 'wms/dashboard.html')
