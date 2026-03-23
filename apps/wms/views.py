@@ -152,6 +152,7 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockQuantSerializer
 
 class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    queryset = StockMove.objects.none() # سطر أمان عشان الـ Router
     serializer_class = StockMoveSerializer
 
     def get_queryset(self):
