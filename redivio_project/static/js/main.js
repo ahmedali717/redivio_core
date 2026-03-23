@@ -1694,5 +1694,8 @@ createApp({
     mounted() {
         this.checkAuth();
         this.startClock();
+        this.fetchAll(); 
+        this.fetchMaterialsList();
+        this.fetchWMSStats();
     }
 }).mount('#app');
