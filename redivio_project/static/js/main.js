@@ -275,11 +275,33 @@ createApp({
         ...itemMasterModule.methods,
 
         // داخل methods في main.js
-        generateItemReport() {
-                console.log("Filters used:", this.reportFilters);
-                // رسالة مؤقتة عشان نتأكد إن الزرار شغال قبل ما نربطه بالباك إند
-                alert("تم استلام الفلاتر! جاري جلب التقرير...");
-            },
+        // ابحث عن generateItemReport واستبدلها بهذا الكود
+        async generateItemReport() {
+            if (!this.reportFilters.material_id) {
+                this.showToast(this.isArabic ? "برجاء اختيار صنف أولاً" : "Please select a material", 'error');
+                return;
+            }
+            
+            this.loading = true;
+            try {
+                // بناء رابط البحث بالفلاتر
+                let url = `/api/wms/moves/?material_id=${this.reportFilters.material_id}`;
+                if (this.reportFilters.date_from) url += `&date_from=${this.reportFilters.date_from}`;
+                if (this.reportFilters.date_to) url += `&date_to=${this.reportFilters.date_to}`;
+
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    // تحديث المصفوفة بالبيانات القادمة من السيرفر
+                    this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
+                    this.showToast(this.isArabic ? "تم تحديث البيانات" : "Report updated", 'success');
+                }
+            } catch (error) {
+                console.error("Error fetching ledger:", error);
+            } finally {
+                this.loading = false;
+            }
+        },
 
         async fetchPurchaseOrders() {
             try {
