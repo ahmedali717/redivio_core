@@ -173,8 +173,26 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockQuantSerializer
 
 class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StockMove.objects.all().order_by('-date')
     serializer_class = StockMoveSerializer
+
+    def get_queryset(self):
+        # جلب الحركات مع الروابط بتاعتها لسرعة التحميل
+        qs = StockMove.objects.all().select_related('material', 'dest_bin', 'source_bin').order_by('-date')
+        
+        # استقبال الفلاتر من الـ JS
+        # لاحظ: الـ JS بيبعت material_id و date_from و date_to
+        m_id = self.request.query_params.get('material_id')
+        d_from = self.request.query_params.get('date_from')
+        d_to = self.request.query_params.get('date_to')
+
+        if m_id:
+            qs = qs.filter(material_id=m_id)
+        if d_from:
+            qs = qs.filter(date__date__gte=d_from)
+        if d_to:
+            qs = qs.filter(date__date__lte=d_to)
+            
+        return qs
 
 class WMSHomeView(View):
     def get(self, request):
