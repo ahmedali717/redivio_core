@@ -283,13 +283,24 @@ createApp({
             }
             this.loading = true;
             try {
-                const response = await fetch(`/api/wms/moves/?material_id=${this.reportFilters.material_id}&date_from=${this.reportFilters.date_from}&date_to=${this.reportFilters.date_to}`);
+                // نبعت الطلب للسيرفر بنفس الأسماء اللي السيرفر مستنيها
+                const url = `/api/wms/moves/?material_id=${this.reportFilters.material_id}&date_from=${this.reportFilters.date_from}&date_to=${this.reportFilters.date_to}`;
+                const response = await fetch(url);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    // دعم الـ Pagination (results) أو المصفوفة المباشرة
                     this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
+                    
+                    if (this.inventoryMoves.length === 0) {
+                        this.showToast(this.isArabic ? "لا توجد حركات لهذا الصنف" : "No movements found", 'info');
+                    } else {
+                        this.showToast(this.isArabic ? `تم العثور على ${this.inventoryMoves.length} حركة` : `Found ${this.inventoryMoves.length} moves`, 'success');
+                    }
                 }
             } catch (e) {
-                console.error("Report Error:", e);
+                console.error("Report Fetch Error:", e);
+                this.showToast("Network Error", 'error');
             } finally {
                 this.loading = false;
             }
