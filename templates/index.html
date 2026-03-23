@@ -310,7 +310,8 @@
             <button @click="inventoryTab = 'item_ledger'" 
                     :class="inventoryTab === 'item_ledger' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" 
                     class="px-4 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
-                <i class="fas fa-file-invoice"></i> [[ isArabic ? 'حركة صنف' : 'Item Ledger' ]]
+                <i class="fas fa-file-invoice"></i> 
+                [[ isArabic ? 'حركة صنف' : 'Item Ledger' ]]
             </button>
         </div>
         
@@ -334,21 +335,13 @@
         <div v-if="inventoryTab === 'reports'" class="h-full animate-in slide-in-from-bottom-4 duration-500">
             {% include "wms/inventory_reports.html" %}
         </div>
-        <div v-if="inventoryTab === 'item_ledger'" class="h-full flex items-center justify-center animate-in slide-in-from-bottom-4 duration-500">
-            <div class="bg-white p-20 rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 text-center">
-                <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-file-invoice text-3xl"></i>
-                </div>
-                <h1 class="text-4xl font-black text-slate-800 mb-4">
-                    [[ isArabic ? 'هنا سوف يتم عرض التقرير' : 'Report will be displayed here' ]]
-                </h1>
-                <p class="text-slate-500 font-medium">الوصلة اشتغلت يا ريس، قولي لما تظهر لك عشان نرجع الجدول</p>
-                
-                <button @click="inventoryTab = 'levels'" class="mt-8 text-indigo-600 font-bold hover:underline">
-                    <i class="fas fa-arrow-right ml-2"></i> رجوع للأرصدة
-                </button>
-            </div>
-        </div>
+        <div v-if="inventoryTab === 'item_ledger'" class="h-full flex items-center justify-center bg-white rounded-3xl border border-dashed border-slate-300 animate-in fade-in zoom-in duration-300">
+    <div class="text-center">
+        <div class="text-6xl mb-4">📄</div>
+        <h2 class="text-2xl font-black text-slate-700">هنا سوف يتم عرض التقرير</h2>
+        <p class="text-slate-400 mt-2">الربط شغال يا ريس.. جرب تدوس على زرار تاني وارجع هنا</p>
+    </div>
+</div>
     </div>
 </div>
 
