@@ -176,26 +176,28 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockMoveSerializer
 
     def get_queryset(self):
-        # نجلب كل الحركات مرتبة من الأحدث للأقدم
-        qs = StockMove.objects.all().order_by('-date')
+        # 1. بنبدأ بكل الحركات المتاحة للشركة الحالية (بفضل OpcoAwareMixin)
+        # وبنستخدم select_related عشان الأداء يكون سريع
+        qs = StockMove.objects.all().select_related('material', 'dest_bin', 'source_bin').order_by('-date')
         
-        # 1. فلترة بالصنف
+        # 2. استقبال الفلاتر من الرابط (URL Params)
+        # الجافاسكريبت بيبعت material_id
         material_id = self.request.query_params.get('material_id')
-        if material_id:
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+
+        # 3. تطبيق الفلاتر لو موجودة
+        if material_id and material_id != '':
             qs = qs.filter(material_id=material_id)
             
-        # 2. فلترة من تاريخ
-        date_from = self.request.query_params.get('date_from')
         if date_from:
             qs = qs.filter(date__date__gte=date_from)
             
-        # 3. فلترة إلى تاريخ
-        date_to = self.request.query_params.get('date_to')
         if date_to:
             qs = qs.filter(date__date__lte=date_to)
             
         return qs
-
+ٍ    
 class WMSHomeView(View):
     def get(self, request):
         return render(request, 'wms/dashboard.html')
