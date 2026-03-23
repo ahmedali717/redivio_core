@@ -278,26 +278,18 @@ createApp({
         // ابحث عن generateItemReport واستبدلها بهذا الكود
         async generateItemReport() {
             if (!this.reportFilters.material_id) {
-                this.showToast(this.isArabic ? "برجاء اختيار صنف أولاً" : "Please select a material", 'error');
+                this.showToast(this.isArabic ? "برجاء اختيار صنف أولاً" : "Select material first", 'error');
                 return;
             }
-            
             this.loading = true;
             try {
-                // بناء رابط البحث بالفلاتر
-                let url = `/api/wms/moves/?material_id=${this.reportFilters.material_id}`;
-                if (this.reportFilters.date_from) url += `&date_from=${this.reportFilters.date_from}`;
-                if (this.reportFilters.date_to) url += `&date_to=${this.reportFilters.date_to}`;
-
-                const response = await fetch(url);
+                const response = await fetch(`/api/wms/moves/?material_id=${this.reportFilters.material_id}&date_from=${this.reportFilters.date_from}&date_to=${this.reportFilters.date_to}`);
                 if (response.ok) {
                     const data = await response.json();
-                    // تحديث المصفوفة بالبيانات القادمة من السيرفر
                     this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
-                    this.showToast(this.isArabic ? "تم تحديث البيانات" : "Report updated", 'success');
                 }
-            } catch (error) {
-                console.error("Error fetching ledger:", error);
+            } catch (e) {
+                console.error("Report Error:", e);
             } finally {
                 this.loading = false;
             }

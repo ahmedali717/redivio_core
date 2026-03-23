@@ -176,18 +176,16 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockMoveSerializer
 
     def get_queryset(self):
-        # 1. بنبدأ بكل الحركات المتاحة للشركة الحالية (بفضل OpcoAwareMixin)
-        # وبنستخدم select_related عشان الأداء يكون سريع
+        # 1. جلب الحركات الأساسية
         qs = StockMove.objects.all().select_related('material', 'dest_bin', 'source_bin').order_by('-date')
         
-        # 2. استقبال الفلاتر من الرابط (URL Params)
-        # الجافاسكريبت بيبعت material_id
+        # 2. استقبال الفلاتر من الطلب
         material_id = self.request.query_params.get('material_id')
         date_from = self.request.query_params.get('date_from')
         date_to = self.request.query_params.get('date_to')
 
-        # 3. تطبيق الفلاتر لو موجودة
-        if material_id and material_id != '':
+        # 3. تطبيق الفلاتر بأمان
+        if material_id:
             qs = qs.filter(material_id=material_id)
             
         if date_from:
