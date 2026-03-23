@@ -335,11 +335,25 @@
         <div v-if="inventoryTab === 'reports'" class="h-full animate-in slide-in-from-bottom-4 duration-500">
             {% include "wms/inventory_reports.html" %}
         </div>
-        <div v-if="inventoryTab === 'item_ledger'" class="h-full flex items-center justify-center bg-white rounded-3xl border border-dashed border-slate-300 animate-in fade-in zoom-in duration-300">
-    <div class="text-center">
-        <div class="text-6xl mb-4">📄</div>
-        <h2 class="text-2xl font-black text-slate-700">هنا سوف يتم عرض التقرير</h2>
-        <p class="text-slate-400 mt-2">الربط شغال يا ريس.. جرب تدوس على زرار تاني وارجع هنا</p>
+        <div v-if="inventoryTab === 'item_ledger'" 
+     class="relative z-[100] min-h-[500px] w-full flex items-center justify-center bg-white rounded-[3rem] border-4 border-dashed border-indigo-200 animate-in fade-in zoom-in duration-500 shadow-2xl">
+    
+    <div class="text-center p-10">
+        <div class="text-8xl mb-6">📋</div>
+        <h2 class="text-4xl font-black text-slate-800 mb-4">هنا سوف يتم عرض التقرير</h2>
+        <p class="text-xl text-slate-500 font-bold mb-8">الربط شغال 100% يا أحمد.. مبروك!</p>
+        
+        <div class="inline-flex gap-4 bg-slate-100 p-4 rounded-2xl font-mono text-sm text-slate-600">
+            <span>Tab: <b class="text-indigo-600">[[ inventoryTab ]]</b></span>
+            <span>|</span>
+            <span>View: <b class="text-indigo-600">[[ view ]]</b></span>
+        </div>
+        
+        <div class="mt-8">
+            <button @click="inventoryTab = 'levels'" class="bg-slate-800 text-white px-8 py-3 rounded-2xl hover:bg-slate-700 transition-all">
+                رجوع للأرصدة
+            </button>
+        </div>
     </div>
 </div>
     </div>
