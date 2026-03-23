@@ -26,13 +26,13 @@
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'لوحة التحكم' : 'Dashboard' ]]</span>
             </a>
 
-            <a href="#" @click.prevent="view = 'inventory_module'; inventoryTab = 'levels'; getListData()" 
-               :class="view === 'inventory_module' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
-               :class="{'border-indigo-400': view === 'inventory_module'}">
-                <i class="fas fa-boxes-stacked w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'إدارة المستودعات' : 'Inventory Module' ]]</span>
-            </a>
+            <a href="#" @click.prevent="view = 'inventory_module'; inventoryTab = 'item_ledger'" 
+   :class="view === 'inventory_module' && inventoryTab === 'item_ledger' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'"
+   class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
+   :class="{'border-indigo-400': view === 'inventory_module' && inventoryTab === 'item_ledger'}">
+    <i class="fas fa-file-invoice w-6 text-center text-lg"></i>
+    <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'حركة صنف' : 'Item Ledger' ]]</span>
+</a>
 
             <a href="#" @click.prevent="view = 'procurement_module'" 
                :class="view === 'procurement_module' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:bg-slate-800'"
