@@ -276,26 +276,27 @@ createApp({
 
         // داخل methods في main.js
         // ابحث عن generateItemReport واستبدلها بهذا الكود
-        async generateItemReport() {
-            if (!this.reportFilters.material_id) {
-                this.showToast(this.isArabic ? "برجاء اختيار صنف أولاً" : "Select material first", 'error');
-                return;
-            }
+        // استبدل generateItemReport و fetchInventoryMoves و fetchStockMoves بالدالة دي:
+        async fetchMovesReport() {
             this.loading = true;
             try {
-                // نبعت الطلب للسيرفر بنفس الأسماء اللي السيرفر مستنيها
-                const url = `/api/wms/moves/?material_id=${this.reportFilters.material_id}&date_from=${this.reportFilters.date_from}&date_to=${this.reportFilters.date_to}`;
-                const response = await fetch(url);
+                // بناء الرابط بذكاء: لو فيه فلتر يتبعت، لو مفيش يجيب الكل
+                const params = new URLSearchParams();
+                if (this.reportFilters.material_id) params.append('material_id', this.reportFilters.material_id);
+                if (this.reportFilters.location_id) params.append('location_id', this.reportFilters.location_id);
+                if (this.reportFilters.date_from)   params.append('date_from', this.reportFilters.date_from);
+                if (this.reportFilters.date_to)     params.append('date_to', this.reportFilters.date_to);
+
+                const url = `/api/wms/moves/?${params.toString()}`;
+                const res = await fetch(url);
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    // دعم الـ Pagination (results) أو المصفوفة المباشرة
+                if (res.ok) {
+                    const data = await res.json();
+                    // توحيد المصفوفة اللي الجدول بيقرأ منها
                     this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
                     
                     if (this.inventoryMoves.length === 0) {
-                        this.showToast(this.isArabic ? "لا توجد حركات لهذا الصنف" : "No movements found", 'info');
-                    } else {
-                        this.showToast(this.isArabic ? `تم العثور على ${this.inventoryMoves.length} حركة` : `Found ${this.inventoryMoves.length} moves`, 'success');
+                        this.showToast(this.isArabic ? "لا توجد نتائج" : "No results", 'info');
                     }
                 }
             } catch (e) {
@@ -717,39 +718,8 @@ createApp({
                 console.error("Error fetching POs:", e);
             }
         },
-        async fetchStockMoves() {
-            try {
-                // 🚀 التأكد من الرابط الصحيح اللي جاب داتا في المتصفح
-                const response = await fetch('/api/wms/moves/'); 
-                if (response.ok) {
-                    const data = await response.json();
-                    // تأكد إن اسم المصفوفة هنا هو نفس الاسم المستخدم في v-for في الـ HTML
-                    this.inventoryMoves = data; 
-                    console.log("Moves loaded:", data);
-                }
-            } catch (error) {
-                console.error("Failed to load moves:", error);
-            }
-        },
         // دالة لجلب سجل الحركات
         // الدالة الموحدة لجلب الحركات وعرضها في التقارير
-        async fetchInventoryMoves() {
-    this.loading = true;
-    try {
-        // نربط الفلاتر بالرابط (URL)
-        let url = `/api/wms/moves/?material=${this.reportFilters.material_id}&location=${this.reportFilters.location_id}&from=${this.reportFilters.date_from}&to=${this.reportFilters.date_to}`;
-        
-        const response = await fetch(url);
-        if (response.ok) {
-            const data = await response.json();
-            this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
-        }
-    } catch (error) {
-        console.error("Error fetching report:", error);
-    } finally {
-        this.loading = false;
-    }
-},
 
         async validateReceipt() {
             const entry = this.forms.stock_entry;

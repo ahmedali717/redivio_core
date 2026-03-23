@@ -1,7 +1,12 @@
+/**
+ * موديول إدارة المخازن (Inventory/WMS Module)
+ * يتم دمجه في الـ App الرئيسي باستخدام ...inventoryModule.methods
+ */
 export const inventoryModule = {
+    // 1. الحالة (State) - القيم الافتراضية
     state: {
         inventoryList: [],
-        inventoryMoves: [], // تأكد إن الاسم ده هو الموحد في كل مكان
+        inventoryMoves: [], // المصفوفة الموحدة لعرض حركة الصنف
         itemLogs: [],
         selectedItem: null,
         reportFilters: {
@@ -20,43 +25,86 @@ export const inventoryModule = {
         }
     },
 
+    // 2. الدوال (Methods)
     methods: {
-        // الدالة الموحدة لجلب التقارير (بدون تمرير context معقد)
-        async generateItemReport(instance) {
-            const target = instance || this; // عشان يشتغل سواء من داخل الموديول أو من main.js
-            
-            if (!target.reportFilters.material_id) {
-                target.showToast(target.isArabic ? "برجاء اختيار الصنف" : "Select Material", "error");
+        /**
+         * دالة جلب تقرير "حركة صنف"
+         * تعالج الفلاتر وترسلها للـ Backend بأسماء صحيحة
+         */
+        async generateItemReport() {
+            // التحقق من أن المستخدم اختار صنفاً
+            if (!this.reportFilters.material_id) {
+                this.showToast(this.isArabic ? "برجاء اختيار الصنف أولاً" : "Select material first", "error");
                 return;
             }
 
-            target.loading = true;
+            this.loading = true;
             try {
-                // توحيد الرابط مع الـ Backend
-                const query = new URLSearchParams({
-                    material: target.reportFilters.material_id,
-                    location: target.reportFilters.location_id,
-                    from: target.reportFilters.date_from,
-                    to: target.reportFilters.date_to
-                }).toString();
+                // بناء المعاملات (Query Params) - نقوم بإرسال القيم الموجودة فقط
+                const queryObj = {};
+                if (this.reportFilters.material_id) queryObj.material_id = this.reportFilters.material_id;
+                if (this.reportFilters.location_id) queryObj.location_id = this.reportFilters.location_id;
+                if (this.reportFilters.date_from)   queryObj.date_from   = this.reportFilters.date_from;
+                if (this.reportFilters.date_to)     queryObj.date_to     = this.reportFilters.date_to;
 
-                const res = await fetch(`/api/wms/moves/?${query}`);
+                const params = new URLSearchParams(queryObj).toString();
+
+                // استدعاء الـ API الخاص بـ StockMoveViewSet
+                const res = await fetch(`/api/wms/moves/?${params}`);
+                
                 if (res.ok) {
                     const data = await res.json();
-                    // تحديث المصفوفة اللي الجدول بيقرأ منها
-                    target.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
-                    target.showToast(target.isArabic ? "تم تحديث البيانات" : "Data Updated", "success");
+                    
+                    // التعامل مع صيغ البيانات المختلفة (Array مباشرة أو نتائج Pagination)
+                    this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
+                    
+                    // تنبيه المستخدم بالنتيجة
+                    if (this.inventoryMoves.length === 0) {
+                        this.showToast(this.isArabic ? "لا توجد حركات مسجلة لهذا الصنف" : "No movements found", "info");
+                    } else {
+                        const count = this.inventoryMoves.length;
+                        this.showToast(this.isArabic ? `تم تحديث البيانات (${count} حركة)` : `Data Updated (${count} moves)`, "success");
+                    }
+                } else {
+                    const errData = await res.text();
+                    throw new Error(errData || "Server Error");
                 }
             } catch (e) {
                 console.error("Report Fetch Error:", e);
+                this.showToast(this.isArabic ? "عذراً، فشل جلب بيانات التقرير" : "Failed to fetch report", "error");
             } finally {
-                target.loading = false;
+                this.loading = false;
             }
         },
 
-        addItemRow(instance) {
-            const target = instance || this;
-            target.forms.stock_entry.items.push({ material_id: '', quantity: 1, unit_cost: 0 });
+        /**
+         * إضافة سطر جديد في نموذج الاستلام/الصرف
+         */
+        addItemRow() {
+            // التأكد من أن الهيكل موجود لتجنب أخطاء undefined
+            if (!this.forms.stock_entry) {
+                this.forms.stock_entry = { items: [] };
+            }
+            if (!this.forms.stock_entry.items) {
+                this.forms.stock_entry.items = [];
+            }
+
+            this.forms.stock_entry.items.push({ 
+                material_id: '', 
+                quantity: 1, 
+                unit_cost: 0 
+            });
+        },
+
+        /**
+         * حذف سطر من نموذج الاستلام
+         */
+        removeItemRow(index) {
+            if (this.forms.stock_entry.items.length > 1) {
+                this.forms.stock_entry.items.splice(index, 1);
+            } else {
+                this.showToast(this.isArabic ? "يجب إدراج صنف واحد على الأقل" : "At least one item required", "info");
+            }
         }
     }
 };
