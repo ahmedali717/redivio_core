@@ -277,6 +277,31 @@ createApp({
         // داخل methods في main.js
         // ابحث عن generateItemReport واستبدلها بهذا الكود
         // داخل قسم methods في ملف main.js
+        startOperation(type) {
+            // 1. تحديد التابة النشطة في المودال
+            this.activeOperation = type;
+
+            // 2. مصفوفة العمليات التي تعتبر "إضافة" (Incoming)
+            const incomingOps = ['po_receipt', 'mrp_receipt', 'so_return', 'incoming_transfer'];
+
+            // 3. تهيئة كائن الـ stock_entry وتحديد نوع الحركة فوراً
+            if (!this.forms.stock_entry) {
+                this.forms.stock_entry = { items: [], po_id: '' };
+            }
+
+            // هنا السر: لو العملية في قائمة الإضافة، النوع IN، غير كدة OUT
+            this.forms.stock_entry.move_type = incomingOps.includes(type) ? 'IN' : 'OUT';
+            
+            // تصفير البيانات للبدء في عملية جديدة
+            this.forms.stock_entry.items = [];
+            this.forms.stock_entry.po_id = '';
+
+            // لو العملية شراء، نجهز أوامر التوريد
+            if (type === 'po_receipt') {
+                this.fetchPendingPOs(); 
+            }
+        },
+
         async generateItemReport() {
             // 1. التحقق من اختيار صنف أولاً
             if (!this.reportFilters.material_id) {
@@ -796,6 +821,7 @@ createApp({
                     body: JSON.stringify({
                         po_id: entry.po_id,
                         opco_id: this.activeOpcoId,
+                        move_type: entry.move_type,
                         items: itemsToReceive.map(item => ({
                             material_id: item.material_id,
                             quantity: item.received_qty,
