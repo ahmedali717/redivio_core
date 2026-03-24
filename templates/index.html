@@ -312,7 +312,7 @@
         </div>
 
         <div v-if="inventoryTab === 'moves'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
-            <h1 class="text-4xl font-black text-purple-700">4. صفحة التقارير جاري العمل عليها</h1>
+            {% include "components/inventory_item_report.html" %}
         </div>
 
         <div v-if="inventoryTab === 'reports'" class="absolute inset-0 bg-purple-50 flex items-center justify-center rounded-[2rem] border-4 border-purple-200">
