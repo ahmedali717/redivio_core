@@ -291,80 +291,40 @@
     </div>
 </div>
 
-            <div v-if="view === 'inventory_module'" class="flex flex-col h-full space-y-4 animate-in fade-in duration-500">
+            <div v-if="view === 'inventory_module'" class="flex flex-col h-full space-y-4 p-4 bg-slate-100">
     
-    <div class="bg-white p-3 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
-        <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50">
-            <button @click="inventoryTab = 'levels'" :class="inventoryTab === 'levels' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-6 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
-                <i class="fas fa-warehouse"></i> [[ isArabic ? 'الأرصدة الحالية' : 'Stock Levels' ]]
-            </button>
-            <button @click="inventoryTab = 'items'" :class="inventoryTab === 'items' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-6 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
-                <i class="fas fa-barcode"></i> [[ isArabic ? 'سجل الأصناف' : 'Item Master' ]]
-            </button>
-            <button @click="inventoryTab = 'moves'" :class="inventoryTab === 'moves' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-4 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
-                <i class="fas fa-exchange-alt"></i> [[ isArabic ? 'الحركات' : 'Operations' ]]
-            </button>
-            <button @click="inventoryTab = 'reports'" :class="inventoryTab === 'reports' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-4 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
-                <i class="fas fa-chart-pie"></i> [[ isArabic ? 'تقارير' : 'Reporting' ]]
-            </button>
-            <button @click="inventoryTab = 'item_ledger'" :class="inventoryTab === 'item_ledger' ? 'bg-white shadow-md text-indigo-600' : 'text-slate-500'" class="px-4 py-2.5 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
-                <i class="fas fa-file-invoice"></i> [[ isArabic ? 'حركة صنف' : 'Item Ledger' ]]
-            </button>
-        </div>
-
-        <div class="flex gap-2">
-            <button @click="openModal('stock_entry')" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-emerald-100 transition-all flex items-center gap-2">
-                <i class="fas fa-plus-circle"></i> [[ isArabic ? 'حركة مخزنية' : 'Stock Entry' ]]
-            </button>
-        </div>
+    <div class="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-2 border border-slate-200">
+        <button @click="inventoryTab = 'levels'" :class="inventoryTab === 'levels' ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">الأرصدة</button>
+        <button @click="inventoryTab = 'items'" :class="inventoryTab === 'items' ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">سجل الأصناف</button>
+        <button @click="inventoryTab = 'moves'" :class="inventoryTab === 'moves' ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">الحركات</button>
+        <button @click="inventoryTab = 'reports'" :class="inventoryTab === 'reports' ? 'bg-white shadow-md text-indigo-600 border border-indigo-100' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">التقارير</button>
+        <button @click="inventoryTab = 'item_ledger'" :class="inventoryTab === 'item_ledger' ? 'bg-black text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">حركة صنف</button>
     </div>
 
-    <div class="flex-1 relative min-h-[600px]">
+    <div class="flex-1 relative min-h-[400px]">
 
-        <div v-if="inventoryTab === 'levels'" class="absolute inset-0 overflow-y-auto animate-in fade-in duration-300">
-            {% include "wms/dashboard.html" %}
+        <div v-if="inventoryTab === 'levels'" class="absolute inset-0 bg-emerald-100 flex items-center justify-center rounded-[2rem] border-4 border-emerald-300">
+            <h1 class="text-4xl font-black text-emerald-700">1. صفحة الأرصدة الحالية</h1>
         </div>
 
-        <div v-if="inventoryTab === 'items'" class="absolute inset-0 overflow-y-auto animate-in fade-in duration-300">
-            {% include "components/item_master_list.html" %}
+        <div v-if="inventoryTab === 'items'" class="absolute inset-0 bg-blue-100 flex items-center justify-center rounded-[2rem] border-4 border-blue-300">
+            <h1 class="text-4xl font-black text-blue-700">2. صفحة سجل الأصناف</h1>
         </div>
 
-        <div v-if="inventoryTab === 'moves'" class="absolute inset-0 overflow-y-auto animate-in fade-in duration-300">
-            {% include "wms/inventory_moves.html" %}
+        <div v-if="inventoryTab === 'moves'" class="absolute inset-0 bg-amber-100 flex items-center justify-center rounded-[2rem] border-4 border-amber-300">
+            <h1 class="text-4xl font-black text-amber-700">3. صفحة العمليات والحركات</h1>
         </div>
 
-        <div v-if="inventoryTab === 'reports'" class="absolute inset-0 overflow-y-auto animate-in fade-in duration-300">
-            {% include "wms/inventory_reports.html" %}
+        <div v-if="inventoryTab === 'reports'" class="absolute inset-0 bg-purple-100 flex items-center justify-center rounded-[2rem] border-4 border-purple-300">
+            <h1 class="text-4xl font-black text-purple-700">4. صفحة التقارير</h1>
         </div>
 
-        <div v-if="inventoryTab === 'item_ledger'" class="absolute inset-0 z-[50] bg-white p-4 md:p-8 animate-in slide-in-from-right-10 duration-500 rounded-[2.5rem] border border-slate-200 shadow-inner">
-            <div class="max-w-6xl mx-auto h-full flex flex-col">
-                <div class="flex justify-between items-center mb-8 bg-slate-800 text-white p-6 rounded-3xl shadow-lg">
-                    <div>
-                        <h2 class="text-xl md:text-2xl font-black">كارت حركة صنف تفصيلي</h2>
-                        <p class="text-slate-400 text-[10px] uppercase tracking-widest mt-1">Detailed Item Transaction Ledger</p>
-                    </div>
-                    <button @click="inventoryTab = 'levels'" class="w-10 h-10 bg-white/10 hover:bg-red-500 rounded-xl transition-all flex items-center justify-center">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-
-                <div class="flex-1 bg-white rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center p-6">
-                    <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 rotate-3">
-                        <i class="fas fa-file-invoice text-3xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-slate-800 mb-2">تقرير حركة الصنف</h3>
-                    <p class="text-slate-400 max-w-sm">
-                        [[ reportFilters.material_id ? 'جاري تحميل البيانات من السيرفر...' : 'برجاء استخدام أدوات البحث لاختيار الصنف المطلوب عرض حركته.' ]]
-                    </p>
-                    
-                    <div class="mt-8 px-4 py-2 bg-slate-100 rounded-lg font-mono text-[10px] text-slate-400">
-                        Tab: [[ inventoryTab ]] | View: [[ view ]]
-                    </div>
-                </div>
-            </div>
+        <div v-if="inventoryTab === 'item_ledger'" class="absolute inset-0 bg-rose-100 flex items-center justify-center rounded-[2rem] border-4 border-rose-300 z-[999]">
+            <h1 class="text-4xl font-black text-rose-700">5. صفحة حركة الصنف (Ledger)</h1>
         </div>
+
     </div>
+</div>
         <transition name="ready-fade">
             <div v-if="showReadyMessage" 
                  class="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[9999] flex items-center gap-4 bg-emerald-600 text-white px-8 py-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-emerald-400/30 backdrop-blur-md">
