@@ -475,11 +475,24 @@ createApp({
             );
 
             if (itemIndex !== -1) {
-                let currentQty = parseFloat(this.forms.stock_entry.items[itemIndex].received_qty) || 0;
-                let addedQty = parseFloat(this.scannedItemData.scan_qty) || 1;
-                
-                this.forms.stock_entry.items[itemIndex].received_qty = currentQty + addedQty;
-                this.showToast(this.isArabic ? `تم إضافة ${addedQty} لـ ${this.scannedItemData.material_name}` : `Added ${addedQty}`, 'success');
+                const item = this.forms.stock_entry.items[itemIndex];
+                const balance = item.ordered_qty - (item.received_before || 0);
+                const addedQty = parseFloat(this.scannedItemData.scan_qty) || 1;
+                const currentInForm = parseFloat(item.received_qty) || 0;
+
+                // 🛡️ صمام الأمان: منع استلام كمية أكبر من المتبقي
+                if ((currentInForm + addedQty) > balance) {
+                    this.showToast(
+                        this.isArabic 
+                        ? `خطأ: الكمية المتبقية هي ${balance} فقط!` 
+                        : `Error: Remaining balance is only ${balance}!`, 
+                        'error'
+                    );
+                    return; // وقف العملية
+                }
+
+                item.received_qty = currentInForm + addedQty;
+                this.showToast(this.isArabic ? `تم إضافة ${addedQty}` : `Added ${addedQty}`, 'success');
             }
 
             this.closeQtyModal();
@@ -689,20 +702,16 @@ createApp({
             try {
                 this.loading = true;
                 const res = await fetch(`/api/orders/${poId}/`);
-                
-                const contentType = res.headers.get("content-type");
-                if (!res.ok || !contentType || !contentType.includes("application/json")) {
-                    throw new Error("Invalid response from server");
-                }
-
                 const data = await res.json();
                 const currentOpcoId = parseInt(this.activeOpcoId);
                 
-                // 🚀 التعديل الجوهري لضبط الكميات
+                // 🚀 تحديد نوع الحركة "إضافة" فور اختيار الأمر
+                this.forms.stock_entry.move_type = 'IN';
+
                 this.forms.stock_entry.items = data.lines.map(i => {
                     const material = this.materials_list.find(m => m.id === i.material);
                     
-                    // 1. استخراج الرف الافتراضي
+                    // استخراج الرف الافتراضي
                     let autoSelectedBin = i.default_bin || ''; 
                     if (!autoSelectedBin && material?.company_assignments) {
                         const assign = material.company_assignments.find(a => parseInt(a.opco_id) === currentOpcoId);
@@ -713,22 +722,16 @@ createApp({
                         material_id: i.material,
                         material_name: i.material_name || material?.name || 'Unknown',
                         sku: i.material_sku || material?.sku || 'N/A', 
-                        
-                        // --- الحسابات المطلوبة ---
-                        ordered_qty: parseFloat(i.quantity),      // إجمالي الكمية المطلوبة في أمر الشراء
-                        received_before: parseFloat(i.received_qty || 0), // ما تم استلامه في "حركات سابقة"
-                        received_qty: 0,                         // 0 -> الكمية اللي بيتم استلامها "الآن" في هذه الحركة
-                        // -----------------------
-
+                        ordered_qty: parseFloat(i.quantity),          // الطلب الأصلي
+                        received_before: parseFloat(i.received_qty || 0), // المستلم سابقاً (من السيرفر)
+                        received_qty: 0,                               // الكمية الحالية (صفر مؤقتاً)
                         bin_id: autoSelectedBin 
                     };
                 });
 
-                this.showToast(this.isArabic ? "تم تحميل تفاصيل الأصناف" : "Items loaded", 'success');
-
+                this.showToast(this.isArabic ? "تم تحميل تفاصيل الأمر والكميات السابقة" : "PO details and history loaded", 'success');
             } catch (e) {
-                console.error(e);
-                this.showToast(this.isArabic ? "خطأ في جلب بيانات الأصناف" : "Error fetching items", 'error');
+                this.showToast(this.isArabic ? "خطأ في جلب البيانات" : "Fetch error", 'error');
             } finally {
                 this.loading = false;
             }
@@ -793,25 +796,40 @@ createApp({
                 return;
             }
 
-            // 2. فلترة الأصناف التي تم إدخال كمية لها فقط (تجاهل الأصفار)
+            // 2. فلترة الأصناف المستلمة
             const itemsToReceive = entry.items.filter(i => parseFloat(i.received_qty) > 0);
 
             if (itemsToReceive.length === 0) {
-                this.showToast(this.isArabic ? "يجب إدخال كمية لواحد من الأصناف على الأقل" : "Enter quantity for at least one item", 'error');
+                this.showToast(this.isArabic ? "يجب إدخال كمية استلام واحدة على الأقل" : "Enter at least one quantity", 'error');
                 return;
             }
 
-            // 3. التحقق من تحديد الرف لكل صنف مستلم
+            // 🚀 [شرط 1 و 2]: التحقق من الكميات المستلمة سابقا والمتبقية
+            // هنلف على كل صنف ونشوف هل اللي بيكتبه اليوزر أكبر من المتبقي ولا لأ
+            for (const item of itemsToReceive) {
+                const balance = item.ordered_qty - (item.received_before || 0); // المتبقي الحقيقي
+                if (item.received_qty > balance) {
+                    this.showToast(
+                        this.isArabic 
+                        ? `خطأ: الكمية المكتوبة لـ (${item.material_name}) وهي ${item.received_qty} أكبر من المتبقي في الأمر (${balance})` 
+                        : `Error: Quantity for ${item.material_name} exceeds remaining balance`, 
+                        'error'
+                    );
+                    return; // وقف العملية فوراً ومنع الإرسال للسيرفر
+                }
+            }
+
+            // 3. التحقق من الرفوف
             const missingBins = itemsToReceive.filter(i => !i.bin_id);
             if (missingBins.length > 0) {
-                this.showToast(this.isArabic ? "برجاء تحديد الرف للأصناف المستلمة" : "Please select bin for received items", 'error');
+                this.showToast(this.isArabic ? "برجاء تحديد الرف لكل صنف" : "Select bins", 'error');
                 return;
             }
 
             try {
                 this.loading = true;
                 
-                // إرسال البيانات للباك-إند
+                // [شرط 3 و 4]: تسجيل نوع الحركة كإضافة (IN) وإرسالها
                 const response = await fetch('/api/wms/stock-receipts/', {
                     method: 'POST',
                     headers: {
@@ -821,7 +839,7 @@ createApp({
                     body: JSON.stringify({
                         po_id: entry.po_id,
                         opco_id: this.activeOpcoId,
-                        move_type: entry.move_type,
+                        move_type: 'IN', // 🚀 إجبار النوع يكون إضافة
                         items: itemsToReceive.map(item => ({
                             material_id: item.material_id,
                             quantity: item.received_qty,
@@ -830,40 +848,32 @@ createApp({
                     })
                 });
 
-                // ✅ قراءة الرد مرة واحدة فقط هنا لتجنب خطأ "body stream already read"
                 const data = await response.json();
 
                 if (response.ok) {
-                    // 🚀 التعديل السحري هنا عشان يقرأ البيانات أياً كان المسمى اللي جانغو باعته
+                    // [شرط 3]: استقبال رقم الإذن المولد من السيرفر
                     const receiptId = data.id || data.receipt_id; 
-                    const receiptNo = data.receipt_number || data.receipt_no || "جديدة";
+                    const receiptNo = data.receipt_number || data.receipt_no || "GRN-NEW";
 
                     this.showToast(
-                        this.isArabic ? `تم حفظ الحركة رقم ${receiptNo} بنجاح` : `GRN ${receiptNo} saved successfully`, 
+                        this.isArabic ? `تم حفظ إذن الإضافة رقم ${receiptNo} بنجاح` : `GRN ${receiptNo} saved`, 
                         'success'
                     );
 
-                    // 4. سؤال المستخدم إذا كان يريد الطباعة فوراً
-                    if (confirm(this.isArabic ? "هل تريد طباعة مستند الاستلام الآن؟" : "Do you want to print the receipt now?")) {
-                        if (receiptId) {
-                            window.open(`/print/grn/${receiptId}/`, '_blank');
-                        } else if (data.print_url) {
-                            window.open(data.print_url, '_blank');
-                        } else {
-                            console.error("Receipt ID is missing in server response");
-                        }
+                    // [شرط 5]: طباعة إذن الإضافة فوراً بصورة صحيحة
+                    if (confirm(this.isArabic ? "هل تريد طباعة إذن الإضافة الآن؟" : "Print GRN now?")) {
+                        // فتح رابط الطباعة في صفحة جديدة
+                        window.open(`/print/grn/${receiptId}/`, '_blank');
                     }
 
-                    this.goBackToOperations(); // العودة للشاشة الرئيسية
-                    await this.refreshAllData(); // تحديث الأرصدة
+                    this.goBackToOperations(); 
+                    await this.refreshAllData(); 
                     
                 } else {
-                    // التعامل مع أخطاء السيرفر (مثل Validation Errors)
-                    const errorMessage = data.error || (this.isArabic ? "فشل الاستلام" : "Receipt failed");
-                    throw new Error(errorMessage);
+                    throw new Error(data.error || "Server Error");
                 }
             } catch (e) {
-                console.error("Receipt Process Error:", e);
+                console.error("Receipt Error:", e);
                 this.showToast(e.message, 'error');
             } finally {
                 this.loading = false;
