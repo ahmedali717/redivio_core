@@ -1,3 +1,4 @@
+from django.apps import apps
 from rest_framework import serializers
 from .models import Vendor, PurchaseOrder, PurchaseOrderLine, StockReceipt, StockReceiptLine
 
