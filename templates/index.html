@@ -312,11 +312,11 @@
         </div>
 
         <div v-if="inventoryTab === 'moves'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
-            {% include "wms/inventory_moves.html" %}
+            <h1 class="text-4xl font-black text-purple-700">4. صفحة التقارير جاري العمل عليها</h1>
         </div>
 
         <div v-if="inventoryTab === 'reports'" class="absolute inset-0 bg-purple-50 flex items-center justify-center rounded-[2rem] border-4 border-purple-200">
-            <h1 class="text-4xl font-black text-purple-700">4. صفحة التقارير جاري العمل عليها</h1>
+            {% include "wms/inventory_moves.html" %}
         </div>
 
         <div v-if="inventoryTab === 'item_ledger'" class="absolute inset-0 bg-rose-50 flex items-center justify-center rounded-[2rem] border-4 border-rose-200 z-[999]">
