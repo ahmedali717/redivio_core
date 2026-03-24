@@ -1,6 +1,3 @@
-{% extends "base.html" %} {% block title %}Warehouse Management{% endblock %}
-
-{% block content %}
 <div class="wms-dashboard-wrapper space-y-8">
     <div class="flex justify-between items-end border-b border-slate-200 pb-4">
         <div>
@@ -115,32 +112,3 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    // تطبيق Vue خاص بصفحة المخازن فقط!
-    createApp({
-        mixins: [BaseMixin], // يرث الخصائص العامة
-        delimiters: ['[[', ']]'], // عشان ما يتعارضش مع جانغو
-        data() {
-            return {
-                plants_count: 0,
-                items_count: 0
-            }
-        },
-        mounted() {
-            this.fetchWMSData();
-        },
-        methods: {
-            async fetchWMSData() {
-                // جلب بيانات خاصة بالمخازن فقط
-                const res = await fetch('/api/wms/stats/');
-                const data = await res.json();
-                this.plants_count = data.plants;
-                this.items_count = data.items;
-            }
-        }
-    }).mount('#app');
-</script>
-{% endblock %}
