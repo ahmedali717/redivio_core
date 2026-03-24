@@ -308,19 +308,19 @@
         </div>
 
         <div v-if="inventoryTab === 'items'" class="absolute inset-0 bg-blue-100 flex items-center justify-center rounded-[2rem] border-4 border-blue-300">
-            <h1 class="text-4xl font-black text-blue-700">2. صفحة سجل الأصناف</h1>
+            {% include "components/item_master_list.html" %}
         </div>
 
         <div v-if="inventoryTab === 'moves'" class="absolute inset-0 bg-amber-100 flex items-center justify-center rounded-[2rem] border-4 border-amber-300">
-            <h1 class="text-4xl font-black text-amber-700">3. صفحة العمليات والحركات</h1>
+            {% include "wms/inventory_moves.html" %}
         </div>
 
         <div v-if="inventoryTab === 'reports'" class="absolute inset-0 bg-purple-100 flex items-center justify-center rounded-[2rem] border-4 border-purple-300">
-            <h1 class="text-4xl font-black text-purple-700">4. صفحة التقارير</h1>
+            {% include "wms/inventory_reports.html" %}
         </div>
 
         <div v-if="inventoryTab === 'item_ledger'" class="absolute inset-0 bg-rose-100 flex items-center justify-center rounded-[2rem] border-4 border-rose-300 z-[999]">
-            <h1 class="text-4xl font-black text-rose-700">5. صفحة حركة الصنف (Ledger)</h1>
+            {% include "wms/inventory_item_reports.html" %}
         </div>
 
     </div>
