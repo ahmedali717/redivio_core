@@ -276,35 +276,43 @@ createApp({
 
         // داخل methods في main.js
         // ابحث عن generateItemReport واستبدلها بهذا الكود
+        // داخل قسم methods في ملف main.js
         async generateItemReport() {
+            // 1. التحقق من اختيار صنف أولاً
             if (!this.reportFilters.material_id) {
-                this.showToast(this.isArabic ? "برجاء اختيار صنف أولاً" : "Select material first", 'error');
+                alert(this.isArabic ? 'برجاء اختيار الصنف أولاً' : 'Please select a material first');
                 return;
             }
-            this.loading = true;
+
+            this.loading = true; // تشغيل علامة التحميل (Spinner)
+
             try {
-                // نبعت الطلب للسيرفر بنفس الأسماء اللي السيرفر مستنيها
-                const url = `/api/wms/moves/?material_id=${this.reportFilters.material_id}&date_from=${this.reportFilters.date_from}&date_to=${this.reportFilters.date_to}`;
-                const response = await fetch(url);
+                // 2. تجهيز روابط البحث (Query Parameters)
+                const params = new URLSearchParams({
+                    material_id: this.reportFilters.material_id,
+                    date_from: this.reportFilters.date_from || '',
+                    date_to: this.reportFilters.date_to || '',
+                    location_id: this.reportFilters.location_id || ''
+                });
+
+                // 3. طلب البيانات من السيرفر (تأكد أن الرابط مطابق لـ urls.py)
+                const response = await fetch(`/api/wms/moves/?${params.toString()}`);
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    // دعم الـ Pagination (results) أو المصفوفة المباشرة
-                    this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
-                    
-                    if (this.inventoryMoves.length === 0) {
-                        this.showToast(this.isArabic ? "لا توجد حركات لهذا الصنف" : "No movements found", 'info');
-                    } else {
-                        this.showToast(this.isArabic ? `تم العثور على ${this.inventoryMoves.length} حركة` : `Found ${this.inventoryMoves.length} moves`, 'success');
-                    }
-                }
-            } catch (e) {
-                console.error("Report Fetch Error:", e);
-                this.showToast("Network Error", 'error');
+                if (!response.ok) throw new Error('Network response was not ok');
+
+                const data = await response.json();
+                
+                // 4. وضع البيانات في المصفوفة لعرضها في الجدول
+                this.inventoryMoves = data;
+
+            } catch (error) {
+                console.error("Error generating report:", error);
+                alert(this.isArabic ? 'حدث خطأ أثناء جلب البيانات' : 'Error fetching report data');
             } finally {
-                this.loading = false;
+                this.loading = false; // إيقاف علامة التحميل
             }
         },
+
 
         async fetchPurchaseOrders() {
             try {
