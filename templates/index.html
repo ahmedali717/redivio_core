@@ -316,30 +316,12 @@
         </div>
 
         <div v-if="inventoryTab === 'reports'" class="absolute inset-0 bg-purple-100 flex items-center justify-center rounded-[2rem] border-4 border-purple-300">
-            {% include "wms/inventory_reports.html" %}
+            <h1 class="text-4xl font-black text-purple-700">4. صفحة التقارير</h1>
         </div>
 
-        <div v-if="inventoryTab === 'item_ledger'" class="absolute inset-0 z-[60] bg-slate-50 overflow-y-auto animate-in slide-in-from-right-10 duration-500">
-        <div class="p-8 space-y-6">
-            <div class="flex justify-between items-center bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200">
-                <div>
-                    <h2 class="text-2xl font-black text-slate-800">
-                        <i class="fas fa-history text-indigo-600 mr-2"></i> حركة الصنف التفصيلية
-                    </h2>
-                    <p class="text-slate-500 text-xs font-bold uppercase mt-1 tracking-widest">Item Transaction Ledger</p>
-                </div>
-                <div class="flex gap-3">
-                    <button @click="inventoryTab = 'levels'" class="bg-slate-100 text-slate-400 w-12 h-12 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-                {% include "wms/inventory_item_report.html" %}
-            </div>
+        <div v-if="inventoryTab === 'item_ledger'" class="absolute inset-0 bg-rose-100 flex items-center justify-center rounded-[2rem] border-4 border-rose-300 z-[999]">
+            <h1 class="text-4xl font-black text-rose-700">5. صفحة حركة الصنف (Ledger)</h1>
         </div>
-    </div>
 
     </div>
 </div>
