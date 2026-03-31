@@ -19,7 +19,7 @@
                 <p>التاريخ: {{ receipt.date|date:"Y-m-d H:i" }}</p>
             </div>
             <div class="col-6 text-start">
-                <h4>شركة الخرسانة الجاهزة</h4>
+                <h4>{{ receipt.opco.name|default:"الشركة" }}</h4>
                 <p>مرجع أمر التوريد: {{ receipt.po.po_number }}</p>
             </div>
         </div>

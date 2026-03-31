@@ -76,13 +76,14 @@ class StockMoveSerializer(serializers.ModelSerializer):
     # إذا كان receipt_type غير موجود في الموديل، نعرفه هنا كـ Field إضافي
     # لمنع خطأ ImproperlyConfigured
     receipt_type = serializers.CharField(required=False, allow_blank=True, write_only=True)
+    receipt_id = serializers.SerializerMethodField()
 
     class Meta:
         model = StockMove
         fields = [
             'id', 'date', 'items', 'move_type', 'receipt_type', 'opco', 'reference', # 👈 ضفنا 'date' هنا
             'vendor_name', 'payment_term', 'dest_bin', 'source_bin',
-            'material_name', 'source_loc', 'dest_loc', 'material', 'quantity'
+            'material_name', 'source_loc', 'dest_loc', 'material', 'quantity', 'receipt_id'
         ]
         extra_kwargs = {
             'material': {'required': False, 'allow_null': True},
@@ -97,6 +98,19 @@ class StockMoveSerializer(serializers.ModelSerializer):
 
     def get_dest_loc(self, obj):
         return obj.dest_bin.code if obj.dest_bin else "External"
+
+    def get_receipt_id(self, obj):
+        if obj.reference and obj.reference.startswith("GRN: "):
+            receipt_no = obj.reference.split("GRN: ")[1].strip()
+            from django.apps import apps
+            try:
+                StockReceipt = apps.get_model('procurement', 'StockReceipt')
+                receipt = StockReceipt.objects.filter(receipt_number=receipt_no).first()
+                if receipt:
+                    return receipt.id
+            except LookupError:
+                pass
+        return None
 
     def create(self, validated_data):
         """تصحيح: يجب أن تكون الدالة داخل الكلاس وبإزاحة صحيحة"""
