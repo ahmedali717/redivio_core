@@ -105,6 +105,8 @@ createApp({
             wms_stats: {},
             selectedItemCard: null,
             vendors: [],
+            selectedVendor: null,
+            vendorLedger: null,
             purchase_orders: [],
             pending_pos: [],
 
@@ -356,6 +358,37 @@ createApp({
                 }
             } catch (e) {
                 console.error("Error fetching POs:", e);
+            }
+        },
+
+        async fetchVendors() {
+            try {
+                const url = this.activeOpcoId 
+                    ? `/api/vendors/?opco=${this.activeOpcoId}` 
+                    : '/api/vendors/';
+                const res = await fetch(url);
+                if (res.ok) {
+                    this.vendors = await res.json();
+                }
+            } catch (e) {
+                console.error("Error fetching vendors:", e);
+            }
+        },
+
+        async fetchVendorLedger(vendor) {
+            this.loading = true;
+            try {
+                const res = await fetch(`/api/vendors/${vendor.id}/ledger/`);
+                if (res.ok) {
+                    this.vendorLedger = await res.json();
+                    this.selectedVendor = vendor;
+                    this.view = 'vendor_ledger';
+                }
+            } catch (e) {
+                console.error("Error fetching ledger:", e);
+                this.showToast(this.isArabic ? "خطأ في جلب كشف الحساب" : "Error fetching ledger", 'error');
+            } finally {
+                this.loading = false;
             }
         },
 

@@ -44,6 +44,50 @@ class VendorViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
 
+    @action(detail=True, methods=['get'])
+    def ledger(self, request, pk=None):
+        vendor = self.get_object()
+        pos = PurchaseOrder.objects.filter(vendor=vendor).order_by('-date')
+        
+        # تجميع الحركات (Orders & Receipts)
+        history = []
+        for po in pos:
+            # إضافة أمر التوريد نفسه كحركة
+            history.append({
+                'id': po.id,
+                'date': po.date,
+                'type': 'PURCHASE_ORDER',
+                'number': po.po_number,
+                'status': po.status,
+                'amount': po.extra_data.get('grand_total', 0) if po.extra_data else 0,
+                'doc_type': 'PO'
+            })
+            
+            # إضافة أذون الاستلام المرتبطة بهذا الـ PO
+            for receipt in po.receipts.all():
+                history.append({
+                    'id': receipt.id,
+                    'date': receipt.date.date(),
+                    'type': 'STOCK_RECEIPT',
+                    'number': receipt.receipt_number,
+                    'status': 'RECEIVED',
+                    'amount': 0, # الاستلام ليس له قيمة مالية مباشرة هنا
+                    'doc_type': 'GRN'
+                })
+        
+        # ترتيب التاريخ من الأحدث للأقدم
+        history.sort(key=lambda x: x['date'], reverse=True)
+        
+        return Response({
+            'vendor_name': vendor.name,
+            'vendor_code': vendor.code,
+            'summary': {
+                'total_pos': pos.count(),
+                'received_pos': pos.filter(status='RECEIVED').count(),
+            },
+            'transactions': history
+        })
+
 class PurchaseOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     """ إدارة أوامر الشراء (PO) """
     queryset = PurchaseOrder.objects.all().order_by('-created_at')

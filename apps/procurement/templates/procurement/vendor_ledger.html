@@ -1,0 +1,84 @@
+{% verbatim %}
+<div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[500px] p-6 animate-in slide-in-from-left-4 duration-500">
+    <div class="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
+        <div class="flex items-center gap-4">
+            <button @click="view = 'vendors_list'" class="w-10 h-10 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-900 hover:text-white transition-all">
+                <i class="fas fa-arrow-right"></i>
+            </button>
+            <div>
+                <h2 class="text-xl font-black text-slate-800">كشف حساب: [[ selectedVendor?.name ]]</h2>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">كود المورد: [[ selectedVendor?.code ]]</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+             <div class="bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100 text-center">
+                <span class="block text-[9px] font-black text-emerald-600 uppercase">إجمالي الطلبات</span>
+                <span class="text-lg font-black text-emerald-700">[[ vendorLedger?.summary?.total_pos || 0 ]]</span>
+            </div>
+            <div class="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 text-center">
+                <span class="block text-[9px] font-black text-indigo-600 uppercase">تم استلامه</span>
+                <span class="text-lg font-black text-indigo-700">[[ vendorLedger?.summary?.received_pos || 0 ]]</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1">
+        <div v-if="!vendorLedger?.transactions?.length" class="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+            <i class="fas fa-history text-4xl text-slate-200 mb-4"></i>
+            <p class="text-slate-400 font-bold">لا توجد حركات مسجلة لهذا المورد حتى الآن</p>
+        </div>
+
+        <div v-else class="space-y-4">
+            <table class="w-full text-right" dir="rtl">
+                <thead>
+                    <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                        <th class="px-6 py-4">تاريخ المستند</th>
+                        <th class="px-6 py-4">نوع الحركة</th>
+                        <th class="px-6 py-4">رقم المرجع / المستند</th>
+                        <th class="px-6 py-4 text-center">الحالة</th>
+                        <th class="px-6 py-4 text-left">قيمة المستند</th>
+                        <th class="px-6 py-4"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    <tr v-for="tx in vendorLedger.transactions" :key="tx.doc_type + tx.id" class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4 text-xs font-bold text-slate-600">
+                            [[ formatDate(tx.date) ]]
+                        </td>
+                        <td class="px-6 py-4">
+                            <span :class="tx.doc_type === 'PO' ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100'" 
+                                  class="px-3 py-1.5 rounded-xl text-[10px] font-black border flex items-center gap-1 w-fit">
+                                <i :class="tx.doc_type === 'PO' ? 'fas fa-file-invoice' : 'fas fa-truck-loading'"></i>
+                                [[ tx.doc_type === 'PO' ? 'أمر توريد' : 'إذن استلام (GRN)' ]]
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 font-black text-slate-800 text-sm">
+                            [[ tx.number ]]
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span :class="{
+                                'bg-emerald-50 text-emerald-600 border-emerald-100': tx.status === 'RECEIVED',
+                                'bg-blue-50 text-blue-600 border-blue-100': tx.status === 'DRAFT' || tx.status === 'CONFIRMED'
+                            }" class="px-2 py-1 rounded-full text-[10px] font-bold border">
+                                [[ tx.status ]]
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-left font-mono font-black text-slate-700">
+                            [[ tx.amount ? parseFloat(tx.amount).toLocaleString() : '---' ]]
+                        </td>
+                        <td class="px-6 py-4 text-left">
+                            <!-- أزرار الطباعة -->
+                            <button v-if="tx.doc_type === 'PO'" @click="printPO(tx.id)" class="text-slate-400 hover:text-indigo-600 p-2 transition-colors">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            <button v-if="tx.doc_type === 'GRN'" @click="printGRN(tx.id)" class="text-slate-400 hover:text-emerald-600 p-2 transition-colors">
+                                <i class="fas fa-print"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endverbatim %}
