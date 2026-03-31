@@ -17,7 +17,7 @@ from apps.core.views import (
 from apps.item_master.views import MaterialViewSet, CategoryViewSet
 from apps.wms.views import StockQuantViewSet, StockMoveViewSet
 # عدل السطر ده ليتضمن الدالة الجديدة
-from apps.procurement.views import VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, print_po_pdf, print_grn_pdf
+from apps.procurement.views import VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, print_po_pdf, print_grn_pdf, StockReceiptViewSet
 from apps.sales.views import CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet
 
 # 2. إعداد الراوتر
@@ -38,6 +38,7 @@ router.register(r'inventory', StockQuantViewSet, basename='stockquant')
 router.register(r'moves', StockMoveViewSet, basename='stockmove')
 
 router.register(r'vendors', VendorViewSet, basename='vendor')
+router.register(r'stock-receipts', StockReceiptViewSet, basename='stockreceipt')
 router.register(r'orders', PurchaseOrderViewSet, basename='purchaseorder')
 router.register(r'order-lines', PurchaseOrderLineViewSet, basename='purchaseorderline')
 

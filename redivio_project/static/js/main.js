@@ -830,20 +830,19 @@ createApp({
                 this.loading = true;
                 
                 // [شرط 3 و 4]: تسجيل نوع الحركة كإضافة (IN) وإرسالها
-                const response = await fetch('/api/wms/stock-receipts/', {
+                const response = await fetch('/api/stock-receipts/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': this.getCookie('csrftoken')
                     },
                     body: JSON.stringify({
-                        po_id: entry.po_id,
-                        opco_id: this.activeOpcoId,
-                        move_type: 'IN', // 🚀 إجبار النوع يكون إضافة
+                        po: entry.po_id,
+                        opco: this.activeOpcoId,
                         items: itemsToReceive.map(item => ({
-                            material_id: item.material_id,
+                            material: item.material_id,
                             quantity: item.received_qty,
-                            bin_id: item.bin_id
+                            storage_bin: item.bin_id
                         }))
                     })
                 });
