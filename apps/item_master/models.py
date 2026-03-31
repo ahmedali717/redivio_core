@@ -59,6 +59,14 @@ class Material(models.Model):
     def __str__(self):
         return f"[{self.sku}] {self.name}"
 
+    @property
+    def total_on_hand(self):
+        """حساب إجمالي الأرصدة في كل الرفوف الخاصة بهذا الصنف في هذه الشركة"""
+        from django.db.models import Sum
+        from apps.wms.models import StockQuant
+        total = StockQuant.objects.filter(material=self, opco=self.opco).aggregate(Sum('quantity'))['quantity__sum']
+        return total or 0
+
 # 3. 🛡️ محرك قواعد التوجيه (Putaway Rules / MaterialLocation)
 class MaterialLocation(models.Model):
     material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name='material_bins')

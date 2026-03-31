@@ -97,10 +97,15 @@ export const itemMasterModule = {
                     : [{ opco_id: material.opco, bins: material.storage_locations_ids || [], primary_bin: material.current_primary_bin || null }],
                 
                 tracking: material.tracking || 'none',
+                standard_price: material.standard_price || 0,
                 weight: material.weight || 0,
                 volume: material.volume || 0,
                 reorder_level: material.reorder_level || 0,
-                max_level: material.max_level || 0
+                max_level: material.max_level || 0,
+                
+                // 🚀 البيانات الجديدة لعرض الأرصدة (Odoo 19 Modal)
+                on_hand: material.on_hand || 0,
+                stock_details: material.stock_details || []
             };
             
             instance.imagePreview = instance.fixImagePath(material.image); 

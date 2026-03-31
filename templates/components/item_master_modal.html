@@ -3,6 +3,7 @@
     
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col animate-fadeIn">
         
+        <!-- Header -->
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
             <div>
                 <h2 class="text-xl font-bold text-slate-800">
@@ -26,24 +27,33 @@
             </div>
         </div>
 
+        <!-- Tab Bar -->
         <div v-if="isAdvancedMode" class="flex border-b border-gray-100 bg-white px-6">
             <button @click="materialTab = 'general'" 
                     :class="materialTab === 'general' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'"
-                    class="py-3 px-4 border-b-2 font-medium text-sm transition-all">
+                    class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
                 <i class="fas fa-info-circle ml-1"></i> [[ isArabic ? 'بيانات عامة' : 'General' ]]
             </button>
             <button @click="materialTab = 'inventory'" 
                     :class="materialTab === 'inventory' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'"
-                    class="py-3 px-4 border-b-2 font-medium text-sm transition-all">
+                    class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
                 <i class="fas fa-boxes ml-1"></i> [[ isArabic ? 'المخزون والرفوف' : 'Inventory & Bins' ]]
+            </button>
+            <button @click="materialTab = 'balances'" 
+                    v-if="isEditing"
+                    :class="materialTab === 'balances' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'"
+                    class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
+                <i class="fas fa-chart-pie ml-1"></i> [[ isArabic ? 'الأرصدة الحالية' : 'Stock Balances' ]]
             </button>
         </div>
 
+        <!-- Content Area -->
         <div class="p-6 overflow-y-auto flex-grow bg-white">
             
+            <!-- General Info Tab -->
             <div v-show="materialTab === 'general'">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    
+                    <!-- Image Upload -->
                     <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-4 bg-slate-50 hover:bg-slate-100 transition-colors">
                         <div v-if="imagePreview" class="relative group">
                             <img :src="imagePreview" class="w-40 h-40 object-cover rounded-lg shadow-md mb-2">
@@ -61,13 +71,14 @@
                         </label>
                     </div>
 
+                    <!-- Main Fields -->
                     <div class="md:col-span-2 grid grid-cols-2 gap-4">
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-slate-700 mb-1">SKU *</label>
                             <input v-model="forms.material.sku" type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="e.g. ITEM-1001">
                         </div>
                         <div class="col-span-2 md:col-span-1">
-                            <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'الا%م' : 'Name' ]] *</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'الاسم' : 'Name' ]] *</label>
                             <input v-model="forms.material.name" type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
                         </div>
                         
@@ -86,7 +97,7 @@
                         </div>
 
                         <div v-if="isAdvancedMode" class="col-span-2 border-t pt-4 mt-2">
-                            <h4 class="text-xs font-bold text-indigo-600 mb-3 uppercase tracking-wider">[[ isArabic ? 'إعدادات التتبع' : 'Traceability' ]]</h4>
+                            <h4 class="text-xs font-bold text-indigo-600 mb-3 uppercase tracking-wider text-right" dir="rtl">[[ isArabic ? 'إعدادات التتبع' : 'Traceability' ]]</h4>
                             <div class="grid grid-cols-3 gap-4">
                                 <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-slate-50" :class="forms.material.tracking === 'none' ? 'border-indigo-600 bg-indigo-50' : ''">
                                     <input type="radio" v-model="forms.material.tracking" value="none" class="hidden">
@@ -103,7 +114,10 @@
                             </div>
                         </div>
                     </div>
-                </div> <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
+                </div>
+
+                <!-- Stock Levels -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'متوسط التكلفة (السعر)' : 'Standard Price' ]]</label>
                         <div class="relative">
@@ -122,80 +136,124 @@
                         <input type="number" v-model="forms.material.max_level" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
                     </div>
                 </div>
-                </div> <div v-show="materialTab === 'inventory'" class="space-y-6">
+            </div>
+
+            <!-- Inventory & Bins Tab -->
+            <div v-show="materialTab === 'inventory'" class="space-y-6">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-xs font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fas fa-sitemap"></i>
+                            [[ isArabic ? 'ربط الصنف بالشركات والمستودعات' : 'Company & Bin Assignments' ]]
+                        </h4>
+                        <button @click="addCompanyRow" type="button" 
+                                class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-1">
+                            <i class="fas fa-plus"></i> [[ isArabic ? 'إضافة شركة' : 'Add Company' ]]
+                        </button>
+                    </div>
+
+                    <div class="border rounded-xl overflow-hidden bg-white shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200" dir="rtl">
+                            <thead class="bg-slate-100 text-slate-600 text-[10px] font-black uppercase">
+                                <tr>
+                                    <th class="px-4 py-3 text-right w-1/3">[[ isArabic ? 'الشركة' : 'Operating Company' ]]</th>
+                                    <th class="px-4 py-3 text-right">[[ isArabic ? 'الرفوف المختارة' : 'Assigned Bins' ]]</th>
+                                    <th class="px-4 py-3 text-center w-20">[[ isArabic ? 'حذف' : 'Action' ]]</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr v-for="(row, index) in forms.material.company_assignments" :key="index" class="hover:bg-slate-50/50 transition-colors text-right">
+                                    <td class="px-4 py-3 align-top">
+                                        <select v-model="row.opco_id" @change="row.bins = []; row.primary_bin = null"
+                                                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500">
+                                            <option value="">[[ isArabic ? '-- اختر الشركة --' : '-- Select OpCo --' ]]</option>
+                                            <option v-for="op in allOpcos" :key="op.id" :value="op.id">[[ op.name ]]</option>
+                                        </select>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <div v-if="row.opco_id">
+                                            <div class="flex flex-wrap gap-2 mb-2 justify-start">
+                                                <span v-for="binId in row.bins" :key="binId" 
+                                                      class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 text-[10px] font-bold">
+                                                    [[ getBinCodeById(binId) ]]
+                                                    <i @click="removeBinFromRow(index, binId)" class="fas fa-times cursor-pointer hover:text-red-500"></i>
+                                                </span>
+                                            </div>
+                                            <select @change="addBinToRow(index, $event)" class="w-full px-3 py-1.5 border border-dashed border-slate-300 rounded text-[10px] bg-slate-50">
+                                                <option value="">[[ isArabic ? '+ إضافة رف من هذه الشركة' : '+ Add Bin' ]]</option>
+                                                <option v-for="bin in getBinsByOpco(row.opco_id)" :key="bin.id" :value="bin.id">
+                                                    [[ bin.code ]] ([[ getBinLocationName(bin.id) ]])
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div v-else class="text-[10px] text-slate-400 italic py-2">
+                                            [[ isArabic ? 'يجب اختيار الشركة أولاً لتحديد الرفوف' : 'Select company to view bins' ]]
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-center align-top">
+                                        <button @click="forms.material.company_assignments.splice(index, 1)" 
+                                                class="text-slate-300 hover:text-red-500 transition-colors">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <div v-show="materialTab === 'inventory'" class="space-y-6">
-    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-        <div class="flex justify-between items-center mb-4">
-            <h4 class="text-xs font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2">
-                <i class="fas fa-sitemap"></i>
-                [[ isArabic ? 'ربط الصنف بالشركات والمستودعات' : 'Company & Bin Assignments' ]]
-            </h4>
-            <button @click="addCompanyRow" type="button" 
-                    class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-1">
-                <i class="fas fa-plus"></i> [[ isArabic ? 'إضافة شركة' : 'Add Company' ]]
-            </button>
-        </div>
+            <!-- Stock Balances Tab (Odoo 19 Style) -->
+            <div v-show="materialTab === 'balances'" class="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                <div class="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100 relative overflow-hidden">
+                     <div class="flex justify-between items-center relative z-10" dir="rtl">
+                        <div>
+                            <h3 class="text-2xl font-black text-indigo-900 leading-none">[[ parseFloat(forms.material.on_hand || 0).toLocaleString() ]] [[ forms.material.base_uom ]]</h3>
+                            <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mt-1">Total Stock on Hand (إجمالي الرصيد)</p>
+                        </div>
+                        <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-50">
+                            <i class="fas fa-boxes-stacked text-xl"></i>
+                        </div>
+                     </div>
+                     <i class="fas fa-cubes-stacked absolute -bottom-4 -right-4 text-8xl text-indigo-600 opacity-5"></i>
+                </div>
 
-        <div class="border rounded-xl overflow-hidden bg-white shadow-sm">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-slate-100 text-slate-600 text-[10px] font-black uppercase">
-                    <tr>
-                        <th class="px-4 py-3 text-right w-1/3">[[ isArabic ? 'الشركة' : 'Operating Company' ]]</th>
-                        <th class="px-4 py-3 text-right">[[ isArabic ? 'الرفوف المختارة' : 'Assigned Bins' ]]</th>
-                        <th class="px-4 py-3 text-center w-20">[[ isArabic ? 'حذف' : 'Action' ]]</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr v-for="(row, index) in forms.material.company_assignments" :key="index" class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-4 py-3 align-top">
-                            <select v-model="row.opco_id" @change="row.bins = []; row.primary_bin = null"
-                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500">
-                                <option value="">[[ isArabic ? '-- اختر الشركة --' : '-- Select OpCo --' ]]</option>
-                                <option v-for="op in allOpcos" :key="op.id" :value="op.id">[[ op.name ]]</option>
-                            </select>
-                        </td>
-                        <td class="px-4 py-3">
-                            <div v-if="row.opco_id">
-                                <div class="flex flex-wrap gap-2 mb-2">
-                                    <span v-for="binId in row.bins" :key="binId" 
-                                          class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 text-[10px] font-bold">
-                                        [[ getBinCodeById(binId) ]]
-                                        <i @click="removeBinFromRow(index, binId)" class="fas fa-times cursor-pointer hover:text-red-500"></i>
+                <div class="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
+                    <table class="w-full text-right font-medium" dir="rtl">
+                        <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                            <tr>
+                                <th class="px-6 py-4">المنشأة / الموقع</th>
+                                <th class="px-6 py-4">الرف (Bin)</th>
+                                <th class="px-6 py-4 text-left">الكمية</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 text-sm">
+                            <tr v-for="st in (forms.material.stock_details || [])" :key="st.bin" class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="font-bold text-slate-700">[[ st.location ]]</div>
+                                    <div class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">[[ st.plant ]]</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-black border border-indigo-100 uppercase font-mono">
+                                        [[ st.bin ]]
                                     </span>
-                                </div>
-                                <select @change="addBinToRow(index, $event)" class="w-full px-3 py-1.5 border border-dashed border-slate-300 rounded text-[10px] bg-slate-50">
-                                    <option value="">[[ isArabic ? '+ إضافة رف من هذه الشركة' : '+ Add Bin' ]]</option>
-                                    <option v-for="bin in getBinsByOpco(row.opco_id)" :key="bin.id" :value="bin.id">
-                                        [[ bin.code ]] ([[ getBinLocationName(bin.id) ]])
-                                    </option>
-                                </select>
-                            </div>
-                            <div v-else class="text-[10px] text-slate-400 italic py-2">
-                                [[ isArabic ? 'يجب اختيار الشركة أولاً لتحديد الرفوف' : 'Select company to view bins' ]]
-                            </div>
-                        </td>
-                        <td class="px-4 py-3 text-center align-top">
-                            <button @click="forms.material.company_assignments.splice(index, 1)" 
-                                    class="text-slate-300 hover:text-red-500 transition-colors">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                                </td>
+                                <td class="px-6 py-4 text-left">
+                                    <span class="text-base font-black text-slate-900">[[ parseFloat(st.quantity).toLocaleString() ]]</span>
+                                    <span class="text-[10px] text-slate-400 mr-1 font-bold">[[ forms.material.base_uom ]]</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div v-if="!forms.material.stock_details || forms.material.stock_details.length === 0" class="py-12 text-center">
+                        <i class="fas fa-ghost text-4xl text-slate-100 mb-2"></i>
+                        <p class="text-slate-400 font-bold text-xs">لا توجد أرصدة مخزونة حالياً لهذا الصنف</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <p class="text-[9px] text-slate-400 mt-3 italic font-medium">
-            <i class="fas fa-info-circle ml-1"></i>
-            [[ isArabic ? 'هذا التصميم يسمح لك بتعريف نفس الصنف (SKU) في عدة شركات مختلفة بمستودعات مستقلة.' : 'This allows you to link the same SKU across multiple companies with independent bins.' ]]
-        </p>
-    </div>
-</div>
 
+        <!-- Footer Actions -->
         <div class="px-6 py-4 bg-slate-50 border-t border-gray-100 flex justify-end space-x-3 rtl:space-x-reverse">
             <button @click="showModal = false" class="px-6 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
                 [[ isArabic ? 'إلغاء' : 'Cancel' ]]

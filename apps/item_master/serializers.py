@@ -10,14 +10,27 @@ class CategorySerializer(serializers.ModelSerializer):
 class MaterialSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     company_assignments = serializers.SerializerMethodField()
+    on_hand = serializers.DecimalField(source='total_on_hand', max_digits=12, decimal_places=2, read_only=True)
+    stock_details = serializers.SerializerMethodField()
 
     class Meta:
         model = Material
         fields = [
             'id', 'sku', 'name', 'category', 'category_name', 
             'base_uom', 'barcode', 'company_assignments','standard_price',
-            'image', 'tracking', 'reorder_level', 'max_level'
+            'image', 'tracking', 'reorder_level', 'max_level', 'on_hand', 'stock_details'
         ]
+
+    def get_stock_details(self, obj):
+        """إرجاع الأرصدة مقسمة بالأرفف للأودو 19 موديول"""
+        from apps.wms.models import StockQuant
+        quants = StockQuant.objects.filter(material=obj, opco=obj.opco)
+        return [{
+            'bin': q.storage_bin.code,
+            'location': q.storage_bin.storage_location.name,
+            'plant': q.storage_bin.storage_location.plant.name,
+            'quantity': q.quantity
+        } for q in quants]
 
     def get_company_assignments(self, obj):
         assignments = []
