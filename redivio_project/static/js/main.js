@@ -1588,6 +1588,9 @@ createApp({
                 this.plants = results[1];
                 this.locations = results[2];
                 this.bins = results[3];
+                // تحميل الموردين والمشتريات أيضاً
+                this.fetchVendors();
+                this.fetchPurchaseOrders();
             } catch (e) { 
                 console.error("Core Data Fetch Error:", e); 
             }
