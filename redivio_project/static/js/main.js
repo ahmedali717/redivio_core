@@ -371,6 +371,11 @@ createApp({
             // الرابط ده المفروض يفتح صفحة الـ PDF اللي جانغو بيعملها
             window.open(`/print/po/${poId}/`, '_blank');
         },
+        
+        printGRN(receiptId) {
+            this.showToast(this.isArabic ? "جاري تجهيز إذن الاستلام للطباعة..." : "Preparing GRN document...", "success");
+            window.open(`/print/grn/${receiptId}/`, '_blank');
+        },
 
     // 🚀 1. الدالة اللي كانت مفقودة وعاملة الإيرور (ربط الانتر)
         processBarcodeManual() {
