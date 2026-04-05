@@ -49,6 +49,7 @@ router.register(r'sales-lines', SalesOrderLineViewSet, basename='salesorderline'
 # 3. الروابط
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('i18n/', include('django.conf.urls.i18n')), # ✅ رابط تغيير اللغة
     path('api/', include(router.urls)),
     path('api/wms/', include('apps.wms.urls')),
     path('print/po/<int:pk>/', print_po_pdf, name='print_po_pdf'),

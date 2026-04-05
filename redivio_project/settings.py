@@ -65,6 +65,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",  # ✅ مضاف لتحويل اللغة
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -85,6 +86,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
+                "django.template.context_processors.i18n",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
@@ -122,10 +124,22 @@ AUTH_PASSWORD_VALIDATORS = [
 # INTERNATIONALIZATION
 # =========================================================
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "en"  # اللغة الافتراضية
 TIME_ZONE = "UTC"
 USE_I18N = True
+USE_L10N = True  # تفعيل التنسيقات المحلية (التاريخ والأرقام)
 USE_TZ = True
+
+from django.utils.translation import gettext_lazy as _
+
+LANGUAGES = [
+    ('en', _('English')),
+    ('ar', _('Arabic')),
+]
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
 
 # =========================================================
 # STATIC & MEDIA

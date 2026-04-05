@@ -94,6 +94,18 @@
         </div>
     </div>
 
+    <div class="px-4 py-2 border-t border-slate-800 bg-slate-950">
+        <form action="{% url 'set_language' %}" method="post" class="w-full">
+            {% csrf_token %}
+            <input name="next" type="hidden" value="{{ request.get_full_path }}">
+            <input name="language" type="hidden" value="{% if request.LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
+            <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg transition-all text-sm font-medium">
+                <i class="fas fa-globe w-5 text-center"></i>
+                <span>[[ isArabic ? 'English' : 'العربية' ]]</span>
+            </button>
+        </form>
+    </div>
+
     <div class="p-4 border-t border-slate-800 bg-slate-950">
         <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-3 text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white rounded-lg transition-all duration-200 group">
             <i class="fas fa-sign-out-alt w-5 text-center group-hover:rotate-180 transition-transform"></i>

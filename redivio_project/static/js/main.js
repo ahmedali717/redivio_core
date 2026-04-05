@@ -39,7 +39,7 @@ createApp({
             },
             loading: false, 
             sidebarCollapsed: false,
-            isArabic: true,
+            isArabic: window.is_arabic,
             isEditing: false,
             isAdvancedMode: false,
             
