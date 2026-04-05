@@ -1,7 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="{{ request.LANGUAGE_CODE }}" dir="{% if request.LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
-<script>window.is_arabic = {% if request.LANGUAGE_CODE == 'ar' %}true{% else %}false{% endif %};</script>
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+<script>window.is_arabic = {% if LANGUAGE_CODE == 'ar' %}true{% else %}false{% endif %};</script>
 <head>
     <meta charset="UTF-8">
     <title>REDIVIO ERP - {% block title %}Dashboard{% endblock %}</title>

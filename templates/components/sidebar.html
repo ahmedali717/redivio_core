@@ -92,10 +92,10 @@
         <form action="{% url 'set_language' %}" method="post" class="w-full">
             {% csrf_token %}
             <input name="next" type="hidden" value="{{ request.get_full_path }}">
-            <input name="language" type="hidden" value="{% if request.LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
-            <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg transition-all text-xs font-bold border border-slate-700/50 hover:border-blue-500/50">
-                <i class="fas fa-globe-americas w-5 text-center text-sm"></i>
-                <span v-show="!sidebarCollapsed">[[ isArabic ? 'ENGLISH VERSION' : 'النسخة العربية' ]]</span>
+            <input name="language" type="hidden" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
+            <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg transition-all text-[11px] font-bold border border-slate-700/50 hover:border-blue-500/50 uppercase tracking-tighter">
+                <i class="fas fa-language w-5 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed">[[ isArabic ? 'Switch to English' : 'التحويل للعربية' ]]</span>
             </button>
         </form>
     </div>
