@@ -10,7 +10,7 @@ from django.shortcuts import render, get_object_or_404
 
 # Models & Serializers
 # الاستيراد النسبي (.) صحيح لأننا داخل نفس التطبيق
-from .models import Vendor, PurchaseOrder, PurchaseOrderLine , StockReceipt , SalesOrder
+from .models import Vendor, PurchaseOrder, PurchaseOrderLine , StockReceipt
 from .serializers import VendorSerializer, PurchaseOrderSerializer, PurchaseOrderLineSerializer , StockReceiptSerializer
 
 # ✅ التصحيح: يجب استخدام apps.wms بدلاً من wms مباشرة
