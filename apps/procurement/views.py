@@ -179,3 +179,17 @@ def print_grn_pdf(request, pk):
     
     # استدعاء ملف الـ HTML الخاص بالتصميم
     return render(request, 'procurement/print_grn.html', {'receipt': receipt})
+
+def print_so_pdf(request, pk):
+    # جلب أمر البيع أو إظهار 404 لو مش موجود
+    so = get_object_or_404(SalesOrder, pk=pk)
+    
+    # تجهيز البيانات اللي هتروح للـ HTML
+    context = {
+        'so': so,
+        'lines': so.lines.all(), # تأكد إن الـ related_name في الموديل هو lines
+        'company': so.opco,      # عشان يعرض اللوجو واسم الشركة
+    }
+    
+    # ده اسم ملف الـ HTML اللي هنكريته في الخطوة الجاية
+    return render(request, 'prints/sales_order_print.html', context)
