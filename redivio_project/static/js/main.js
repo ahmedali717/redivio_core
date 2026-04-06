@@ -15,9 +15,9 @@ createApp({
             barcodeQuery: '',
             // 🚀 ضيف المتغير ده هنا في أول سطر
             activeOperation: null,
-            
+
             // 🚀 التعديل الأول: ضيف السطرين دول هنا بالظبط
-            showQtyModal: false, 
+            showQtyModal: false,
             scannedItemData: {
                 material_id: null,
                 material_name: '',
@@ -27,11 +27,11 @@ createApp({
             },
 
             // 1. جعل الموديول الموحد هو الشاشة الافتراضية (اختياري)
-            view: 'inventory_module', 
+            view: 'inventory_module',
             inventoryMoves: [],
             // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
-            inventoryTab: 'levels', 
-            salesTab: 'dashboard', 
+            inventoryTab: 'levels',
+            salesTab: 'dashboard',
             customerSearch: '',
             soSearch: '',
             customers: [],
@@ -43,12 +43,12 @@ createApp({
                 date_from: '',
                 date_to: ''
             },
-            loading: false, 
+            loading: false,
             sidebarCollapsed: false,
             isArabic: window.is_arabic,
             isEditing: false,
             isAdvancedMode: false,
-            
+
             confirmModal: {
                 show: false,
                 onConfirm: null,
@@ -72,16 +72,16 @@ createApp({
 
             ...(utils.state || {}),
             ...(inventoryModule.state || {}),
-            
+
             user: { name: '...', role: '...', is_superuser: false },
-            
-            config: { 
-                company_name: '', 
+
+            config: {
+                company_name: '',
                 is_holding: false,
                 tax_id: '',
                 cr_number: '',
                 created_at: null,
-                logo: null 
+                logo: null
             },
 
             license: {
@@ -91,7 +91,7 @@ createApp({
             },
             topMaterials: [],
 
-            kpis: { 
+            kpis: {
                 materials: 0,         // عدد الأصناف
                 total_stock_value: 0,  // إجمالي قيمة المخزون
                 low_stock_count: 0,    // أصناف تحت حد الطلب
@@ -99,14 +99,14 @@ createApp({
                 stock_qty: 0,          // إجمالي القطع
                 pending_pos: 0         // المشتريات المعلقة
             },
-            allOpcos: [], 
-            opcos: [],    
-            
-            subsidiaries: [], 
-            plants: [], 
-            locations: [], 
+            allOpcos: [],
+            opcos: [],
+
+            subsidiaries: [],
+            plants: [],
+            locations: [],
             bins: [],
-            materials_list: [], 
+            materials_list: [],
             inventoryList: [],
             wms_stats: {},
             selectedItemCard: null,
@@ -116,13 +116,13 @@ createApp({
             purchase_orders: [],
             pending_pos: [],
 
-            showModal: false, 
+            showModal: false,
             materialTab: 'general',
-            modalType: '', 
+            modalType: '',
             draggedType: null,
-            activeOpcoId: null, 
+            activeOpcoId: null,
             parentOpcoId: null,
-            activePlantId: null, 
+            activePlantId: null,
             activeLocationId: null,
             imagePreview: null,
             selectedFile: null,
@@ -135,8 +135,14 @@ createApp({
                 material: { ar: 'تعريف صنف جديد', en: 'Define New Material' },
                 stock_entry: { ar: 'إذن استلام / تحويل مخزني', en: 'Stock Inbound / Transfer' },
                 po: { ar: 'أمر توريد جديد', en: 'New Purchase Order' },
-                opco: { ar: 'إضافة شركة تابعة / مشغلة', en: 'Add Subsidiary / OpCo' }
+                opco: { ar: 'إضافة شركة تابعة / مشغلة', en: 'Add Subsidiary / OpCo' },
+                salesorder: { ar: 'أمر بيع جديد', en: 'New Sales Order' },
+                customer: { ar: 'بيانات عميل جديد', en: 'Customer Information' },
 
+                // 🚀 السطور اللي كانت ناقصة وعاملة المشكلة تم إضافتها هنا:
+                view_po: { ar: 'تفاصيل أمر التوريد', en: 'Purchase Order Details' },
+                payment: { ar: 'تحصيل دفعة مالية', en: 'Record Payment' },
+                delivery: { ar: 'صرف بضاعة', en: 'Order Delivery' }
             },
 
             forms: {
@@ -145,55 +151,66 @@ createApp({
                 plant: { id: null, opco: null, code: '', name: '' },
                 location: { id: null, plant: null, code: '', name: '' },
                 bin: { id: null, storage_location: null, code: '' },
-                material: { 
-                    id: null, 
-                    sku: '', 
-                    name: '', 
-                    category: '', 
-                    base_uom: 'PCS', 
+                material: {
+                    id: null,
+                    sku: '',
+                    name: '',
+                    category: '',
+                    base_uom: 'PCS',
                     barcode: '',
-                    standard_price: 0, 
+                    standard_price: 0,
                     // 🚀 الهيكل الجديد لدعم تعدد الشركات
                     company_assignments: [
-                        { opco_id: null, bins: [], primary_bin: null } 
+                        { opco_id: null, bins: [], primary_bin: null }
                     ],
-                    tracking: 'none', 
-                    reorder_level: 0, 
-                    max_level: 0 
+                    tracking: 'none',
+                    reorder_level: 0,
+                    max_level: 0
                 },
-                po: { 
-                    id: null, 
-                    vendor: '', 
-                    po_number: '', 
+                po: {
+                    id: null,
+                    vendor: '',
+                    po_number: '',
                     is_tax_inclusive: false, // شامل الضريبة؟
                     tax_rate: 15, // نسبة الضريبة الافتراضية
-                    lines: [{ material: '', quantity: 1, unit_price: 0 }] 
+                    lines: [{ material: '', quantity: 1, unit_price: 0 }]
                 },
-                
-                stock_entry: { items: [], po_id: '' }
+
+                stock_entry: { items: [], po_id: '' },
+                customer: { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' },
+                salesorder: {
+                    id: null,
+                    customer: '',
+                    so_number: `SO-${Date.now()}`,
+                    status: 'DRAFT',
+                    total_amount: 0,
+                    tax_amount: 0,
+                    grand_total: 0,
+                    lines: [{ material: '', quantity: 1, unit_price: 0 }]
+                }
             }
         };
     },
 
     computed: {
 
-        
+
         filteredMaterials() {
             let list = this.materials_list || [];
-            
+
             // 1. فلترة بالشركة الحالية
             if (this.activeOpcoId) {
                 list = list.filter(item => {
-                    if (!item.company_assignments) return true; 
+                    if (!item.company_assignments) return true;
                     return item.company_assignments.some(a => parseInt(a.opco_id) === parseInt(this.activeOpcoId));
                 });
             }
 
             // 2. فلترة بنص البحث (لو المستخدم كتب حاجة)
             if (!this.searchQuery) return list;
-            
+
             const query = this.searchQuery.toLowerCase();
-            return list.filter(item => 
+            return list.filter(item =>
                 (item.name && item.name.toLowerCase().includes(query)) ||
                 (item.sku && item.sku.toLowerCase().includes(query)) ||
                 (item.barcode && item.barcode.toLowerCase().includes(query))
@@ -239,13 +256,13 @@ createApp({
 
         // 🚀 حسابات أمر التوريد (الضرائب والإجماليات)
         poLineTotal() {
-            if(!this.forms.po || !this.forms.po.lines) return 0;
+            if (!this.forms.po || !this.forms.po.lines) return 0;
             return this.forms.po.lines.reduce((sum, line) => sum + ((line.quantity || 0) * (line.unit_price || 0)), 0);
         },
         poTaxAmount() {
-            if(!this.forms.po) return 0;
+            if (!this.forms.po) return 0;
             const rate = (this.forms.po.tax_rate || 0) / 100;
-            if(this.forms.po.is_tax_inclusive) {
+            if (this.forms.po.is_tax_inclusive) {
                 // لو السعر شامل الضريبة، بنستخرج الضريبة من الإجمالي
                 return this.poLineTotal - (this.poLineTotal / (1 + rate));
             } else {
@@ -254,16 +271,16 @@ createApp({
             }
         },
         poSubtotal() {
-            if(!this.forms.po) return 0;
-            if(this.forms.po.is_tax_inclusive) {
+            if (!this.forms.po) return 0;
+            if (this.forms.po.is_tax_inclusive) {
                 return this.poLineTotal - this.poTaxAmount;
             } else {
                 return this.poLineTotal;
             }
         },
         poGrandTotal() {
-            if(!this.forms.po) return 0;
-            if(this.forms.po.is_tax_inclusive) {
+            if (!this.forms.po) return 0;
+            if (this.forms.po.is_tax_inclusive) {
                 return this.poLineTotal; // الإجمالي هو نفس السعر المكتوب
             } else {
                 return this.poLineTotal + this.poTaxAmount; // الإجمالي + الضريبة
@@ -320,14 +337,14 @@ createApp({
 
             // هنا السر: لو العملية في قائمة الإضافة، النوع IN، غير كدة OUT
             this.forms.stock_entry.move_type = incomingOps.includes(type) ? 'IN' : 'OUT';
-            
+
             // تصفير البيانات للبدء في عملية جديدة
             this.forms.stock_entry.items = [];
             this.forms.stock_entry.po_id = '';
 
             // لو العملية شراء، نجهز أوامر التوريد
             if (type === 'po_receipt') {
-                this.fetchPendingPOs(); 
+                this.fetchPendingPOs();
             }
         },
 
@@ -351,11 +368,11 @@ createApp({
 
                 // 3. طلب البيانات من السيرفر (تأكد أن الرابط مطابق لـ urls.py)
                 const response = await fetch(`/api/wms/moves/?${params.toString()}`);
-                
+
                 if (!response.ok) throw new Error('Network response was not ok');
 
                 const data = await response.json();
-                
+
                 // 4. وضع البيانات في المصفوفة لعرضها في الجدول
                 this.inventoryMoves = data;
 
@@ -370,8 +387,8 @@ createApp({
 
         async fetchPurchaseOrders() {
             try {
-                const url = this.activeOpcoId 
-                    ? `/api/orders/?opco=${this.activeOpcoId}` 
+                const url = this.activeOpcoId
+                    ? `/api/orders/?opco=${this.activeOpcoId}`
                     : '/api/orders/';
                 const res = await fetch(url);
                 if (res.ok) {
@@ -438,8 +455,8 @@ createApp({
 
         async fetchVendors() {
             try {
-                const url = this.activeOpcoId 
-                    ? `/api/vendors/?opco=${this.activeOpcoId}` 
+                const url = this.activeOpcoId
+                    ? `/api/vendors/?opco=${this.activeOpcoId}`
                     : '/api/vendors/';
                 const res = await fetch(url);
                 if (res.ok) {
@@ -479,15 +496,15 @@ createApp({
             // الرابط ده المفروض يفتح صفحة الـ PDF اللي جانغو بيعملها
             window.open(`/print/po/${poId}/`, '_blank');
         },
-        
+
         printGRN(receiptId) {
             this.showToast(this.isArabic ? "جاري تجهيز إذن الاستلام للطباعة..." : "Preparing GRN document...", "success");
             window.open(`/print/grn/${receiptId}/`, '_blank');
         },
 
-    // 🚀 1. الدالة اللي كانت مفقودة وعاملة الإيرور (ربط الانتر)
+        // 🚀 1. الدالة اللي كانت مفقودة وعاملة الإيرور (ربط الانتر)
         processBarcodeManual() {
-            if(!this.barcodeQuery) return;
+            if (!this.barcodeQuery) return;
             this.processScannedBarcode(this.barcodeQuery.trim());
         },
 
@@ -496,14 +513,14 @@ createApp({
             this.isScanning = true;
             this.$nextTick(() => {
                 if (this.scannerInstance) {
-                    try { this.scannerInstance.clear(); } catch(e) {}
+                    try { this.scannerInstance.clear(); } catch (e) { }
                 }
 
                 this.scannerInstance = new Html5Qrcode("reader", {
-                    formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13 ]
+                    formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13]
                 });
-                
-                const config = { 
+
+                const config = {
                     fps: 10,
                     qrbox: { width: 300, height: 120 },
                     experimentalFeatures: {
@@ -512,7 +529,7 @@ createApp({
                 };
 
                 this.scannerInstance.start(
-                    { facingMode: "environment" }, 
+                    { facingMode: "environment" },
                     config,
                     (decodedText) => {
                         if (this.scannerInstance && this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
@@ -531,20 +548,20 @@ createApp({
         processScannedBarcode(barcode) {
             if (!this.forms.stock_entry.items || this.forms.stock_entry.items.length === 0) {
                 this.showToast(this.isArabic ? "برجاء اختيار أمر التوريد أولاً" : "Select PO first", 'error');
-                if(this.scannerInstance && this.isScanning) this.scannerInstance.resume();
+                if (this.scannerInstance && this.isScanning) this.scannerInstance.resume();
                 return;
             }
 
             const matchedMaterial = this.materials_list.find(
-                m => (m.barcode && m.barcode.toString() === barcode.toString()) || 
-                     (m.sku && m.sku.toLowerCase() === barcode.toLowerCase()) || 
-                     (m.id && m.id.toString() === barcode.toString())
+                m => (m.barcode && m.barcode.toString() === barcode.toString()) ||
+                    (m.sku && m.sku.toLowerCase() === barcode.toLowerCase()) ||
+                    (m.id && m.id.toString() === barcode.toString())
             );
 
             if (!matchedMaterial) {
                 this.showToast(this.isArabic ? `الباركود (${barcode}) غير مسجل في بيانات الأصناف!` : `Barcode not registered!`, 'error');
                 this.barcodeQuery = '';
-                if(this.scannerInstance && this.isScanning) {
+                if (this.scannerInstance && this.isScanning) {
                     setTimeout(() => this.scannerInstance.resume(), 1500);
                 }
                 return;
@@ -566,7 +583,7 @@ createApp({
                 this.barcodeQuery = '';
 
                 setTimeout(() => {
-                    if(this.$refs.qtyInput) {
+                    if (this.$refs.qtyInput) {
                         this.$refs.qtyInput.focus();
                         this.$refs.qtyInput.select();
                     }
@@ -575,7 +592,7 @@ createApp({
             } else {
                 this.showToast(this.isArabic ? `الصنف (${matchedMaterial.name}) غير مطلوب في أمر التوريد الحالي!` : `Item not in this PO!`, 'error');
                 this.barcodeQuery = '';
-                if(this.scannerInstance && this.isScanning) {
+                if (this.scannerInstance && this.isScanning) {
                     setTimeout(() => this.scannerInstance.resume(), 1500);
                 }
             }
@@ -596,9 +613,9 @@ createApp({
                 // 🛡️ صمام الأمان: منع استلام كمية أكبر من المتبقي
                 if ((currentInForm + addedQty) > balance) {
                     this.showToast(
-                        this.isArabic 
-                        ? `خطأ: الكمية المتبقية هي ${balance} فقط!` 
-                        : `Error: Remaining balance is only ${balance}!`, 
+                        this.isArabic
+                            ? `خطأ: الكمية المتبقية هي ${balance} فقط!`
+                            : `Error: Remaining balance is only ${balance}!`,
                         'error'
                     );
                     return; // وقف العملية
@@ -614,7 +631,7 @@ createApp({
         // 🚀 5. إغلاق النافذة
         closeQtyModal() {
             this.showQtyModal = false;
-            if(this.scannerInstance && this.isScanning) {
+            if (this.scannerInstance && this.isScanning) {
                 if (this.scannerInstance.getState() === Html5QrcodeScannerState.PAUSED) {
                     this.scannerInstance.resume();
                 }
@@ -638,13 +655,13 @@ createApp({
         downloadTemplate() {
             // أسماء الأعمدة (لازم الباك-إند يكون متبرمج يقرأ الأسماء دي بالظبط)
             const headers = ['SKU*', 'Name*', 'Category', 'Base_UOM', 'Barcode', 'Tracking'];
-            
+
             // صف تجريبي عشان المستخدم يفهم الفورمات
             const exampleRow = ['ITEM-001', 'مثال: أسمنت بورتلاندي', 'Raw Materials', 'BAG', '123456789012', 'none'];
-            
+
             // تجميع الملف
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
-                + headers.join(",") + "\n" 
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"
+                + headers.join(",") + "\n"
                 + exampleRow.join(",");
 
             // إنشاء الرابط وتنزيل الملف
@@ -655,7 +672,7 @@ createApp({
             document.body.appendChild(link);
             link.click();
             link.remove();
-            
+
             this.showToast(this.isArabic ? "تم تحميل قالب الاستيراد" : "Template downloaded", "success");
         },
 
@@ -663,7 +680,6 @@ createApp({
         addPOLine() {
             this.forms.po.lines.push({ material: '', quantity: 1, unit_price: 0 });
         },
-        
         removePOLine(index) {
             if (this.forms.po.lines.length > 1) {
                 this.forms.po.lines.splice(index, 1);
@@ -672,7 +688,19 @@ createApp({
             }
         },
 
-    
+        // --- Sales Order Line Management ---
+        addSalesOrderLine() {
+            this.forms.salesorder.lines.push({ material: '', quantity: 1, unit_price: 0 });
+        },
+        removeSalesOrderLine(index) {
+            if (this.forms.salesorder.lines.length > 1) {
+                this.forms.salesorder.lines.splice(index, 1);
+            } else {
+                this.showToast(this.isArabic ? "يجب أن يحتوي الأمر على صنف واحد على الأقل" : "SO must have at least one line", 'error');
+            }
+        },
+
+
         exportToExcel() {
             const list = this.filteredMaterials || [];
             if (list.length === 0) {
@@ -680,7 +708,7 @@ createApp({
                 return;
             }
 
-            const headers = this.isArabic 
+            const headers = this.isArabic
                 ? ['المعرف', 'الكود (SKU)', 'اسم الصنف', 'التصنيف', 'وحدة القياس']
                 : ['ID', 'SKU', 'Name', 'Category', 'UOM'];
 
@@ -692,8 +720,8 @@ createApp({
                 item.base_uom || 'PCS'
             ]);
 
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
-                + headers.join(",") + "\n" 
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"
+                + headers.join(",") + "\n"
                 + rows.map(e => e.join(",")).join("\n");
 
             const encodedUri = encodeURI(csvContent);
@@ -703,7 +731,7 @@ createApp({
             document.body.appendChild(link);
             link.click();
             link.remove();
-            
+
             this.showToast(this.isArabic ? "تم التصدير بنجاح" : "Exported successfully", "success");
         },
 
@@ -739,7 +767,7 @@ createApp({
                 this.showToast("Network Error", "error");
             } finally {
                 this.loading = false;
-                event.target.value = ''; 
+                event.target.value = '';
             }
         },
 
@@ -762,14 +790,14 @@ createApp({
             };
             return titles[this.activeOperation] || (this.isArabic ? 'عملية مخزنية' : 'Stock Operation');
         },
-        
+
         startOperation(type) {
             this.activeOperation = type;
             // 🚀 لو العملية هي استلام من مورد، نادي أوامر التوريد فوراً
             if (type === 'po_receipt') {
-                this.fetchPendingPOs(); 
+                this.fetchPendingPOs();
             }
-            
+
             if (!this.forms.stock_entry) {
                 this.forms.stock_entry = { items: [], po_id: '' };
             } else {
@@ -777,7 +805,7 @@ createApp({
                 this.forms.stock_entry.po_id = '';
             }
         },
-        
+
         goBackToOperations() {
             // 1. إيقاف الكاميرا فوراً وبشكل صحيح
             if (this.isScanning) {
@@ -791,16 +819,16 @@ createApp({
                     });
                 }
             }
-            
+
             // 2. تصفير كل الحالات (الـ Variables)
             this.activeOperation = null;
             this.isScanning = false;
             this.barcodeQuery = '';
-            
+
             // تصفير بيانات الاستلام عشان لو فتحت أمر توريد تاني ميبقاش فيه داتا قديمة
-            this.forms.stock_entry = { 
-                po_id: '', 
-                items: [] 
+            this.forms.stock_entry = {
+                po_id: '',
+                items: []
             };
 
             // إخفاء أي رسائل Toast قديمة
@@ -817,15 +845,15 @@ createApp({
                 const res = await fetch(`/api/orders/${poId}/`);
                 const data = await res.json();
                 const currentOpcoId = parseInt(this.activeOpcoId);
-                
+
                 // 🚀 تحديد نوع الحركة "إضافة" فور اختيار الأمر
                 this.forms.stock_entry.move_type = 'IN';
 
                 this.forms.stock_entry.items = data.lines.map(i => {
                     const material = this.materials_list.find(m => m.id === i.material);
-                    
+
                     // استخراج الرف الافتراضي
-                    let autoSelectedBin = i.default_bin || ''; 
+                    let autoSelectedBin = i.default_bin || '';
                     if (!autoSelectedBin && material?.company_assignments) {
                         const assign = material.company_assignments.find(a => parseInt(a.opco_id) === currentOpcoId);
                         autoSelectedBin = assign?.primary_bin || (assign?.bins?.length > 0 ? assign.bins[0] : '');
@@ -834,11 +862,11 @@ createApp({
                     return {
                         material_id: i.material,
                         material_name: i.material_name || material?.name || 'Unknown',
-                        sku: i.material_sku || material?.sku || 'N/A', 
+                        sku: i.material_sku || material?.sku || 'N/A',
                         ordered_qty: parseFloat(i.quantity),          // الطلب الأصلي
                         received_before: parseFloat(i.received_qty || 0), // المستلم سابقاً (من السيرفر)
                         received_qty: 0,                               // الكمية الحالية (صفر مؤقتاً)
-                        bin_id: autoSelectedBin 
+                        bin_id: autoSelectedBin
                     };
                 });
 
@@ -849,14 +877,14 @@ createApp({
                 this.loading = false;
             }
         },
-        
+
         async fetchPendingPOs() {
             try {
                 // نطلب فقط الأوامر المعتمدة Confirmed للشركة النشطة
-                const url = this.activeOpcoId 
-                    ? `/api/orders/?status=Confirmed&opco=${this.activeOpcoId}` 
+                const url = this.activeOpcoId
+                    ? `/api/orders/?status=Confirmed&opco=${this.activeOpcoId}`
                     : '/api/orders/?status=Confirmed';
-                    
+
                 const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
@@ -869,11 +897,11 @@ createApp({
         async fetchStockMoves() {
             try {
                 // 🚀 التأكد من الرابط الصحيح اللي جاب داتا في المتصفح
-                const response = await fetch('/api/wms/moves/'); 
+                const response = await fetch('/api/wms/moves/');
                 if (response.ok) {
                     const data = await response.json();
                     // تأكد إن اسم المصفوفة هنا هو نفس الاسم المستخدم في v-for في الـ HTML
-                    this.inventoryMoves = data; 
+                    this.inventoryMoves = data;
                     console.log("Moves loaded:", data);
                 }
             } catch (error) {
@@ -883,26 +911,26 @@ createApp({
         // دالة لجلب سجل الحركات
         // الدالة الموحدة لجلب الحركات وعرضها في التقارير
         async fetchInventoryMoves() {
-    this.loading = true;
-    try {
-        // نربط الفلاتر بالرابط (URL)
-        let url = `/api/wms/moves/?material=${this.reportFilters.material_id}&location=${this.reportFilters.location_id}&from=${this.reportFilters.date_from}&to=${this.reportFilters.date_to}`;
-        
-        const response = await fetch(url);
-        if (response.ok) {
-            const data = await response.json();
-            this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
-        }
-    } catch (error) {
-        console.error("Error fetching report:", error);
-    } finally {
-        this.loading = false;
-    }
-},
+            this.loading = true;
+            try {
+                // نربط الفلاتر بالرابط (URL)
+                let url = `/api/wms/moves/?material=${this.reportFilters.material_id}&location=${this.reportFilters.location_id}&from=${this.reportFilters.date_from}&to=${this.reportFilters.date_to}`;
+
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
+                }
+            } catch (error) {
+                console.error("Error fetching report:", error);
+            } finally {
+                this.loading = false;
+            }
+        },
 
         async validateReceipt() {
             const entry = this.forms.stock_entry;
-            
+
             // 1. التحقق من اختيار أمر التوريد
             if (!entry.po_id) {
                 this.showToast(this.isArabic ? "برجاء اختيار أمر توريد" : "Please select a PO", 'error');
@@ -923,9 +951,9 @@ createApp({
                 const balance = item.ordered_qty - (item.received_before || 0); // المتبقي الحقيقي
                 if (item.received_qty > balance) {
                     this.showToast(
-                        this.isArabic 
-                        ? `خطأ: الكمية المكتوبة لـ (${item.material_name}) وهي ${item.received_qty} أكبر من المتبقي في الأمر (${balance})` 
-                        : `Error: Quantity for ${item.material_name} exceeds remaining balance`, 
+                        this.isArabic
+                            ? `خطأ: الكمية المكتوبة لـ (${item.material_name}) وهي ${item.received_qty} أكبر من المتبقي في الأمر (${balance})`
+                            : `Error: Quantity for ${item.material_name} exceeds remaining balance`,
                         'error'
                     );
                     return; // وقف العملية فوراً ومنع الإرسال للسيرفر
@@ -941,7 +969,7 @@ createApp({
 
             try {
                 this.loading = true;
-                
+
                 // [شرط 3 و 4]: تسجيل نوع الحركة كإضافة (IN) وإرسالها
                 const response = await fetch('/api/stock-receipts/', {
                     method: 'POST',
@@ -964,11 +992,11 @@ createApp({
 
                 if (response.ok) {
                     // [شرط 3]: استقبال رقم الإذن المولد من السيرفر
-                    const receiptId = data.id || data.receipt_id; 
+                    const receiptId = data.id || data.receipt_id;
                     const receiptNo = data.receipt_number || data.receipt_no || "GRN-NEW";
 
                     this.showToast(
-                        this.isArabic ? `تم حفظ إذن الإضافة رقم ${receiptNo} بنجاح` : `GRN ${receiptNo} saved`, 
+                        this.isArabic ? `تم حفظ إذن الإضافة رقم ${receiptNo} بنجاح` : `GRN ${receiptNo} saved`,
                         'success'
                     );
 
@@ -978,9 +1006,9 @@ createApp({
                         window.open(`/print/grn/${receiptId}/`, '_blank');
                     }
 
-                    this.goBackToOperations(); 
-                    await this.refreshAllData(); 
-                    
+                    this.goBackToOperations();
+                    await this.refreshAllData();
+
                 } else {
                     throw new Error(data.error || "Server Error");
                 }
@@ -1005,10 +1033,10 @@ createApp({
         async quickAddVendor() {
             const vendorName = prompt(this.isArabic ? "أدخل اسم المورد الجديد:" : "Enter new vendor name:");
             if (!vendorName) return;
-            
+
             // إنشاء كود مبدئي للمورد
             const vendorCode = "V-" + Math.floor(Math.random() * 10000);
-            
+
             try {
                 this.loading = true;
                 const res = await fetch('/api/vendors/', {
@@ -1026,8 +1054,8 @@ createApp({
                     this.forms.po.vendor = newVendor.id; // اختياره تلقائياً في الفورم
                     this.showToast(this.isArabic ? "تم إضافة المورد بنجاح" : "Vendor added", "success");
                 }
-            } catch(e) {
-                 this.showToast("Error adding vendor", "error");
+            } catch (e) {
+                this.showToast("Error adding vendor", "error");
             } finally {
                 this.loading = false;
             }
@@ -1037,12 +1065,12 @@ createApp({
         formatDate(dateStr) {
             if (!dateStr) return '---';
             const date = new Date(dateStr);
-            return date.toLocaleDateString('ar-EG', { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit' 
+            return date.toLocaleDateString('ar-EG', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
         },
 
@@ -1052,7 +1080,7 @@ createApp({
             if (!this.forms.material.company_assignments) {
                 this.forms.material.company_assignments = [];
             }
-            
+
             this.forms.material.company_assignments.push({
                 opco_id: '',
                 bins: [],
@@ -1092,12 +1120,12 @@ createApp({
 
         // 🚀 نظام التنبيهات الاحترافي في منتصف الشاشة
         showToast(message, type = 'success') {
-            console.log("Toast Triggered:", message, type); 
+            console.log("Toast Triggered:", message, type);
             const toast = document.createElement('div');
             toast.className = `custom-toast ${type}`;
             toast.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:9999; padding:20px; color:white; border-radius:10px; text-align:center; min-width:200px; box-shadow: 0 15px 35px rgba(0,0,0,0.3);";
             toast.style.backgroundColor = type === 'success' ? '#28a745' : '#dc3545';
-            
+
             toast.innerHTML = `
                 <div class="toast-content">
                     <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}" style="font-size: 2.5rem;"></i>
@@ -1105,7 +1133,7 @@ createApp({
                 </div>
             `;
             document.body.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.5s ease';
@@ -1129,7 +1157,7 @@ createApp({
 
                 if (data.success) {
                     this.activeOpcoId = companyId;
-                    window.location.reload(); 
+                    window.location.reload();
                 } else {
                     // ✅ استخدام التنبيه الاحترافي
                     this.showToast(this.isArabic ? "عذراً، لا تملك صلاحية الوصول لهذه الشركة" : "Access denied for this company", 'error');
@@ -1189,9 +1217,9 @@ createApp({
                     is_holding: !!active.is_holding,
                     tax_id: active.tax_id || '',
                     cr_number: active.cr_number || '',
-                    logo: finalLogo 
+                    logo: finalLogo
                 };
-                this.imagePreview = finalLogo; 
+                this.imagePreview = finalLogo;
             }
         },
 
@@ -1217,7 +1245,7 @@ createApp({
         handleLogoUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                this.newLogoFile = file; 
+                this.newLogoFile = file;
                 const previewUrl = URL.createObjectURL(file);
                 this.imagePreview = previewUrl;
                 this.config.logo = previewUrl;
@@ -1246,7 +1274,7 @@ createApp({
 
             if (type === 'po' && ['Received', 'Confirmed'].includes(item.status)) {
                 this.showToast(
-                    this.isArabic ? "لا يمكن تعديل أمر توريد تم استلامه أو تأكيده" : "Cannot edit a Received/Confirmed PO", 
+                    this.isArabic ? "لا يمكن تعديل أمر توريد تم استلامه أو تأكيده" : "Cannot edit a Received/Confirmed PO",
                     "error"
                 );
                 return;
@@ -1258,7 +1286,7 @@ createApp({
 
             if (type === 'material') {
                 const itemData = JSON.parse(JSON.stringify(item));
-                
+
                 this.forms.material = {
                     id: itemData.id,
                     sku: itemData.sku,
@@ -1273,10 +1301,10 @@ createApp({
                     // 🚀 التعديل الجوهري هنا لملء الجدول الديناميكي عند التعديل
                     // نحول البيانات المسطحة القادمة من السيرفر إلى مصفوفة الـ Assignments
                     company_assignments: itemData.company_assignments || [
-                        { 
-                            opco_id: itemData.opco, 
-                            bins: itemData.storage_locations_ids || [], 
-                            primary_bin: itemData.current_primary_bin || null 
+                        {
+                            opco_id: itemData.opco,
+                            bins: itemData.storage_locations_ids || [],
+                            primary_bin: itemData.current_primary_bin || null
                         }
                     ]
                 };
@@ -1294,15 +1322,15 @@ createApp({
         setPrimaryBin(binId) {
             // 1. تحديث قيمة الرف الرئيسي في نموذج الصنف
             this.forms.material.primary_bin = binId;
-            
+
             // 2. التأكد من أن الرف المختار كـ Primary موجود أصلاً في قائمة الرفوف المختارة
             if (!this.forms.material.assigned_bins.includes(binId)) {
                 this.forms.material.assigned_bins.push(binId);
             }
-            
+
             // 3. تنبيه بصرى سريع للمستخدم
             this.showToast(
-                this.isArabic ? "تم تحديد الرف كوجهة افتراضية للاستلام" : "Primary bin set for Putaway", 
+                this.isArabic ? "تم تحديد الرف كوجهة افتراضية للاستلام" : "Primary bin set for Putaway",
                 'success'
             );
         },
@@ -1325,11 +1353,11 @@ createApp({
             // 🛡️ صمام الأمان: حماية الكيان الأساسي من الحذف
             if (type === 'opco') {
                 const targetOpco = (this.opcos || []).find(o => o.id === id);
-                
+
                 // منع حذف الشركة إذا كانت هي القابضة (Holding) أو الشركة الأم (التي ليس لها Parent)
                 if (targetOpco && (targetOpco.is_holding || !targetOpco.parent)) {
                     this.showToast(
-                        this.isArabic ? "لا يمكن حذف الشركة الأساسية للمنظومة" : "The primary entity cannot be deleted", 
+                        this.isArabic ? "لا يمكن حذف الشركة الأساسية للمنظومة" : "The primary entity cannot be deleted",
                         'error'
                     );
                     return; // إيقاف العملية فوراً
@@ -1338,7 +1366,7 @@ createApp({
 
             // 1️⃣ إظهار المودال المخصص للتأكيد
             this.confirmModal.show = true;
-            
+
             // 2️⃣ تعريف وظيفة "عند التأكيد" (Logic الحذف الفعلي)
             this.confirmModal.onConfirm = async () => {
                 this.confirmModal.show = false; // إخفاء المودال فوراً
@@ -1346,8 +1374,8 @@ createApp({
                     this.loading = true;
                     const res = await fetch(`/api/${type}s/${id}/`, {
                         method: 'DELETE',
-                        headers: { 
-                            'X-CSRFToken': this.getCookie('csrftoken') 
+                        headers: {
+                            'X-CSRFToken': this.getCookie('csrftoken')
                         }
                     });
 
@@ -1391,24 +1419,32 @@ createApp({
                 const parentCompany = this.allOpcos.find(o => o.id === parseInt(this.forms.opco.parent));
                 if (parentCompany && !parentCompany.is_holding) {
                     this.showToast(
-                        this.isArabic ? "لا يمكن إضافة شركة تابعة إلا تحت شركة قابضة (Holding)" : "Subsidiaries can only be added under a Holding company", 
+                        this.isArabic ? "لا يمكن إضافة شركة تابعة إلا تحت شركة قابضة (Holding)" : "Subsidiaries can only be added under a Holding company",
                         'error'
                     );
-                    return; 
+                    return;
                 }
             }
 
             const isEdit = this.isEditing;
             const id = this.forms[type].id;
-            
+
             // 3. تحديد الرابط ونوع الطلب (PATCH للتعديل و POST للإضافة)
             let url = isEdit ? `/api/${type}s/${id}/` : `/api/${type}s/`;
-            let method = isEdit ? 'PATCH' : 'POST'; 
+            let method = isEdit ? 'PATCH' : 'POST';
             const csrftoken = this.getCookie('csrftoken');
 
-            // 🚀 التحديث الأول: تصحيح مسار أمر التوريد
+            // 🚀 تصحيح مسار أمر التوريد
             if (type === 'po') {
                 url = isEdit ? `/api/orders/${id}/` : `/api/orders/`;
+            }
+            // 🚀 تصحيح مسار أوامر البيع
+            else if (type === 'salesorder') {
+                url = isEdit ? `/api/sales-orders/${id}/` : `/api/sales-orders/`;
+            }
+            // 🚀 تصحيح مسار العملاء
+            else if (type === 'customer') {
+                url = isEdit ? `/api/customers/${id}/` : `/api/customers/`;
             }
 
             try {
@@ -1423,14 +1459,14 @@ createApp({
                 if (useFormData) {
                     payload = new FormData();
                     const data = this.forms[type];
-                    
+
                     Object.keys(data).forEach(key => {
                         if (type === 'material' && key === 'company_assignments') {
                             // 🚀 تحويل المصفوفة لنص JSON (ضروري جداً لنجاح json.loads في بايثون)
                             // قمنا بإضافة فلترة بسيطة لضمان عدم إرسال أسطر "فارغة" بدون شركة مختارة
                             const validAssignments = data[key].filter(assign => assign.opco_id);
                             payload.append('company_assignments', JSON.stringify(validAssignments));
-                        } 
+                        }
                         // 🛡️ منع إرسال الحقول القديمة (assigned_bins) لأننا استبدلناها بـ company_assignments
                         else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments'].includes(key)) {
                             let val = data[key];
@@ -1468,6 +1504,23 @@ createApp({
                         }))
                     });
                 }
+                // 🚀 أوامر البيع - JSON مع الـ lines
+                else if (type === 'salesorder') {
+                    headers['Content-Type'] = 'application/json';
+                    payload = JSON.stringify({
+                        opco: this.activeOpcoId,
+                        customer: this.forms.salesorder.customer,
+                        so_number: this.forms.salesorder.so_number,
+                        status: this.forms.salesorder.status || 'DRAFT',
+                        lines: this.forms.salesorder.lines
+                            .filter(l => l.material)
+                            .map(l => ({
+                                material: l.material,
+                                quantity: l.quantity,
+                                unit_price: l.unit_price
+                            }))
+                    });
+                }
                 else {
                     headers['Content-Type'] = 'application/json';
                     payload = JSON.stringify(this.forms[type]);
@@ -1490,12 +1543,12 @@ createApp({
                     this.showModal = false;
                     this.selectedFile = null;
                     this.imagePreview = null;
-                    
+
                     // تحديث كافة البيانات في الواجهة لتعكس التغييرات
                     await this.refreshAllData();
-                    
+
                     this.showToast(
-                        this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully", 
+                        this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully",
                         'success'
                     );
                 } else {
@@ -1544,24 +1597,24 @@ createApp({
             try {
                 this.loading = true;
                 const formData = new FormData();
-                formData.append('name', this.config.company_name); 
+                formData.append('name', this.config.company_name);
                 formData.append('is_holding', this.config.is_holding ? 'true' : 'false');
                 formData.append('tax_id', this.config.tax_id || '');
                 formData.append('cr_number', this.config.cr_number || '');
-                
+
                 const activeOpco = this.allOpcos.find(o => o.id === parseInt(targetId));
                 if (activeOpco) {
-                    formData.append('code', activeOpco.code); 
+                    formData.append('code', activeOpco.code);
                 }
 
                 if (this.newLogoFile instanceof File) {
                     formData.append('logo', this.newLogoFile);
                 }
 
-                const url = `/api/opcos/${targetId}/`; 
+                const url = `/api/opcos/${targetId}/`;
 
                 const response = await fetch(url, {
-                    method: 'PATCH', 
+                    method: 'PATCH',
                     headers: { 'X-CSRFToken': this.getCookie('csrftoken') },
                     body: formData
                 });
@@ -1596,7 +1649,7 @@ createApp({
                     is_holding: updatedData.is_holding,
                     tax_id: updatedData.tax_id,
                     cr_number: updatedData.cr_number,
-                    logo: logoUrl 
+                    logo: logoUrl
                 };
             }
 
@@ -1608,17 +1661,17 @@ createApp({
         async refreshAllData() {
             this.loading = true;
             try {
-                await this.fetchAll(); 
+                await this.fetchAll();
                 await Promise.all([
-                    this.fetchDashboardData(), 
-                    this.getListData(), 
+                    this.fetchDashboardData(),
+                    this.getListData(),
                     this.fetchWMSStats(),
                     this.fetchMaterialsList(),
                     this.fetchPurchaseOrders()
                 ]);
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {
-                console.error("Error in refreshAllData:", e); 
+                console.error("Error in refreshAllData:", e);
             } finally {
                 this.loading = false;
             }
@@ -1629,19 +1682,19 @@ createApp({
                 const res = await fetch('/api/check-auth/');
                 const data = await res.json();
                 if (data.authenticated) {
-                    this.user = { 
-                        name: data.user, 
+                    this.user = {
+                        name: data.user,
                         is_superuser: data.is_superuser,
                         role: data.role
                     };
-                    
+
                     this.license = {
                         daysRemaining: data.days_remaining,
                         companyName: data.holding_name,
                         isExpired: data.days_remaining <= 0
                     };
-                    
-                    await this.fetchAll(); 
+
+                    await this.fetchAll();
                     this.activeOpcoId = data.company_id || (this.allOpcos[0] ? this.allOpcos[0].id : null);
                     this.syncGlobalConfig(this.activeOpcoId);
                     await this.refreshAllData();
@@ -1659,15 +1712,15 @@ createApp({
                     endpoints.map(e => fetch(`/api/${e}/`).then(r => r.json()))
                 );
 
-                this.opcos = results[0]; 
+                this.opcos = results[0];
                 this.plants = results[1];
                 this.locations = results[2];
                 this.bins = results[3];
                 // تحميل الموردين والمشتريات أيضاً
                 this.fetchVendors();
                 this.fetchPurchaseOrders();
-            } catch (e) { 
-                console.error("Core Data Fetch Error:", e); 
+            } catch (e) {
+                console.error("Core Data Fetch Error:", e);
             }
         },
 
@@ -1699,7 +1752,7 @@ createApp({
             try {
                 const res = await fetch('/api/dashboard-data/');
                 const data = await res.json();
-                if(data.kpis) this.kpis = data.kpis;
+                if (data.kpis) this.kpis = data.kpis;
             } catch (e) { console.log("KPI fetch error"); }
         },
         // داخل methods في main.js
@@ -1707,10 +1760,10 @@ createApp({
             // 1. جلب بيانات الصنف شاملة الرفوف
             const res = await fetch(`/api/materials/${item.material_id}/`);
             const data = await res.json();
-            
+
             // 2. البحث عن الرف اللي واخد تعليم "is_primary"
             const primary = data.material_bins.find(b => b.is_primary);
-            
+
             if (primary) {
                 this.forms.stock_entry.bin_id = primary.storage_bin;
                 this.showToast(this.isArabic ? "تم تحديد الرف الافتراضي تلقائياً" : "Default bin selected", 'success');
@@ -1719,8 +1772,8 @@ createApp({
         async fetchPurchaseOrders() {
             try {
                 // هنجيب كل أوامر التوريد الخاصة بالشركة الحالية
-                const url = this.activeOpcoId 
-                    ? `/api/orders/?opco=${this.activeOpcoId}` 
+                const url = this.activeOpcoId
+                    ? `/api/orders/?opco=${this.activeOpcoId}`
                     : '/api/orders/';
                 const res = await fetch(url);
                 if (res.ok) {
@@ -1788,63 +1841,71 @@ createApp({
             this.imagePreview = null;
             this.selectedFile = null;
 
-            if (type === 'plant') this.forms.plant = { id: null, opco: this.activeOpcoId, code: '', name: '' };
-            else if (type === 'location') this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
-            else if (type === 'bin') this.forms.bin = { id: null, storage_location: this.activeLocationId, code: '' };
-            else if (type === 'material') {
+            if (type === 'salesorder') {
+                this.forms.salesorder = {
+                    id: null,
+                    customer: '',
+                    so_number: `SO-${Date.now()}`,
+                    status: 'DRAFT',
+                    total_amount: 0,
+                    tax_amount: 0,
+                    grand_total: 0,
+                    lines: [{ material: '', quantity: 1, unit_price: 0 }]
+                };
+            } else if (type === 'customer') {
+                this.forms.customer = { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' };
+            } else if (type === 'plant') {
+                this.forms.plant = { id: null, opco: this.activeOpcoId, code: '', name: '' };
+            } else if (type === 'location') {
+                this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
+            } else if (type === 'bin') {
+                this.forms.bin = { id: null, storage_location: this.activeLocationId, code: '' };
+            } else if (type === 'material') {
                 this.forms.material = {
-                    id: null, 
-                    sku: '', 
-                    name: '', 
-                    category: '', 
-                    base_uom: 'PCS', 
-                    barcode: '', 
-                    // 🚀 التحديث هنا: تهيئة المصفوفة الجديدة بدلاً من الحقل القديم
+                    id: null,
+                    sku: '',
+                    name: '',
+                    category: '',
+                    base_uom: 'PCS',
+                    barcode: '',
                     company_assignments: [
-                        { 
-                            opco_id: this.activeOpcoId, // تعيين الشركة النشطة حالياً كخيار افتراضي
-                            bins: [], 
-                            primary_bin: null 
+                        {
+                            opco_id: this.activeOpcoId,
+                            bins: [],
+                            primary_bin: null
                         }
                     ],
-                    tracking: 'none', 
-                    reorder_level: 0, 
-                    max_level: 0 
+                    tracking: 'none',
+                    reorder_level: 0,
+                    max_level: 0
                 };
-            }
-            else if (type === 'stock_entry') {
-                this.forms.stock_entry = { 
-                    receipt_type: 'PURCHASE', 
+            } else if (type === 'stock_entry') {
+                this.forms.stock_entry = {
+                    receipt_type: 'PURCHASE',
                     items: [{ material_id: '', quantity: 1, unit_cost: 0 }],
-                    target_plant: this.activePlantId || '', 
-                    bin_id: '', 
+                    target_plant: this.activePlantId || '',
+                    bin_id: '',
                     quantity: 1
                 };
-            }
-            else if (type === 'po') {
-                // توليد رقم أمر توريد تلقائي
+            } else if (type === 'po') {
                 const autoNo = `PO-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-                
-                this.forms.po = { 
-                    id: null, 
-                    vendor: '', 
-                    po_number: autoNo, 
-                    is_tax_inclusive: false, 
-                    tax_rate: 15, 
-                    lines: [{ material: '', quantity: 1, unit_price: 0 }] 
+                this.forms.po = {
+                    id: null,
+                    vendor: '',
+                    po_number: autoNo,
+                    is_tax_inclusive: false,
+                    tax_rate: 15,
+                    lines: [{ material: '', quantity: 1, unit_price: 0 }]
                 };
-                // جلب الموردين عشان يظهروا في القائمة
-                this.fetchVendors(); 
-            }
-
-            else if (type === 'opco') {
-                this.forms.opco = { 
-                    id: null, 
-                    code: data ? data.code : '', 
-                    name: '', 
-                    currency: 'USD', 
-                    parent: data ? data.parent : (this.activeOpcoId || null), 
-                    is_holding: false 
+                this.fetchVendors();
+            } else if (type === 'opco') {
+                this.forms.opco = {
+                    id: null,
+                    code: data ? data.code : '',
+                    name: '',
+                    currency: 'USD',
+                    parent: data ? data.parent : (this.activeOpcoId || null),
+                    is_holding: false
                 };
             }
         }
@@ -1853,7 +1914,7 @@ createApp({
     mounted() {
         this.checkAuth();
         this.startClock();
-        this.fetchAll(); 
+        this.fetchAll();
         this.fetchMaterialsList();
         this.fetchWMSStats();
     }

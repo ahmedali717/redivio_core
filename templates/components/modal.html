@@ -176,6 +176,97 @@
     </div>
 </div>
 
+            <!-- Customer Modal -->
+            <div v-if="modalType === 'customer'" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Code</label>
+                        <input v-model="forms.customer.code" type="text" class="w-full border p-2.5 rounded-xl font-mono uppercase" placeholder="CUST-001" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Tax ID</label>
+                        <input v-model="forms.customer.tax_id" type="text" class="w-full border p-2.5 rounded-xl" placeholder="123-456-789">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Customer Name</label>
+                    <input v-model="forms.customer.name" type="text" class="w-full border p-2.5 rounded-xl" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Email</label>
+                        <input v-model="forms.customer.email" type="email" class="w-full border p-2.5 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Phone</label>
+                        <input v-model="forms.customer.phone" type="text" class="w-full border p-2.5 rounded-xl">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales Order Modal -->
+            <div v-if="modalType === 'salesorder'" class="space-y-6 animate-in zoom-in-95 duration-300">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">العميل (Customer)</label>
+                        <div class="flex gap-2">
+                            <select v-model="forms.salesorder.customer" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none" required>
+                                <option value="">اختر العميل...</option>
+                                <option v-for="c in customers" :key="c.id" :value="c.id">[[ c.name ]]</option>
+                            </select>
+                            <button @click.prevent="openModal('customer')" class="bg-white border border-slate-200 text-slate-400 w-11 h-11 rounded-xl hover:text-rose-600 hover:border-rose-200 transition-all">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">رقم أمر البيع</label>
+                        <input type="text" v-model="forms.salesorder.so_number" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-mono font-bold text-rose-700 focus:ring-2 focus:ring-rose-500 outline-none" readonly>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
+                            <tr>
+                                <th class="p-4">الصنف (Item)</th>
+                                <th class="p-4 text-center">الكمية</th>
+                                <th class="p-4 text-center">سعر الوحدة</th>
+                                <th class="p-4 text-left">الإجمالي</th>
+                                <th class="p-4 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="(line, index) in forms.salesorder.lines" :key="index" class="group">
+                                <td class="p-3">
+                                    <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-xs font-bold transition-all" required>
+                                        <option value="">اختر الصنف...</option>
+                                        <option v-for="m in materials_list" :key="m.id" :value="m.id">[[ m.name ]]</option>
+                                    </select>
+                                </td>
+                                <td class="p-3">
+                                    <input type="number" v-model="line.quantity" class="w-20 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-center font-bold text-xs outline-none">
+                                </td>
+                                <td class="p-3">
+                                    <input type="number" v-model="line.unit_price" class="w-24 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-center font-bold text-xs outline-none">
+                                </td>
+                                <td class="p-3 text-left font-black text-slate-700">
+                                    [[ (line.quantity * line.unit_price).toFixed(2) ]]
+                                </td>
+                                <td class="p-3">
+                                    <button @click.prevent="removeSalesOrderLine(index)" class="text-slate-300 hover:text-red-500 transition-colors">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button @click.prevent="addSalesOrderLine" class="w-full py-3 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-rose-600 transition-all border-t border-dashed border-slate-200">
+                        <i class="fas fa-plus-circle mr-1"></i> إضافة صنف جديد
+                    </button>
+                </div>
+            </div>
+
             <button type="submit" class="w-full bg-slate-900 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl mt-6 transition-all shadow-lg flex items-center justify-center gap-2">
                 <i class="fas fa-save"></i>
                 <span>[[ isArabic ? 'حفظ البيانات' : 'Save Data' ]]</span>
