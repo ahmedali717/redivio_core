@@ -1429,141 +1429,79 @@ createApp({
             const isEdit = this.isEditing;
             const id = this.forms[type].id;
 
-            // 3. تحديد الرابط ونوع الطلب (PATCH للتعديل و POST للإضافة)
+            // 3. تحديد الرابط ونوع الطلب
             let url = isEdit ? `/api/${type}s/${id}/` : `/api/${type}s/`;
             let method = isEdit ? 'PATCH' : 'POST';
             const csrftoken = this.getCookie('csrftoken');
 
-            // 🚀 تصحيح مسار أمر التوريد
-            if (type === 'po') {
-                url = isEdit ? `/api/orders/${id}/` : `/api/orders/`;
-            }
-            // 🚀 تصحيح مسار أوامر البيع
-            else if (type === 'salesorder') {
-                url = isEdit ? `/api/sales-orders/${id}/` : `/api/sales-orders/`;
-            }
-            // 🚀 تصحيح مسار العملاء
-            else if (type === 'customer') {
-                url = isEdit ? `/api/customers/${id}/` : `/api/customers/`;
-            }
+            // تصحيح مسارات الـ API الخاصة بكل موديل
+            if (type === 'po') url = isEdit ? `/api/orders/${id}/` : `/api/orders/`;
+            else if (type === 'salesorder') url = isEdit ? `/api/sales-orders/${id}/` : `/api/sales-orders/`;
+            else if (type === 'customer') url = isEdit ? `/api/customers/${id}/` : `/api/customers/`;
 
             try {
                 this.loading = true;
                 let payload;
                 let headers = { 'X-CSRFToken': csrftoken };
 
-                // 4. الأصناف والشركات تحتاج FormData لدعم رفع الصور (Image/Logo)
                 const useFormData = (type === 'material' || type === 'opco');
 
-                // ابحث عن السطر الذي يبدأ بـ if (useFormData) داخل submitForm
                 if (useFormData) {
                     payload = new FormData();
                     const data = this.forms[type];
 
+                    // 🚀 إضافة الـ opco لـ FormData
+                    if (!data.opco && this.activeOpcoId) {
+                        payload.append('opco', this.activeOpcoId);
+                    }
+
                     Object.keys(data).forEach(key => {
                         if (type === 'material' && key === 'company_assignments') {
-                            // 🚀 تحويل المصفوفة لنص JSON (ضروري جداً لنجاح json.loads في بايثون)
-                            // قمنا بإضافة فلترة بسيطة لضمان عدم إرسال أسطر "فارغة" بدون شركة مختارة
                             const validAssignments = data[key].filter(assign => assign.opco_id);
                             payload.append('company_assignments', JSON.stringify(validAssignments));
                         }
-                        // 🛡️ منع إرسال الحقول القديمة (assigned_bins) لأننا استبدلناها بـ company_assignments
                         else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments'].includes(key)) {
                             let val = data[key];
-                            // تحويل البوليان لنص يفهمه بايثون
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             payload.append(key, val);
                         }
                     });
 
-                    // 📸 إرفاق الصورة أو اللوجو
                     if (this.selectedFile) {
                         const fileKey = (type === 'material') ? 'image' : 'logo';
                         payload.append(fileKey, this.selectedFile);
                     }
                 }
-
-                // 🚀 التعديل الجوهري هنا لأمر التوريد
-                else if (type === 'po') {
-                    headers['Content-Type'] = 'application/json'; // لازم نعرف السيرفر إننا بنبعت JSON
-                    payload = JSON.stringify({
-                        opco: this.activeOpcoId,
-                        vendor: this.forms.po.vendor,
-                        po_number: this.forms.po.po_number,
-                        extra_data: {
-                            is_tax_inclusive: this.forms.po.is_tax_inclusive,
-                            tax_rate: this.forms.po.tax_rate,
-                            subtotal: this.poSubtotal,
-                            tax_amount: this.poTaxAmount,
-                            grand_total: this.poGrandTotal
-                        },
-                        lines: this.forms.po.lines.map(line => ({
-                            material: line.material,
-                            quantity: line.quantity,
-                            unit_price: line.unit_price
-                        }))
-                    });
-                }
-                // 🚀 أوامر البيع - JSON مع الـ lines
-                else if (type === 'salesorder') {
-                    headers['Content-Type'] = 'application/json';
-                    payload = JSON.stringify({
-                        opco: this.activeOpcoId,
-                        customer: this.forms.salesorder.customer,
-                        so_number: this.forms.salesorder.so_number,
-                        status: this.forms.salesorder.status || 'DRAFT',
-                        lines: this.forms.salesorder.lines
-                            .filter(l => l.material)
-                            .map(l => ({
-                                material: l.material,
-                                quantity: l.quantity,
-                                unit_price: l.unit_price
-                            }))
-                    });
-                }
                 else {
                     headers['Content-Type'] = 'application/json';
-                    payload = JSON.stringify(this.forms[type]);
+
+                    // 🚀 🚀 التعديل الجوهري هنا لضمان إرسال opco مع الـ JSON
+                    let finalData = { ...this.forms[type] };
+
+                    // إذا كان الحقل opco فارغ، نستخدم الشركة النشطة حالياً
+                    if (!finalData.opco && this.activeOpcoId) {
+                        finalData.opco = this.activeOpcoId;
+                    }
+
+                    payload = JSON.stringify(finalData);
                 }
 
-                // 6. تنفيذ طلب الـ Fetch
+                // تنفيذ الطلب
                 const response = await fetch(url, {
                     method: method,
                     headers: headers,
                     body: payload
                 });
 
-                const contentType = response.headers.get("content-type");
-
                 if (response.ok) {
-                    // نجاح العملية
-                    if (contentType && contentType.includes("application/json")) {
-                        await response.json();
-                    }
                     this.showModal = false;
                     this.selectedFile = null;
                     this.imagePreview = null;
-
-                    // تحديث كافة البيانات في الواجهة لتعكس التغييرات
                     await this.refreshAllData();
-
-                    this.showToast(
-                        this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully",
-                        'success'
-                    );
+                    this.showToast(this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully", 'success');
                 } else {
-                    // معالجة أخطاء السيرفر
                     const errorResponse = await response.text();
-                    console.error("Server Error:", errorResponse);
-
-                    if (errorResponse.includes("<!DOCTYPE")) {
-                        let errWindow = window.open("", "_blank");
-                        errWindow.document.write(errorResponse);
-                        errWindow.document.close();
-                        this.showToast(this.isArabic ? "خطأ في السيرفر! راجع النافذة الجديدة." : "Server Error! Check the new tab.", 'error');
-                    } else {
-                        this.showToast(this.isArabic ? "فشل الحفظ: " + errorResponse : "Save failed: " + errorResponse, 'error');
-                    }
+                    this.showToast(this.isArabic ? "فشل الحفظ: " + errorResponse : "Save failed: " + errorResponse, 'error');
                 }
             } catch (error) {
                 console.error("Network Error:", error);
