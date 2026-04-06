@@ -179,18 +179,3 @@ def print_grn_pdf(request, pk):
     
     # استدعاء ملف الـ HTML الخاص بالتصميم
     return render(request, 'procurement/print_grn.html', {'receipt': receipt})
-
-def print_so_pdf(request, pk):
-    """ دالة طباعة أمر البيع """
-    so = get_object_or_404(SalesOrder, pk=pk)
-    
-    # التأكد من جلب السطور بشكل صحيح
-    lines = so.lines.all() if hasattr(so, 'lines') else []
-    
-    context = {
-        'so': so,
-        'lines': lines,
-        'company': so.opco,
-    }
-    # ثبتنا المسار ده بناءً على صورة المجلدات اللي بعتها قبل كدة
-    return render(request, 'sales/sales_order_print.html', context)

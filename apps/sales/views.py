@@ -123,3 +123,23 @@ class SalesInvoiceViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 class CustomerPaymentViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = CustomerPayment.objects.all().order_by('-date')
     serializer_class = CustomerPaymentSerializer
+
+# ضيف دي في آخر ملف views.py بتاع الـ Sales
+def print_so_pdf(request, pk):
+    """ دالة عرض صفحة طباعة أمر البيع (SO) """
+    # جلب أمر البيع
+    so = get_object_or_404(SalesOrder, pk=pk)
+    
+    # جلب السطور (Lines)
+    # ملاحظة: تأكد أن related_name في الموديل هو 'lines' 
+    # لو مش متأكد، استخدم salesorderline_set.all()
+    lines = so.lines.all() if hasattr(so, 'lines') else so.salesorderline_set.all()
+    
+    context = {
+        'so': so,
+        'lines': lines,
+        'company': so.opco,
+    }
+    
+    # المسار ده لازم يطابق مكان ملف الـ HTML اللي عملناه
+    return render(request, 'sales/sales_order_print.html', context)
