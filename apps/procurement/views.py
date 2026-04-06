@@ -127,27 +127,48 @@ class StockReceiptViewSet(viewsets.ModelViewSet):
     serializer_class = StockReceiptSerializer
 
     def create(self, request, *args, **kwargs):
+        # 1. استلام معرف أمر البيع (لو موجود)
+        so_id = request.data.get('so_id')
+        po_id = request.data.get('po') # للمشتريات
+        
+        # 2. تحديد نوع الحركة: لو فيه SO تبقى OUT (صرف)، لو فيه PO تبقى IN (إضافة)
+        move_type = 'OUT' if so_id else 'IN'
+        request.data['move_type'] = move_type
+
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            # حفظ الحركة
-            receipt = serializer.save(created_by=request.user)
-            
-            # تحديث حالة الـ PO (منطقك سليم هنا)
-            po = receipt.po
-            if all(line.received_quantity >= line.quantity for line in po.lines.all()):
-                po.status = 'RECEIVED'
-                po.save()
+            with transaction.atomic():
+                # حفظ حركة المخزن (الـ Receipt والـ Moves)
+                receipt = serializer.save(created_by=request.user)
+                
+                # ✅ حالة المشتريات: تحديث الـ PO لـ RECEIVED
+                if receipt.po:
+                    po = receipt.po
+                    if all(line.received_quantity >= line.quantity for line in po.lines.all()):
+                        po.status = 'RECEIVED'
+                        po.save()
 
-            # 🚀 التعديل الجوهري هنا:
-            # لازم نرجع الـ id والـ receipt_no علشان الـ Vue يفهمهم
-            return Response({
-                'id': receipt.id,                           # 👈 ده اللي بيشيل الـ undefined
-                'receipt_no': receipt.receipt_number,
-                'print_url': f'/print/grn/{receipt.id}/',
-                'status': 'success'
-            }, status=status.HTTP_201_CREATED)
+                # ✅ حالة المبيعات (الربط الجديد): تحديث الـ SO لـ DELIVERED
+                if so_id:
+                    from apps.sales.models import SalesOrder
+                    try:
+                        so = SalesOrder.objects.get(id=so_id)
+                        so.status = 'DELIVERED'
+                        so.save()
+                    except SalesOrder.DoesNotExist:
+                        pass
+
+                # الرد للـ Vue ببيانات النجاح والطباعة
+                return Response({
+                    'id': receipt.id,
+                    'receipt_no': receipt.receipt_number,
+                    'move_type': move_type,
+                    'status': 'success',
+                    'print_url': f'/print/grn/{receipt.id}/' # أو رابط مستند الصرف
+                }, status=status.HTTP_201_CREATED)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
 class PurchaseOrderLineViewSet(viewsets.ModelViewSet):
     queryset = PurchaseOrderLine.objects.all()
