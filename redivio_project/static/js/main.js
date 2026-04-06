@@ -1583,6 +1583,7 @@ createApp({
             }
         },
 
+
         handleSaveSuccess(updatedData) {
             let logoUrl = updatedData.logo;
             if (logoUrl && !logoUrl.startsWith('http') && !logoUrl.startsWith('/')) {

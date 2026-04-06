@@ -1,14 +1,14 @@
 <div class="animate-in slide-in-from-bottom-4 duration-500">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-            <h2 class="text-2xl font-bold text-slate-800">[[ isArabic ? 'طلبات المبيعات' : 'Sales Orders' ]]</h2>
-            <p class="text-slate-500 text-sm">[[ isArabic ? 'إدارة عقود البيع وأوامر التجهيز' : 'Project management and
-                order processing' ]]</p>
+            <h2 class="text-2xl font-bold text-slate-800">[[ isArabic ? "طلبات المبيعات" : "Sales Orders" ]]</h2>
+            <p class="text-slate-500 text-sm">[[ isArabic ? "إدارة عقود البيع وأوامر التجهيز" : "Project management and
+                order processing" ]]</p>
         </div>
         <button @click="openModal('salesorder')"
             class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-rose-200 transition-all flex items-center justify-center gap-2 uppercase tracking-tighter text-xs">
             <i class="fas fa-plus text-xs"></i>
-            [[ isArabic ? 'أمر بيع جديد' : 'New Sales Order' ]]
+            [[ isArabic ? "أمر بيع جديد" : "New Sales OrderS" ]]
         </button>
     </div>
 
@@ -37,19 +37,19 @@
 
                 <div class="flex-1 min-w-[200px]">
                     <div class="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-0.5">[[ isArabic ?
-                        'العميل' : 'Customer' ]]</div>
+                        "العميل" : "Customer" ]]</div>
                     <div class="font-bold text-slate-600 text-sm">[[ so.customer_name ]]</div>
                 </div>
 
                 <div class="min-w-[120px]">
                     <div class="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-0.5">[[ isArabic ?
-                        'التاريخ' : 'Date' ]]</div>
+                        "التاريخ" : "Date" ]]</div>
                     <div class="font-mono text-xs text-slate-500">[[ so.date ]]</div>
                 </div>
 
                 <div class="min-w-[120px]">
                     <div class="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-0.5">[[ isArabic ?
-                        'الإجمالي النهائي' : 'Grand Total' ]]</div>
+                        "الإجمالي" : "Total" ]]</div>
                     <div class="font-black text-slate-800">$[[ formatNumber(so.grand_total) ]]</div>
                 </div>
 
@@ -82,14 +82,14 @@
 
             <div v-if="so.showDetails"
                 class="bg-slate-50 border-t border-slate-100 p-6 animate-in fade-in zoom-in-95 duration-200">
-                <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-inner">
                     <table class="w-full text-sm text-right">
                         <thead class="bg-slate-50 text-[10px] uppercase font-black text-slate-400 border-b">
                             <tr>
-                                <th class="px-4 py-3">[[ isArabic ? 'الصنف' : 'Material' ]]</th>
-                                <th class="px-4 py-3 text-center">[[ isArabic ? 'الكمية' : 'Qty' ]]</th>
-                                <th class="px-4 py-3 text-center">[[ isArabic ? 'السعر' : 'Price' ]]</th>
-                                <th class="px-4 py-3 text-left">[[ isArabic ? 'الإجمالي' : 'Total' ]]</th>
+                                <th class="px-4 py-3">[[ isArabic ? "الصنف" : "Material" ]]</th>
+                                <th class="px-4 py-3 text-center">[[ isArabic ? "الكمية" : "Qty" ]]</th>
+                                <th class="px-4 py-3 text-center">[[ isArabic ? "السعر" : "Price" ]]</th>
+                                <th class="px-4 py-3 text-left">[[ isArabic ? "الإجمالي" : "Total" ]]</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50">
