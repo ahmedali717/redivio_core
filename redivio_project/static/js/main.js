@@ -1789,6 +1789,28 @@ createApp({
                 }))
             };
         },
+        async updateSOStatus(soId, newStatus) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/sales-orders/${soId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تأكيد الأمر بنجاح" : "Order Confirmed", 'success');
+                    await this.fetchSalesOrders(); // تحديث القائمة عشان زرار الشاحنة يظهر
+                }
+            } catch (e) {
+                this.showToast("Error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
 
         async fetchMaterialsList() {
             try {
