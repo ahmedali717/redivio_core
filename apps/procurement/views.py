@@ -181,23 +181,16 @@ def print_grn_pdf(request, pk):
     return render(request, 'procurement/print_grn.html', {'receipt': receipt})
 
 def print_so_pdf(request, pk):
+    """ دالة طباعة أمر البيع """
     so = get_object_or_404(SalesOrder, pk=pk)
+    
+    # التأكد من جلب السطور بشكل صحيح
+    lines = so.lines.all() if hasattr(so, 'lines') else []
+    
     context = {
         'so': so,
-        'lines': so.lines.all(), 
+        'lines': lines,
         'company': so.opco,
     }
-    # التصحيح بناءً على هيكل ملفاتك في الصورة 📂
+    # ثبتنا المسار ده بناءً على صورة المجلدات اللي بعتها قبل كدة
     return render(request, 'sales/sales_order_print.html', context)
-    # جلب أمر البيع أو إظهار 404 لو مش موجود
-    so = get_object_or_404(SalesOrder, pk=pk)
-    
-    # تجهيز البيانات اللي هتروح للـ HTML
-    context = {
-        'so': so,
-        'lines': so.lines.all(), # تأكد إن الـ related_name في الموديل هو lines
-        'company': so.opco,      # عشان يعرض اللوجو واسم الشركة
-    }
-    
-    # ده اسم ملف الـ HTML اللي هنكريته في الخطوة الجاية
-    return render(request, 'prints/sales_order_print.html', context)
