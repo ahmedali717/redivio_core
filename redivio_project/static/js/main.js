@@ -1789,7 +1789,6 @@ createApp({
                 }))
             };
         },
-
         async updateSOStatus(soId, newStatus) {
             try {
                 this.loading = true;
