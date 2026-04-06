@@ -181,6 +181,14 @@ def print_grn_pdf(request, pk):
     return render(request, 'procurement/print_grn.html', {'receipt': receipt})
 
 def print_so_pdf(request, pk):
+    so = get_object_or_404(SalesOrder, pk=pk)
+    context = {
+        'so': so,
+        'lines': so.lines.all(), 
+        'company': so.opco,
+    }
+    # التصحيح بناءً على هيكل ملفاتك في الصورة 📂
+    return render(request, 'sales/sales_order_print.html', context)
     # جلب أمر البيع أو إظهار 404 لو مش موجود
     so = get_object_or_404(SalesOrder, pk=pk)
     
