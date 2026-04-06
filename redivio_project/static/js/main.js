@@ -422,13 +422,22 @@ createApp({
                 if (res.ok) this.customers = await res.json();
             } catch (e) { console.error("Error fetching customers:", e); }
         },
+
         async fetchSalesOrders() {
             const url = this.activeOpcoId ? `/api/sales-orders/?opco=${this.activeOpcoId}` : '/api/sales-orders/';
             try {
                 const res = await fetch(url);
-                if (res.ok) this.salesOrders = await res.json();
-            } catch (e) { console.error("Error fetching sales orders:", e); }
+                if (res.ok) {
+                    const data = await res.json();
+                    // 🚀 إضافة خاصية showDetails عشان الـ Expand يشتغل
+                    this.salesOrders = data.map(so => ({
+                        ...so,
+                        showDetails: false
+                    }));
+                }
+            } catch (e) { console.error("Error:", e); }
         },
+
         async fetchSalesInvoices() {
             const url = this.activeOpcoId ? `/api/sales-invoices/?opco=${this.activeOpcoId}` : '/api/sales-invoices/';
             try {
@@ -495,6 +504,10 @@ createApp({
             this.showToast(this.isArabic ? "جاري تحضير ملف الطباعة..." : "Preparing document...", "success");
             // الرابط ده المفروض يفتح صفحة الـ PDF اللي جانغو بيعملها
             window.open(`/print/po/${poId}/`, '_blank');
+        },
+
+        printSO(id) {
+            window.open(`/print/so/${id}/`, '_blank');
         },
 
         printGRN(receiptId) {
@@ -1752,6 +1765,28 @@ createApp({
             this.forms.po = JSON.parse(JSON.stringify(po)); // نسخ بيانات الأمر للفورم
             this.showModal = true;
             this.showToast(this.isArabic ? "جاري عرض تفاصيل الأمر" : "Viewing PO Details", 'success');
+        },
+
+        // دالة لبدء عملية الصرف بناءً على أمر البيع
+        startDelivery(so) {
+            this.activeOperation = 'so_delivery'; // تحديد نوع العملية (صورة 2)
+            this.modalType = 'delivery';
+            this.showModal = true;
+
+            // تجهيز بيانات الصرف بناءً على أصناف أمر البيع
+            this.forms.stock_entry = {
+                so_id: so.id,
+                move_type: 'OUT',
+                items: so.lines.map(line => ({
+                    material_id: line.material,
+                    material_name: line.material_name,
+                    sku: line.material_sku,
+                    ordered_qty: line.quantity,
+                    received_before: line.delivered_qty || 0, // الكمية اللي انصرفت قبل كدة
+                    received_qty: 0, // الكمية اللي هتتصرف دلوقتي
+                    bin_id: '' // الرف اللي هيتم السحب منه
+                }))
+            };
         },
 
         async fetchMaterialsList() {
