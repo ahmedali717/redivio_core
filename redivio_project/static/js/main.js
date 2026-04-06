@@ -429,13 +429,13 @@ createApp({
                 const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
-                    // 🚀 إضافة خاصية showDetails عشان الـ Expand يشتغل
+                    // 🚀 إضافة الخاصية هنا ضروري جداً
                     this.salesOrders = data.map(so => ({
                         ...so,
                         showDetails: false
                     }));
                 }
-            } catch (e) { console.error("Error:", e); }
+            } catch (e) { console.error("Error fetching SOs:", e); }
         },
 
         async fetchSalesInvoices() {
