@@ -1789,6 +1789,33 @@ createApp({
                 }))
             };
         },
+
+        async fetchSODetailsForDelivery() {
+            const soId = this.forms.stock_entry.so_id;
+            if (!soId) return;
+
+            this.loading = true;
+            try {
+                const res = await fetch(`/api/sales-orders/${soId}/`);
+                const data = await res.json();
+
+                this.forms.stock_entry.move_type = 'OUT';
+                this.forms.stock_entry.items = data.lines.map(line => ({
+                    material_id: line.material,
+                    material_name: line.material_name,
+                    sku: line.material_sku,
+                    ordered_qty: line.quantity,
+                    received_before: line.delivered_qty || 0,
+                    received_qty: 0,
+                    bin_id: ''
+                }));
+            } catch (e) {
+                this.showToast("Error loading SO details", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async updateSOStatus(soId, newStatus) {
             try {
                 this.loading = true;
