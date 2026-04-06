@@ -17,21 +17,32 @@ from apps.wms.models import StorageBin
 #  1. Helper Mixin
 # =========================================================
 class OpcoAwareMixin:
-    """Reads active opco from query param ?opco= first, then falls back to session."""
-    
     def _get_opco_id(self):
+        # بنحاول نجيب الـ ID من الرابط، لو مفيش بنجيبه من الجلسة (Session)
         return self.request.query_params.get('opco') or self.request.session.get('active_opco_id')
 
     def get_queryset(self):
+        # 1. بنجيب الـ queryset الأصلية المعرفة في الـ ViewSet
+        queryset = super().get_queryset()
         opco_id = self._get_opco_id()
+        
+        # 2. لو فيه opco_id، بنعمل فلترة
         if opco_id:
-            return self.queryset.filter(opco_id=opco_id)
-        return self.queryset
+            try:
+                # بنفلتر بـ opco (اسم الحقل) و opco_id (القيمة)
+                # استخدام opco_id كـ argument بيخلي Django يفهم إننا بنبعت الـ ID مباشرة
+                return queryset.filter(opco_id=int(opco_id))
+            except (ValueError, TypeError):
+                # لو الـ ID اللي مبعوت مش رقم (زي كلمة 'null') ميعملش Crash ويرجع الداتا كلها
+                return queryset
+        
+        return queryset
 
     def perform_create(self, serializer):
         opco_id = self._get_opco_id()
         if opco_id:
-            serializer.save(opco_id=opco_id)
+            # بنحفظ الـ opco_id مع الكائن الجديد
+            serializer.save(opco_id=int(opco_id))
         else:
             serializer.save()
 
