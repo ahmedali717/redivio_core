@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.db import transaction
 
 # Models & Serializers
@@ -123,3 +123,25 @@ class SalesInvoiceViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 class CustomerPaymentViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = CustomerPayment.objects.all().order_by('-date')
     serializer_class = CustomerPaymentSerializer
+
+# =========================================================
+#  3. Print Views
+# =========================================================
+
+def print_so_pdf(request, pk):
+    """ دالة عرض صفحة طباعة أمر البيع (SO) """
+    # جلب أمر البيع أو 404
+    so = get_object_or_404(SalesOrder, pk=pk)
+    
+    # جلب السطور المرتبطة
+    # استخدمنا hasattr كصمام أمان عشان لو الـ related_name مختلف
+    lines = so.lines.all() if hasattr(so, 'lines') else so.salesorderline_set.all()
+    
+    context = {
+        'so': so,
+        'lines': lines,
+        'company': so.opco,
+    }
+    
+    # المسار ده لازم يطابق صورة ملفاتك اللي بعتها (sales/sales_order_print.html)
+    return render(request, 'sales/sales_order_print.html', context)
