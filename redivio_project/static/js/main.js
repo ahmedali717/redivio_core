@@ -1770,6 +1770,7 @@ createApp({
 
         // دالة لبدء عملية الصرف بناءً على أمر البيع
         startDelivery(so) {
+            this.view = 'inventory_module';
             this.activeOperation = 'so_delivery'; // تحديد نوع العملية (صورة 2)
             this.modalType = 'delivery';
             this.showModal = true;
