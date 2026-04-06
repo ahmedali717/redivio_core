@@ -26,6 +26,30 @@
                 {% include "procurement/vendor_ledger.html" %}
             </div>
 
+            <div v-if="view === 'sales_module'" class="flex flex-col h-full space-y-4 p-4">
+                <div class="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-2 border border-slate-200">
+                    <button @click="salesTab = 'dashboard'" :class="salesTab === 'dashboard' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'نظرة عامة' : 'Overview' ]]</button>
+                    <button @click="salesTab = 'customers'" :class="salesTab === 'customers' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'العملاء' : 'Customers' ]]</button>
+                    <button @click="salesTab = 'orders'" :class="salesTab === 'orders' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'أوامر البيع' : 'Sales Orders' ]]</button>
+                    <button @click="salesTab = 'invoices'" :class="salesTab === 'invoices' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'الفواتير' : 'Invoices' ]]</button>
+                </div>
+
+                <div class="flex-1 relative min-h-[500px]">
+                    <div v-if="salesTab === 'dashboard'" class="absolute inset-0 overflow-y-auto">
+                        {% include "sales/dashboard.html" %}
+                    </div>
+                    <div v-if="salesTab === 'customers'" class="absolute inset-0 overflow-y-auto">
+                        {% include "sales/customers_list.html" %}
+                    </div>
+                    <div v-if="salesTab === 'orders'" class="absolute inset-0 overflow-y-auto">
+                        {% include "sales/orders_list.html" %}
+                    </div>
+                    <div v-if="salesTab === 'invoices'" class="absolute inset-0 overflow-y-auto">
+                        {% include "sales/invoices_list.html" %}
+                    </div>
+                </div>
+            </div>
+
             <div v-if="view === 'global_config'" class="animate-in fade-in duration-500">
             <div class="flex items-center justify-between mb-8">
                 <div>

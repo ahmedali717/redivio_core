@@ -18,7 +18,7 @@ from apps.item_master.views import MaterialViewSet, CategoryViewSet
 from apps.wms.views import StockQuantViewSet, StockMoveViewSet
 # عدل السطر ده ليتضمن الدالة الجديدة
 from apps.procurement.views import VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, print_po_pdf, print_grn_pdf, StockReceiptViewSet
-from apps.sales.views import CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet
+from apps.sales.views import CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet, SalesInvoiceViewSet, CustomerPaymentViewSet
 
 # 2. إعداد الراوتر
 router = DefaultRouter()
@@ -45,6 +45,8 @@ router.register(r'order-lines', PurchaseOrderLineViewSet, basename='purchaseorde
 router.register(r'customers', CustomerViewSet, basename='customer')
 router.register(r'sales-orders', SalesOrderViewSet, basename='salesorder')
 router.register(r'sales-lines', SalesOrderLineViewSet, basename='salesorderline')
+router.register(r'sales-invoices', SalesInvoiceViewSet, basename='salesinvoice')
+router.register(r'customer-payments', CustomerPaymentViewSet, basename='customerpayment')
 
 # 3. الروابط
 urlpatterns = [

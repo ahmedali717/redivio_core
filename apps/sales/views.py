@@ -1,28 +1,30 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 
 # Models & Serializers
-from .models import Customer, SalesOrder, SalesOrderLine
-from .serializers import CustomerSerializer, SalesOrderSerializer, SalesOrderLineSerializer
+from .models import Customer, SalesOrder, SalesOrderLine, SalesInvoice, CustomerPayment
+from .serializers import (
+    CustomerSerializer, SalesOrderSerializer, SalesOrderLineSerializer,
+    SalesInvoiceSerializer, CustomerPaymentSerializer
+)
 
-# ✅ التصحيح: استيراد StorageBin باستخدام apps.wms
 from apps.wms.models import StorageBin
 
 # =========================================================
 #  1. Helper Mixin
 # =========================================================
 class OpcoAwareMixin:
-    """
-    يقوم تلقائياً بربط السجل بالشركة (OpCo) بناءً على الجلسة الحالية
-    """
-    def perform_create(self, serializer):
-        opco_id = self.request.data.get('opco')
+    def get_queryset(self):
         active_opco_id = self.request.session.get('active_opco_id')
-        
-        if opco_id:
-            serializer.save(opco_id=opco_id)
-        elif active_opco_id:
+        if active_opco_id:
+            return self.queryset.filter(opco_id=active_opco_id)
+        return self.queryset
+
+    def perform_create(self, serializer):
+        active_opco_id = self.request.session.get('active_opco_id')
+        if active_opco_id:
             serializer.save(opco_id=active_opco_id)
         else:
             serializer.save()
@@ -32,39 +34,24 @@ class OpcoAwareMixin:
 # =========================================================
 
 class CustomerViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    """ إدارة العملاء """
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
 
 class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    """ إدارة أوامر البيع (SO) """
     queryset = SalesOrder.objects.all().order_by('-created_at')
     serializer_class = SalesOrderSerializer
 
-    # --- Custom Action: Deliver Items (Delivery Note) ---
-    # يقوم بتحويل الحالة إلى DELIVERED وخصم المخزون
     @action(detail=True, methods=['post'])
     def deliver(self, request, pk=None):
         so = self.get_object()
-        
-        # 1. تحديد الرف الذي سيتم الصرف منه (Source Bin)
         bin_id = request.data.get('bin_id')
         if not bin_id:
             return Response({'error': 'Source Bin ID is required for delivery.'}, status=400)
         
         try:
             source_bin = StorageBin.objects.get(id=bin_id)
-            
-            # 2. استدعاء دالة الصرف من الموديل
-            if hasattr(so, 'deliver_items'):
-                so.deliver_items(source_bin)
-            else:
-                # Fallback logic
-                so.status = 'DELIVERED'
-                so.save()
-            
+            so.deliver_items(source_bin)
             return Response({'status': 'Delivered', 'so_number': so.so_number})
-            
         except StorageBin.DoesNotExist:
             return Response({'error': 'Invalid Source Bin ID'}, status=404)
         except Exception as e:
@@ -73,3 +60,11 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 class SalesOrderLineViewSet(viewsets.ModelViewSet):
     queryset = SalesOrderLine.objects.all()
     serializer_class = SalesOrderLineSerializer
+
+class SalesInvoiceViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    queryset = SalesInvoice.objects.all().order_by('-date')
+    serializer_class = SalesInvoiceSerializer
+
+class CustomerPaymentViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    queryset = CustomerPayment.objects.all().order_by('-date')
+    serializer_class = CustomerPaymentSerializer

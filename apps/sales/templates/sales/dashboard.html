@@ -1,0 +1,120 @@
+<div class="space-y-6 animate-in fade-in duration-500">
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600">
+                    <i class="fas fa-users text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">[[ isArabic ? 'إجمالي العملاء' : 'Total Customers' ]]</p>
+                    <h3 class="text-2xl font-black text-slate-800">[[ customers.length ]]</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+                    <i class="fas fa-cart-shopping text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">[[ isArabic ? 'أوامر البيع النشطة' : 'Active Orders' ]]</p>
+                    <h3 class="text-2xl font-black text-slate-800">[[ salesOrders.filter(o => o.status === 'CONFIRMED').length ]]</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
+                    <i class="fas fa-file-invoice-dollar text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">[[ isArabic ? 'إيرادات الشهر' : 'Monthly Revenue' ]]</p>
+                    <h3 class="text-2xl font-black text-emerald-600">$[[ formatNumber(totalMonthlySales) ]]</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600">
+                    <i class="fas fa-clock text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">[[ isArabic ? 'فواتير متأخرة' : 'Overdue Invoices' ]]</p>
+                    <h3 class="text-2xl font-black text-slate-800">[[ salesInvoices.filter(i => i.status === 'UNPAID').length ]]</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities & Charts Placeholder -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <i class="fas fa-history text-rose-600"></i>
+                [[ isArabic ? 'آخر حركات البيع' : 'Recent Sales Activity' ]]
+            </h3>
+            <div class="space-y-4">
+                <div v-for="so in salesOrders.slice(0, 5)" :key="so.id" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-rose-200 transition-all cursor-pointer group">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-slate-400 group-hover:text-rose-600 transition-colors">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-800 text-sm">[[ so.so_number ]]</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">[[ so.customer_name ]]</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-slate-800 text-sm">$[[ formatNumber(so.grand_total) ]]</p>
+                        <span :class="getStatusClass(so.status)" class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">[[ so.status ]]</span>
+                    </div>
+                </div>
+                <button @click="salesTab = 'orders'" class="w-full py-3 text-sm font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all">
+                    [[ isArabic ? 'عرض كافة الطلبات' : 'View All Orders' ]]
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+            <i class="fas fa-chart-line absolute -bottom-10 -right-10 text-[12rem] text-white/5"></i>
+            <h3 class="text-lg font-bold mb-6">[[ isArabic ? 'أفضل العملاء' : 'Top Customers' ]]</h3>
+            <div class="space-y-6">
+                <!-- Mock Top Customers -->
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-rose-500 flex items-center justify-center font-bold text-lg border-4 border-slate-700 shadow-xl">A</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span>Ahmed Trading Co.</span>
+                            <span class="text-rose-400">$12,450.00</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-rose-500" style="width: 85%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center font-bold text-lg border-4 border-slate-700 shadow-xl">S</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span>Salah Industrial Group</span>
+                            <span class="text-blue-400">$8,900.00</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-500" style="width: 60%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
+                <p class="text-xs text-slate-400 leading-relaxed italic">
+                    <i class="fas fa-info-circle mr-1 text-rose-400"></i>
+                    [[ isArabic ? 'يتم تحديث هذه البيانات بناءً على الفواتير المحصلة.' : 'This data is updated based on collected invoices.' ]]
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

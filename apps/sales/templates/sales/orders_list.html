@@ -1,0 +1,65 @@
+<div class="animate-in slide-in-from-bottom-4 duration-500">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-800">[[ isArabic ? 'طلبات المبيعات' : 'Sales Orders' ]]</h2>
+            <p class="text-slate-500 text-sm">[[ isArabic ? 'إدارة عقود البيع وأوامر التجهيز' : 'Project management and order processing' ]]</p>
+        </div>
+        <button @click="openModal('salesorder')" class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-rose-200 transition-all flex items-center justify-center gap-2 uppercase tracking-tighter text-xs">
+            <i class="fas fa-plus text-xs"></i>
+            [[ isArabic ? 'أمر بيع جديد' : 'New Sales Order' ]]
+        </button>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-6">
+        <div class="w-full relative mb-6">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" v-model="soSearch" :placeholder="isArabic ? 'ابحث عن أمر بيع...' : 'Search sales orders...'" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-6 text-sm font-semibold outline-none focus:ring-2 focus:ring-rose-500 transition-all">
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase font-black tracking-widest border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-4">[[ isArabic ? 'رقم الطلب' : 'SO Number' ]]</th>
+                        <th class="px-6 py-4">[[ isArabic ? 'العميل' : 'Customer' ]]</th>
+                        <th class="px-6 py-4">[[ isArabic ? 'التاريخ' : 'Date' ]]</th>
+                        <th class="px-6 py-4">[[ isArabic ? 'المبلغ الإجمالي' : 'Total Amount' ]]</th>
+                        <th class="px-6 py-4 text-center">[[ isArabic ? 'الحالة' : 'Status' ]]</th>
+                        <th class="px-6 py-4 text-right">[[ isArabic ? 'إجراءات' : 'Actions' ]]</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50 text-sm">
+                    <tr v-for="so in filteredSalesOrders" :key="so.id" class="hover:bg-slate-50/50 transition-colors group">
+                        <td class="px-6 py-4">
+                            <span class="font-bold text-slate-700 text-sm">[[ so.so_number ]]</span>
+                            <div class="text-[10px] font-black text-rose-500 uppercase tracking-widest">SO-ID: #[[ so.id ]]</div>
+                        </td>
+                        <td class="px-6 py-4 font-bold text-slate-500 text-xs">[[ so.customer_name ]]</td>
+                        <td class="px-6 py-4 font-mono text-xs text-slate-400">[[ so.date ]]</td>
+                        <td class="px-6 py-4">
+                            <span class="font-black text-slate-800">$[[ formatNumber(so.grand_total) ]]</span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span :class="getStatusClass(so.status)" class="text-[10px] px-3 py-1 rounded-full font-bold uppercase border">
+                                [[ so.status ]]
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <button @click="editItem('salesorder', so)" class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition-all shadow-sm">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </button>
+                                <button v-if="so.status === 'CONFIRMED'" @click="openDeliveryModal(so)" class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-all shadow-sm">
+                                    <i class="fas fa-truck text-xs"></i>
+                                </button>
+                                <button @click="confirmDelete('salesorder', so.id)" class="w-8 h-8 rounded-xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-all shadow-sm">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

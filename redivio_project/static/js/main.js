@@ -31,6 +31,12 @@ createApp({
             inventoryMoves: [],
             // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
             inventoryTab: 'levels', 
+            salesTab: 'dashboard', 
+            customerSearch: '',
+            soSearch: '',
+            customers: [],
+            salesOrders: [],
+            salesInvoices: [],
             reportFilters: {
                 material_id: '',
                 location_id: '',
@@ -264,6 +270,27 @@ createApp({
             }
         },
 
+        // --- Sales Module Computed ---
+        filteredCustomers() {
+            if (!this.customerSearch) return this.customers;
+            const q = this.customerSearch.toLowerCase();
+            return this.customers.filter(c => c.name.toLowerCase().includes(q) || (c.code && c.code.toLowerCase().includes(q)));
+        },
+        filteredSalesOrders() {
+            if (!this.soSearch) return this.salesOrders;
+            const q = this.soSearch.toLowerCase();
+            return this.salesOrders.filter(o => o.so_number.toLowerCase().includes(q) || (o.customer_name && o.customer_name.toLowerCase().includes(q)));
+        },
+        totalMonthlySales() {
+            return this.salesInvoices.reduce((sum, inv) => sum + parseFloat(inv.total_amount || 0), 0);
+        },
+        totalUnpaidInvoices() {
+            return this.salesInvoices.filter(i => i.status !== 'PAID').reduce((sum, inv) => sum + (parseFloat(inv.total_amount) - parseFloat(inv.paid_amount)), 0);
+        },
+        totalPaidInvoices() {
+            return this.salesInvoices.reduce((sum, inv) => sum + parseFloat(inv.paid_amount || 0), 0);
+        },
+
     },
 
     watch: {
@@ -359,6 +386,54 @@ createApp({
             } catch (e) {
                 console.error("Error fetching POs:", e);
             }
+        },
+
+        // --- Sales Module Methods ---
+        async fetchSalesData() {
+            this.loading = true;
+            await Promise.all([
+                this.fetchCustomers(),
+                this.fetchSalesOrders(),
+                this.fetchSalesInvoices()
+            ]);
+            this.loading = false;
+        },
+        async fetchCustomers() {
+            const url = this.activeOpcoId ? `/api/customers/?opco=${this.activeOpcoId}` : '/api/customers/';
+            try {
+                const res = await fetch(url);
+                if (res.ok) this.customers = await res.json();
+            } catch (e) { console.error("Error fetching customers:", e); }
+        },
+        async fetchSalesOrders() {
+            const url = this.activeOpcoId ? `/api/sales-orders/?opco=${this.activeOpcoId}` : '/api/sales-orders/';
+            try {
+                const res = await fetch(url);
+                if (res.ok) this.salesOrders = await res.json();
+            } catch (e) { console.error("Error fetching sales orders:", e); }
+        },
+        async fetchSalesInvoices() {
+            const url = this.activeOpcoId ? `/api/sales-invoices/?opco=${this.activeOpcoId}` : '/api/sales-invoices/';
+            try {
+                const res = await fetch(url);
+                if (res.ok) this.salesInvoices = await res.json();
+            } catch (e) { console.error("Error fetching sales invoices:", e); }
+        },
+        getStatusClass(status) {
+            const classes = {
+                'DRAFT': 'bg-slate-50 text-slate-500 border-slate-200',
+                'CONFIRMED': 'bg-blue-50 text-blue-600 border-blue-200',
+                'DELIVERED': 'bg-emerald-50 text-emerald-600 border-emerald-200',
+                'SHIPPED': 'bg-indigo-50 text-indigo-600 border-indigo-200',
+                'UNPAID': 'bg-rose-50 text-rose-600 border-rose-200',
+                'PAID': 'bg-emerald-50 text-emerald-600 border-emerald-200',
+                'PARTIAL': 'bg-amber-50 text-amber-600 border-amber-200',
+                'CANCELLED': 'bg-red-50 text-red-600 border-red-200'
+            };
+            return classes[status] || 'bg-slate-50 text-slate-400 border-slate-200';
+        },
+        formatNumber(num) {
+            return parseFloat(num || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
 
         async fetchVendors() {
