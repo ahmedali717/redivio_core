@@ -61,17 +61,21 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create SO with lines atomically."""
-        # 🛡️ تأمين جلب البيانات لمنع أخطاء الـ Database
+        # 🔒 تأمين جلب البيانات لمنع انهيار الـ Database
         data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
-        lines_data = data.pop('lines', []) if 'lines' in data else []
         
-        # التأكد من صحة الـ OpCo
-        opco_id = self._get_opco_id() or data.get('opco')
-        if opco_id and str(opco_id).strip() not in ['', 'null', 'None']:
-            try: 
-                data['opco'] = int(float(str(opco_id)))
-            except: 
-                pass
+        # استخراج الخطوط بدون حذفها من الداتا الأصلية في البداية
+        lines_raw = data.get('lines', [])
+        
+        # التأكد التام من وجود OpCo و Customer كأرقام صحيحة
+        opco_val = self._get_opco_id() or data.get('opco')
+        customer_val = data.get('customer')
+        
+        try:
+            if opco_val: data['opco'] = int(float(str(opco_val)))
+            if customer_val: data['customer'] = int(float(str(customer_val)))
+        except (ValueError, TypeError):
+            pass # نترك الـ serializer يظهر خطأ التحقق (Validation Error)
 
         with transaction.atomic():
             serializer = self.get_serializer(data=data)
@@ -79,26 +83,25 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             so = serializer.save()
 
             total = decimal.Decimal('0.00')
-            for item in lines_data:
+            for item in lines_raw:
                 material_id = item.get('material')
-                if not material_id: 
-                    continue
+                if not material_id: continue
                 
-                # تأمين تحويل الكمية والسعر (0 افتراضي)
-                q = item.get('quantity', 0)
-                p = item.get('unit_price', 0)
+                # تأمين القيم المالية (0 كقيمة افتراضية صريحة)
+                raw_q = item.get('quantity', 0)
+                raw_p = item.get('unit_price', 0)
                 
-                qty = decimal.Decimal(str(q)) if q not in [None, ''] else decimal.Decimal('0.00')
-                price = decimal.Decimal(str(p)) if p not in [None, ''] else decimal.Decimal('0.00')
+                q = decimal.Decimal(str(raw_q)) if raw_q not in [None, ''] else decimal.Decimal('0.00')
+                p = decimal.Decimal(str(raw_p)) if raw_p not in [None, ''] else decimal.Decimal('0.00')
                 
-                line_total = (qty * price).quantize(decimal.Decimal('0.01'))
+                line_total = (q * p).quantize(decimal.Decimal('0.01'))
                 total += line_total
                 
                 SalesOrderLine.objects.create(
                     so=so,
                     material_id=material_id,
-                    quantity=qty,
-                    unit_price=price,
+                    quantity=q,
+                    unit_price=p,
                     total=line_total
                 )
             
