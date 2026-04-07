@@ -195,11 +195,11 @@ class StockDeliveryAPI(APIView):
                         storage_bin=source_bin
                     )
                     
-                    # تحديث الكمية المصروفة في أمر البيع
-                    so_line = so.lines.filter(material_id=item['material_id']).first()
-                    if so_line:
-                        so_line.delivered_quantity += qty_decimal
-                        so_line.save()
+                    # تحديث الكمية المصروفة (معطل مؤقتاً لعدم وجود الحقل في قاعدة البيانات)
+                    # so_line = so.lines.filter(material_id=item['material_id']).first()
+                    # if so_line:
+                    #     so_line.delivered_quantity += qty_decimal
+                    #     so_line.save()
 
                 so.status = 'DELIVERED'
                 so.save()
@@ -224,7 +224,7 @@ def get_sales_order_details(request, so_id):
                 'material_name': line.material.name,
                 'sku': getattr(line.material, 'sku', line.material.code),
                 'ordered_qty': float(line.quantity),
-                'received_qty': float(getattr(line, 'delivered_quantity', 0)),
+                'received_qty': 0, # float(getattr(line, 'delivered_quantity', 0)),
             })
         
         return JsonResponse({'items': items_data})
