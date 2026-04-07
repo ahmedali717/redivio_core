@@ -60,8 +60,9 @@ class StockMove(models.Model):
     dest_bin = models.ForeignKey(StorageBin, related_name='in_moves', null=True, blank=True, on_delete=models.SET_NULL)
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
     reference = models.CharField(max_length=100)
-    date = models.DateTimeField(auto_now_add=True)
     move_type = models.CharField(max_length=10, choices=[('IN', 'In'), ('OUT', 'Out')])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     # أضف الحقول دي عشان السيريالايزر يشتغل صح
     vendor_name = models.CharField(max_length=200, null=True, blank=True)

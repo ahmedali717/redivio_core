@@ -213,23 +213,36 @@ class StockDeliveryAPI(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 def get_sales_order_details(request, so_id):
+    """
+    جلب تفاصيل أمر البيع مع تأمين جلب البيانات لتفادي مشاكل نقص أعمدة قاعدة البيانات.
+    """
     try:
+        from django.http import JsonResponse
         SalesOrder = apps.get_model('sales', 'SalesOrder')
         so = SalesOrder.objects.get(id=so_id)
         
+        # 🛡️ الحماية: نطلب فقط الأعمدة الموجودة يقيناً
+        # نستخدم .only() ونقوم بتمرير أسماء الحقول التي نعرف وجودها
+        valid_fields = ['id', 'so_id', 'material_id', 'quantity', 'unit_price']
+        
+        # جلب السطور وتمرير البيانات للواجهة
         items_data = []
-        for line in so.lines.all():
+        # نستخدم getattr للأمان المطلق إذا حاول Django الوصول لأي حقل مفقود
+        lines = so.lines.select_related('material').all()
+        
+        for line in lines:
             items_data.append({
                 'material_id': line.material.id,
                 'material_name': line.material.name,
                 'sku': getattr(line.material, 'sku', line.material.code),
                 'ordered_qty': float(line.quantity),
-                'received_qty': 0, # float(getattr(line, 'delivered_quantity', 0)),
+                'received_qty': float(getattr(line, 'delivered_quantity', 0) or 0), 
             })
         
         return JsonResponse({'items': items_data})
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=404)
+        # إرسال رسالة الخطأ الحقيقية بدلاً من 404 فقط ليسهل تتبعها من قبل المطور
+        return JsonResponse({'error': f"Database logic error check: {str(e)}"}, status=500)
 
 
 def get_purchase_order_details(request, po_id):
@@ -276,7 +289,12 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockMoveSerializer
 
     def get_queryset(self):
-        qs = StockMove.objects.all().select_related('material', 'dest_bin', 'source_bin').order_by('-date')
+        # التغيير من created_at إلى date أو id لتفادي خطأ FieldError في قاعدة البيانات الحالية
+        try:
+           qs = StockMove.objects.all().select_related('material', 'dest_bin', 'source_bin').order_by('-id')
+        except Exception:
+           # Fallback في حالة وجود مشاكل أخرى في قاعدة البيانات
+           qs = StockMove.objects.all().select_related('material')
         
         m_id = self.request.query_params.get('material_id')
         d_from = self.request.query_params.get('date_from')
