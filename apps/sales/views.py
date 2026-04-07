@@ -12,7 +12,7 @@ from .serializers import (
     SalesInvoiceSerializer, CustomerPaymentSerializer
 )
 
-from apps.wms.models import StorageBin
+# from apps.wms.models import StorageBin # ❌ إزالة لـمنع الـ Circular Import
 
 # =========================================================
 #  1. Helper Mixin
@@ -118,6 +118,8 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             return Response({'error': 'Source Bin ID is required for delivery.'}, status=400)
         
         try:
+            from django.apps import apps
+            StorageBin = apps.get_model('wms', 'StorageBin')
             source_bin = StorageBin.objects.get(id=bin_id)
             so.deliver_items(source_bin)
             return Response({'status': 'Delivered', 'so_number': so.so_number})
