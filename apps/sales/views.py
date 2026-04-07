@@ -61,12 +61,16 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create SO with lines atomically."""
-        # Use a copy to avoid mutating the original request data if it's a dict
-        data_copy = dict(request.data)
-        lines_data = data_copy.pop('lines', [])
+        # ✅ التعديل المحوري: استخدام copy() للتعامل مع QueryDict و JSON معاً
+        if hasattr(request.data, 'copy'):
+            data_copy = request.data.copy()
+        else:
+            data_copy = dict(request.data)
+            
+        lines_data = data_copy.pop('lines', []) if 'lines' in data_copy else []
         
         opco_id = self._get_opco_id() or data_copy.get('opco')
-        if opco_id:
+        if opco_id and str(opco_id).isdigit():
             data_copy['opco'] = int(opco_id)
 
         with transaction.atomic():
@@ -79,8 +83,13 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 if not line.get('material'):
                     continue
                 
-                qty = decimal.Decimal(str(line.get('quantity', 1) or 1))
-                price = decimal.Decimal(str(line.get('unit_price', 0) or 0))
+                # ✅ تصحيح: قبول الصفر وعدم إجبار القيمة على 1
+                raw_qty = line.get('quantity')
+                raw_price = line.get('unit_price')
+                
+                qty = decimal.Decimal(str(raw_qty)) if raw_qty is not None and str(raw_qty).strip() != '' else decimal.Decimal('0.00')
+                price = decimal.Decimal(str(raw_price)) if raw_price is not None and str(raw_price).strip() != '' else decimal.Decimal('0.00')
+                
                 line_total = (qty * price).quantize(decimal.Decimal('0.01'))
                 total += line_total
                 
