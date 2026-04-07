@@ -16,8 +16,12 @@ urlpatterns = [
     # رابط الاستلام: /api/wms/stock-receipts/
     path('stock-receipts/', views.StockReceiptAPI.as_view(), name='api_stock_receipts'),
     
-    # رابط التفاصيل: /api/wms/purchase-orders/<id>/
+    # رابط الصرف (Delivery): /api/wms/stock-deliveries/
+    path('stock-deliveries/', views.StockDeliveryAPI.as_view(), name='api_stock_deliveries'),
+    
+    # رابط التفاصيل للمشتريات والمبيعات
     path('purchase-orders/<int:po_id>/', views.get_purchase_order_details, name='api_po_details'),
+    path('sales-orders/<int:so_id>/', views.get_sales_order_details, name='api_so_details'),
     
     path('dashboard/', views.WMSHomeView.as_view(), name='wms_home'),
     path('stats/', views.wms_stats, name='wms_stats'), 

@@ -891,6 +891,49 @@ createApp({
             }
         },
 
+        // 🚀 دالة جلب تفاصيل أمر البيع للصرف (SO Delivery)
+        async fetchSODetailsForDelivery() {
+            const soId = this.forms.stock_entry.so_id;
+            if (!soId) return;
+
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/wms/sales-orders/${soId}/`);
+                const data = await res.json();
+                const currentOpcoId = parseInt(this.activeOpcoId);
+
+                // تحديد نوع الحركة "صرف" فور اختيار الأمر
+                this.forms.stock_entry.move_type = 'OUT';
+
+                this.forms.stock_entry.items = data.items.map(i => {
+                    const material = this.materials_list.find(m => m.id === i.material_id);
+
+                    // استخراج الرف الرئيسي لجلبه كافتراضي للصرف
+                    let autoSelectedBin = '';
+                    if (material?.company_assignments) {
+                        const assign = material.company_assignments.find(a => parseInt(a.opco_id) === currentOpcoId);
+                        autoSelectedBin = assign?.primary_bin || (assign?.bins?.length > 0 ? assign.bins[0] : '');
+                    }
+
+                    return {
+                        material_id: i.material_id,
+                        material_name: i.material_name || material?.name || 'Unknown',
+                        sku: i.sku || material?.sku || 'N/A',
+                        ordered_qty: parseFloat(i.ordered_qty),          // الطلب الأصلي
+                        received_before: parseFloat(i.received_qty || 0), // المصروف سابقاً (من السيرفر)
+                        received_qty: 0,                                  // الكمية الحالية (صفر مؤقتاً)
+                        bin_id: autoSelectedBin
+                    };
+                });
+
+                this.showToast(this.isArabic ? "تم تحميل تفاصيل أمر البيع والكميات المنصرفة" : "SO details and delivery history loaded", 'success');
+            } catch (e) {
+                this.showToast(this.isArabic ? "خطأ في جلب البيانات" : "Fetch error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async fetchPendingPOs() {
             try {
                 // نطلب فقط الأوامر المعتمدة Confirmed للشركة النشطة
@@ -943,24 +986,28 @@ createApp({
 
         async validateReceipt() {
             const entry = this.forms.stock_entry;
+            const isDelivery = this.activeOperation === 'so_delivery';
 
-            // 1. التحقق من اختيار أمر التوريد
-            if (!entry.po_id) {
+            // 1. التحقق من اختيار أمر التوريد / البيع
+            if (!isDelivery && !entry.po_id) {
                 this.showToast(this.isArabic ? "برجاء اختيار أمر توريد" : "Please select a PO", 'error');
                 return;
             }
-
-            // 2. فلترة الأصناف المستلمة
-            const itemsToReceive = entry.items.filter(i => parseFloat(i.received_qty) > 0);
-
-            if (itemsToReceive.length === 0) {
-                this.showToast(this.isArabic ? "يجب إدخال كمية استلام واحدة على الأقل" : "Enter at least one quantity", 'error');
+            if (isDelivery && !entry.so_id) {
+                this.showToast(this.isArabic ? "برجاء اختيار أمر بيع" : "Please select a SO", 'error');
                 return;
             }
 
-            // 🚀 [شرط 1 و 2]: التحقق من الكميات المستلمة سابقا والمتبقية
-            // هنلف على كل صنف ونشوف هل اللي بيكتبه اليوزر أكبر من المتبقي ولا لأ
-            for (const item of itemsToReceive) {
+            // 2. فلترة الأصناف المستلمة / المصروفة
+            const itemsToProcess = entry.items.filter(i => parseFloat(i.received_qty) > 0);
+
+            if (itemsToProcess.length === 0) {
+                this.showToast(this.isArabic ? (isDelivery ? "يجب إدخال كمية صرف واحدة على الأقل" : "يجب إدخال كمية استلام واحدة على الأقل") : "Enter at least one quantity", 'error');
+                return;
+            }
+
+            // 🚀 التحقق من الكميات المستلمة/المصروفة سابقا والمتبقية
+            for (const item of itemsToProcess) {
                 const balance = item.ordered_qty - (item.received_before || 0); // المتبقي الحقيقي
                 if (item.received_qty > balance) {
                     this.showToast(
@@ -974,7 +1021,7 @@ createApp({
             }
 
             // 3. التحقق من الرفوف
-            const missingBins = itemsToReceive.filter(i => !i.bin_id);
+            const missingBins = itemsToProcess.filter(i => !i.bin_id);
             if (missingBins.length > 0) {
                 this.showToast(this.isArabic ? "برجاء تحديد الرف لكل صنف" : "Select bins", 'error');
                 return;
@@ -983,40 +1030,51 @@ createApp({
             try {
                 this.loading = true;
 
-                // [شرط 3 و 4]: تسجيل نوع الحركة كإضافة (IN) وإرسالها
-                const response = await fetch('/api/stock-receipts/', {
+                // التمييز بين الاستلام والصرف
+                const apiEndpoint = isDelivery ? '/api/wms/stock-deliveries/' : '/api/wms/stock-receipts/';
+                const payload = {
+                    opco: this.activeOpcoId,
+                    items: itemsToProcess.map(item => ({
+                        material_id: item.material_id, // Ensure consistent naming if API expects material_id or material. I'll use bin_id and material_id based on views.py
+                        quantity: item.received_qty,
+                        bin_id: item.bin_id
+                    }))
+                };
+
+                if (isDelivery) {
+                    payload.so_id = entry.so_id;
+                } else {
+                    payload.po_id = entry.po_id;
+                }
+
+                const response = await fetch(apiEndpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': this.getCookie('csrftoken')
                     },
-                    body: JSON.stringify({
-                        po: entry.po_id,
-                        opco: this.activeOpcoId,
-                        items: itemsToReceive.map(item => ({
-                            material: item.material_id,
-                            quantity: item.received_qty,
-                            storage_bin: item.bin_id
-                        }))
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    // [شرط 3]: استقبال رقم الإذن المولد من السيرفر
-                    const receiptId = data.id || data.receipt_id;
-                    const receiptNo = data.receipt_number || data.receipt_no || "GRN-NEW";
+                    const docNumber = data.receipt_number || data.delivery_number || "NEW-DOC";
 
                     this.showToast(
-                        this.isArabic ? `تم حفظ إذن الإضافة رقم ${receiptNo} بنجاح` : `GRN ${receiptNo} saved`,
+                        this.isArabic ? `تم حفظ الإذن رقم ${docNumber} بنجاح` : `Document ${docNumber} saved`,
                         'success'
                     );
 
-                    // [شرط 5]: طباعة إذن الإضافة فوراً بصورة صحيحة
-                    if (confirm(this.isArabic ? "هل تريد طباعة إذن الإضافة الآن؟" : "Print GRN now?")) {
-                        // فتح رابط الطباعة في صفحة جديدة
-                        window.open(`/print/grn/${receiptId}/`, '_blank');
+                    // طباعة الإذن فوراً
+                    const printMsg = isDelivery ? "هل تريد طباعة إذن الصرف الآن؟" : "هل تريد طباعة إذن الإضافة الآن؟";
+                    const printMsgEn = isDelivery ? "Print Delivery Note now?" : "Print GRN now?";
+                    if (confirm(this.isArabic ? printMsg : printMsgEn)) {
+                        if (isDelivery) {
+                            window.open(`/print/delivery/${data.delivery_id || data.id}/`, '_blank');
+                        } else {
+                            window.open(`/print/grn/${data.receipt_id || data.id}/`, '_blank');
+                        }
                     }
 
                     this.goBackToOperations();
@@ -1026,7 +1084,7 @@ createApp({
                     throw new Error(data.error || "Server Error");
                 }
             } catch (e) {
-                console.error("Receipt Error:", e);
+                console.error("Move Error:", e);
                 this.showToast(e.message, 'error');
             } finally {
                 this.loading = false;

@@ -42,20 +42,10 @@ class PurchaseOrder(models.Model):
         StockMove = apps.get_model('wms', 'StockMove')
         
         for line in self.lines.all():
-            # 1. تحديث/إنشاء رصيد (Quant)
-            # نستخدم target_bin.location.plant للوصول للمخزن
-            quant, created = StockQuant.objects.get_or_create(
-                opco=self.opco,
-                plant=target_bin.location.plant,
-                storage_bin=target_bin, 
-                material=line.material,
-                defaults={'quantity': 0}
-            )
-            quant.quantity += line.quantity
-            quant.save()
-
+            # 1. لا نقوم بتحديث رصيد (Quant) يدوياً 
+            # لأن حركة المخزون ستقوم بذلك تلقائياً بمجرد إنشائها
+            
             # 2. تسجيل الحركة (Move)
-            # لاحظ: قمنا بتحديث أسماء الحقول لتطابق موديل WMS الجديد
             StockMove.objects.create(
                 opco=self.opco,
                 material=line.material,

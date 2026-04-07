@@ -55,8 +55,8 @@ class SalesOrder(models.Model):
             quant = StockQuant.objects.filter(storage_bin=source_bin, material=line.material).first()
             
             if quant:
-                quant.quantity -= line.quantity
-                quant.save()
+                # لا نطرح من الرصيد يدوياً لأن حركة المخزون ستقوم بذلك
+                pass
             else:
                 StockQuant.objects.create(
                     opco=self.opco,
@@ -85,6 +85,12 @@ class SalesOrderLine(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    delivered_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    @property
+    def remaining_quantity(self):
+        return self.quantity - self.delivered_quantity
 
     def save(self, *args, **kwargs):
         self.total = self.quantity * self.unit_price
@@ -118,4 +124,38 @@ class CustomerPayment(models.Model):
     method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='CASH')
     reference = models.CharField(max_length=100, blank=True, null=True)
 
-    def __str__(self): return self.payment_number
+    def __str__(self): return self.payment_number
+
+import datetime
+class StockDelivery(models.Model):
+    """ إذن صرف للصنف (Delivery Note) """
+    opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
+    delivery_number = models.CharField(max_length=50, unique=True, blank=True)
+    so = models.ForeignKey(SalesOrder, on_delete=models.CASCADE, related_name='deliveries')
+    date = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.delivery_number:
+            year = datetime.date.today().year
+            last_delivery = StockDelivery.objects.filter(delivery_number__contains=f'DN-{year}').order_by('id').last()
+            if last_delivery:
+                last_no = int(last_delivery.delivery_number.split('-')[-1])
+                new_no = last_no + 1
+            else:
+                new_no = 1
+            self.delivery_number = f"DN-{year}-{new_no:04d}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.delivery_number
+
+class StockDeliveryLine(models.Model):
+    """ تفاصيل الأصناف المصروفة في كل إذن """
+    delivery = models.ForeignKey(StockDelivery, related_name='items', on_delete=models.CASCADE)
+    material = models.ForeignKey('item_master.Material', on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=12, decimal_places=2)
+    storage_bin = models.ForeignKey('wms.StorageBin', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.delivery.delivery_number} - {self.material.name}"
