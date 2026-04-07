@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import render, get_object_or_404
 from django.db import transaction
+import decimal
 
 # Models & Serializers
 from .models import Customer, SalesOrder, SalesOrderLine, SalesInvoice, CustomerPayment
@@ -60,25 +61,29 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create SO with lines atomically."""
-        lines_data = request.data.pop('lines', []) if isinstance(request.data, dict) else []
-        opco_id = self._get_opco_id() or request.data.get('opco')
+        # Use a copy to avoid mutating the original request data if it's a dict
+        data_copy = dict(request.data)
+        lines_data = data_copy.pop('lines', [])
+        
+        opco_id = self._get_opco_id() or data_copy.get('opco')
+        if opco_id:
+            data_copy['opco'] = int(opco_id)
 
         with transaction.atomic():
-            # Build the payload dict to avoid mutating request.data directly
-            data = {**request.data, 'opco': opco_id} if opco_id else dict(request.data)
-            serializer = self.get_serializer(data=data)
+            serializer = self.get_serializer(data=data_copy)
             serializer.is_valid(raise_exception=True)
             so = serializer.save()
 
-            # Create lines
-            total = 0
+            total = decimal.Decimal('0.00')
             for line in lines_data:
                 if not line.get('material'):
                     continue
-                qty = float(line.get('quantity', 1))
-                price = float(line.get('unit_price', 0))
-                line_total = qty * price
+                
+                qty = decimal.Decimal(str(line.get('quantity', 1) or 1))
+                price = decimal.Decimal(str(line.get('unit_price', 0) or 0))
+                line_total = (qty * price).quantize(decimal.Decimal('0.01'))
                 total += line_total
+                
                 SalesOrderLine.objects.create(
                     so=so,
                     material_id=line['material'],
@@ -87,8 +92,8 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     total=line_total
                 )
             
-            # Update totals
-            tax = total * 0.15
+            # Update totals with 15% VAT
+            tax = (total * decimal.Decimal('0.15')).quantize(decimal.Decimal('0.01'))
             so.total_amount = total
             so.tax_amount = tax
             so.grand_total = total + tax

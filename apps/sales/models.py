@@ -1,5 +1,6 @@
 from django.db import models
 from django.apps import apps # ✅ ضروري لاستدعاء الموديلات ديناميكياً
+import decimal
 
 class Customer(models.Model):
     opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
@@ -41,7 +42,7 @@ class SalesOrder(models.Model):
 
     def calculate_totals(self):
         self.total_amount = sum(line.total for line in self.lines.all())
-        self.tax_amount = self.total_amount * models.Decimal('0.15') # Example 15% VAT
+        self.tax_amount = (self.total_amount * decimal.Decimal('0.15')).quantize(decimal.Decimal('0.01'))
         self.grand_total = self.total_amount + self.tax_amount
         self.save()
 
