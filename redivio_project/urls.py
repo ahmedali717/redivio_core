@@ -18,7 +18,7 @@ from apps.item_master.views import MaterialViewSet, CategoryViewSet
 from apps.wms.views import StockQuantViewSet, StockMoveViewSet
 # عدل السطر ده ليتضمن الدالة الجديدة
 from apps.procurement.views import VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, print_po_pdf, print_grn_pdf, StockReceiptViewSet
-from apps.sales.views import CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet, SalesInvoiceViewSet, CustomerPaymentViewSet, StockDeliveryViewSet, print_so_pdf
+from apps.sales.views import CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet, SalesInvoiceViewSet, CustomerPaymentViewSet, StockDeliveryViewSet, print_so_pdf, print_delivery_pdf
 
 # 2. إعداد الراوتر
 router = DefaultRouter()
@@ -58,6 +58,7 @@ urlpatterns = [
     path('print/po/<int:pk>/', print_po_pdf, name='print_po_pdf'),
     path('print/grn/<int:pk>/', print_grn_pdf, name='print_grn'),
     path('print/so/<int:pk>/', print_so_pdf, name='print_so_pdf'),
+    path('print/delivery/<int:pk>/', print_delivery_pdf, name='print_delivery_pdf'),
     path('logout/', logout_view, name='logout'), # ✅ رابط الخروج
     path('', include('apps.core.urls')),
 ]

@@ -515,6 +515,15 @@ createApp({
             window.open(`/print/grn/${receiptId}/`, '_blank');
         },
 
+        printDelivery(deliveryId) {
+            if (!deliveryId || deliveryId === 'undefined') {
+                this.showToast(this.isArabic ? "خطأ: رقم الإذن غير موجود" : "Error: Delivery ID is missing", 'error');
+                return;
+            }
+            this.showToast(this.isArabic ? "جاري تجهيز إذن الصرف للطباعة..." : "Preparing Delivery Note...", "success");
+            window.open(`/print/delivery/${deliveryId}/`, '_blank');
+        },
+
         // 🚀 1. الدالة اللي كانت مفقودة وعاملة الإيرور (ربط الانتر)
         processBarcodeManual() {
             if (!this.barcodeQuery) return;
@@ -1087,9 +1096,9 @@ createApp({
                     const printMsgEn = isDelivery ? "Print Delivery Note now?" : "Print GRN now?";
                     if (confirm(this.isArabic ? printMsg : printMsgEn)) {
                         if (isDelivery) {
-                            window.open(`/print/delivery/${data.delivery_id || data.id}/`, '_blank');
+                            this.printDelivery(data.id);
                         } else {
-                            window.open(`/print/grn/${data.receipt_id || data.id}/`, '_blank');
+                            this.printGRN(data.id);
                         }
                     }
 

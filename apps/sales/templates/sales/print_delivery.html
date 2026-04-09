@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إذن صرف بضاعة - {{ delivery.delivery_number|default:delivery.id }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    <style>
+        @media print { .no-print { display: none; } }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; }
+        .receipt-container { background: white; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .receipt-header { border-bottom: 3px solid #e11d48; margin-bottom: 30px; padding-bottom: 20px; }
+        .company-logo { font-size: 24px; font-weight: 900; color: #e11d48; }
+        .table thead { background-color: #e11d48; color: white; }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container receipt-container border p-5">
+        <div class="row receipt-header align-items-center">
+            <div class="col-6">
+                <h2 class="fw-bold text-danger">إذن صرف مخزني</h2>
+                <p class="mb-1 text-secondary">رقم الإذن: <strong class="text-dark">{{ delivery.id }}</strong></p>
+                <p class="mb-1 text-secondary">التاريخ: <strong class="text-dark">{{ delivery.date|date:"Y-m-d H:i" }}</strong></p>
+            </div>
+            <div class="col-6 text-start">
+                <div class="company-logo mb-2">{{ delivery.opco.name|default:"REDIVIO ERP" }}</div>
+                <p class="mb-1">مرجع العميل: <strong>{{ delivery.so.customer.name }}</strong></p>
+                <p class="mb-1">رقم أمر البيع: <strong>{{ delivery.so.so_number }}</strong></p>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">تفاصيل الصرف:</h5>
+            <div class="row">
+                <div class="col-6">
+                    <p><strong>الموقع:</strong> {{ delivery.warehouse|default:"المخزن الرئيسي" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <table class="table table-hover text-center">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>كود الصنف</th>
+                    <th>وصف الصنف</th>
+                    <th>الكمية المنصرفة</th>
+                    <th>الموقع / الرف</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if delivery.items.all %}
+                    {% for item in delivery.items.all %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.material.sku }}</td>
+                        <td>{{ item.material.name }}</td>
+                        <td class="fw-bold">{{ item.quantity }}</td>
+                        <td>{{ item.source_bin.code|default:"---" }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    {# في حالة كان الموديل لا يحتوي على items.all (لو كان موديل وسيط) #}
+                    {% for move in moves %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ move.material.sku }}</td>
+                        <td>{{ move.material.name }}</td>
+                        <td class="fw-bold">{{ move.quantity }}</td>
+                        <td>{{ move.source_bin.code|default:"---" }}</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+
+        <div class="row mt-5 pt-5 text-center">
+            <div class="col-4">
+                <p class="fw-bold">أمين المخزن</p>
+                <div class="mt-4 border-bottom w-50 mx-auto"></div>
+            </div>
+            <div class="col-4">
+                <p class="fw-bold">المستلم / العميل</p>
+                <div class="mt-4 border-bottom w-50 mx-auto"></div>
+            </div>
+            <div class="col-4">
+                <p class="fw-bold">اعتماد الإدارة</p>
+                <div class="mt-4 border-bottom w-50 mx-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5 no-print">
+        <button onclick="window.print()" class="btn btn-danger btn-lg px-5 rounded-pill shadow">
+            <i class="fas fa-print me-2"></i> طباعة إذن الصرف
+        </button>
+    </div>
+</body>
+</html>

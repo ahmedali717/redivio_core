@@ -184,3 +184,17 @@ def print_so_pdf(request, pk):
     
     # المسار ده لازم يطابق صورة ملفاتك اللي بعتها (sales/sales_order_print.html)
     return render(request, 'sales/sales_order_print.html', context)
+
+def print_delivery_pdf(request, pk):
+    """ دالة عرض صفحة طباعة إذن الصرف (Delivery Note) """
+    delivery = get_object_or_404(StockDelivery, pk=pk)
+    
+    # جلب الحركات المخزنية المرتبطة بهذا الإذن
+    from apps.wms.models import StockMove
+    moves = StockMove.objects.filter(reference=delivery.delivery_number)
+    
+    context = {
+        'delivery': delivery,
+        'moves': moves,
+    }
+    return render(request, 'sales/print_delivery.html', context)
