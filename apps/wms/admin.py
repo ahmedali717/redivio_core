@@ -32,8 +32,8 @@ class StockQuantAdmin(admin.ModelAdmin):
 
 @admin.register(StockMove)
 class StockMoveAdmin(admin.ModelAdmin):
-    list_display = ('reference', 'move_type', 'material', 'quantity', 'date', 'opco')
-    list_filter = ('opco', 'move_type', 'date')
+    list_display = ('reference', 'move_type', 'material', 'quantity', 'created_at', 'opco')
+    list_filter = ('opco', 'move_type', 'created_at')
     search_fields = ('reference', 'material__name')
     # جعل الحقول للقراءة فقط لضمان عدم التلاعب في سجل الحركات يدوياً
-    readonly_fields = ('date',)
+    readonly_fields = ('created_at',)
