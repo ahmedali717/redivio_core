@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.views import View
+from django.views.generic import TemplateView
 from django.db import transaction
 from django.http import JsonResponse
 from rest_framework import viewsets, status
@@ -119,11 +120,6 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 quant.quantity += qty
                 quant.save()
 
-            # Update PO status if all items received (simplified)
-            if po_id:
-                # Actual logic would check if partial or full
-                pass
-
         # 🚚 2. Process Material Outbound (Delivery)
         elif move_type == 'OUT':
             for item in items:
@@ -239,3 +235,21 @@ class StockReceiptViewSet(viewsets.ModelViewSet):
         move_view.request = request
         move_view.format_kwarg = None
         return move_view.create(request, *args, **kwargs)
+
+class WMSHomeView(TemplateView):
+    template_name = 'wms/dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # يمكنك إضافة بيانات إضافية هنا للـ Dashboard
+        return context
+
+class StockReceiptAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        return Response({"status": "deprecated, use StockMoveViewSet"}, status=200)
+
+class StockDeliveryAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        return Response({"status": "deprecated, use StockMoveViewSet"}, status=200)
