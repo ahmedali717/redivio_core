@@ -810,12 +810,17 @@ createApp({
             if (type === 'po_receipt') {
                 this.fetchPendingPOs();
             }
+            // 🚚 لو العملية هي صرف لبيع، نادي أوامر البيع فوراً
+            if (type === 'so_delivery') {
+                this.fetchPendingSOs();
+            }
 
             if (!this.forms.stock_entry) {
-                this.forms.stock_entry = { items: [], po_id: '' };
+                this.forms.stock_entry = { items: [], po_id: '', so_id: '' };
             } else {
                 this.forms.stock_entry.items = [];
                 this.forms.stock_entry.po_id = '';
+                this.forms.stock_entry.so_id = '';
             }
         },
 
@@ -936,11 +941,9 @@ createApp({
 
         async fetchPendingPOs() {
             try {
-                // نطلب فقط الأوامر المعتمدة Confirmed للشركة النشطة
                 const url = this.activeOpcoId
-                    ? `/api/orders/?status=Confirmed&opco=${this.activeOpcoId}`
-                    : '/api/orders/?status=Confirmed';
-
+                    ? `/api/orders/?status=CONFIRMED&opco=${this.activeOpcoId}`
+                    : '/api/orders/?status=CONFIRMED';
                 const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
@@ -950,15 +953,28 @@ createApp({
                 console.error("Error fetching POs:", e);
             }
         },
+
+        async fetchPendingSOs() {
+            try {
+                const url = this.activeOpcoId
+                   ? `/api/sales-orders/?status=CONFIRMED&opco=${this.activeOpcoId}`
+                   : '/api/sales-orders/?status=CONFIRMED';
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.salesOrders = Array.isArray(data) ? data : (data.results || []);
+                }
+            } catch (e) {
+                console.error("Error fetching SOs:", e);
+            }
+        },
+
         async fetchStockMoves() {
             try {
-                // 🚀 التأكد من الرابط الصحيح اللي جاب داتا في المتصفح
                 const response = await fetch('/api/wms/moves/');
                 if (response.ok) {
                     const data = await response.json();
-                    // تأكد إن اسم المصفوفة هنا هو نفس الاسم المستخدم في v-for في الـ HTML
                     this.inventoryMoves = data;
-                    console.log("Moves loaded:", data);
                 }
             } catch (error) {
                 console.error("Failed to load moves:", error);

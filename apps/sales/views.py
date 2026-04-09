@@ -6,10 +6,10 @@ from django.db import transaction
 import decimal
 
 # Models & Serializers
-from .models import Customer, SalesOrder, SalesOrderLine, SalesInvoice, CustomerPayment
+from .models import Customer, SalesOrder, SalesOrderLine, SalesInvoice, CustomerPayment, StockDelivery
 from .serializers import (
     CustomerSerializer, SalesOrderSerializer, SalesOrderLineSerializer,
-    SalesInvoiceSerializer, CustomerPaymentSerializer
+    SalesInvoiceSerializer, CustomerPaymentSerializer, StockDeliverySerializer
 )
 
 # from apps.wms.models import StorageBin # ❌ إزالة لـمنع الـ Circular Import
@@ -30,13 +30,15 @@ class OpcoAwareMixin:
         # 2. لو فيه opco_id، بنعمل فلترة
         if opco_id:
             try:
-                # بنفلتر بـ opco (اسم الحقل) و opco_id (القيمة)
-                # استخدام opco_id كـ argument بيخلي Django يفهم إننا بنبعت الـ ID مباشرة
-                return queryset.filter(opco_id=int(opco_id))
+                queryset = queryset.filter(opco_id=int(opco_id))
             except (ValueError, TypeError):
-                # لو الـ ID اللي مبعوت مش رقم (زي كلمة 'null') ميعملش Crash ويرجع الداتا كلها
-                return queryset
+                pass
         
+        # 3. دعم الفلترة بالحالة (status)
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
         return queryset
 
     def perform_create(self, serializer):
@@ -125,8 +127,15 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             from django.apps import apps
             StorageBin = apps.get_model('wms', 'StorageBin')
             source_bin = StorageBin.objects.get(id=bin_id)
+            
+            # Use the atomic method in the model
             so.deliver_items(source_bin)
-            return Response({'status': 'Delivered', 'so_number': so.so_number})
+            
+            return Response({
+                'status': 'Delivered', 
+                'so_number': so.so_number,
+                'message': 'Stock moves created and invoice generated.'
+            })
         except StorageBin.DoesNotExist:
             return Response({'error': 'Invalid Source Bin ID'}, status=404)
         except Exception as e:
@@ -143,6 +152,16 @@ class SalesInvoiceViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 class CustomerPaymentViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = CustomerPayment.objects.all().order_by('-date')
     serializer_class = CustomerPaymentSerializer
+
+class StockDeliveryViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    queryset = StockDelivery.objects.all().order_by('-date')
+    serializer_class = StockDeliverySerializer
+
+    def create(self, request, *args, **kwargs):
+        # Implementation similar to StockReceipt but for OUT
+        response = super().create(request, *args, **kwargs)
+        # Additional logic if needed (e.g. auto-invoice is already handled by deliver_items)
+        return response
 
 # =========================================================
 #  3. Print Views

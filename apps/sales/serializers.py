@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Customer, SalesOrder, SalesOrderLine, SalesInvoice, CustomerPayment
+from .models import Customer, SalesOrder, SalesOrderLine, SalesInvoice, CustomerPayment, StockDelivery, StockDeliveryLine
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,7 +10,7 @@ class SalesOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.ReadOnlyField(source='material.name')
     class Meta:
         model = SalesOrderLine
-        fields = ['id', 'so', 'material', 'material_name', 'quantity', 'unit_price', 'total']
+        fields = ['id', 'so', 'material', 'material_name', 'quantity', 'unit_price', 'total', 'shipped_quantity', 'remaining_quantity']
 
 class SalesOrderSerializer(serializers.ModelSerializer):
     lines = SalesOrderLineSerializer(many=True, read_only=True)
@@ -31,3 +31,15 @@ class CustomerPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerPayment
         fields = '__all__'
+
+class StockDeliveryLineSerializer(serializers.ModelSerializer):
+    material_name = serializers.ReadOnlyField(source='material.name')
+    class Meta:
+        model = StockDeliveryLine
+        fields = ['id', 'delivery', 'material', 'material_name', 'quantity', 'storage_bin']
+
+class StockDeliverySerializer(serializers.ModelSerializer):
+    items = StockDeliveryLineSerializer(many=True, read_only=True)
+    class Meta:
+        model = StockDelivery
+        fields = ['id', 'opco', 'delivery_number', 'so', 'date', 'created_by', 'items']

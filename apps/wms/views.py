@@ -9,14 +9,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from decimal import Decimal
 from django.db.models import Sum, F
+from django.core.exceptions import ObjectDoesNotExist
+from django.apps import apps
 
-# استيراد الـ Mixin والـ Models والـ Serializers
+# Mixin & Models
 from apps.core.mixins import OpcoAwareMixin 
 from apps.core.models import OpCo
-# جلب الموديل هنا بشكل عام أو جوا الدوال
-from django.apps import apps
 from apps.procurement.models import PurchaseOrder
-
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
     PlantSerializer, StorageLocationSerializer, 
@@ -48,224 +47,17 @@ def wms_stats(request):
         ).aggregate(total=Sum('val'))
         total_value = agg['total'] if agg['total'] is not None else 0
     except Exception as e:
-        total_value = 0
+        print(f"Error in wms_stats: {e}")
         
-    low_stock = quants.filter(quantity__lte=0).count()
-    
     return Response({
         "plants": plants_count,
         "items": items_count,
-        "total_value": round(float(total_value), 2),
-        "low_stock": low_stock
+        "total_value": float(total_value),
+        "low_stock": quants.filter(quantity__lte=5).count()
     })
 
 # =========================================================
-#  2. Stock Receipt Logic
-# =========================================================
-
-class StockReceiptAPI(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        data = request.data
-        po_id = data.get('po_id')
-        items = data.get('items', [])
-        active_opco_id = request.session.get('active_opco_id')
-
-        if not active_opco_id:
-            return Response({"error": "No active company"}, status=400)
-
-        try:
-            with transaction.atomic():
-                po = PurchaseOrder.objects.get(id=po_id)
-                StockReceipt = apps.get_model('procurement', 'StockReceipt')
-                StockReceiptLine = apps.get_model('procurement', 'StockReceiptLine')
-                
-                # إنشاء إذن استلام
-                receipt = StockReceipt.objects.create(
-                    opco_id=active_opco_id,
-                    po=po,
-                    created_by=request.user if request.user.is_authenticated else None
-                )
-                
-                for item in items:
-                    target_bin = StorageBin.objects.select_related('storage_location__plant').get(id=item['bin_id'])
-                    target_plant = target_bin.storage_location.plant
-
-                    qty_val = item.get('quantity', 0)
-                    qty_decimal = Decimal(str(qty_val))
-
-                    # لا نقوم بإنشاء/تحديث StockQuant يدوياً لأن StockMove.save يقوم بذلك تلقائياً
-                    # لضمان عدم التكرار
-
-                    StockMove.objects.create(
-                        opco_id=active_opco_id,
-                        material_id=item['material_id'],
-                        quantity=qty_decimal,
-                        move_type='RECEIPT',  # أو IN
-                        reference=f"PO Receipt: {po.po_number}",
-                        dest_bin=target_bin,
-                        vendor_name=getattr(po.vendor, 'name', '') 
-                    )
-                    
-                    StockReceiptLine.objects.create(
-                        receipt=receipt,
-                        material_id=item['material_id'],
-                        quantity=qty_decimal,
-                        storage_bin=target_bin
-                    )
-                    
-                    # تحديث الكمية المستلمة في تفاصيل أمر التوريد
-                    po_line = po.lines.filter(material_id=item['material_id']).first()
-                    if po_line:
-                        po_line.received_quantity += qty_decimal
-                        po_line.save()
-
-                po.status = 'RECEIVED'
-                po.save()
-
-                return Response({
-                    "success": True, 
-                    "receipt_id": receipt.id, 
-                    "receipt_number": receipt.receipt_number
-                }, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-class StockDeliveryAPI(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        data = request.data
-        so_id = data.get('so_id')
-        items = data.get('items', [])
-        active_opco_id = request.session.get('active_opco_id')
-
-        if not active_opco_id:
-            return Response({"error": "No active company"}, status=400)
-
-        try:
-            with transaction.atomic():
-                SalesOrder = apps.get_model('sales', 'SalesOrder')
-                StockDelivery = apps.get_model('sales', 'StockDelivery')
-                StockDeliveryLine = apps.get_model('sales', 'StockDeliveryLine')
-                
-                so = SalesOrder.objects.get(id=so_id)
-                
-                # إنشاء إذن صرف
-                delivery = StockDelivery.objects.create(
-                    opco_id=active_opco_id,
-                    so=so,
-                    created_by=request.user if request.user.is_authenticated else None
-                )
-                
-                for item in items:
-                    source_bin = StorageBin.objects.select_related('storage_location__plant').get(id=item['bin_id'])
-                    
-                    qty_val = item.get('quantity', 0)
-                    qty_decimal = Decimal(str(qty_val))
-                    
-                    if qty_decimal <= 0:
-                        continue
-                        
-                    # التحقق من وجود رصيد كافٍ
-                    quant = StockQuant.objects.filter(
-                        opco_id=active_opco_id,
-                        material_id=item['material_id'],
-                        storage_bin=source_bin
-                    ).first()
-                    
-                    if not quant or quant.quantity < qty_decimal:
-                        raise ValueError(f"Insufficient stock for {item['material_name']} in bin {source_bin.code}")
-
-                    # تسجيل الحركة (والتي ستقوم بخصم الكمية تلقائياً من StockQuant)
-                    StockMove.objects.create(
-                        opco_id=active_opco_id,
-                        material_id=item['material_id'],
-                        quantity=qty_decimal,
-                        move_type='OUT', 
-                        reference=f"SO Delivery: {so.so_number}",
-                        source_bin=source_bin
-                    )
-                    
-                    StockDeliveryLine.objects.create(
-                        delivery=delivery,
-                        material_id=item['material_id'],
-                        quantity=qty_decimal,
-                        storage_bin=source_bin
-                    )
-                    
-                    # تحديث الكمية المصروفة (معطل مؤقتاً لعدم وجود الحقل في قاعدة البيانات)
-                    # so_line = so.lines.filter(material_id=item['material_id']).first()
-                    # if so_line:
-                    #     so_line.delivered_quantity += qty_decimal
-                    #     so_line.save()
-
-                so.status = 'DELIVERED'
-                so.save()
-
-                return Response({
-                    "success": True, 
-                    "delivery_id": delivery.id, 
-                    "delivery_number": delivery.delivery_number
-                }, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-def get_sales_order_details(request, so_id):
-    """
-    جلب تفاصيل أمر البيع مع تأمين جلب البيانات لتفادي مشاكل نقص أعمدة قاعدة البيانات.
-    """
-    try:
-        from django.http import JsonResponse
-        SalesOrder = apps.get_model('sales', 'SalesOrder')
-        so = SalesOrder.objects.get(id=so_id)
-        
-        # 🛡️ الحماية: نطلب فقط الأعمدة الموجودة يقيناً
-        # نستخدم .only() ونقوم بتمرير أسماء الحقول التي نعرف وجودها
-        valid_fields = ['id', 'so_id', 'material_id', 'quantity', 'unit_price']
-        
-        # جلب السطور وتمرير البيانات للواجهة
-        items_data = []
-        # نستخدم getattr للأمان المطلق إذا حاول Django الوصول لأي حقل مفقود
-        lines = so.lines.select_related('material').all()
-        
-        for line in lines:
-            items_data.append({
-                'material_id': line.material.id,
-                'material_name': line.material.name,
-                'sku': getattr(line.material, 'sku', line.material.code),
-                'ordered_qty': float(line.quantity),
-                'received_qty': float(getattr(line, 'delivered_quantity', 0) or 0), 
-            })
-        
-        return JsonResponse({'items': items_data})
-    except Exception as e:
-        # إرسال رسالة الخطأ الحقيقية بدلاً من 404 فقط ليسهل تتبعها من قبل المطور
-        return JsonResponse({'error': f"Database logic error check: {str(e)}"}, status=500)
-
-
-def get_purchase_order_details(request, po_id):
-    try:
-        po = PurchaseOrder.objects.get(id=po_id)
-        items_source = getattr(po, 'items', None) or po.purchaseorderitem_set
-        
-        items_data = []
-        for item in items_source.all():
-            items_data.append({
-                'material_id': item.material.id,
-                'material_name': item.material.name,
-                'sku': getattr(item.material, 'sku', item.material.code),
-                'ordered_qty': float(item.quantity),
-                'received_qty': float(item.quantity),
-            })
-        
-        return JsonResponse({'items': items_data})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=404)
-
-# =========================================================
-#  3. ViewSets
+#  2. ViewSets
 # =========================================================
 
 class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
@@ -281,34 +73,169 @@ class StorageBinViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StorageBinSerializer
 
 class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StockQuant.objects.select_related('material', 'storage_bin', 'plant').all()
+    queryset = StockQuant.objects.all()
     serializer_class = StockQuantSerializer
 
 class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StockMove.objects.none() # سطر أمان عشان الـ Router
+    queryset = StockMove.objects.all().order_by('-id')
     serializer_class = StockMoveSerializer
 
-    def get_queryset(self):
-        # التغيير من created_at إلى date أو id لتفادي خطأ FieldError في قاعدة البيانات الحالية
-        try:
-           qs = StockMove.objects.all().select_related('material', 'dest_bin', 'source_bin').order_by('-id')
-        except Exception:
-           # Fallback في حالة وجود مشاكل أخرى في قاعدة البيانات
-           qs = StockMove.objects.all().select_related('material')
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        move_type = data.get('move_type') # 'IN' or 'OUT'
+        items = data.get('items', [])
+        po_id = data.get('po_id')
+        so_id = data.get('so_id')
+        opco_id = self._get_opco_id()
+
+        if not items:
+            return Response({"error": "No items provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 🚀 1. Process Material Inbound (Receipt)
+        if move_type == 'IN':
+            for item in items:
+                qty = Decimal(str(item['received_qty']))
+                if qty <= 0: continue
+                
+                dest_bin = StorageBin.objects.get(id=item['bin_id'])
+                
+                # Create StockMove
+                move = StockMove.objects.create(
+                    opco_id=opco_id,
+                    material_id=item['material_id'],
+                    quantity=qty,
+                    move_type='IN',
+                    dest_bin=dest_bin,
+                    reference=f"PO {po_id}" if po_id else "Manual In"
+                )
+                
+                # Update StockQuant
+                quant, created = StockQuant.objects.get_or_create(
+                    opco_id=opco_id,
+                    material_id=item['material_id'],
+                    storage_bin=dest_bin
+                )
+                quant.quantity += qty
+                quant.save()
+
+            # Update PO status if all items received (simplified)
+            if po_id:
+                # Actual logic would check if partial or full
+                pass
+
+        # 🚚 2. Process Material Outbound (Delivery)
+        elif move_type == 'OUT':
+            for item in items:
+                qty = Decimal(str(item['received_qty']))
+                if qty <= 0: continue
+
+                source_bin = StorageBin.objects.get(id=item['bin_id'])
+                
+                # Check Availability
+                quant = StockQuant.objects.filter(
+                    opco_id=opco_id,
+                    material_id=item['material_id'],
+                    storage_bin=source_bin
+                ).first()
+                
+                if not quant or quant.quantity < qty:
+                    raise Exception(f"Insufficient stock for {item['material_name']} in bin {source_bin.code}")
+
+                # Create StockMove
+                move = StockMove.objects.create(
+                    opco_id=opco_id,
+                    material_id=item['material_id'],
+                    quantity=qty,
+                    move_type='OUT',
+                    source_bin=source_bin,
+                    reference=f"SO {so_id}" if so_id else "Manual Out"
+                )
+
+                # Update StockQuant
+                quant.quantity -= qty
+                quant.save()
+
+        return Response({"status": "success"}, status=status.HTTP_201_CREATED)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_sales_order_details(request, so_id):
+    """ جلب تفاصيل أمر البيع مع الكميات المنصرفة سابقاً بشكل آمن """
+    if not so_id or so_id == 'null' or so_id == 'undefined':
+        return Response({'items': []})
         
-        m_id = self.request.query_params.get('material_id')
-        d_from = self.request.query_params.get('date_from')
-        d_to = self.request.query_params.get('date_to')
-
-        if m_id:
-            qs = qs.filter(material_id=m_id)
-        if d_from:
-            qs = qs.filter(date__date__gte=d_from)
-        if d_to:
-            qs = qs.filter(date__date__lte=d_to)
+    try:
+        SalesOrder = apps.get_model('sales', 'SalesOrder')
+        so = SalesOrder.objects.get(id=int(so_id))
+        lines = so.lines.select_related('material').all()
+        
+        items_data = []
+        for line in lines:
+            if not line.material: continue
+            items_data.append({
+                'material_id': line.material.id,
+                'material_name': line.material.name,
+                'sku': getattr(line.material, 'sku', line.material.code if hasattr(line.material, 'code') else f"MAT-{line.material.id}"),
+                'ordered_qty': float(line.quantity),
+                'received_before': float(getattr(line, 'delivered_quantity', 0) or 0),
+                'received_qty': 0,
+            })
             
-        return qs
+        return Response({
+            'so_id': so.id,
+            'so_number': so.so_number,
+            'customer_name': so.customer.name,
+            'items': items_data
+        })
+    except (ObjectDoesNotExist, ValueError):
+        return Response({'error': 'Sales Order not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
 
-class WMSHomeView(View):
-    def get(self, request):
-        return render(request, 'wms/dashboard.html')
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_purchase_order_details(request, po_id):
+    """ جلب تفاصيل أمر التوريد مع الكميات المستلمة سابقاً """
+    if not po_id or po_id == 'null' or po_id == 'undefined':
+        return Response({'items': []})
+        
+    try:
+        PurchaseOrder = apps.get_model('procurement', 'PurchaseOrder')
+        po = PurchaseOrder.objects.get(id=int(po_id))
+        lines = po.lines.select_related('material').all()
+        
+        items_data = []
+        for line in lines:
+            if not line.material: continue
+            items_data.append({
+                'material_id': line.material.id,
+                'material_name': line.material.name,
+                'sku': getattr(line.material, 'sku', line.material.code if hasattr(line.material, 'code') else f"MAT-{line.material.id}"),
+                'ordered_qty': float(line.quantity),
+                'received_before': float(getattr(line, 'received_qty', 0) or 0),
+                'received_qty': 0,
+            })
+            
+        return Response({
+            'po_id': po.id,
+            'po_number': po.po_number,
+            'vendor_name': po.vendor.name,
+            'items': items_data
+        })
+    except (ObjectDoesNotExist, ValueError):
+        return Response({'error': 'Purchase Order not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+class StockReceiptViewSet(viewsets.ModelViewSet):
+    """ هذا الـ ViewSet قديم وسيتم استبداله مستقبلاً بـ StockMoveViewSet لكنه ضروري للتوافق حالياً """
+    queryset = StockMove.objects.all()
+    serializer_class = StockMoveSerializer
+
+    def create(self, request, *args, **kwargs):
+        # توجيه الطلب لـ StockMoveViewSet.create
+        move_view = StockMoveViewSet()
+        move_view.request = request
+        move_view.format_kwarg = None
+        return move_view.create(request, *args, **kwargs)

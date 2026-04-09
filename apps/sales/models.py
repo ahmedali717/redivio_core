@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.apps import apps
 import decimal
 
@@ -47,24 +47,55 @@ class SalesOrder(models.Model):
         self.save()
 
     def deliver_items(self, source_bin):
-        if self.status in ['DELIVERED', 'SHIPPED']: return
+        """ Robust delivery logic with invoice generation. """
+        if self.status in ['DELIVERED', 'SHIPPED']:
+            return
         
-        StockQuant = apps.get_model('wms', 'StockQuant')
         StockMove = apps.get_model('wms', 'StockMove')
-        
-        for line in self.lines.all():
-            StockMove.objects.create(
-                opco=self.opco,
-                material=line.material,
-                quantity=line.quantity,
-                move_type='OUT', 
-                source_bin=source_bin,
-                dest_bin=None,
-                reference=f"SO: {self.so_number}"
-            )
+        StockQuant = apps.get_model('wms', 'StockQuant')
+
+        with transaction.atomic():
+            for line in self.lines.all():
+                # التحقق من الرصيد في الرف المصدر
+                quant = StockQuant.objects.filter(storage_bin=source_bin, material=line.material).first()
+                if not quant or quant.quantity < line.quantity:
+                    raise Exception(f"Insufficient stock for {line.material.name} in bin {source_bin.code}")
+
+                # تسجيل الحركة
+                StockMove.objects.create(
+                    opco=self.opco,
+                    material=line.material,
+                    quantity=line.quantity,
+                    move_type='OUT',
+                    source_bin=source_bin,
+                    dest_bin=None,
+                    reference=f"SO: {self.so_number}"
+                )
+                # تحديث الكمية المشحونة
+                line.shipped_quantity += line.quantity
+                line.save()
+
+            self.status = 'SHIPPED'
+            self.save()
             
-        self.status = 'DELIVERED'
-        self.save()
+            # إنشاء فاتورة تلقائياً
+            self.create_invoice()
+
+    def create_invoice(self):
+        """ Creates a Sales Invoice automatically from the SO. """
+        if SalesInvoice.objects.filter(sales_order=self).exists():
+            return
+        
+        invoice_number = f"INV-{self.so_number}"
+        SalesInvoice.objects.create(
+            opco=self.opco,
+            invoice_number=invoice_number,
+            sales_order=self,
+            customer=self.customer,
+            due_date=datetime.date.today() + datetime.timedelta(days=30),
+            total_amount=self.grand_total,
+            status='UNPAID'
+        )
 
 class SalesOrderLine(models.Model):
     so = models.ForeignKey(SalesOrder, related_name='lines', on_delete=models.CASCADE)
@@ -72,6 +103,11 @@ class SalesOrderLine(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    shipped_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    @property
+    def remaining_quantity(self):
+        return self.quantity - self.shipped_quantity
 
     def save(self, *args, **kwargs):
         self.total = self.quantity * self.unit_price
