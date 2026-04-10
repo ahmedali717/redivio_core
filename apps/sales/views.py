@@ -192,9 +192,7 @@ def print_so_pdf(request, pk):
         'lines': lines,
         'company': so.opco,
     }
-    response = render(request, 'sales/sales_order_print.html', context)
-    response['Content-Disposition'] = f'attachment; filename="{so.so_number}.pdf"'
-    return response
+    return render(request, 'sales/sales_order_print.html', context)
 
 def print_delivery_pdf(request, pk):
     """ دالة عرض صفحة طباعة إذن الصرف (Delivery Note) """
@@ -206,9 +204,7 @@ def print_delivery_pdf(request, pk):
         'delivery': delivery,
         'moves': moves,
     }
-    response = render(request, 'sales/print_delivery.html', context)
-    response['Content-Disposition'] = f'attachment; filename="{delivery.delivery_number}.pdf"'
-    return response
+    return render(request, 'sales/print_delivery.html', context)
 
 def print_invoice_pdf(request, pk):
     """ دالة عرض صفحة طباعة الفاتورة (Invoice) """
@@ -225,6 +221,4 @@ def print_invoice_pdf(request, pk):
         'company': invoice.opco,
         'qr_data': f"Seller: {invoice.opco.name}\nVAT: {invoice.opco.tax_id or '310123456700003'}\nTotal: {invoice.total_amount}\nDate: {invoice.date}"
     }
-    response = render(request, 'sales/print_invoice.html', context)
-    response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
-    return response
+    return render(request, 'sales/print_invoice.html', context)

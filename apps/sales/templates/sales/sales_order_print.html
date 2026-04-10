@@ -114,6 +114,13 @@
         <p>الضريبة (15%): {{ so.tax_amount }}</p>
         <h2 style="color: #d9534f;">الإجمالي النهائي: {{ so.grand_total }}</h2>
     </div>
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
 </body>
 
 </html>

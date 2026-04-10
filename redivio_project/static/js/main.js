@@ -1925,6 +1925,14 @@ createApp({
             window.open(`/api/print/invoice/${id}/`, '_blank');
         },
 
+        printGRN(id) {
+            window.open(`/api/print/grn/${id}/`, '_blank');
+        },
+
+        printPO(id) {
+            window.open(`/api/print/po/${id}/`, '_blank');
+        },
+
         printDelivery(id) {
             window.open(`/api/print/delivery/${id}/`, '_blank');
         },

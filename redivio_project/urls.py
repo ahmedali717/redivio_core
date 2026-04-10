@@ -55,10 +55,10 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')), # ✅ رابط تغيير اللغة
     path('api/', include(router.urls)),
     path('api/wms/', include('apps.wms.urls')),
-    path('print/po/<int:pk>/', print_po_pdf, name='print_po_pdf'),
-    path('print/grn/<int:pk>/', print_grn_pdf, name='print_grn'),
-    path('print/so/<int:pk>/', print_so_pdf, name='print_so_pdf'),
-    path('print/delivery/<int:pk>/', print_delivery_pdf, name='print_delivery_pdf'),
+    path('api/print/po/<int:pk>/', print_po_pdf, name='print_po_pdf'),
+    path('api/print/grn/<int:pk>/', print_grn_pdf, name='print_grn'),
+    path('api/print/so/<int:pk>/', print_so_pdf, name='print_so_pdf'),
+    path('api/print/delivery/<int:pk>/', print_delivery_pdf, name='print_delivery_pdf'),
     path('api/print/invoice/<int:pk>/', print_invoice_pdf, name='print_invoice_pdf'),
     path('logout/', logout_view, name='logout'), # ✅ رابط الخروج
     path('', include('apps.core.urls')),

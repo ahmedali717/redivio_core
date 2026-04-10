@@ -185,9 +185,7 @@ def print_po_pdf(request, pk):
         
         # إذا كنت تريد العرض كـ HTML أولاً للتأكد من الشكل قبل تحويله لـ PDF
         # ده هيخليك تشوف التصميم في المتصفح وتعدله براحتك
-        response = render(request, 'procurement/print_po.html', {'po': po})
-        response['Content-Disposition'] = f'attachment; filename="{po.po_number}.pdf"'
-        return response
+        return render(request, 'procurement/print_po.html', {'po': po})
         
         # ملحوظة: إذا أردت تحويله لـ PDF حقيقي لاحقاً، 
         # سنستخدم مكتبة مثل weasyprint أو xhtml2pdf هنا.
