@@ -12,27 +12,6 @@ class SalesOrderLineSerializer(serializers.ModelSerializer):
         model = SalesOrderLine
         fields = ['id', 'so', 'material', 'material_name', 'quantity', 'unit_price', 'total', 'shipped_quantity', 'remaining_quantity']
 
-class SalesOrderSerializer(serializers.ModelSerializer):
-    lines = SalesOrderLineSerializer(many=True, read_only=True)
-    customer_name = serializers.ReadOnlyField(source='customer.name')
-    deliveries = StockDeliverySerializer(many=True, read_only=True) # إضافة حركات الصرف
-    
-    class Meta:
-        model = SalesOrder
-        fields = ['id', 'opco', 'so_number', 'customer', 'customer_name', 'date', 'status', 'total_amount', 'tax_amount', 'grand_total', 'notes', 'lines', 'deliveries']
-
-class SalesInvoiceSerializer(serializers.ModelSerializer):
-    customer_name = serializers.ReadOnlyField(source='customer.name')
-    class Meta:
-        model = SalesInvoice
-        fields = '__all__'
-
-class CustomerPaymentSerializer(serializers.ModelSerializer):
-    customer_name = serializers.ReadOnlyField(source='customer.name')
-    class Meta:
-        model = CustomerPayment
-        fields = '__all__'
-
 class StockDeliveryLineSerializer(serializers.ModelSerializer):
     material_name = serializers.ReadOnlyField(source='material.name')
     class Meta:
@@ -86,3 +65,24 @@ class StockDeliverySerializer(serializers.ModelSerializer):
             so.save()
 
         return delivery
+
+class SalesOrderSerializer(serializers.ModelSerializer):
+    lines = SalesOrderLineSerializer(many=True, read_only=True)
+    customer_name = serializers.ReadOnlyField(source='customer.name')
+    deliveries = StockDeliverySerializer(many=True, read_only=True) # تم تعريفه الآن في الأعلى
+    
+    class Meta:
+        model = SalesOrder
+        fields = ['id', 'opco', 'so_number', 'customer', 'customer_name', 'date', 'status', 'total_amount', 'tax_amount', 'grand_total', 'notes', 'lines', 'deliveries']
+
+class SalesInvoiceSerializer(serializers.ModelSerializer):
+    customer_name = serializers.ReadOnlyField(source='customer.name')
+    class Meta:
+        model = SalesInvoice
+        fields = '__all__'
+
+class CustomerPaymentSerializer(serializers.ModelSerializer):
+    customer_name = serializers.ReadOnlyField(source='customer.name')
+    class Meta:
+        model = CustomerPayment
+        fields = '__all__'
