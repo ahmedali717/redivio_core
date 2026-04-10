@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from django.shortcuts import render, get_object_or_404
+from redivio_project.utils.pdf import render_to_pdf
 
 # Models & Serializers
 # الاستيراد النسبي (.) صحيح لأننا داخل نفس التطبيق
@@ -182,23 +183,11 @@ def print_po_pdf(request, pk):
     """ دالة محسنة لطباعة أمر الشراء بتنسيق HTML شيك """
     try:
         po = PurchaseOrder.objects.get(pk=pk)
-        
-        # إذا كنت تريد العرض كـ HTML أولاً للتأكد من الشكل قبل تحويله لـ PDF
-        # ده هيخليك تشوف التصميم في المتصفح وتعدله براحتك
-        return render(request, 'procurement/print_po.html', {'po': po})
-        
-        # ملحوظة: إذا أردت تحويله لـ PDF حقيقي لاحقاً، 
-        # سنستخدم مكتبة مثل weasyprint أو xhtml2pdf هنا.
-        
+        return render_to_pdf('procurement/print_po.html', {'po': po})
     except PurchaseOrder.DoesNotExist:
         return HttpResponse("أمر التوريد غير موجود", status=404)
     
 def print_grn_pdf(request, pk):
     """ دالة عرض صفحة طباعة مستند الاستلام (GRN) """
-    # جلب بيانات حركة الاستلام بناءً على الـ ID
     receipt = get_object_or_404(StockReceipt, pk=pk)
-    
-    # استدعاء ملف الـ HTML الخاص بالتصميم
-    response = render(request, 'procurement/print_grn.html', {'receipt': receipt})
-    response['Content-Disposition'] = f'attachment; filename="{receipt.receipt_number}.pdf"'
-    return response
+    return render_to_pdf('procurement/print_grn.html', {'receipt': receipt})

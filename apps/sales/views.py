@@ -192,7 +192,7 @@ def print_so_pdf(request, pk):
         'lines': lines,
         'company': so.opco,
     }
-    return render(request, 'sales/sales_order_print.html', context)
+    return render_to_pdf('sales/sales_order_print.html', context)
 
 def print_delivery_pdf(request, pk):
     """ دالة عرض صفحة طباعة إذن الصرف (Delivery Note) """
@@ -204,7 +204,7 @@ def print_delivery_pdf(request, pk):
         'delivery': delivery,
         'moves': moves,
     }
-    return render(request, 'sales/print_delivery.html', context)
+    return render_to_pdf('sales/print_delivery.html', context)
 
 def print_invoice_pdf(request, pk):
     """ دالة عرض صفحة طباعة الفاتورة (Invoice) """
@@ -221,4 +221,4 @@ def print_invoice_pdf(request, pk):
         'company': invoice.opco,
         'qr_data': f"Seller: {invoice.opco.name}\nVAT: {invoice.opco.tax_id or '310123456700003'}\nTotal: {invoice.total_amount}\nDate: {invoice.date}"
     }
-    return render(request, 'sales/print_invoice.html', context)
+    return render_to_pdf('sales/print_invoice.html', context)
