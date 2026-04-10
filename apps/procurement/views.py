@@ -185,7 +185,9 @@ def print_po_pdf(request, pk):
         
         # إذا كنت تريد العرض كـ HTML أولاً للتأكد من الشكل قبل تحويله لـ PDF
         # ده هيخليك تشوف التصميم في المتصفح وتعدله براحتك
-        return render(request, 'procurement/print_po.html', {'po': po})
+        response = render(request, 'procurement/print_po.html', {'po': po})
+        response['Content-Disposition'] = f'attachment; filename="{po.po_number}.pdf"'
+        return response
         
         # ملحوظة: إذا أردت تحويله لـ PDF حقيقي لاحقاً، 
         # سنستخدم مكتبة مثل weasyprint أو xhtml2pdf هنا.
@@ -199,4 +201,6 @@ def print_grn_pdf(request, pk):
     receipt = get_object_or_404(StockReceipt, pk=pk)
     
     # استدعاء ملف الـ HTML الخاص بالتصميم
-    return render(request, 'procurement/print_grn.html', {'receipt': receipt})
+    response = render(request, 'procurement/print_grn.html', {'receipt': receipt})
+    response['Content-Disposition'] = f'attachment; filename="{receipt.receipt_number}.pdf"'
+    return response

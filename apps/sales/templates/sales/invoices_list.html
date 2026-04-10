@@ -72,4 +72,71 @@
             </table>
         </div>
     </div>
+
+    <!-- Record Payment Modal -->
+    <div v-if="modalType === 'payment' && showModal" class="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden mx-4 transform transition-all scale-100">
+            <div class="bg-gradient-to-r from-rose-500 to-rose-600 p-8 text-center relative">
+                <h3 class="text-white text-2xl font-black italic tracking-tighter">[[ isArabic ? 'تحصيل دفعة مالية' : 'Record Payment' ]]</h3>
+                <p class="text-rose-100 text-[10px] font-black uppercase tracking-widest mt-1">Invoice: #[[ forms.payment.invoice_number ]]</p>
+                <button @click="showModal = false" class="absolute top-8 right-8 text-white/50 hover:text-white transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-8 space-y-6">
+                <!-- Customer Info -->
+                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-400">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">Customer</h4>
+                        <p class="font-bold text-slate-700">[[ forms.payment.customer_name ]]</p>
+                    </div>
+                </div>
+
+                <!-- Input Fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'المبلغ المستحق' : 'Amount Due' ]]</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">$</span>
+                            <input type="number" v-model.number="forms.payment.amount" step="0.01"
+                                class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl py-4 pl-8 pr-5 font-black text-slate-800 focus:bg-white focus:border-rose-500 transition-all outline-none">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'طريقة الدفع' : 'Method' ]]</label>
+                        <select v-model="forms.payment.method"
+                            class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl py-4 px-5 font-black text-slate-800 focus:bg-white focus:border-rose-500 transition-all outline-none">
+                            <option value="CASH">[[ isArabic ? 'نقدي' : 'Cash' ]]</option>
+                            <option value="BANK">[[ isArabic ? 'تحويل بنكي' : 'Bank Transfer' ]]</option>
+                            <option value="CHECK">[[ isArabic ? 'شيك' : 'Check' ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'مرجع أو ملاحظات' : 'Reference / Notes' ]]</label>
+                    <input type="text" v-model="forms.payment.reference"
+                        class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl py-4 px-5 font-bold text-slate-800 focus:bg-white focus:border-rose-500 transition-all outline-none"
+                        placeholder="Ref #, Bank Name, etc.">
+                </div>
+            </div>
+
+            <div class="p-8 border-t border-slate-50 flex gap-4 bg-slate-50/50">
+                <button @click="showModal = false"
+                    class="flex-1 py-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-400 hover:text-slate-600 transition-all active:scale-95">
+                    [[ isArabic ? 'إلغاء' : 'Cancel' ]]
+                </button>
+                <button @click="submitPayment" :disabled="loading"
+                    class="flex-[2] py-4 bg-rose-600 text-white rounded-2xl font-black shadow-xl shadow-rose-200 hover:bg-slate-900 transition-all active:scale-95 flex items-center justify-center gap-3">
+                    <i v-if="loading" class="fas fa-spinner fa-spin"></i>
+                    <i v-else class="fas fa-check-circle"></i>
+                    [[ isArabic ? 'تأكيد التحصيل' : 'Confirm Payment' ]]
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

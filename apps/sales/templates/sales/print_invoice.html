@@ -202,12 +202,14 @@
             </thead>
             <tbody>
                 {% for line in lines %}
+                {% if line.shipped_quantity > 0 %}
                 <tr>
                     <td>{{ line.material.name }}</td>
-                    <td style="text-align: center;">{{ line.quantity }}</td>
+                    <td style="text-align: center;">{{ line.shipped_quantity|floatformat:0 }}</td>
                     <td style="text-align: center;">${{ line.unit_price }}</td>
-                    <td style="text-align: left;">${{ line.total }}</td>
+                    <td style="text-align: left;">${{ line.unbilled_quantity_total|default:line.total }}</td> <!-- Note: Need to verify if unbilled_quantity_total exists or just use math -->
                 </tr>
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>

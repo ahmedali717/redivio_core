@@ -180,13 +180,11 @@ class StockDeliveryViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 #  3. Print Views
 # =========================================================
 
+from django.http import HttpResponse
+
 def print_so_pdf(request, pk):
     """ دالة عرض صفحة طباعة أمر البيع (SO) """
-    # جلب أمر البيع أو 404
     so = get_object_or_404(SalesOrder, pk=pk)
-    
-    # جلب السطور المرتبطة
-    # استخدمنا hasattr كصمام أمان عشان لو الـ related_name مختلف
     lines = so.lines.all() if hasattr(so, 'lines') else so.salesorderline_set.all()
     
     context = {
@@ -194,15 +192,13 @@ def print_so_pdf(request, pk):
         'lines': lines,
         'company': so.opco,
     }
-    
-    # المسار ده لازم يطابق صورة ملفاتك اللي بعتها (sales/sales_order_print.html)
-    return render(request, 'sales/sales_order_print.html', context)
+    response = render(request, 'sales/sales_order_print.html', context)
+    response['Content-Disposition'] = f'attachment; filename="{so.so_number}.pdf"'
+    return response
 
 def print_delivery_pdf(request, pk):
     """ دالة عرض صفحة طباعة إذن الصرف (Delivery Note) """
     delivery = get_object_or_404(StockDelivery, pk=pk)
-    
-    # جلب الحركات المخزنية المرتبطة بهذا الإذن
     from apps.wms.models import StockMove
     moves = StockMove.objects.filter(reference=delivery.delivery_number)
     
@@ -210,7 +206,9 @@ def print_delivery_pdf(request, pk):
         'delivery': delivery,
         'moves': moves,
     }
-    return render(request, 'sales/print_delivery.html', context)
+    response = render(request, 'sales/print_delivery.html', context)
+    response['Content-Disposition'] = f'attachment; filename="{delivery.delivery_number}.pdf"'
+    return response
 
 def print_invoice_pdf(request, pk):
     """ دالة عرض صفحة طباعة الفاتورة (Invoice) """
@@ -227,4 +225,6 @@ def print_invoice_pdf(request, pk):
         'company': invoice.opco,
         'qr_data': f"Seller: {invoice.opco.name}\nVAT: {invoice.opco.tax_id or '310123456700003'}\nTotal: {invoice.total_amount}\nDate: {invoice.date}"
     }
-    return render(request, 'sales/print_invoice.html', context)
+    response = render(request, 'sales/print_invoice.html', context)
+    response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
+    return response

@@ -145,7 +145,8 @@ createApp({
                 // 🚀 السطور اللي كانت ناقصة وعاملة المشكلة تم إضافتها هنا:
                 view_po: { ar: 'تفاصيل أمر التوريد', en: 'Purchase Order Details' },
                 payment: { ar: 'تحصيل دفعة مالية', en: 'Record Payment' },
-                delivery: { ar: 'صرف بضاعة', en: 'Order Delivery' }
+                delivery: { ar: 'صرف بضاعة', en: 'Order Delivery' },
+                so_delivery: { ar: 'صرف بضاعة من أمر بيع', en: 'WMS Sales Delivery' }
             },
 
             forms: {
@@ -190,6 +191,13 @@ createApp({
                     tax_amount: 0,
                     grand_total: 0,
                     lines: [{ material: '', quantity: 1, unit_price: 0 }]
+                },
+                payment: {
+                    invoice: null,
+                    customer: null,
+                    amount: 0,
+                    method: 'CASH',
+                    reference: ''
                 }
             }
         };
@@ -348,6 +356,11 @@ createApp({
             // لو العملية شراء، نجهز أوامر التوريد
             if (type === 'po_receipt') {
                 this.fetchPendingPOs();
+            }
+
+            // لو العملية مبيعات، نجهز أوامر البيع القابلة للصرف
+            if (type === 'so_delivery') {
+                this.fetchSalesOrders();
             }
         },
 
@@ -1913,7 +1926,89 @@ createApp({
         },
 
         printDelivery(id) {
-            window.open(`/print/delivery/${id}/`, '_blank');
+            window.open(`/api/print/delivery/${id}/`, '_blank');
+        },
+
+        async fetchSODetailsForDelivery() {
+            const soId = this.forms.stock_entry.so_id;
+            if (!soId) return;
+
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/sales-orders/${soId}/`);
+                if (res.ok) {
+                    const so = await res.json();
+                    // تصفير القائمة القديمة وملئها بالأصناف المطلوبة للصرف
+                    this.forms.stock_entry.items = so.lines
+                        .filter(l => l.remaining_quantity > 0)
+                        .map(line => ({
+                            material_id: line.material,
+                            material_name: line.material_name,
+                            sku: line.material_sku,
+                            ordered_qty: line.quantity,
+                            received_before: line.shipped_quantity,
+                            received_qty: line.remaining_quantity, // الكمية الافتراضية هي المتبقي
+                            bin_id: line.suggested_bin || ''
+                        }));
+                }
+            } catch (e) {
+                console.error("Error fetching SO details:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        openPaymentModal(invoice) {
+            this.modalType = 'payment';
+            this.forms.payment = {
+                invoice: invoice.id,
+                invoice_number: invoice.invoice_number,
+                customer: invoice.customer,
+                customer_name: invoice.customer_name,
+                amount: invoice.total_amount - invoice.paid_amount,
+                method: 'CASH',
+                reference: ''
+            };
+            this.showModal = true;
+        },
+
+        async submitPayment() {
+            try {
+                this.loading = true;
+                const payload = {
+                    opco: this.activeOpcoId,
+                    invoice: this.forms.payment.invoice,
+                    customer: this.forms.payment.customer,
+                    amount: this.forms.payment.amount,
+                    method: this.forms.payment.method,
+                    reference: this.forms.payment.reference,
+                    payment_number: `PAY-${Date.now()}`
+                };
+
+                const res = await fetch('/api/customer-payments/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تسجيل الدفعة بنجاح" : "Payment recorded", 'success');
+                    this.showModal = false;
+                    await this.fetchSalesInvoices();
+                    await this.fetchCustomers();
+                    await this.fetchPayments();
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Payment failed", 'error');
+                }
+            } catch (e) {
+                this.showToast("Network Error", 'error');
+            } finally {
+                this.loading = false;
+            }
         },
 
         async updateSOStatus(soId, newStatus) {
