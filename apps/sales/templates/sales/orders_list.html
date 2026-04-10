@@ -60,7 +60,13 @@
                         <i class="fas fa-eye text-xs"></i>
                     </button>
 
-                    <button v-if="so.status === 'CONFIRMED'" @click.stop="startDelivery(so)"
+                    <button v-if="so.status === 'CONFIRMED' || so.status === 'SHIPPED'" @click.stop="generateInvoice(so)"
+                        title="إصدار فاتورة"
+                        class="w-8 h-8 rounded-lg text-rose-500 border border-rose-100 flex items-center justify-center hover:bg-rose-50">
+                        <i class="fas fa-file-invoice-dollar text-xs"></i>
+                    </button>
+
+                    <button v-if="so.status === 'CONFIRMED' || so.status === 'SHIPPED'" @click.stop="startDelivery(so)"
                         class="w-8 h-8 rounded-lg text-emerald-500 border border-emerald-100 flex items-center justify-center hover:bg-emerald-50">
                         <i class="fas fa-truck-loading text-xs"></i>
                     </button>

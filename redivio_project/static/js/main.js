@@ -445,6 +445,31 @@ createApp({
                 if (res.ok) this.salesInvoices = await res.json();
             } catch (e) { console.error("Error fetching sales invoices:", e); }
         },
+
+        async generateInvoice(so) {
+            this.showToast(this.isArabic ? "جاري إصدار الفاتورة..." : "Generating invoice...", "success");
+            try {
+                const res = await fetch(`/api/sales-orders/${so.id}/generate_invoice/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم إصدار الفاتورة بنجاح" : "Invoice generated successfully", "success");
+                    await this.fetchSalesOrders();
+                    await this.fetchSalesInvoices();
+                    await this.fetchCustomers(); // لتحديث أرصدة العملاء فوراً
+                } else {
+                    this.showToast(data.error || (this.isArabic ? "فشل إصدار الفاتورة" : "Failed to generate invoice"), "error");
+                }
+            } catch (e) {
+                console.error("Error generating invoice:", e);
+                this.showToast("Network Error", "error");
+            }
+        },
         getStatusClass(status) {
             const classes = {
                 'DRAFT': 'bg-slate-50 text-slate-500 border-slate-200',

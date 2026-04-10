@@ -200,7 +200,7 @@ def get_sales_order_details(request, so_id):
                 'material_name': line.material.name,
                 'sku': getattr(line.material, 'sku', line.material.code if hasattr(line.material, 'code') else f"MAT-{line.material.id}"),
                 'ordered_qty': float(line.quantity),
-                'received_before': float(getattr(line, 'delivered_quantity', 0) or 0),
+                'received_before': float(getattr(line, 'shipped_quantity', 0) or 0),
                 'received_qty': 0,
             })
             

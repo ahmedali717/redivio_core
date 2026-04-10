@@ -141,6 +141,19 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=400)
 
+    @action(detail=True, methods=['post'])
+    def generate_invoice(self, request, pk=None):
+        """ إصدار فاتورة يدوياً بناءً على ما تم صرفه مخزنياً """
+        so = self.get_object()
+        try:
+            so.create_invoice()
+            return Response({
+                'status': 'success',
+                'message': 'Invoice generated successfully for shipped items.'
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
 class SalesOrderLineViewSet(viewsets.ModelViewSet):
     queryset = SalesOrderLine.objects.all()
     serializer_class = SalesOrderLineSerializer

@@ -10,7 +10,7 @@ class SalesOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.ReadOnlyField(source='material.name')
     class Meta:
         model = SalesOrderLine
-        fields = ['id', 'so', 'material', 'material_name', 'quantity', 'unit_price', 'total', 'shipped_quantity', 'remaining_quantity']
+        fields = ['id', 'so', 'material', 'material_name', 'quantity', 'unit_price', 'total', 'shipped_quantity', 'billed_quantity', 'remaining_quantity', 'unbilled_quantity']
 
 class StockDeliveryLineSerializer(serializers.ModelSerializer):
     material_name = serializers.ReadOnlyField(source='material.name')
@@ -52,17 +52,7 @@ class StockDeliverySerializer(serializers.ModelSerializer):
                 reference=f"DN: {delivery.delivery_number}"
             )
             
-        # إنشاء فاتورة تلقائياً بناءً على هذا الإذن فقط (سواء شحن كلي أو جزئي)
-        so = delivery.so
-        if hasattr(so, 'create_invoice'):
-            so.create_invoice(delivery=delivery)
-
-        if all(line.shipped_quantity >= line.quantity for line in so.lines.all()):
-            so.status = 'DELIVERED'
-        else:
-            so.status = 'SHIPPED'
-        
-        so.save()
+        delivery.so.save()
         return delivery
 
 class SalesOrderSerializer(serializers.ModelSerializer):

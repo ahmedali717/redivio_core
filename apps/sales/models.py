@@ -85,40 +85,62 @@ class SalesOrder(models.Model):
         """ 
         Creates a Sales Invoice. 
         If 'delivery' is provided, it bills only the items in that delivery.
-        Otherwise, it bills the full SO (fallback).
+        Otherwise, it bills all shipped items that haven't been invoiced yet.
         """
-        invoice_number = f"INV-{self.so_number}"
+        import datetime
+        invoice_number = f"INV-{self.so_number}-MAN"
         if delivery:
             invoice_number = f"INV-{delivery.delivery_number}"
+        else:
+            # إضافة ختم زمني للفاتورة اليدوية لضمان التفرد
+            timestamp = datetime.datetime.now().strftime("%H%M%S")
+            invoice_number = f"INV-{self.so_number}-{timestamp}"
         
-        # التأكد من عدم تكرار الفاتورة لنفس الإذن
+        # التأكد من عدم تكرار الفاتورة
         if SalesInvoice.objects.filter(invoice_number=invoice_number).exists():
             return
         
         total_amount = decimal.Decimal('0.00')
+        lines_to_update = []
+
         if delivery:
             # حساب القيمة بناءً على ما تم صرفه فعلياً في هذا الإذن
             for item in delivery.items.all():
-                # جلب السعر من سطر أمر البيع المرتبط بنفس الصنف
                 so_line = self.lines.filter(material=item.material).first()
                 if so_line:
-                    total_amount += item.quantity * so_line.unit_price
+                    qty_to_bill = item.quantity
+                    total_amount += qty_to_bill * so_line.unit_price
+                    so_line.billed_quantity += qty_to_bill
+                    lines_to_update.append(so_line)
         else:
-            # النظام القديم: فاتورة بكامل قيمة الطلب
-            total_amount = self.total_amount
+            # إصدار فاتورة يدوية بما تم صرفه ولم يُفوتر بعد
+            for line in self.lines.all():
+                unbilled_qty = line.shipped_quantity - line.billed_quantity
+                if unbilled_qty > 0:
+                    total_amount += unbilled_qty * line.unit_price
+                    line.billed_quantity += unbilled_qty
+                    lines_to_update.append(line)
+
+        if total_amount <= 0:
+            # لا يوجد شيء ليتم فوترته (إما لم يتم الصرف أو تم فوترة كل المنصرف)
+            raise Exception("No shipped items available for invoicing.")
 
         tax_amount = (total_amount * decimal.Decimal('0.15')).quantize(decimal.Decimal('0.01'))
         grand_total = total_amount + tax_amount
 
-        SalesInvoice.objects.create(
-            opco=self.opco,
-            invoice_number=invoice_number,
-            sales_order=self,
-            customer=self.customer,
-            due_date=datetime.date.today() + datetime.timedelta(days=30),
-            total_amount=grand_total,
-            status='UNPAID'
-        )
+        with transaction.atomic():
+            SalesInvoice.objects.create(
+                opco=self.opco,
+                invoice_number=invoice_number,
+                sales_order=self,
+                customer=self.customer,
+                due_date=datetime.date.today() + datetime.timedelta(days=30),
+                total_amount=grand_total,
+                status='UNPAID'
+            )
+            # تحديث الكميات المفوترة في سطور الأوردر
+            for l in lines_to_update:
+                l.save()
 
 class SalesOrderLine(models.Model):
     so = models.ForeignKey(SalesOrder, related_name='lines', on_delete=models.CASCADE)
@@ -127,10 +149,15 @@ class SalesOrderLine(models.Model):
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     shipped_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    billed_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     @property
     def remaining_quantity(self):
         return self.quantity - self.shipped_quantity
+
+    @property
+    def unbilled_quantity(self):
+        return self.shipped_quantity - self.billed_quantity
 
     def save(self, *args, **kwargs):
         self.total = self.quantity * self.unit_price
