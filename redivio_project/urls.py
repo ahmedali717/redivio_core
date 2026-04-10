@@ -18,7 +18,7 @@ from apps.item_master.views import MaterialViewSet, CategoryViewSet
 from apps.wms.views import StockQuantViewSet, StockMoveViewSet
 # عدل السطر ده ليتضمن الدالة الجديدة
 from apps.procurement.views import VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, print_po_pdf, print_grn_pdf, StockReceiptViewSet
-from apps.sales.views import CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet, SalesInvoiceViewSet, CustomerPaymentViewSet, StockDeliveryViewSet, print_so_pdf, print_delivery_pdf
+from apps.sales.views import CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet, SalesInvoiceViewSet, CustomerPaymentViewSet, StockDeliveryViewSet, print_so_pdf, print_delivery_pdf, print_invoice_pdf
 
 # 2. إعداد الراوتر
 router = DefaultRouter()
