@@ -36,7 +36,7 @@ class StockDeliveryLineSerializer(serializers.ModelSerializer):
     material_name = serializers.ReadOnlyField(source='material.name')
     class Meta:
         model = StockDeliveryLine
-        fields = ['id', 'delivery', 'material', 'material_name', 'quantity', 'storage_bin']
+        fields = ['id', 'material', 'material_name', 'quantity', 'storage_bin']
 
 class StockDeliverySerializer(serializers.ModelSerializer):
     items = StockDeliveryLineSerializer(many=True) # جعلها قابلة للكتابة
