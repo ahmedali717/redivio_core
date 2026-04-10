@@ -475,10 +475,13 @@ createApp({
             }
         },
 
-        fetchPayments() {
-            axios.get('/api/customer-payments/').then(res => {
-                this.customerPayments = res.data;
-            });
+        async fetchPayments() {
+            try {
+                const res = await fetch('/api/customer-payments/');
+                if (res.ok) this.customerPayments = await res.json();
+            } catch (e) {
+                console.error("Error fetching payments:", e);
+            }
         },
         getStatusClass(status) {
             const classes = {
@@ -1569,6 +1572,7 @@ createApp({
             if (type === 'po') url = isEdit ? `/api/orders/${id}/` : `/api/orders/`;
             else if (type === 'salesorder') url = isEdit ? `/api/sales-orders/${id}/` : `/api/sales-orders/`;
             else if (type === 'customer') url = isEdit ? `/api/customers/${id}/` : `/api/customers/`;
+            else if (type === 'delivery') url = '/api/stock-deliveries/';
 
             try {
                 this.loading = true;
@@ -1894,20 +1898,24 @@ createApp({
             this.showModal = true;
 
             // تجهيز بيانات الصرف بناءً على أصناف أمر البيع
-            this.forms.stock_entry = {
-                so_id: so.id,
-                move_type: 'OUT',
+            this.forms.delivery = {
+                so: so.id,
                 items: so.lines.map(line => ({
-                    material_id: line.material,
-                    material_name: line.material_name,
-                    sku: line.material_sku,
-                    ordered_qty: line.quantity,
-                    received_before: line.delivered_qty || 0, // الكمية اللي انصرفت قبل كدة
-                    received_qty: 0, // الكمية اللي هتتصرف دلوقتي
-                    bin_id: '' // الرف اللي هيتم السحب منه
+                    material: line.material,
+                    quantity: line.quantity - line.shipped_quantity,
+                    storage_bin: ''
                 }))
             };
         },
+
+        printInvoice(id) {
+            window.open(`/api/print/invoice/${id}/`, '_blank');
+        },
+
+        printDelivery(id) {
+            window.open(`/print/delivery/${id}/`, '_blank');
+        },
+
         async updateSOStatus(soId, newStatus) {
             try {
                 this.loading = true;

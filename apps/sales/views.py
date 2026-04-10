@@ -211,3 +211,20 @@ def print_delivery_pdf(request, pk):
         'moves': moves,
     }
     return render(request, 'sales/print_delivery.html', context)
+
+def print_invoice_pdf(request, pk):
+    """ دالة عرض صفحة طباعة الفاتورة (Invoice) """
+    invoice = get_object_or_404(SalesInvoice, pk=pk)
+    
+    # جلب سطور أمر البيع المرتبط
+    lines = []
+    if invoice.sales_order:
+        lines = invoice.sales_order.lines.all()
+    
+    context = {
+        'invoice': invoice,
+        'lines': lines,
+        'company': invoice.opco,
+        'qr_data': f"Seller: {invoice.opco.name}\nVAT: {invoice.opco.tax_id or '310123456700003'}\nTotal: {invoice.total_amount}\nDate: {invoice.date}"
+    }
+    return render(request, 'sales/print_invoice.html', context)
