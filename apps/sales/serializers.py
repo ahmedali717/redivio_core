@@ -15,10 +15,11 @@ class SalesOrderLineSerializer(serializers.ModelSerializer):
 class SalesOrderSerializer(serializers.ModelSerializer):
     lines = SalesOrderLineSerializer(many=True, read_only=True)
     customer_name = serializers.ReadOnlyField(source='customer.name')
+    deliveries = StockDeliverySerializer(many=True, read_only=True) # إضافة حركات الصرف
     
     class Meta:
         model = SalesOrder
-        fields = ['id', 'opco', 'so_number', 'customer', 'customer_name', 'date', 'status', 'total_amount', 'tax_amount', 'grand_total', 'notes', 'lines']
+        fields = ['id', 'opco', 'so_number', 'customer', 'customer_name', 'date', 'status', 'total_amount', 'tax_amount', 'grand_total', 'notes', 'lines', 'deliveries']
 
 class SalesInvoiceSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')
