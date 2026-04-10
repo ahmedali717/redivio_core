@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views import View
 from django.views.generic import TemplateView
-from django.db import transaction
+from django.db import transaction, models
 from django.http import JsonResponse
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
@@ -80,6 +80,32 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = StockMove.objects.all().order_by('-id')
     serializer_class = StockMoveSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # دعم الفلترة المرسلة من الواجهة الأمامية
+        material_id = self.request.query_params.get('material_id')
+        if material_id:
+            queryset = queryset.filter(material_id=material_id)
+            
+        location_id = self.request.query_params.get('location_id')
+        if location_id and location_id.strip():
+            # إذا تم تحديد موقع، نفلتر الحركات الصادرة (source) أو الواردة (dest) المرتبطة بهذا الموقع
+            queryset = queryset.filter(
+                models.Q(source_bin__storage_location_id=location_id) | 
+                models.Q(dest_bin__storage_location_id=location_id)
+            )
+            
+        date_from = self.request.query_params.get('date_from')
+        if date_from:
+            queryset = queryset.filter(created_at__date__gte=date_from)
+            
+        date_to = self.request.query_params.get('date_to')
+        if date_to:
+            queryset = queryset.filter(created_at__date__lte=date_to)
+            
+        return queryset
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):

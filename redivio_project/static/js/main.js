@@ -1055,14 +1055,14 @@ createApp({
             try {
                 this.loading = true;
 
-                // التمييز بين الاستلام والصرف
-                const apiEndpoint = isDelivery ? '/api/wms/stock-deliveries/' : '/api/wms/stock-receipts/';
+                // التمييز بين الاستلام والصرف (استخدام الروابط الموحدة الجديدة)
+                const apiEndpoint = isDelivery ? '/api/stock-deliveries/' : '/api/stock-receipts/';
                 const payload = {
                     opco: this.activeOpcoId,
                     items: itemsToProcess.map(item => ({
-                        material_id: item.material_id, // Ensure consistent naming if API expects material_id or material. I'll use bin_id and material_id based on views.py
+                        material: item.material_id, // تغيير material_id إلى material
                         quantity: item.received_qty,
-                        bin_id: item.bin_id
+                        storage_bin: item.bin_id    // تغيير bin_id إلى storage_bin
                     }))
                 };
 
