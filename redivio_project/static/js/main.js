@@ -1067,9 +1067,9 @@ createApp({
                 };
 
                 if (isDelivery) {
-                    payload.so_id = entry.so_id;
+                    payload.so = entry.so_id;
                 } else {
-                    payload.po_id = entry.po_id;
+                    payload.po = entry.po_id;
                 }
 
                 const response = await fetch(apiEndpoint, {
