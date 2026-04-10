@@ -81,19 +81,42 @@ class SalesOrder(models.Model):
             # إنشاء فاتورة تلقائياً
             self.create_invoice()
 
-    def create_invoice(self):
-        """ Creates a Sales Invoice automatically from the SO. """
-        if SalesInvoice.objects.filter(sales_order=self).exists():
+    def create_invoice(self, delivery=None):
+        """ 
+        Creates a Sales Invoice. 
+        If 'delivery' is provided, it bills only the items in that delivery.
+        Otherwise, it bills the full SO (fallback).
+        """
+        invoice_number = f"INV-{self.so_number}"
+        if delivery:
+            invoice_number = f"INV-{delivery.delivery_number}"
+        
+        # التأكد من عدم تكرار الفاتورة لنفس الإذن
+        if SalesInvoice.objects.filter(invoice_number=invoice_number).exists():
             return
         
-        invoice_number = f"INV-{self.so_number}"
+        total_amount = decimal.Decimal('0.00')
+        if delivery:
+            # حساب القيمة بناءً على ما تم صرفه فعلياً في هذا الإذن
+            for item in delivery.items.all():
+                # جلب السعر من سطر أمر البيع المرتبط بنفس الصنف
+                so_line = self.lines.filter(material=item.material).first()
+                if so_line:
+                    total_amount += item.quantity * so_line.unit_price
+        else:
+            # النظام القديم: فاتورة بكامل قيمة الطلب
+            total_amount = self.total_amount
+
+        tax_amount = (total_amount * decimal.Decimal('0.15')).quantize(decimal.Decimal('0.01'))
+        grand_total = total_amount + tax_amount
+
         SalesInvoice.objects.create(
             opco=self.opco,
             invoice_number=invoice_number,
             sales_order=self,
             customer=self.customer,
             due_date=datetime.date.today() + datetime.timedelta(days=30),
-            total_amount=self.grand_total,
+            total_amount=grand_total,
             status='UNPAID'
         )
 

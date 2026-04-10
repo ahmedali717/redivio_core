@@ -52,18 +52,17 @@ class StockDeliverySerializer(serializers.ModelSerializer):
                 reference=f"DN: {delivery.delivery_number}"
             )
             
-        # 4. تحديث حالة أمر البيع لو تم شحن كل الأصناف
+        # إنشاء فاتورة تلقائياً بناءً على هذا الإذن فقط (سواء شحن كلي أو جزئي)
         so = delivery.so
+        if hasattr(so, 'create_invoice'):
+            so.create_invoice(delivery=delivery)
+
         if all(line.shipped_quantity >= line.quantity for line in so.lines.all()):
             so.status = 'DELIVERED'
-            so.save()
-            # إنشاء فاتورة تلقائياً
-            if hasattr(so, 'create_invoice'):
-                so.create_invoice()
         else:
             so.status = 'SHIPPED'
-            so.save()
-
+        
+        so.save()
         return delivery
 
 class SalesOrderSerializer(serializers.ModelSerializer):
