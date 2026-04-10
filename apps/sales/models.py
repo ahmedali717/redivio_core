@@ -129,6 +129,14 @@ class SalesInvoice(models.Model):
 
     def __str__(self): return self.invoice_number
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if is_new:
+            # زيادة مديونية العميل عند إصدار فاتورة جديدة
+            self.customer.balance += self.total_amount
+            self.customer.save()
+        super().save(*args, **kwargs)
+
 class CustomerPayment(models.Model):
     PAYMENT_METHODS = [('CASH', 'Cash'), ('BANK', 'Bank Transfer'), ('CHECK', 'Check')]
     
@@ -142,6 +150,24 @@ class CustomerPayment(models.Model):
     reference = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self): return self.payment_number
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if is_new:
+            # تقليل مديونية العميل عند استلام دفعة
+            self.customer.balance -= self.amount
+            self.customer.save()
+            
+            # لو الدفعة مرتبطة بفاتورة، نحدث المبالغ في الفاتورة
+            if self.invoice:
+                self.invoice.paid_amount += self.amount
+                if self.invoice.paid_amount >= self.invoice.total_amount:
+                    self.invoice.status = 'PAID'
+                elif self.invoice.paid_amount > 0:
+                    self.invoice.status = 'PARTIAL'
+                self.invoice.save()
+                
+        super().save(*args, **kwargs)
 
 import datetime
 class StockDelivery(models.Model):
