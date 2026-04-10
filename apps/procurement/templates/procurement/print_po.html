@@ -132,21 +132,28 @@
             </tr>
         </table>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         window.onload = function() {
+            var element = document.body;
+            var opt = {
+              margin:       10,
+              filename:     'PO-{{ po.po_number|default:po.id }}.pdf',
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2, useCORS: true },
+              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
             setTimeout(function() {
-                window.print();
+                document.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
+                html2pdf().set(opt).from(element).save().then(() => {
+                    document.querySelectorAll('.no-print').forEach(el => el.style.display = 'block');
+                });
             }, 500);
         };
     </script>
 </body>
 </html>
-<script>
-    // أول ما الصفحة تفتح، يفتح قائمة الطباعة فوراً
-    window.onload = function() {
-        window.print();
-    };
-</script>
 
 <style>
     /* كود يخفي أي حاجة مش عايزينها تطلع في الورقة (زي زرار إغلاق أو طباعة) */

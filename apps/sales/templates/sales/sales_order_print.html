@@ -114,10 +114,20 @@
         <p>الضريبة (15%): {{ so.tax_amount }}</p>
         <h2 style="color: #d9534f;">الإجمالي النهائي: {{ so.grand_total }}</h2>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         window.onload = function() {
+            var element = document.body;
+            var opt = {
+              margin:       10,
+              filename:     'SO-{{ so.so_number|default:so.id }}.pdf',
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2, useCORS: true },
+              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
             setTimeout(function() {
-                window.print();
+                html2pdf().set(opt).from(element).save();
             }, 500);
         };
     </script>
