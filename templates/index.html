@@ -26,26 +26,44 @@
                 {% include "procurement/vendor_ledger.html" %}
             </div>
 
+            <div v-if="view === 'accounting_module'" class="flex flex-col h-full space-y-4 p-4">
+                <div class="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-2 border border-slate-200">
+                    <button @click="accountingTab = 'dashboard'" :class="accountingTab === 'dashboard' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'نظرة عامة' : 'Overview' ]]</button>
+                    <button @click="accountingTab = 'customers'" :class="accountingTab === 'customers' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'العملاء' : 'Customers' ]]</button>
+                    <button @click="accountingTab = 'invoices'" :class="accountingTab === 'invoices' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'الفواتير' : 'Invoices' ]]</button>
+                    <button @click="accountingTab = 'payments'" :class="accountingTab === 'payments' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'المدفوعات' : 'Payments' ]]</button>
+                </div>
+
+                <div class="flex-1 relative min-h-[500px]">
+                    <div v-if="accountingTab === 'dashboard'" class="absolute inset-0 overflow-y-auto">
+                        {% include "sales/accounting_dashboard.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'customers'" class="absolute inset-0 overflow-y-auto">
+                        {% include "sales/customers_list.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'invoices'" class="absolute inset-0 overflow-y-auto">
+                        {% include "sales/invoices_list.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'payments'" class="absolute inset-0 overflow-y-auto">
+                        <div class="flex items-center justify-center h-64 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400 font-bold">
+                            [[ isArabic ? 'سجل المدفوعات قادم قريباً' : 'Payments Ledger Coming Soon' ]]
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div v-if="view === 'sales_module'" class="flex flex-col h-full space-y-4 p-4">
                 <div class="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-2 border border-slate-200">
                     <button @click="salesTab = 'dashboard'" :class="salesTab === 'dashboard' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'نظرة عامة' : 'Overview' ]]</button>
-                    <button @click="salesTab = 'customers'" :class="salesTab === 'customers' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'العملاء' : 'Customers' ]]</button>
                     <button @click="salesTab = 'orders'" :class="salesTab === 'orders' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'أوامر البيع' : 'Sales Orders' ]]</button>
-                    <button @click="salesTab = 'invoices'" :class="salesTab === 'invoices' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'الفواتير' : 'Invoices' ]]</button>
                 </div>
 
                 <div class="flex-1 relative min-h-[500px]">
                     <div v-if="salesTab === 'dashboard'" class="absolute inset-0 overflow-y-auto">
                         {% include "sales/dashboard.html" %}
                     </div>
-                    <div v-if="salesTab === 'customers'" class="absolute inset-0 overflow-y-auto">
-                        {% include "sales/customers_list.html" %}
-                    </div>
                     <div v-if="salesTab === 'orders'" class="absolute inset-0 overflow-y-auto">
                         {% include "sales/orders_list.html" %}
-                    </div>
-                    <div v-if="salesTab === 'invoices'" class="absolute inset-0 overflow-y-auto">
-                        {% include "sales/invoices_list.html" %}
                     </div>
                 </div>
             </div>

@@ -32,11 +32,12 @@ createApp({
             // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
             inventoryTab: 'levels',
             salesTab: 'dashboard',
-            customerSearch: '',
             soSearch: '',
+            accountingTab: 'dashboard',
             customers: [],
             salesOrders: [],
             salesInvoices: [],
+            customerPayments: [],
             reportFilters: {
                 material_id: '',
                 location_id: '',
@@ -65,7 +66,9 @@ createApp({
                     { id: 'org_builder', name: { ar: 'بناء الهيكل', en: 'Org Builder' }, icon: 'fas fa-sitemap' },
                     // موديول واحد شامل للمخزون
                     { id: 'inventory_module', name: { ar: 'إدارة المستودعات', en: 'Inventory WMS' }, icon: 'fas fa-boxes-stacked' },
-                    { id: 'procurement_module', name: { ar: 'إدارة المشتريات', en: 'Procurement' }, icon: 'fas fa-file-invoice-dollar' }
+                    { id: 'procurement_module', name: { ar: 'إدارة المشتريات', en: 'Procurement' }, icon: 'fas fa-truck' },
+                    { id: 'sales_module', name: { ar: 'إدارة المبيعات', en: 'Sales & CRM' }, icon: 'fas fa-cart-shopping' },
+                    { id: 'accounting_module', name: { ar: 'المحاسبة والمالية', en: 'Accounting' }, icon: 'fas fa-file-invoice-dollar' }
                 ]
             },
 
@@ -411,7 +414,8 @@ createApp({
             await Promise.all([
                 this.fetchCustomers(),
                 this.fetchSalesOrders(),
-                this.fetchSalesInvoices()
+                this.fetchSalesInvoices(),
+                this.fetchPayments()
             ]);
             this.loading = false;
         },
@@ -469,6 +473,12 @@ createApp({
                 console.error("Error generating invoice:", e);
                 this.showToast("Network Error", "error");
             }
+        },
+
+        fetchPayments() {
+            axios.get('/api/customer-payments/').then(res => {
+                this.customerPayments = res.data;
+            });
         },
         getStatusClass(status) {
             const classes = {

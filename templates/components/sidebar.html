@@ -47,7 +47,15 @@
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
                :class="{'border-rose-400': view === 'sales_module'}">
                 <i class="fas fa-cart-shopping w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'إدارة المبيعات' : 'Sales Module' ]]</span>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'إدارة المبيعات' : 'Sales & Orders' ]]</span>
+            </a>
+
+            <a href="#" @click.prevent="view = 'accounting_module'; accountingTab = 'dashboard'; fetchSalesData()" 
+               :class="view === 'accounting_module' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
+               :class="{'border-amber-400': view === 'accounting_module'}">
+                <i class="fas fa-file-invoice-dollar w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'المحاسبة والمالية' : 'Accounting' ]]</span>
             </a>
         </div>
 
