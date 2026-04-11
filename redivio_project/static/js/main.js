@@ -15,6 +15,7 @@ createApp({
             barcodeQuery: '',
             // 🚀 ضيف المتغير ده هنا في أول سطر
             activeOperation: null,
+            showBrandDropdown: false,
 
             // 🚀 التعديل الأول: ضيف السطرين دول هنا بالظبط
             showQtyModal: false,
@@ -325,6 +326,16 @@ createApp({
         activeOpcoId(newId) {
             if (newId) this.syncGlobalConfig(newId);
         }
+    },
+
+    mounted() {
+        // إضافة مستمع للنقرات الخارجية لإغلاق القوائم المنسدلة
+        document.addEventListener('mousedown', (e) => {
+            const brandArea = document.querySelector('.brand-area-container');
+            if (brandArea && !brandArea.contains(e.target)) {
+                this.showBrandDropdown = false;
+            }
+        });
     },
 
     methods: {

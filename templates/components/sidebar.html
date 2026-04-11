@@ -5,9 +5,75 @@
         <i :class="sidebarCollapsed ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left'"></i>
     </button>
 
-    <div class="h-16 flex items-center gap-3 px-4 border-b border-slate-800 bg-slate-950 overflow-hidden text-white">
-        <img src="/static/brand/logo_r.png" class="w-8 h-8 object-contain shrink-0" alt="Redivio Logo">
-        <span v-show="!sidebarCollapsed" class="text-lg font-bold tracking-wider tech-font animate-in fade-in duration-300">REDIVIO</span>
+    <div class="h-16 flex items-center gap-3 px-4 border-b border-slate-800 bg-slate-950 overflow-visible text-white relative brand-area-container">
+        <div class="flex items-center gap-3 cursor-pointer group" @click="showBrandDropdown = !showBrandDropdown">
+            <img src="/static/brand/logo_r.png" class="w-8 h-8 object-contain shrink-0" alt="Redivio Logo">
+            <span v-show="!sidebarCollapsed" class="text-lg font-bold tracking-wider tech-font animate-in fade-in duration-300">REDIVIO</span>
+            <i v-show="!sidebarCollapsed" class="fa-solid fa-chevron-down text-[10px] text-slate-500 transition-transform" :class="{'rotate-180': showBrandDropdown}"></i>
+        </div>
+
+        <!-- 🚀 القائمة المنسدلة الجديدة (Mega Menu) -->
+        <div v-if="showBrandDropdown" 
+             class="absolute top-14 left-4 w-80 bg-slate-900 border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            <div class="p-5 grid grid-cols-2 gap-6">
+                <!-- العمود الأول: العمليات -->
+                <div class="space-y-4">
+                    <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest border-b border-slate-800 pb-2 flex items-center justify-between">
+                        <span>[[ isArabic ? 'العمليات' : 'Operation' ]]</span>
+                        <i class="fas fa-rocket"></i>
+                    </p>
+                    <div class="flex flex-col gap-1">
+                        <button @click="view = 'dashboard'; showBrandDropdown = false" class="text-[11px] font-bold text-slate-400 hover:text-white hover:bg-blue-600/20 p-2 rounded-lg transition-all text-left flex items-center gap-2 group/item">
+                            <i class="fas fa-chart-pie w-5 text-center text-blue-500 group-hover/item:scale-110 transition-transform"></i> 
+                            <span>[[ isArabic ? 'لوحة التحكم' : 'Dashboard' ]]</span>
+                        </button>
+                        <button @click="view = 'inventory_module'; inventoryTab = 'levels'; showBrandDropdown = false" class="text-[11px] font-bold text-slate-400 hover:text-white hover:bg-blue-600/20 p-2 rounded-lg transition-all text-left flex items-center gap-2 group/item">
+                            <i class="fas fa-boxes-stacked w-5 text-center text-indigo-500 group-hover/item:scale-110 transition-transform"></i> 
+                            <span>[[ isArabic ? 'المستودعات' : 'Inventory' ]]</span>
+                        </button>
+                        <button @click="view = 'procurement_module'; showBrandDropdown = false" class="text-[11px] font-bold text-slate-400 hover:text-white hover:bg-blue-600/20 p-2 rounded-lg transition-all text-left flex items-center gap-2 group/item">
+                            <i class="fas fa-truck w-5 text-center text-emerald-500 group-hover/item:scale-110 transition-transform"></i> 
+                            <span>[[ isArabic ? 'المشتريات' : 'Procure' ]]</span>
+                        </button>
+                        <button @click="view = 'sales_module'; showBrandDropdown = false" class="text-[11px] font-bold text-slate-400 hover:text-white hover:bg-blue-600/20 p-2 rounded-lg transition-all text-left flex items-center gap-2 group/item">
+                            <i class="fas fa-cart-shopping w-5 text-center text-rose-500 group-hover/item:scale-110 transition-transform"></i> 
+                            <span>[[ isArabic ? 'المبيعات' : 'Sales' ]]</span>
+                        </button>
+                        <button @click="view = 'accounting_module'; showBrandDropdown = false" class="text-[11px] font-bold text-slate-400 hover:text-white hover:bg-blue-600/20 p-2 rounded-lg transition-all text-left flex items-center gap-2 group/item">
+                            <i class="fas fa-file-invoice-dollar w-5 text-center text-amber-500 group-hover/item:scale-110 transition-transform"></i> 
+                            <span>[[ isArabic ? 'المحاسبة' : 'Accounts' ]]</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- العمود الثاني: الإعدادات -->
+                <div class="space-y-4 border-l border-slate-800 pl-4">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2 flex items-center justify-between">
+                        <span>[[ isArabic ? 'الإعدادات' : 'Settings' ]]</span>
+                        <i class="fas fa-sliders"></i>
+                    </p>
+                    <div class="flex flex-col gap-1">
+                        <button @click="view = 'org_builder'; showBrandDropdown = false" class="text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-800 p-2 rounded-lg transition-all text-left flex items-center gap-2 group/item">
+                            <i class="fas fa-sitemap w-5 text-center text-blue-400"></i> 
+                            <span>[[ isArabic ? 'بناء الهيكل' : 'Org Build' ]]</span>
+                        </button>
+                        <button @click="view = 'global_config'; showBrandDropdown = false" class="text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-800 p-2 rounded-lg transition-all text-left flex items-center gap-2 group/item">
+                            <i class="fas fa-cogs w-5 text-center text-slate-500"></i> 
+                            <span>[[ isArabic ? 'إعدادات النظام' : 'System' ]]</span>
+                        </button>
+                        <button @click="view = 'users'; showBrandDropdown = false" class="text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-800 p-2 rounded-lg transition-all text-left flex items-center gap-2 group/item">
+                            <i class="fas fa-users w-5 text-center text-slate-500"></i> 
+                            <span>[[ isArabic ? 'المستخدمين' : 'Users' ]]</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-black/50 p-2 border-t border-slate-800 text-center">
+                <span class="text-[8px] text-slate-600 font-bold uppercase tracking-[0.2em]">Enterprise Core Suite</span>
+            </div>
+        </div>
     </div>
 
     <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
