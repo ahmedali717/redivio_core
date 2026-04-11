@@ -55,36 +55,6 @@
                     </div>
                 </div>
 
-                <!-- قسم الإعدادات -->
-                <div class="relative group/nested">
-                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-800 cursor-pointer text-slate-300 hover:text-white transition-all group-hover/nested:bg-slate-800">
-                        <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 bg-amber-500/10 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-sliders text-amber-500 text-xs"></i>
-                            </div>
-                            <span class="text-[11px] font-black uppercase tracking-widest">[[ isArabic ? 'الإعدادات' : 'Settings' ]]</span>
-                        </div>
-                        <i class="fas fa-chevron-right text-[10px] text-slate-600 transition-transform" :class="isArabic ? 'rotate-180 group-hover/nested:rotate-90' : 'group-hover/nested:rotate-90'"></i>
-                    </div>
-                    
-                    <!-- القائمة الفرعية: الإعدادات -->
-                    <div :class="isArabic ? 'right-full mr-1' : 'left-full ml-1'" 
-                         class="absolute top-0 w-60 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl opacity-0 invisible group-hover/nested:opacity-100 group-hover/nested:visible transition-all duration-300 p-2 space-y-1 z-[110]">
-                        <button @click="view = 'org_builder'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-blue-600 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <i class="fas fa-sitemap w-5 text-center text-blue-400 group-hover/item:text-white"></i>
-                            <span class="text-[11px] font-bold">[[ isArabic ? 'بناء الهيكل' : 'Org Builder' ]]</span>
-                        </button>
-                        <button @click="view = 'global_config'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-700 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <i class="fas fa-cogs w-5 text-center text-slate-500 group-hover/item:text-white"></i>
-                            <span class="text-[11px] font-bold">[[ isArabic ? 'إعدادات النظام' : 'System' ]]</span>
-                        </button>
-                        <button @click="view = 'users'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-700 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <i class="fas fa-users w-5 text-center text-slate-500 group-hover/item:text-white"></i>
-                            <span class="text-[11px] font-bold">[[ isArabic ? 'المستخدمين' : 'Users' ]]</span>
-                        </button>
-                    </div>
-                </div>
-
                 <div class="h-px bg-slate-800 my-2 mx-1"></div>
                 
                 <div class="px-3 py-2">
