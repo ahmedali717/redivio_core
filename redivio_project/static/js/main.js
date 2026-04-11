@@ -97,6 +97,11 @@ createApp({
             },
             topMaterials: [],
 
+            activeUsers: [
+                { id: 1, name: 'Ahmed Ali', role: 'Administrator', status: 'online', last_action: 'Dashboard View' },
+                { id: 2, name: 'Sara Kamel', role: 'Sales Manager', status: 'online', last_action: 'Creating Invoice' },
+                { id: 3, name: 'Omar Zaid', role: 'WMS Supervisor', status: 'away', last_action: 'Stock Count' }
+            ],
             kpis: {
                 materials: 0,         // عدد الأصناف
                 total_stock_value: 0,  // إجمالي قيمة المخزون
