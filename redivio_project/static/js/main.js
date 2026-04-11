@@ -103,16 +103,12 @@ createApp({
                 { id: 3, name: 'Omar Zaid', role: 'WMS Supervisor', status: 'away', last_action: 'Stock Count' }
             ],
             kpis: {
-                materials: 0,         // عدد الأصناف
-                total_stock_value: 0,  // إجمالي قيمة المخزون
-                low_stock_count: 0,    // أصناف تحت حد الطلب
-                active_bins: 0,        // الرفوف المستغلة
-                stock_qty: 0,          // إجمالي القطع
-                pending_pos: 0,        // المشتريات المعلقة
-                sales_total: 0,        // إجمالي المبيعات
-                purchases_total: 0,    // إجمالي المشتريات
-                pending_sos: 0,        // أوامر البيع المعلقة
-                customers_count: 0     // عدد العملاء
+                inventory: { total_items: 0, stock_qty: 0, dead_stock: 0, critical_items: 0 },
+                sales: { total: 0, delivered: 0, remaining_delivery: 0, invoiced: 0, remaining_invoice: 0 },
+                procurement: { total: 0, received: 0, invoiced: 0, paid: 0 },
+                finance: { invoices: 0, collected: 0, remaining: 0 },
+                vendors: 0,
+                customers_count: 0
             },
             allOpcos: [],
             opcos: [],
@@ -367,18 +363,41 @@ createApp({
         },
 
         refreshKpis() {
-            // Local simulation logic for real data display
-            this.kpis.materials = this.materials_list?.length || 154;
-            this.kpis.stock_qty = this.inventoryList?.reduce((acc, item) => acc + (item.quantity || 0), 0) || 4280;
-            this.kpis.total_stock_value = this.kpis.stock_qty * 12.5; // Estimated value
+            // 📦 1. حسابات المخزون (Inventory)
+            this.kpis.inventory.total_items = this.materials_list?.length || 0;
+            this.kpis.inventory.stock_qty = this.inventoryList?.reduce((acc, item) => acc + (item.quantity || 0), 0) || 0;
+            this.kpis.inventory.critical_items = this.inventoryList?.filter(item => {
+                const material = this.materials_list.find(m => m.id === item.material_id);
+                return material && (item.quantity < (material.reorder_level || 5));
+            }).length || 0;
+            this.kpis.inventory.dead_stock = this.inventoryList?.filter(item => item.quantity > 500).length || 0; // محاكاة: الكميات الضخمة جدا الراكدة
+
+            // 💰 2. حسابات المبيعات (Sales)
+            const soData = this.salesOrders || [];
+            this.kpis.sales.total = soData.reduce((acc, so) => acc + (parseFloat(so.grand_total || so.total_amount) || 0), 0);
+            this.kpis.sales.delivered = soData.filter(so => so.status === 'DELIVERED').reduce((acc, so) => acc + (parseFloat(so.grand_total) || 0), 0);
+            this.kpis.sales.remaining_delivery = this.kpis.sales.total - this.kpis.sales.delivered;
             
-            // Sales & Purchases Overview
-            this.kpis.sales_total = this.salesOrders?.reduce((acc, so) => acc + (parseFloat(so.total_amount) || 0), 0) || 85400;
-            this.kpis.purchases_total = this.purchase_orders?.reduce((acc, po) => acc + (parseFloat(po.total_amount) || 0), 0) || 62100;
-            this.kpis.pending_sos = this.salesOrders?.filter(so => so.status === 'draft')?.length || 4;
-            this.kpis.pending_pos = this.purchase_orders?.filter(po => po.status === 'draft')?.length || 3;
-            this.kpis.vendors = this.vendors?.length || 12;
-            this.kpis.customers_count = this.customers?.length || 45;
+            const invData = this.salesInvoices || [];
+            this.kpis.sales.invoiced = invData.reduce((acc, inv) => acc + (parseFloat(inv.total_amount) || 0), 0);
+            this.kpis.sales.remaining_invoice = this.kpis.sales.total - this.kpis.sales.invoiced;
+
+            // 🛒 3. حسابات المشتريات (Procurement)
+            const poData = this.purchase_orders || [];
+            this.kpis.procurement.total = poData.reduce((acc, po) => acc + (parseFloat(po.total_amount) || 0), 0);
+            this.kpis.procurement.received = poData.filter(po => po.status === 'RECEIVED').reduce((acc, po) => acc + (parseFloat(po.total_amount) || 0), 0);
+            // محاكاة الفوترة والسداد للمشتريات بناء على النسبة
+            this.kpis.procurement.invoiced = this.kpis.procurement.received * 0.9; 
+            this.kpis.procurement.paid = this.kpis.procurement.invoiced * 0.8;
+
+            // 🏦 4. حسابات المالية (Finance)
+            this.kpis.finance.invoices = this.kpis.sales.invoiced;
+            this.kpis.finance.collected = invData.reduce((acc, inv) => acc + (parseFloat(inv.paid_amount || 0)), 0);
+            this.kpis.finance.remaining = this.kpis.finance.invoices - this.kpis.finance.collected;
+
+            // 👥 عدادات إضافية
+            this.kpis.vendors = this.vendors?.length || 0;
+            this.kpis.customers_count = this.customers?.length || 0;
         },
         ...utils.methods,
         ...itemMasterModule.methods,
