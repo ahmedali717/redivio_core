@@ -30,7 +30,7 @@ createApp({
             },
 
             // 1. جعل الموديول الموحد هو الشاشة الافتراضية (اختياري)
-            view: 'inventory_module',
+            view: 'dashboard',
             inventoryMoves: [],
             // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
             inventoryTab: 'levels',
@@ -364,13 +364,15 @@ createApp({
 
         refreshKpis() {
             // 📦 1. حسابات المخزون (Inventory)
-            this.kpis.inventory.total_items = this.materials_list?.length || 0;
-            this.kpis.inventory.stock_qty = this.inventoryList?.reduce((acc, item) => acc + (item.quantity || 0), 0) || 0;
-            this.kpis.inventory.critical_items = this.inventoryList?.filter(item => {
-                const material = this.materials_list.find(m => m.id === item.material_id);
+            this.kpis.inventory.total_items = (this.materials_list || []).length;
+            this.kpis.inventory.stock_qty = (this.inventoryList || []).reduce((acc, item) => acc + (item.quantity || 0), 0);
+            
+            this.kpis.inventory.critical_items = (this.inventoryList || []).filter(item => {
+                const material = (this.materials_list || []).find(m => m.id === item.material_id);
                 return material && (item.quantity < (material.reorder_level || 5));
-            }).length || 0;
-            this.kpis.inventory.dead_stock = this.inventoryList?.filter(item => item.quantity > 500).length || 0; // محاكاة: الكميات الضخمة جدا الراكدة
+            }).length;
+            
+            this.kpis.inventory.dead_stock = (this.inventoryList || []).filter(item => item.quantity > 500).length;
 
             // 💰 2. حسابات المبيعات (Sales)
             const soData = this.salesOrders || [];
@@ -386,7 +388,6 @@ createApp({
             const poData = this.purchase_orders || [];
             this.kpis.procurement.total = poData.reduce((acc, po) => acc + (parseFloat(po.total_amount) || 0), 0);
             this.kpis.procurement.received = poData.filter(po => po.status === 'RECEIVED').reduce((acc, po) => acc + (parseFloat(po.total_amount) || 0), 0);
-            // محاكاة الفوترة والسداد للمشتريات بناء على النسبة
             this.kpis.procurement.invoiced = this.kpis.procurement.received * 0.9; 
             this.kpis.procurement.paid = this.kpis.procurement.invoiced * 0.8;
 
@@ -396,8 +397,8 @@ createApp({
             this.kpis.finance.remaining = this.kpis.finance.invoices - this.kpis.finance.collected;
 
             // 👥 عدادات إضافية
-            this.kpis.vendors = this.vendors?.length || 0;
-            this.kpis.customers_count = this.customers?.length || 0;
+            this.kpis.vendors = (this.vendors || []).length;
+            this.kpis.customers_count = (this.customers || []).length;
         },
         ...utils.methods,
         ...itemMasterModule.methods,
