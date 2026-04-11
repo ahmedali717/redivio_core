@@ -16,6 +16,8 @@ createApp({
             // 🚀 ضيف المتغير ده هنا في أول سطر
             activeOperation: null,
             showBrandDropdown: false,
+            showActivityLog: false,
+            showNotificationsDropdown: false,
 
             // 🚀 التعديل الأول: ضيف السطرين دول هنا بالظبط
             showQtyModal: false,
@@ -334,6 +336,11 @@ createApp({
             const brandArea = document.querySelector('.brand-area-container');
             if (brandArea && !brandArea.contains(e.target)) {
                 this.showBrandDropdown = false;
+            }
+            
+            const notifArea = document.querySelector('.notif-area-container');
+            if (notifArea && !notifArea.contains(e.target)) {
+                this.showNotificationsDropdown = false;
             }
         });
     },

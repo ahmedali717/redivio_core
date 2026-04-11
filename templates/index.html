@@ -399,6 +399,63 @@
             </div>
         </div>
     </div>
+    
+        <!-- Activity Log Drawer -->
+        <div v-show="showActivityLog" class="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl border-l border-slate-200 flex flex-col z-[2000] animate-in slide-in-from-right duration-300">
+            <div class="h-20 border-b border-slate-100 px-6 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                        <i class="fas fa-clipboard-list text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800" v-text="isArabic ? 'سجل النشاط' : 'Activity Log'"></h3>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">[[ view.replace('_', ' ') ]]</p>
+                    </div>
+                </div>
+                <button @click="showActivityLog = false" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30 relative">
+                <!-- Vertical Line -->
+                <div class="absolute top-0 bottom-0 left-10 w-px bg-slate-200 -z-10"></div>
+                
+                <!-- Log Entry 1 -->
+                <div class="flex gap-4 relative">
+                    <div class="w-8 h-8 rounded-full bg-white border-2 border-emerald-500 flex items-center justify-center shrink-0 shadow-sm">
+                        <i class="fas fa-check text-emerald-500 text-[10px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700" v-text="isArabic ? 'تم تحديث البيانات' : 'Data Updated'"></p>
+                        <p class="text-xs text-slate-500 mt-1">System context initialized for <span class="font-mono text-blue-500 bg-blue-50 px-1 rounded">[[ view ]]</span></p>
+                        <p class="text-[10px] text-slate-400 mt-2 font-mono" v-text="currentDate + ' ' + currentTime"></p>
+                    </div>
+                </div>
+
+                <!-- Log Entry 2 -->
+                <div class="flex gap-4 relative">
+                    <div class="w-8 h-8 rounded-full bg-white border-2 border-blue-500 flex items-center justify-center shrink-0 shadow-sm">
+                        <i class="fas fa-user-circle text-blue-500 text-[10px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700" v-text="isArabic ? 'تسجيل دخول' : 'User Login'"></p>
+                        <p class="text-xs text-slate-500 mt-1">User <span class="font-bold">[[ user.name || 'Admin' ]]</span> accessed the system.</p>
+                        <p class="text-[10px] text-slate-400 mt-2 font-mono">Today, 08:30 AM</p>
+                    </div>
+                </div>
+                
+                <div class="text-center pt-4">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" v-text="isArabic ? 'نهاية السجل' : 'End of Log'"></span>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-white border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase transition-all">
+                <span class="hover:text-blue-500 cursor-pointer transition-colors" v-text="isArabic ? 'تحميل المزيد' : 'Load More'"></span>
+                <span class="hover:text-red-500 cursor-pointer transition-colors" v-text="isArabic ? 'مسح السجل' : 'Clear All'"></span>
+            </div>
+        </div>
+
     </main>
 
     {% include "components/modal.html" %}
