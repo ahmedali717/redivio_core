@@ -1,31 +1,28 @@
-{% verbatim %}
-<header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10">
+<header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10" v-cloak>
     <div>
         <h2 class="text-2xl font-bold text-slate-800 capitalize tracking-tight flex items-center gap-2">
             <span class="text-blue-600" v-if="view === 'dashboard'"><i class="fas fa-chart-pie"></i></span>
             <span class="text-blue-600" v-if="view === 'org_builder'"><i class="fas fa-sitemap"></i></span>
-            <span class="text-blue-600" v-if="['inventory', 'wms'].includes(view)"><i class="fas fa-boxes-stacked"></i></span>
+            <span class="text-blue-600" v-if="['inventory', 'wms', 'inventory_module'].includes(view)"><i class="fas fa-boxes-stacked"></i></span>
             <span class="text-blue-600" v-if="view === 'item_master'"><i class="fas fa-barcode"></i></span>
             <span class="text-blue-600" v-if="view === 'global_config'"><i class="fas fa-cogs"></i></span>
             
-            <span>[[ view.replace('_', ' ') ]]</span>
+            <span v-text="view.replace('_', ' ') "></span>
         </h2>
 
         <div class="flex items-center gap-4 mt-1">
             <div class="flex flex-col border-l-2 border-blue-500 pl-3">
-                <span class="text-xs font-bold text-slate-700">[[ licenseStatus.companyName ]]</span>
+                <span class="text-xs font-bold text-slate-700" v-text="licenseStatus.companyName"></span>
                 <span class="text-[10px] text-slate-400 font-medium">
-                    [[ isArabic ? 'تاريخ الإنشاء:' : 'Created:' ]] 
-                    <span class="text-slate-600">
-                        [[ licenseStatus.createdAt ? new Date(licenseStatus.createdAt).toLocaleDateString('en-GB') : '...' ]]
-                    </span>
+                    <span v-text="isArabic ? 'تاريخ الإنشاء:' : 'Created:'"></span>
+                    <span class="text-slate-600" v-text="licenseStatus.createdAt ? new Date(licenseStatus.createdAt).toLocaleDateString('en-GB') : '...'"></span>
                 </span>
             </div>
 
             <div class="flex flex-col gap-1 w-32 ml-2">
                 <div class="flex justify-between text-[9px] font-black text-slate-500 uppercase tracking-tighter">
-                    <span>[[ licenseStatus.daysRemaining ]] [[ isArabic ? 'يوم متبقي' : 'Days' ]]</span>
-                    <span>[[ Math.round((licenseStatus.daysRemaining / 15) * 100) ]]%</span>
+                    <span><span v-text="licenseStatus.daysRemaining"></span> <span v-text="isArabic ? 'يوم متبقي' : 'Days'"></span></span>
+                    <span v-text="Math.round((licenseStatus.daysRemaining / 15) * 100) + '%'"></span>
                 </div>
                 <div class="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner">
                     <div class="h-full transition-all duration-1000 ease-out" 
@@ -41,24 +38,22 @@
         <div class="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
             <i class="fas fa-hourglass-half text-blue-500 text-xs animate-pulse"></i>
             <span class="text-xs font-bold text-blue-700">
-                [[ licenseStatus.daysRemaining ]] / 15 [[ isArabic ? 'يوم متبقي' : 'Days Left' ]]
+                <span v-text="licenseStatus.daysRemaining"></span> / 15 <span v-text="isArabic ? 'يوم متبقي' : 'Days Left'"></span>
             </span>
         </div>
 
         <div class="relative group">
             <button class="flex items-center gap-3 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:bg-white hover:border-blue-400 transition-all shadow-sm">
                 <div class="text-right">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase leading-none mb-1">[[ isArabic ? 'المنشأة الحالية' : 'Current Entity' ]]</p>
-                    <p class="text-xs font-bold text-slate-700 leading-none">
-                        [[ opcos.find(o => o.id === parseInt(activeOpcoId))?.name || '...' ]]
-                    </p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase leading-none mb-1" v-text="isArabic ? 'المنشأة الحالية' : 'Current Entity'"></p>
+                    <p class="text-xs font-bold text-slate-700 leading-none" v-text="opcos.find(o => o.id === parseInt(activeOpcoId))?.name || '...'"></p>
                 </div>
                 <i class="fas fa-shuffle text-blue-500 text-xs transition-transform group-hover:rotate-180"></i>
             </button>
 
             <div class="absolute top-full right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
                 <div class="p-3 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                    <span class="text-[10px] font-black text-slate-400 uppercase">[[ isArabic ? 'اختر منشأة للعمل' : 'Select Work Entity' ]]</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase" v-text="isArabic ? 'اختر منشأة للعمل' : 'Select Work Entity'"></span>
                     <i class="fas fa-building text-blue-200"></i>
                 </div>
                 <div class="max-h-60 overflow-y-auto">
@@ -68,8 +63,8 @@
                          class="p-4 hover:bg-blue-50 cursor-pointer flex items-center justify-between transition-colors border-b border-slate-50 last:border-0"
                          :class="{'bg-blue-50/50 border-r-4 border-blue-500': company.id === parseInt(activeOpcoId)}">
                         <div>
-                            <p class="text-sm font-bold text-slate-700">[[ company.name ]]</p>
-                            <p class="text-[9px] text-slate-400 font-mono">[[ company.code ]]</p>
+                            <p class="text-sm font-bold text-slate-700" v-text="company.name"></p>
+                            <p class="text-[9px] text-slate-400 font-mono" v-text="company.code"></p>
                         </div>
                         <i v-if="company.id === parseInt(activeOpcoId)" class="fas fa-circle-check text-blue-500"></i>
                     </div>
@@ -78,8 +73,8 @@
         </div>
 
         <div class="hidden md:flex flex-col items-end">
-            <span class="text-2xl font-bold text-slate-700 tech-font leading-none">[[ currentTime ]]</span>
-            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">[[ currentDate ]]</span>
+            <span class="text-2xl font-bold text-slate-700 tech-font leading-none" v-text="currentTime"></span>
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1" v-text="currentDate"></span>
         </div>
         
         <div class="h-8 w-px bg-slate-200 mx-2"></div>
@@ -89,4 +84,3 @@
         </a>
     </div>
 </header>
-{% endverbatim %}

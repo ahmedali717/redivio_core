@@ -1,10 +1,7 @@
-{% verbatim %}
-<div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
+<div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in" :dir="isArabic ? 'rtl' : 'ltr'" v-cloak>
     
     <template v-if="modalType === 'material'">
-        {% endverbatim %}
         {% include "components/item_master_modal.html" %}
-        {% verbatim %}
     </template>
 
     <div v-else class="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl transform transition-all scale-100 max-h-[90vh] overflow-y-auto">
@@ -12,7 +9,7 @@
         <div class="flex justify-between items-center mb-6 border-b pb-4">
             <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
                 <i :class="modalType === 'stock_entry' ? 'fas fa-exchange-alt text-emerald-500' : 'fas fa-plus-circle text-indigo-500'"></i>
-                <span>[[ isArabic ? modalTitles[modalType].ar : modalTitles[modalType].en ]]</span>
+                <span v-text="isArabic ? modalTitles[modalType]?.ar : modalTitles[modalType]?.en"></span>
             </h3>
             <button @click="showModal = false" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50">
                 <i class="fas fa-times"></i>
@@ -22,9 +19,9 @@
         <form @submit.prevent="submitForm" class="space-y-5">
             
             <div v-if="['plant', 'material', 'stock_entry'].includes(modalType) && opcos.length > 1" class="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">[[ isArabic ? 'الشركة المشغلة' : 'Operating Company' ]]</label>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1" v-text="isArabic ? 'الشركة المشغلة' : 'Operating Company'"></label>
                 <select v-model="activeOpcoId" class="w-full border-none bg-transparent font-bold text-indigo-600 focus:ring-0">
-                    <option v-for="o in opcos" :key="o.id" :value="o.id">[[ o.name ]]</option>
+                    <option v-for="o in opcos" :key="o.id" :value="o.id" v-text="o.name"></option>
                 </select>
             </div>
 
@@ -57,126 +54,124 @@
             </div>
 
             <div v-if="modalType === 'location'" class="space-y-4">
-                <label class="block text-xs font-bold text-slate-500">[[ isArabic ? 'المنشأة التابع لها' : 'Parent Plant' ]]</label>
+                <label class="block text-xs font-bold text-slate-500" v-text="isArabic ? 'المنشأة التابع لها' : 'Parent Plant'"></label>
                 <select v-model="forms.location.plant" class="w-full border p-2.5 rounded-xl" required>
-                    <option v-for="p in plants" :value="p.id">[[ p.name ]]</option>
+                    <option v-for="p in plants" :value="p.id" v-text="p.name"></option>
                 </select>
                 <input v-model="forms.location.name" type="text" class="w-full border p-2.5 rounded-xl" placeholder="Location Name (e.g. Raw Materials)" required>
             </div>
 
             <div v-if="modalType === 'bin'" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">[[ isArabic ? 'موقع التخزين' : 'Storage Location' ]]</label>
+                    <label class="block text-xs font-bold text-slate-500 mb-1" v-text="isArabic ? 'موقع التخزين' : 'Storage Location'"></label>
                     <select v-model="forms.bin.storage_location" class="w-full border p-2.5 rounded-xl bg-slate-50" required>
-                        <option v-for="loc in locations" :value="loc.id">[[ loc.name ]]</option>
+                        <option v-for="loc in locations" :value="loc.id" v-text="loc.name"></option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">[[ isArabic ? 'كود الرف' : 'Bin Code' ]]</label>
+                    <label class="block text-xs font-bold text-slate-500 mb-1" v-text="isArabic ? 'كود الرف' : 'Bin Code'"></label>
                     <input v-model="forms.bin.code" type="text" class="w-full border-2 border-emerald-100 p-2.5 rounded-xl font-mono uppercase focus:border-emerald-500 outline-none" placeholder="A-101" required>
                 </div>
             </div>
 
             <div v-if="modalType === 'stock_entry'" class="space-y-4">
                 <select v-model="forms.stock_entry.receipt_type" class="w-full border-2 border-indigo-500 p-3 rounded-xl font-bold text-indigo-700">
-                    <option value="PURCHASE">[[ isArabic ? 'توريد مشتريات' : 'Purchase Receipt' ]]</option>
-                    <option value="TRANSFER">[[ isArabic ? 'تحويل مخزني' : 'Stock Transfer' ]]</option>
+                    <option value="PURCHASE" v-text="isArabic ? 'توريد مشتريات' : 'Purchase Receipt'"></option>
+                    <option value="TRANSFER" v-text="isArabic ? 'تحويل مخزني' : 'Stock Transfer'"></option>
                 </select>
+            </div>
+
+            <div v-if="modalType === 'po'" class="space-y-6 animate-in zoom-in-95 duration-300">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">المورد (Vendor)</label>
+                        <div class="flex gap-2">
+                            <select v-model="forms.po.vendor" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <option value="">اختر المورد...</option>
+                                <option v-for="v in vendors" :key="v.id" :value="v.id" v-text="v.name"></option>
+                            </select>
+                            <button @click="quickAddVendor" class="bg-white border border-slate-200 text-slate-400 w-11 h-11 rounded-xl hover:text-emerald-600 hover:border-emerald-200 transition-all">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">رقم أمر التوريد</label>
+                        <input type="text" v-model="forms.po.po_number" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-mono font-bold text-emerald-700 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="PO-2026-0001">
+                    </div>
                 </div>
 
-                <div v-if="modalType === 'po'" class="space-y-6 animate-in zoom-in-95 duration-300">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-3xl border border-slate-100">
-        <div class="space-y-2">
-            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">المورد (Vendor)</label>
-            <div class="flex gap-2">
-                <select v-model="forms.po.vendor" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
-                    <option value="">اختر المورد...</option>
-                    <option v-for="v in vendors" :key="v.id" :value="v.id">[[ v.name ]]</option>
-                </select>
-                <button @click="quickAddVendor" class="bg-white border border-slate-200 text-slate-400 w-11 h-11 rounded-xl hover:text-emerald-600 hover:border-emerald-200 transition-all">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
-        </div>
-        <div class="space-y-2">
-            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">رقم أمر التوريد</label>
-            <input type="text" v-model="forms.po.po_number" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-mono font-bold text-emerald-700 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="PO-2026-0001">
-        </div>
-    </div>
-
-    <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-        <table class="w-full text-right text-sm">
-            <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
-                <tr>
-                    <th class="p-4">الصنف (Item)</th>
-                    <th class="p-4 text-center">الكمية</th>
-                    <th class="p-4 text-center">سعر الوحدة</th>
-                    <th class="p-4 text-left">الإجمالي</th>
-                    <th class="p-4 w-10"></th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-                <tr v-for="(line, index) in forms.po.lines" :key="index" class="group">
-                    <td class="p-3">
-                        <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-xs font-bold transition-all">
-                            <option value="">اختر الصنف...</option>
-                            <option v-for="m in materials_list" :key="m.id" :value="m.id">[[ m.name ]]</option>
-                        </select>
-                    </td>
-                    <td class="p-3">
-                        <input type="number" v-model="line.quantity" class="w-20 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-center font-bold text-xs outline-none">
-                    </td>
-                    <td class="p-3">
-                        <input type="number" v-model="line.unit_price" class="w-24 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-center font-bold text-xs outline-none">
-                    </td>
-                    <td class="p-3 text-left font-black text-slate-700">
-                        [[ (line.quantity * line.unit_price).toFixed(2) ]]
-                    </td>
-                    <td class="p-3">
-                        <button @click="removePOLine(index)" class="text-slate-300 hover:text-red-500 transition-colors">
-                            <i class="fas fa-times-circle"></i>
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <button @click="addPOLine" class="w-full py-3 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-emerald-600 transition-all border-t border-dashed border-slate-200">
-            <i class="fas fa-plus-circle mr-1"></i> إضافة صنف جديد
-        </button>
-    </div>
-
-    <div class="flex flex-col md:flex-row gap-6 items-start justify-between p-2">
-        <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl w-full md:w-auto">
-            <div class="flex items-center gap-4">
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" v-model="forms.po.is_tax_inclusive" class="sr-only peer">
-                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                </label>
-                <span class="text-xs font-bold text-amber-800">الأسعار شاملة الضريبة (VAT Inclusive)</span>
-            </div>
-        </div>
-
-        <div class="w-full md:w-72 space-y-3">
-            <div class="flex justify-between text-slate-500 text-xs font-bold">
-                <span>الإجمالي قبل الضريبة:</span>
-                <span class="font-mono">[[ poSubtotal.toFixed(2) ]]</span>
-            </div>
-            <div class="flex justify-between items-center text-slate-500 text-xs font-bold">
-                <div class="flex items-center gap-1">
-                    <span>ضريبة القيمة المضافة</span>
-                    <input type="number" v-model="forms.po.tax_rate" class="w-10 bg-white border rounded text-center p-0.5 text-[10px]"> %
+                <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
+                            <tr>
+                                <th class="p-4">الصنف (Item)</th>
+                                <th class="p-4 text-center">الكمية</th>
+                                <th class="p-4 text-center">سعر الوحدة</th>
+                                <th class="p-4 text-left">الإجمالي</th>
+                                <th class="p-4 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="(line, index) in forms.po.lines" :key="index" class="group">
+                                <td class="p-3">
+                                    <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-xs font-bold transition-all">
+                                        <option value="">اختر الصنف...</option>
+                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="m.name"></option>
+                                    </select>
+                                </td>
+                                <td class="p-3">
+                                    <input type="number" v-model="line.quantity" class="w-20 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-center font-bold text-xs outline-none">
+                                </td>
+                                <td class="p-3">
+                                    <input type="number" v-model="line.unit_price" class="w-24 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-center font-bold text-xs outline-none">
+                                </td>
+                                <td class="p-3 text-left font-black text-slate-700" v-text="(line.quantity * line.unit_price).toFixed(2)">
+                                </td>
+                                <td class="p-3">
+                                    <button @click="removePOLine(index)" class="text-slate-300 hover:text-red-500 transition-colors">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button @click="addPOLine" class="w-full py-3 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-emerald-600 transition-all border-t border-dashed border-slate-200">
+                        <i class="fas fa-plus-circle mr-1"></i> إضافة صنف جديد
+                    </button>
                 </div>
-                <span class="font-mono text-amber-600">+ [[ poTaxAmount.toFixed(2) ]]</span>
-            </div>
-            <div class="flex justify-between items-center p-4 bg-slate-900 rounded-2xl text-white">
-                <span class="text-xs font-bold">الإجمالي النهائي:</span>
-                <span class="text-xl font-black text-emerald-400 font-mono">[[ poGrandTotal.toFixed(2) ]] <small class="text-[10px] text-white/50">EGP</small></span>
-            </div>
-        </div>
-    </div>
-</div>
 
-            <!-- Customer Modal -->
+                <div class="flex flex-col md:flex-row gap-6 items-start justify-between p-2">
+                    <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl w-full md:w-auto">
+                        <div class="flex items-center gap-4">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" v-model="forms.po.is_tax_inclusive" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+                            <span class="text-xs font-bold text-amber-800">الأسعار شاملة الضريبة (VAT Inclusive)</span>
+                        </div>
+                    </div>
+
+                    <div class="w-full md:w-72 space-y-3">
+                        <div class="flex justify-between text-slate-500 text-xs font-bold">
+                            <span>الإجمالي قبل الضريبة:</span>
+                            <span class="font-mono" v-text="poSubtotal.toFixed(2)"></span>
+                        </div>
+                        <div class="flex justify-between items-center text-slate-500 text-xs font-bold">
+                            <div class="flex items-center gap-1">
+                                <span>ضريبة القيمة المضافة</span>
+                                <input type="number" v-model="forms.po.tax_rate" class="w-10 bg-white border rounded text-center p-0.5 text-[10px]"> %
+                            </div>
+                            <span class="font-mono text-amber-600">+ <span v-text="poTaxAmount.toFixed(2)"></span></span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-slate-900 rounded-2xl text-white">
+                            <span class="text-xs font-bold">الإجمالي النهائي:</span>
+                            <span class="text-xl font-black text-emerald-400 font-mono"><span v-text="poGrandTotal.toFixed(2)"></span> <small class="text-[10px] text-white/50">EGP</small></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div v-if="modalType === 'customer'" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -189,22 +184,21 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Customer Name</label>
+                    <label class="block text-xs font-bold text-slate-500 mb-1" v-text="isArabic ? 'اسم العميل' : 'Customer Name'"></label>
                     <input v-model="forms.customer.name" type="text" class="w-full border p-2.5 rounded-xl" required>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Email</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1" v-text="isArabic ? 'البريد الإلكتروني' : 'Email'"></label>
                         <input v-model="forms.customer.email" type="email" class="w-full border p-2.5 rounded-xl">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Phone</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1" v-text="isArabic ? 'الهاتف' : 'Phone'"></label>
                         <input v-model="forms.customer.phone" type="text" class="w-full border p-2.5 rounded-xl">
                     </div>
                 </div>
             </div>
 
-            <!-- Sales Order Modal -->
             <div v-if="modalType === 'salesorder'" class="space-y-6 animate-in zoom-in-95 duration-300">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-3xl border border-slate-100">
                     <div class="space-y-2">
@@ -212,7 +206,7 @@
                         <div class="flex gap-2">
                             <select v-model="forms.salesorder.customer" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none" required>
                                 <option value="">اختر العميل...</option>
-                                <option v-for="c in customers" :key="c.id" :value="c.id">[[ c.name ]]</option>
+                                <option v-for="c in customers" :key="c.id" :value="c.id" v-text="c.name"></option>
                             </select>
                             <button @click.prevent="openModal('customer')" class="bg-white border border-slate-200 text-slate-400 w-11 h-11 rounded-xl hover:text-rose-600 hover:border-rose-200 transition-all">
                                 <i class="fas fa-plus"></i>
@@ -241,7 +235,7 @@
                                 <td class="p-3">
                                     <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-xs font-bold transition-all" required>
                                         <option value="">اختر الصنف...</option>
-                                        <option v-for="m in materials_list" :key="m.id" :value="m.id">[[ m.name ]]</option>
+                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="m.name"></option>
                                     </select>
                                 </td>
                                 <td class="p-3">
@@ -250,8 +244,7 @@
                                 <td class="p-3">
                                     <input type="number" v-model="line.unit_price" class="w-24 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-center font-bold text-xs outline-none">
                                 </td>
-                                <td class="p-3 text-left font-black text-slate-700">
-                                    [[ (line.quantity * line.unit_price).toFixed(2) ]]
+                                <td class="p-3 text-left font-black text-slate-700" v-text="(line.quantity * line.unit_price).toFixed(2)">
                                 </td>
                                 <td class="p-3">
                                     <button @click.prevent="removeSalesOrderLine(index)" class="text-slate-300 hover:text-red-500 transition-colors">
@@ -269,9 +262,8 @@
 
             <button type="submit" class="w-full bg-slate-900 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl mt-6 transition-all shadow-lg flex items-center justify-center gap-2">
                 <i class="fas fa-save"></i>
-                <span>[[ isArabic ? 'حفظ البيانات' : 'Save Data' ]]</span>
+                <span v-text="isArabic ? 'حفظ البيانات' : 'Save Data'"></span>
             </button>
         </form>
     </div>
 </div>
-{% endverbatim %}

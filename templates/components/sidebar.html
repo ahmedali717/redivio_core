@@ -1,5 +1,4 @@
-{% verbatim %}
-<aside :class="sidebarCollapsed ? 'w-20' : 'w-64'" class="bg-slate-900 text-white flex flex-col h-full hidden md:flex shadow-xl z-20 transition-all duration-300 relative">
+<aside :class="sidebarCollapsed ? 'w-20' : 'w-64'" class="bg-slate-900 text-white flex flex-col h-full hidden md:flex shadow-xl z-20 transition-all duration-300 relative" v-cloak>
     
     <button @click="sidebarCollapsed = !sidebarCollapsed" 
             class="absolute -right-3 top-20 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-xs shadow-lg hover:scale-110 transition-transform cursor-pointer border-2 border-slate-900 z-50">
@@ -14,7 +13,7 @@
     <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
         
         <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2 overflow-hidden">
-            <span v-show="!sidebarCollapsed">[[ isArabic ? 'العمليات والتحليل' : 'Operations & Analytics' ]]</span>
+            <span v-show="!sidebarCollapsed" v-text="isArabic ? 'العمليات والتحليل' : 'Operations & Analytics'"></span>
             <hr v-show="sidebarCollapsed" class="border-slate-800">
         </div>
 
@@ -23,7 +22,7 @@
                :class="view === 'dashboard' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-chart-pie w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'لوحة التحكم' : 'Dashboard' ]]</span>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'لوحة التحكم' : 'Dashboard'"></span>
             </a>
 
             <a href="#" @click.prevent="view = 'inventory_module'; inventoryTab = 'levels'; getListData()" 
@@ -31,7 +30,7 @@
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
                :class="{'border-indigo-400': view === 'inventory_module'}">
                 <i class="fas fa-boxes-stacked w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'إدارة المستودعات' : 'Inventory Module' ]]</span>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'إدارة المستودعات' : 'Inventory Module'"></span>
             </a>
 
             <a href="#" @click.prevent="view = 'procurement_module'" 
@@ -39,7 +38,7 @@
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
                :class="{'border-emerald-400': view === 'procurement_module'}">
                 <i class="fas fa-file-invoice-dollar w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'إدارة المشتريات' : 'Procurement' ]]</span>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'إدارة المشتريات' : 'Procurement'"></span>
             </a>
 
             <a href="#" @click.prevent="view = 'sales_module'; salesTab = 'dashboard'; fetchSalesData()" 
@@ -47,7 +46,7 @@
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
                :class="{'border-rose-400': view === 'sales_module'}">
                 <i class="fas fa-cart-shopping w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'إدارة المبيعات' : 'Sales & Orders' ]]</span>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'إدارة المبيعات' : 'Sales & Orders'"></span>
             </a>
 
             <a href="#" @click.prevent="view = 'accounting_module'; accountingTab = 'dashboard'; fetchSalesData()" 
@@ -55,12 +54,12 @@
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
                :class="{'border-amber-400': view === 'accounting_module'}">
                 <i class="fas fa-file-invoice-dollar w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'المحاسبة والمالية' : 'Accounting' ]]</span>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'المحاسبة والمالية' : 'Accounting'"></span>
             </a>
         </div>
 
         <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mt-8 mb-2 overflow-hidden">
-            <span v-show="!sidebarCollapsed">[[ isArabic ? 'الإعدادات والتهيئة' : 'Configuration' ]]</span>
+            <span v-show="!sidebarCollapsed" v-text="isArabic ? 'الإعدادات والتهيئة' : 'Configuration'"></span>
             <hr v-show="sidebarCollapsed" class="border-slate-800">
         </div>
 
@@ -69,39 +68,37 @@
                :class="view === 'org_builder' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-sitemap w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'هيكلة المنظمة' : 'Org Builder' ]]</span>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'هيكلة المنظمة' : 'Org Builder'"></span>
             </a>
 
             <a href="#" @click.prevent="view = 'global_config'"
                :class="view === 'global_config' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-cogs w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'إعدادات النظام' : 'Global Settings' ]]</span>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'إعدادات النظام' : 'Global Settings'"></span>
             </a>
 
             <a href="#" @click.prevent="view = 'users'"
                :class="view === 'users' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-users w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap">[[ isArabic ? 'المستخدمين' : 'Users' ]]</span>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'المستخدمين' : 'Users'"></span>
             </a>
         </div>
     </nav>
 
     <div class="p-4 border-t border-slate-800 bg-slate-950/50 text-white">
         <div class="flex items-center gap-3 overflow-hidden">
-            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs shrink-0 shadow-lg">
-                [[ user.name ? user.name.charAt(0).toUpperCase() : 'U' ]]
+            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs shrink-0 shadow-lg" v-text="user.name ? user.name.charAt(0).toUpperCase() : 'U'">
             </div>
             <div v-show="!sidebarCollapsed" class="flex-1 min-w-0 animate-in fade-in">
-                <p class="text-xs font-bold truncate">[[ user.name || 'Admin' ]]</p>
+                <p class="text-xs font-bold truncate" v-text="user.name || 'Admin'"></p>
                 <a href="/logout/" class="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1">
-                    <i class="fas fa-sign-out-alt"></i> [[ isArabic ? 'خروج' : 'Logout' ]]
+                    <i class="fas fa-sign-out-alt"></i> <span v-text="isArabic ? 'خروج' : 'Logout'"></span>
                 </a>
             </div>
         </div>
     </div>
-    {% endverbatim %}
     
     <!-- 🌍 Language Switcher -->
     <div class="px-4 py-3 border-t border-slate-800 bg-slate-900/50">
@@ -111,10 +108,8 @@
             <input name="language" type="hidden" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
             <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg transition-all text-[11px] font-bold border border-slate-700/50 hover:border-blue-500/50 uppercase tracking-tighter">
                 <i class="fas fa-language w-5 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed">[[ isArabic ? 'Switch to English' : 'التحويل للعربية' ]]</span>
+                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'Switch to English' : 'التحويل للعربية'"></span>
             </button>
         </form>
     </div>
 </aside>
-{% verbatim %}
-{% endverbatim %}

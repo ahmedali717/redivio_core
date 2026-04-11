@@ -28,10 +28,10 @@
 
             <div v-if="view === 'accounting_module'" class="flex flex-col h-full space-y-4 p-4">
                 <div class="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-2 border border-slate-200">
-                    <button @click="accountingTab = 'dashboard'" :class="accountingTab === 'dashboard' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'نظرة عامة' : 'Overview' ]]</button>
-                    <button @click="accountingTab = 'customers'" :class="accountingTab === 'customers' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'العملاء' : 'Customers' ]]</button>
-                    <button @click="accountingTab = 'invoices'" :class="accountingTab === 'invoices' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'الفواتير' : 'Invoices' ]]</button>
-                    <button @click="accountingTab = 'payments'" :class="accountingTab === 'payments' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'المدفوعات' : 'Payments' ]]</button>
+                    <button @click="accountingTab = 'dashboard'" :class="accountingTab === 'dashboard' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all" v-text="isArabic ? 'نظرة عامة' : 'Overview'"></button>
+                    <button @click="accountingTab = 'customers'" :class="accountingTab === 'customers' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all" v-text="isArabic ? 'العملاء' : 'Customers'"></button>
+                    <button @click="accountingTab = 'invoices'" :class="accountingTab === 'invoices' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all" v-text="isArabic ? 'الفواتير' : 'Invoices'"></button>
+                    <button @click="accountingTab = 'payments'" :class="accountingTab === 'payments' ? 'bg-amber-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all" v-text="isArabic ? 'المدفوعات' : 'Payments'"></button>
                 </div>
 
                 <div class="flex-1 relative min-h-[500px]">
@@ -45,8 +45,7 @@
                         {% include "sales/invoices_list.html" %}
                     </div>
                     <div v-if="accountingTab === 'payments'" class="absolute inset-0 overflow-y-auto">
-                        <div class="flex items-center justify-center h-64 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400 font-bold">
-                            [[ isArabic ? 'سجل المدفوعات قادم قريباً' : 'Payments Ledger Coming Soon' ]]
+                        <div class="flex items-center justify-center h-64 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400 font-bold" v-text="isArabic ? 'سجل المدفوعات قادم قريباً' : 'Payments Ledger Coming Soon'">
                         </div>
                     </div>
                 </div>
@@ -54,8 +53,8 @@
 
             <div v-if="view === 'sales_module'" class="flex flex-col h-full space-y-4 p-4">
                 <div class="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-2 border border-slate-200">
-                    <button @click="salesTab = 'dashboard'" :class="salesTab === 'dashboard' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'نظرة عامة' : 'Overview' ]]</button>
-                    <button @click="salesTab = 'orders'" :class="salesTab === 'orders' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all">[[ isArabic ? 'أوامر البيع' : 'Sales Orders' ]]</button>
+                    <button @click="salesTab = 'dashboard'" :class="salesTab === 'dashboard' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all" v-text="isArabic ? 'نظرة عامة' : 'Overview'"></button>
+                    <button @click="salesTab = 'orders'" :class="salesTab === 'orders' ? 'bg-rose-600 text-white' : 'bg-slate-50 text-slate-500'" class="px-4 py-2 rounded-xl font-bold text-xs transition-all" v-text="isArabic ? 'أوامر البيع' : 'Sales Orders'"></button>
                 </div>
 
                 <div class="flex-1 relative min-h-[500px]">
@@ -379,7 +378,7 @@
                 </div>
                 <div>
                     <p class="font-bold text-lg tracking-wide leading-tight">System is Ready</p>
-                    <p class="text-xs text-emerald-100/80">[[ isArabic ? 'تم تحديث كافة البيانات بنجاح' : 'All data synchronized successfully' ]]</p>
+                    <p class="text-xs text-emerald-100/80" v-text="isArabic ? 'تم تحديث كافة البيانات بنجاح' : 'All data synchronized successfully'"></p>
                 </div>
             </div>
         </transition>
