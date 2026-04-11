@@ -96,79 +96,174 @@
 
     <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
         
-        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2 overflow-hidden">
-            <span v-show="!sidebarCollapsed" v-text="isArabic ? 'العمليات والتحليل' : 'Operations & Analytics'"></span>
-            <hr v-show="sidebarCollapsed" class="border-slate-800">
-        </div>
+        <!-- Inventory Context -->
+        <template v-if="view === 'inventory_module'">
+            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
+                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'إدارة المستودعات' : 'Inventory Management'"></span>
+                <hr v-show="sidebarCollapsed" class="border-indigo-800">
+            </div>
+            
+            <a href="#" @click.prevent="inventoryTab = 'levels'" 
+               :class="inventoryTab === 'levels' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-boxes-stacked w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'الأرصدة' : 'Stock Levels'"></span>
+            </a>
+            <a href="#" @click.prevent="inventoryTab = 'items'" 
+               :class="inventoryTab === 'items' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-barcode w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'سجل الأصناف' : 'Item Master'"></span>
+            </a>
+            <a href="#" @click.prevent="inventoryTab = 'item_ledger'" 
+               :class="inventoryTab === 'item_ledger' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-exchange-alt w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'العمليات المخزنية' : 'Inventory Moves'"></span>
+            </a>
+            <a href="#" @click.prevent="inventoryTab = 'moves'" 
+               :class="inventoryTab === 'moves' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-history w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'حركة صنف' : 'Item Ledger'"></span>
+            </a>
+            <a href="#" @click.prevent="inventoryTab = 'reports'" 
+               :class="inventoryTab === 'reports' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-chart-line w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'التقارير' : 'Reports'"></span>
+            </a>
+        </template>
 
-        <div class="space-y-1">
+        <!-- Sales Context -->
+        <template v-else-if="view === 'sales_module'">
+            <div class="text-[10px] font-bold text-rose-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
+                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'إدارة المبيعات' : 'Sales Management'"></span>
+                <hr v-show="sidebarCollapsed" class="border-rose-800">
+            </div>
+            
+            <a href="#" @click.prevent="salesTab = 'dashboard'" 
+               :class="salesTab === 'dashboard' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-chart-line w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'نظرة عامة' : 'Overview'"></span>
+            </a>
+            <a href="#" @click.prevent="salesTab = 'orders'" 
+               :class="salesTab === 'orders' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-file-invoice-dollar w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'أوامر البيع' : 'Sales Orders'"></span>
+            </a>
+        </template>
+
+        <!-- Accounting Context -->
+        <template v-else-if="view === 'accounting_module'">
+            <div class="text-[10px] font-bold text-amber-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
+                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'المحاسبة والمالية' : 'Accounting & Finance'"></span>
+                <hr v-show="sidebarCollapsed" class="border-amber-800">
+            </div>
+            
+            <a href="#" @click.prevent="accountingTab = 'dashboard'" 
+               :class="accountingTab === 'dashboard' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-chart-line w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'نظرة عامة' : 'Overview'"></span>
+            </a>
+            <a href="#" @click.prevent="accountingTab = 'customers'" 
+               :class="accountingTab === 'customers' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-users w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'العملاء' : 'Customers'"></span>
+            </a>
+            <a href="#" @click.prevent="accountingTab = 'invoices'" 
+               :class="accountingTab === 'invoices' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-file-invoice w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'الفواتير' : 'Invoices'"></span>
+            </a>
+            <a href="#" @click.prevent="accountingTab = 'payments'" 
+               :class="accountingTab === 'payments' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-money-bill-wave w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'المدفوعات' : 'Payments'"></span>
+            </a>
+        </template>
+
+        <!-- Procurement Context -->
+        <template v-else-if="['procurement_module', 'vendors_list', 'vendor_ledger'].includes(view)">
+            <div class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
+                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'إدارة المشتريات' : 'Procurement'"></span>
+                <hr v-show="sidebarCollapsed" class="border-emerald-800">
+            </div>
+            
+            <a href="#" @click.prevent="view = 'procurement_module'" 
+               :class="view === 'procurement_module' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-truck-loading w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'أوامر الشراء' : 'Purchase Orders'"></span>
+            </a>
+            <a href="#" @click.prevent="view = 'vendors_list'" 
+               :class="view === 'vendors_list' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-building w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'سجل الموردين' : 'Vendors'"></span>
+            </a>
+            <a href="#" v-if="view === 'vendor_ledger'" 
+               class="bg-emerald-600 text-white shadow-lg shadow-emerald-900/20 flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-book w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'كشف حساب مورد' : 'Vendor Ledger'"></span>
+            </a>
+        </template>
+
+        <!-- Settings Context -->
+        <template v-else-if="['global_config', 'org_builder', 'users'].includes(view)">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
+                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'الإعدادات والتهيئة' : 'Configuration'"></span>
+                <hr v-show="sidebarCollapsed" class="border-slate-800">
+            </div>
+            
+            <a href="#" @click.prevent="view = 'org_builder'"
+               :class="view === 'org_builder' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-sitemap w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'هيكلة المنظمة' : 'Org Builder'"></span>
+             </a>
+
+            <a href="#" @click.prevent="view = 'global_config'"
+               :class="view === 'global_config' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-cogs w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'إعدادات النظام' : 'Global Settings'"></span>
+             </a>
+
+            <a href="#" @click.prevent="view = 'users'"
+               :class="view === 'users' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-users w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'المستخدمين' : 'Users'"></span>
+             </a>
+        </template>
+
+        <!-- Default Context (Dashboard or Generic) -->
+        <template v-else>
+            <div class="text-[10px] font-bold text-blue-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
+                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'الرئيسية' : 'Main Menu'"></span>
+                <hr v-show="sidebarCollapsed" class="border-blue-800">
+            </div>
+            
             <a href="#" @click.prevent="view = 'dashboard'" 
-               :class="view === 'dashboard' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'"
+               :class="view === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-chart-pie w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'لوحة التحكم' : 'Dashboard'"></span>
             </a>
-
-            <a href="#" @click.prevent="view = 'inventory_module'; inventoryTab = 'levels'; getListData()" 
-               :class="view === 'inventory_module' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
-               :class="{'border-indigo-400': view === 'inventory_module'}">
-                <i class="fas fa-boxes-stacked w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'إدارة المستودعات' : 'Inventory Module'"></span>
-            </a>
-
-            <a href="#" @click.prevent="view = 'procurement_module'" 
-               :class="view === 'procurement_module' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:bg-slate-800'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
-               :class="{'border-emerald-400': view === 'procurement_module'}">
-                <i class="fas fa-file-invoice-dollar w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'إدارة المشتريات' : 'Procurement'"></span>
-            </a>
-
-            <a href="#" @click.prevent="view = 'sales_module'; salesTab = 'dashboard'; fetchSalesData()" 
-               :class="view === 'sales_module' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-slate-400 hover:bg-slate-800'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
-               :class="{'border-rose-400': view === 'sales_module'}">
-                <i class="fas fa-cart-shopping w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'إدارة المبيعات' : 'Sales & Orders'"></span>
-            </a>
-
-            <a href="#" @click.prevent="view = 'accounting_module'; accountingTab = 'dashboard'; fetchSalesData()" 
-               :class="view === 'accounting_module' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden border-l-4 border-transparent"
-               :class="{'border-amber-400': view === 'accounting_module'}">
-                <i class="fas fa-file-invoice-dollar w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'المحاسبة والمالية' : 'Accounting'"></span>
-            </a>
-        </div>
-
-        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mt-8 mb-2 overflow-hidden">
-            <span v-show="!sidebarCollapsed" v-text="isArabic ? 'الإعدادات والتهيئة' : 'Configuration'"></span>
-            <hr v-show="sidebarCollapsed" class="border-slate-800">
-        </div>
-
-        <div class="space-y-1">
-            <a href="#" @click.prevent="view = 'org_builder'"
-               :class="view === 'org_builder' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
-                <i class="fas fa-sitemap w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'هيكلة المنظمة' : 'Org Builder'"></span>
-            </a>
-
-            <a href="#" @click.prevent="view = 'global_config'"
-               :class="view === 'global_config' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
-                <i class="fas fa-cogs w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'إعدادات النظام' : 'Global Settings'"></span>
-            </a>
-
-            <a href="#" @click.prevent="view = 'users'"
-               :class="view === 'users' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
-                <i class="fas fa-users w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'المستخدمين' : 'Users'"></span>
-            </a>
-        </div>
+            
+            <div class="mt-8 px-3 text-[10px] text-slate-500 text-center" v-show="!sidebarCollapsed">
+                <p v-text="isArabic ? 'استخدم قائمة REDIVIO بالاعلى للتنقل' : 'Use the top REDIVIO menu to navigate'"></p>
+                <i class="fas fa-arrow-up mt-4 text-xl animate-bounce text-slate-600"></i>
+            </div>
+        </template>
+        
     </nav>
 
     <div class="p-4 border-t border-slate-800 bg-slate-950/50 text-white">
