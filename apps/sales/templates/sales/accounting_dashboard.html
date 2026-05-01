@@ -104,7 +104,7 @@
                     </svg>
                     <div class="text-center">
                         <span class="text-4xl font-black text-white tech-font">1.8</span>
-                        <p class="text-[9px] text-emerald-400 font-bold uppercase mt-1">Healthy</p>
+                        <p class="text-[9px] text-emerald-400 font-bold uppercase mt-1">[[ isArabic ? 'حالة جيدة' : 'Healthy' ]]</p>
                     </div>
                 </div>
             </div>
@@ -145,7 +145,7 @@
                         <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                             <td class="py-4">
                                 <span class="font-black text-slate-700 font-mono">INV-2023-0091</span>
-                                <p class="text-[10px] text-amber-500 font-bold"><i class="fas fa-file-invoice"></i> Draft Invoice</p>
+                                <p class="text-[10px] text-amber-500 font-bold"><i class="fas fa-file-invoice"></i> [[ isArabic ? 'مسودة فاتورة' : 'Draft Invoice' ]]</p>
                             </td>
                             <td class="py-4 font-bold text-sm text-slate-600">Alrajhi Bank</td>
                             <td class="py-4 font-black text-emerald-600">[[ formatCurrency ? formatCurrency(12500) : '12,500' ]]</td>
@@ -156,7 +156,7 @@
                         <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                             <td class="py-4">
                                 <span class="font-black text-slate-700 font-mono">PAY-OUT-004</span>
-                                <p class="text-[10px] text-rose-500 font-bold"><i class="fas fa-money-check-dollar"></i> Pending Payment</p>
+                                <p class="text-[10px] text-rose-500 font-bold"><i class="fas fa-money-check-dollar"></i> [[ isArabic ? 'دفع معلق' : 'Pending Payment' ]]</p>
                             </td>
                             <td class="py-4 font-bold text-sm text-slate-600">Tech Distributors LLC</td>
                             <td class="py-4 font-black text-rose-600">- [[ formatCurrency ? formatCurrency(4800) : '4,800' ]]</td>

@@ -327,6 +327,24 @@ createApp({
             return this.salesInvoices.reduce((sum, inv) => sum + parseFloat(inv.paid_amount || 0), 0);
         },
 
+        localizedViewName() {
+            const views = {
+                'dashboard': { ar: 'لوحة التحكم', en: 'Dashboard' },
+                'org_builder': { ar: 'هيكلة المنظمة', en: 'Org Builder' },
+                'inventory_module': { ar: 'إدارة المستودعات', en: 'Inventory WMS' },
+                'procurement_module': { ar: 'إدارة المشتريات', en: 'Procurement' },
+                'sales_module': { ar: 'إدارة المبيعات', en: 'Sales & CRM' },
+                'accounting_module': { ar: 'المحاسبة والمالية', en: 'Accounting' },
+                'global_config': { ar: 'إعدادات النظام', en: 'Global Settings' },
+                'users': { ar: 'إدارة المستخدمين', en: 'User Management' },
+                'item_master': { ar: 'سجل الأصناف', en: 'Item Master' },
+                'vendors_list': { ar: 'سجل الموردين', en: 'Vendors' },
+                'vendor_ledger': { ar: 'كشف حساب مورد', en: 'Vendor Ledger' }
+            };
+            const current = views[this.view] || { ar: this.view, en: this.view };
+            return this.isArabic ? current.ar : current.en;
+        },
+
     },
 
     watch: {

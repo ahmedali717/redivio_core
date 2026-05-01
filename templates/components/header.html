@@ -7,7 +7,7 @@
             <span class="text-blue-600" v-if="view === 'item_master'"><i class="fas fa-barcode"></i></span>
             <span class="text-blue-600" v-if="view === 'global_config'"><i class="fas fa-cogs"></i></span>
             
-            <span v-text="view.replace('_', ' ') "></span>
+            <span v-text="localizedViewName"></span>
         </h2>
 
         <div class="flex items-center gap-4 mt-1">
