@@ -3,7 +3,8 @@
         <h2 class="text-2xl font-bold text-slate-800 capitalize tracking-tight flex items-center gap-2">
             <span class="text-blue-600" v-if="view === 'dashboard'"><i class="fas fa-chart-pie"></i></span>
             <span class="text-blue-600" v-if="view === 'org_builder'"><i class="fas fa-sitemap"></i></span>
-            <span class="text-blue-600" v-if="['inventory', 'wms', 'inventory_module'].includes(view)"><i class="fas fa-boxes-stacked"></i></span>
+            <span class="text-amber-600" v-if="['inventory', 'wms', 'inventory_module'].includes(view)"><i class="fas fa-boxes-stacked"></i></span>
+            <span class="text-emerald-600" v-if="['procurement_module', 'vendors_list', 'vendor_ledger'].includes(view)"><i class="fas fa-shopping-cart"></i></span>
             <span class="text-blue-600" v-if="view === 'item_master'"><i class="fas fa-barcode"></i></span>
             <span class="text-blue-600" v-if="view === 'global_config'"><i class="fas fa-cogs"></i></span>
             

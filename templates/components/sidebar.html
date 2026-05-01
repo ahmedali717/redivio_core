@@ -38,13 +38,13 @@
                             <i class="fas fa-chart-pie w-5 text-center text-blue-500 group-hover/item:text-white"></i>
                             <span class="text-[11px] font-bold">[[ isArabic ? 'لوحة التحكم' : 'Dashboard' ]]</span>
                         </button>
-                        <button @click="view = 'inventory_module'; inventoryTab = 'levels'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-indigo-600 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <i class="fas fa-boxes-stacked w-5 text-center text-indigo-500 group-hover/item:text-white"></i>
-                            <span class="text-[11px] font-bold">[[ isArabic ? 'المستودعات' : 'Inventory' ]]</span>
+                        <button @click="view = 'inventory_module'; inventoryTab = 'levels'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-amber-600 text-slate-400 hover:text-white text-left transition-all group/item">
+                            <i class="fas fa-boxes-stacked w-5 text-center text-amber-500 group-hover/item:text-white"></i>
+                            <span class="text-[11px] font-bold">[[ isArabic ? 'RIMS (المستودعات)' : 'RIMS (Inventory)' ]]</span>
                         </button>
                         <button @click="view = 'procurement_module'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-600 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <i class="fas fa-truck w-5 text-center text-emerald-500 group-hover/item:text-white"></i>
-                            <span class="text-[11px] font-bold">[[ isArabic ? 'المشتريات' : 'Procurement' ]]</span>
+                            <i class="fas fa-shopping-cart w-5 text-center text-emerald-500 group-hover/item:text-white"></i>
+                            <span class="text-[11px] font-bold">[[ isArabic ? 'RPMS (المشتريات)' : 'RPMS (Procurement)' ]]</span>
                         </button>
                         <button @click="view = 'sales_module'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-rose-600 text-slate-400 hover:text-white text-left transition-all group/item">
                             <i class="fas fa-cart-shopping w-5 text-center text-rose-500 group-hover/item:text-white"></i>
@@ -70,37 +70,37 @@
         
         <!-- Inventory Context -->
         <template v-if="view === 'inventory_module'">
-            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
-                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'إدارة المستودعات' : 'Inventory Management'"></span>
-                <hr v-show="sidebarCollapsed" class="border-indigo-800">
+            <div class="text-[10px] font-bold text-amber-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
+                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'RIMS (إدارة المستودعات)' : 'RIMS Management'"></span>
+                <hr v-show="sidebarCollapsed" class="border-amber-800">
             </div>
             
             <a href="#" @click.prevent="inventoryTab = 'levels'" 
-               :class="inventoryTab === 'levels' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               :class="inventoryTab === 'levels' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-boxes-stacked w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'الأرصدة' : 'Stock Levels'"></span>
             </a>
             <a href="#" @click.prevent="inventoryTab = 'items'" 
-               :class="inventoryTab === 'items' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               :class="inventoryTab === 'items' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-barcode w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'سجل الأصناف' : 'Item Master'"></span>
             </a>
             <a href="#" @click.prevent="inventoryTab = 'item_ledger'" 
-               :class="inventoryTab === 'item_ledger' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               :class="inventoryTab === 'item_ledger' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-exchange-alt w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'العمليات المخزنية' : 'Inventory Moves'"></span>
             </a>
             <a href="#" @click.prevent="inventoryTab = 'moves'" 
-               :class="inventoryTab === 'moves' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               :class="inventoryTab === 'moves' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-history w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'حركة صنف' : 'Item Ledger'"></span>
             </a>
             <a href="#" @click.prevent="inventoryTab = 'reports'" 
-               :class="inventoryTab === 'reports' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               :class="inventoryTab === 'reports' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-chart-line w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'التقارير' : 'Reports'"></span>
@@ -164,14 +164,14 @@
         <!-- Procurement Context -->
         <template v-else-if="['procurement_module', 'vendors_list', 'vendor_ledger'].includes(view)">
             <div class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
-                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'إدارة المشتريات' : 'Procurement'"></span>
+                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'RPMS (إدارة المشتريات)' : 'RPMS Management'"></span>
                 <hr v-show="sidebarCollapsed" class="border-emerald-800">
             </div>
             
             <a href="#" @click.prevent="view = 'procurement_module'" 
                :class="view === 'procurement_module' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
-                <i class="fas fa-truck-loading w-6 text-center text-lg"></i>
+                <i class="fas fa-shopping-cart w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'أوامر الشراء' : 'Purchase Orders'"></span>
             </a>
             <a href="#" @click.prevent="view = 'vendors_list'" 

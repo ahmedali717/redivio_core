@@ -71,8 +71,8 @@ createApp({
                 operations: [
                     { id: 'org_builder', name: { ar: 'بناء الهيكل', en: 'Org Builder' }, icon: 'fas fa-sitemap' },
                     // موديول واحد شامل للمخزون
-                    { id: 'inventory_module', name: { ar: 'إدارة المستودعات', en: 'Inventory WMS' }, icon: 'fas fa-boxes-stacked' },
-                    { id: 'procurement_module', name: { ar: 'إدارة المشتريات', en: 'Procurement' }, icon: 'fas fa-truck' },
+                    { id: 'inventory_module', name: { ar: 'RIMS (المخزون)', en: 'RIMS (Inventory)' }, icon: 'fas fa-boxes-stacked' },
+                    { id: 'procurement_module', name: { ar: 'RPMS (المشتريات)', en: 'RPMS (Procurement)' }, icon: 'fas fa-shopping-cart' },
                     { id: 'sales_module', name: { ar: 'إدارة المبيعات', en: 'Sales & CRM' }, icon: 'fas fa-cart-shopping' },
                     { id: 'accounting_module', name: { ar: 'المحاسبة والمالية', en: 'Accounting' }, icon: 'fas fa-file-invoice-dollar' }
                 ]
@@ -334,8 +334,8 @@ createApp({
             const views = {
                 'dashboard': { ar: 'لوحة التحكم', en: 'Dashboard' },
                 'org_builder': { ar: 'هيكلة المنظمة', en: 'Org Builder' },
-                'inventory_module': { ar: 'إدارة المستودعات', en: 'Inventory WMS' },
-                'procurement_module': { ar: 'إدارة المشتريات', en: 'Procurement' },
+                'inventory_module': { ar: 'RIMS (المخزون)', en: 'RIMS (Inventory)' },
+                'procurement_module': { ar: 'RPMS (المشتريات)', en: 'RPMS (Procurement)' },
                 'sales_module': { ar: 'إدارة المبيعات', en: 'Sales & CRM' },
                 'accounting_module': { ar: 'المحاسبة والمالية', en: 'Accounting' },
                 'global_config': { ar: 'إعدادات النظام', en: 'Global Settings' },
