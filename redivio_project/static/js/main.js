@@ -1975,7 +1975,13 @@ createApp({
 
         printInventoryReport() {
             this.showToast(this.isArabic ? "جاري تحضير تقرير الجرد..." : "Preparing Inventory Report...", 'info');
-            window.open('/api/inventory/print_audit/', '_blank');
+            window.open('/api/wms/inventory/print_audit/', '_blank');
+        },
+
+        viewStagnantStock() {
+            this.view = 'inventory_module';
+            this.inventoryTab = 'levels';
+            this.showToast(this.isArabic ? "جاري عرض الأصناف الحالية" : "Viewing Current Stock Levels", 'info');
         },
 
         openModal(type) {
@@ -1985,10 +1991,11 @@ createApp({
                 this.forms.stock_entry = { receipt_type: 'PURCHASE', items: [{ material_id: '', quantity: 1, unit_cost: 0 }], target_plant: '', target_location: '' };
             } else if (type === 'material') {
                 this.forms.material = { name: '', code: '', sku: '', category: '', unit: 'PCS', standard_price: 0 };
-            } else if (type === 'purchase_order') {
-                this.view = 'procurement_module';
-                this.modalType = 'purchase_order';
-                this.forms.po = { vendor: '', items: [{ material: '', quantity: 1, price: 0 }] };
+            } else if (type === 'po' || type === 'purchase_order') {
+                // 🚀 توحيد المسمى ليكون 'po' كما هو في modal.html
+                this.modalType = 'po';
+                this.forms.po = { vendor: '', po_number: `PO-${Date.now()}`, lines: [{ material: '', quantity: 1, unit_price: 0 }], tax_rate: 15, is_tax_inclusive: false };
+                this.fetchVendors(); // التأكد من جلب الموردين
             }
             this.showModal = true;
         },

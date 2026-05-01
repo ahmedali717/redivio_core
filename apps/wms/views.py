@@ -117,6 +117,25 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = StockQuant.objects.all()
     serializer_class = StockQuantSerializer
 
+    @viewsets.decorators.action(detail=False, methods=['get'])
+    def print_audit(self, request):
+        """ توليد تقرير جرد للأصناف الحالية """
+        opco_id = self._get_opco_id()
+        quants = StockQuant.objects.filter(opco_id=opco_id).select_related('material', 'storage_bin')
+        
+        data = [{
+            "material": q.material.name,
+            "sku": getattr(q.material, 'sku', q.material.code),
+            "bin": q.storage_bin.code,
+            "quantity": float(q.quantity)
+        } for q in quants]
+        
+        return Response({
+            "report_date": models.DateTimeField(auto_now_add=True),
+            "opco_name": "OpCo Name", # سيتم جلبها ديناميكياً
+            "items": data
+        })
+
 class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = StockMove.objects.all().order_by('-id')
     serializer_class = StockMoveSerializer

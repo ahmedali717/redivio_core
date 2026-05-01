@@ -61,7 +61,7 @@
             <div class="relative z-10 mt-4">
                 <h3 class="text-4xl font-black text-amber-600 tech-font" v-text="12"></h3>
                 <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'أصناف راكدة لأكثر من 90 يوم' : 'Stagnant items > 90 days'"></p>
-                <button @click="view='inventory_module'; inventoryTab='levels'" class="mt-4 text-xs font-black text-amber-600 hover:text-amber-700 uppercase flex items-center gap-1 group/btn">
+                <button @click="viewStagnantStock()" class="mt-4 text-xs font-black text-amber-600 hover:text-amber-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'مراجعة الأصناف الراكدة' : 'Review Stagnant SKUs'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
             </div>
