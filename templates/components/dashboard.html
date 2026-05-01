@@ -38,19 +38,19 @@
             <div class="space-y-4">
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'إجمالي الأصناف' : 'Total Items'"></span>
-                    <span class="font-black text-slate-800 tech-font">[[ kpis.inventory.total_items ]]</span>
+                    <span class="font-black text-slate-800 tech-font">[[ kpis.inventory ? kpis.inventory.total_items : 0 ]]</span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'كمية المخزون' : 'Stock Qty'"></span>
-                    <span class="font-black text-slate-800 tech-font">[[ kpis.inventory.stock_qty ]]</span>
+                    <span class="font-black text-slate-800 tech-font">[[ kpis.inventory ? kpis.inventory.stock_qty : 0 ]]</span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'أصناف حرجة' : 'Critical Stock'"></span>
-                    <span class="font-black text-rose-600 tech-font">[[ kpis.inventory.critical_items ]]</span>
+                    <span class="font-black text-rose-600 tech-font">[[ kpis.inventory ? kpis.inventory.critical_items : 0 ]]</span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'الرواكد' : 'Dead Stock'"></span>
-                    <span class="font-black text-amber-600 tech-font">[[ kpis.inventory.dead_stock ]]</span>
+                    <span class="font-black text-amber-600 tech-font">[[ kpis.inventory ? kpis.inventory.dead_stock : 0 ]]</span>
                 </div>
             </div>
             
@@ -72,19 +72,19 @@
             <div class="space-y-4">
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'إجمالي المبيعات' : 'Total Sales'"></span>
-                    <span class="font-black text-slate-800 tech-font">[[ formatCurrency(kpis.sales.total) ]]</span>
+                    <span class="font-black text-slate-800 tech-font">[[ formatCurrency(kpis.sales ? kpis.sales.total : 0) ]]</span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'تم توصيله' : 'Delivered'"></span>
-                    <span class="font-black text-emerald-600 tech-font">[[ formatCurrency(kpis.sales.delivered) ]]</span>
+                    <span class="font-black text-emerald-600 tech-font">[[ formatCurrency(kpis.sales ? kpis.sales.delivered : 0) ]]</span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'متبقي للتسليم' : 'Remaining Deliv.'"></span>
-                    <span class="font-black text-slate-500 tech-font">[[ formatCurrency(kpis.sales.remaining_delivery) ]]</span>
+                    <span class="font-black text-slate-500 tech-font">[[ formatCurrency(kpis.sales ? kpis.sales.remaining_delivery : 0) ]]</span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-xs font-bold text-rose-500 uppercase" v-text="isArabic ? 'متبقي للفوترة' : 'To Be Invoiced'"></span>
-                    <span class="font-black text-rose-600 tech-font">[[ formatCurrency(kpis.sales.remaining_invoice) ]]</span>
+                    <span class="font-black text-rose-600 tech-font">[[ formatCurrency(kpis.sales ? kpis.sales.remaining_invoice : 0) ]]</span>
                 </div>
             </div>
             
@@ -106,19 +106,19 @@
             <div class="space-y-4">
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'إجمالي الطلبات' : 'Total Orders'"></span>
-                    <span class="font-black text-slate-800 tech-font">[[ formatCurrency(kpis.procurement.total) ]]</span>
+                    <span class="font-black text-slate-800 tech-font">[[ formatCurrency(kpis.procurement ? kpis.procurement.total : 0) ]]</span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'تم استلامه' : 'Received'"></span>
-                    <span class="font-black text-emerald-600 tech-font">[[ formatCurrency(kpis.procurement.received) ]]</span>
+                    <span class="font-black text-emerald-600 tech-font">[[ formatCurrency(kpis.procurement ? kpis.procurement.received : 0) ]]</span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'ما تم فوترته' : 'Invoiced'"></span>
-                    <span class="font-black text-slate-800 tech-font">[[ formatCurrency(kpis.procurement.invoiced) ]]</span>
+                    <span class="font-black text-slate-800 tech-font">[[ formatCurrency(kpis.procurement ? kpis.procurement.invoiced : 0) ]]</span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-xs font-bold text-indigo-500 uppercase" v-text="isArabic ? 'ما تم سداده' : 'Total Paid'"></span>
-                    <span class="font-black text-indigo-600 tech-font">[[ formatCurrency(kpis.procurement.paid) ]]</span>
+                    <span class="font-black text-indigo-600 tech-font">[[ formatCurrency(kpis.procurement ? kpis.procurement.paid : 0) ]]</span>
                 </div>
             </div>
             
@@ -140,15 +140,15 @@
             <div class="space-y-4">
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'إجمالي الفواتير' : 'Total Invoices'"></span>
-                    <span class="font-black text-slate-800 tech-font">[[ formatCurrency(kpis.finance.invoices) ]]</span>
+                    <span class="font-black text-slate-800 tech-font">[[ formatCurrency(kpis.finance ? kpis.finance.invoices : 0) ]]</span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-emerald-500 uppercase" v-text="isArabic ? 'ما تم تحصيله' : 'Total Collected'"></span>
-                    <span class="font-black text-emerald-600 tech-font">[[ formatCurrency(kpis.finance.collected) ]]</span>
+                    <span class="font-black text-emerald-600 tech-font">[[ formatCurrency(kpis.finance ? kpis.finance.collected : 0) ]]</span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b border-slate-50">
                     <span class="text-xs font-bold text-rose-500 uppercase" v-text="isArabic ? 'متبقي / مديونيات' : 'Receivables'"></span>
-                    <span class="font-black text-rose-600 tech-font">[[ formatCurrency(kpis.finance.remaining) ]]</span>
+                    <span class="font-black text-rose-600 tech-font">[[ formatCurrency(kpis.finance ? kpis.finance.remaining : 0) ]]</span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-xs font-bold text-slate-500 uppercase" v-text="isArabic ? 'عدد العملاء' : 'Active Clients'"></span>
@@ -173,7 +173,7 @@
             <div>
                 <h4 class="font-black text-sm uppercase" v-text="isArabic ? 'تنبيه الكفاءة التشغيلية' : 'Operational Efficiency Alert'"></h4>
                 <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                    [[ kpis.inventory.critical_items ]] <span v-text="isArabic ? 'أصناف حرجة تتطلب إعادة طلب' : 'Critical items require immediate restock'"></span>
+                    [[ kpis.inventory ? kpis.inventory.critical_items : 0 ]] <span v-text="isArabic ? 'أصناف حرجة تتطلب إعادة طلب' : 'Critical items require immediate restock'"></span>
                 </p>
             </div>
         </div>

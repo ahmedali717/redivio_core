@@ -1918,9 +1918,9 @@ createApp({
                 const res = await fetch(url);
                 if (res.ok) {
                     this.wms_stats = await res.json();
-                    // تحديث قيم الـ KPIs من بيانات الـ WMS
-                    this.kpis.total_stock_value = this.wms_stats.total_value;
-                    this.kpis.low_stock_count = this.wms_stats.low_stock;
+                    // 🚀 التعديل: تحديث القيم داخل الهيكل الصحيح
+                    this.kpis.inventory.total_value = this.wms_stats.total_value || 0;
+                    this.kpis.inventory.critical_items = this.wms_stats.low_stock || 0;
                 }
             } catch (e) { console.error("Stats Error", e); }
         },
@@ -1929,7 +1929,13 @@ createApp({
             try {
                 const res = await fetch('/api/dashboard-data/');
                 const data = await res.json();
-                if (data.kpis) this.kpis = data.kpis;
+                if (data.kpis) {
+                    // 🚀 التعديل: دمج البيانات بحذر للحفاظ على الهيكل
+                    this.kpis.inventory.total_items = data.kpis.materials || 0;
+                    this.kpis.inventory.stock_qty = data.kpis.stock_qty || 0;
+                    this.kpis.procurement.total = data.kpis.pending_pos || 0;
+                    this.kpis.vendors = data.kpis.vendors || 0;
+                }
             } catch (e) { console.log("KPI fetch error"); }
         },
         // داخل methods في main.js
