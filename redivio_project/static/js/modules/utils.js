@@ -1,6 +1,5 @@
 export const utils = {
     state: {
-        isArabic: true,
         currentTime: '--:--',
         currentDate: 'Loading...',
         showReadyMessage: false,
