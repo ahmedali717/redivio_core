@@ -5,7 +5,7 @@ from django.db import transaction, models
 from django.http import JsonResponse
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from decimal import Decimal
@@ -65,13 +65,13 @@ def wms_stats(request):
     SalesOrder = apps.get_model('sales', 'SalesOrder')
     pending_sos = SalesOrder.objects.filter(opco_id=active_opco_id, status='CONFIRMED').order_by('-created_at')[:5]
     
-    operations = []
+    lang = getattr(request, 'LANGUAGE_CODE', 'en')
     for po in pending_pos:
         operations.append({
             "id": po.id,
             "ref": po.po_number,
             "type": "IN",
-            "type_label": "استلام مشتريات" if request.LANGUAGE_CODE == 'ar' else "PO Receipt",
+            "type_label": "استلام مشتريات" if lang == 'ar' else "PO Receipt",
             "owner": po.vendor.name,
             "status": "Pending"
         })
@@ -80,7 +80,7 @@ def wms_stats(request):
             "id": so.id,
             "ref": so.so_number,
             "type": "OUT",
-            "type_label": "صرف مبيعات" if request.LANGUAGE_CODE == 'ar' else "SO Delivery",
+            "type_label": "صرف مبيعات" if lang == 'ar' else "SO Delivery",
             "owner": so.customer.name,
             "status": "Pending"
         })
@@ -116,7 +116,7 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = StockQuant.objects.all()
     serializer_class = StockQuantSerializer
 
-    @viewsets.decorators.action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'])
     def print_audit(self, request):
         """ توليد تقرير جرد للأصناف الحالية """
         from django.utils import timezone
