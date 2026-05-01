@@ -120,6 +120,7 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     @viewsets.decorators.action(detail=False, methods=['get'])
     def print_audit(self, request):
         """ توليد تقرير جرد للأصناف الحالية """
+        from django.utils import timezone
         opco_id = self._get_opco_id()
         quants = StockQuant.objects.filter(opco_id=opco_id).select_related('material', 'storage_bin')
         
@@ -130,9 +131,12 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             "quantity": float(q.quantity)
         } for q in quants]
         
+        # محاولة جلب اسم الشركة
+        opco_name = OpCo.objects.get(id=opco_id).name if opco_id else "All Companies"
+        
         return Response({
-            "report_date": models.DateTimeField(auto_now_add=True),
-            "opco_name": "OpCo Name", # سيتم جلبها ديناميكياً
+            "report_date": timezone.now(),
+            "opco_name": opco_name,
             "items": data
         })
 
