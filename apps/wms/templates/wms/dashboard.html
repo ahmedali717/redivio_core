@@ -26,7 +26,7 @@
             <button @click="openModal('material')" class="group bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white px-5 py-3 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold tracking-wide">
                 <i class="fas fa-barcode group-hover:scale-110 transition-transform"></i> <span v-text="isArabic ? 'تعريف صنف' : 'New SKU'"></span>
             </button>
-            <button class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl shadow-lg transition-all flex items-center gap-2 font-bold tracking-wide">
+            <button @click="printInventoryReport()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl shadow-lg transition-all flex items-center gap-2 font-bold tracking-wide">
                 <i class="fas fa-print"></i> <span v-text="isArabic ? 'طباعة تقرير الجرد' : 'Print Audit'"></span>
             </button>
         </div>
@@ -45,7 +45,7 @@
             <div class="relative z-10 mt-4">
                 <h3 class="text-4xl font-black text-red-600 tech-font" v-text="kpis.low_stock_count || 3"></h3>
                 <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'أصناف تجاوزت حد إعادة الطلب' : 'SKUs below reorder point'"></p>
-                <button class="mt-4 text-xs font-black text-red-600 hover:text-red-700 uppercase flex items-center gap-1 group/btn">
+                <button @click="openModal('purchase_order')" class="mt-4 text-xs font-black text-red-600 hover:text-red-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'إنشاء أمر شراء الآن' : 'Create PO Now'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
             </div>
@@ -61,7 +61,7 @@
             <div class="relative z-10 mt-4">
                 <h3 class="text-4xl font-black text-amber-600 tech-font" v-text="12"></h3>
                 <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'أصناف راكدة لأكثر من 90 يوم' : 'Stagnant items > 90 days'"></p>
-                <button class="mt-4 text-xs font-black text-amber-600 hover:text-amber-700 uppercase flex items-center gap-1 group/btn">
+                <button @click="view='inventory_module'; inventoryTab='levels'" class="mt-4 text-xs font-black text-amber-600 hover:text-amber-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'مراجعة الأصناف الراكدة' : 'Review Stagnant SKUs'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
             </div>
@@ -104,20 +104,21 @@
                 <!-- Circular Capacity Meter -->
                 <div class="relative w-40 h-40 flex items-center justify-center rounded-full border-8 border-slate-800">
                     <svg class="absolute inset-0 w-full h-full -rotate-90">
-                        <circle cx="50%" cy="50%" r="48%" class="stroke-indigo-500 transition-all duration-1000" stroke-width="12" fill="none" stroke-dasharray="100 100" stroke-dashoffset="22" stroke-linecap="round"></circle>
+                        <circle cx="50%" cy="50%" r="48%" class="stroke-indigo-500 transition-all duration-1000" stroke-width="12" fill="none" 
+                                :stroke-dasharray="301" :stroke-dashoffset="301 - (301 * (wms_stats.capacity || 0) / 100)" stroke-linecap="round"></circle>
                     </svg>
                     <div class="text-center">
-                        <span class="text-4xl font-black text-white tech-font">78%</span>
+                        <span class="text-4xl font-black text-white tech-font">[[ wms_stats.capacity || 0 ]]%</span>
                     </div>
                 </div>
             </div>
             
             <div class="relative z-10 space-y-3">
                 <div class="flex justify-between text-xs font-bold text-slate-300">
-                    <span v-text="isArabic ? 'مواقع مشغولة' : 'Occupied Bins'"></span> <span>450</span>
+                    <span v-text="isArabic ? 'مواقع مشغولة' : 'Occupied Bins'"></span> <span>[[ wms_stats.occupied_bins || 0 ]]</span>
                 </div>
                 <div class="flex justify-between text-xs font-bold text-slate-300">
-                    <span v-text="isArabic ? 'مواقع شاغرة' : 'Available Bins'"></span> <span class="text-emerald-400">127</span>
+                    <span v-text="isArabic ? 'مواقع شاغرة' : 'Available Bins'"></span> <span class="text-emerald-400">[[ (wms_stats.total_bins - wms_stats.occupied_bins) || 0 ]]</span>
                 </div>
             </div>
         </div>
@@ -145,41 +146,32 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Move 1 -->
-                        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                        <!-- Live Operations Data -->
+                        <tr v-for="op in wms_stats.pending_operations" :key="op.ref" class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                             <td class="py-4">
-                                <span class="font-black text-slate-700 font-mono">WH-IN-2023-0014</span>
-                                <p class="text-[10px] text-slate-400 font-bold" v-text="isArabic ? 'استلام مشتريات' : 'PO Receipt'"></p>
+                                <span class="font-black text-slate-700 font-mono">[[ op.ref ]]</span>
+                                <p class="text-[10px] text-slate-400 font-bold" v-text="op.type_label"></p>
                             </td>
                             <td class="py-4">
-                                <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase"><i class="fas fa-arrow-down mr-1"></i> Inbound</span>
+                                <span :class="op.type === 'IN' ? 'bg-blue-50 text-blue-600' : 'bg-rose-50 text-rose-600'" 
+                                      class="px-3 py-1 rounded-lg text-[10px] font-black uppercase">
+                                    <i :class="op.type === 'IN' ? 'fas fa-arrow-down mr-1' : 'fas fa-arrow-up mr-1'"></i> 
+                                    [[ op.type === 'IN' ? 'Inbound' : 'Outbound' ]]
+                                </span>
                             </td>
                             <td class="py-4">
                                 <span class="font-bold text-sm text-slate-600 flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px]">A</div> Ahmed
+                                    <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px]">[[ (op.owner || 'U')[0] ]]</div> [[ op.owner ]]
                                 </span>
                             </td>
                             <td class="py-4 text-center">
-                                <button class="opacity-0 group-hover:opacity-100 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-blue-700 transition-all uppercase tracking-wider" v-text="isArabic ? 'اعتماد' : 'Validate'"></button>
+                                <button @click="op.type === 'IN' ? openReceiptModal(op.id) : openDeliveryModal(op.id)"
+                                        class="opacity-0 group-hover:opacity-100 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-blue-700 transition-all uppercase tracking-wider" 
+                                        v-text="isArabic ? 'اعتماد' : 'Validate'"></button>
                             </td>
                         </tr>
-                        <!-- Move 2 -->
-                        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
-                            <td class="py-4">
-                                <span class="font-black text-slate-700 font-mono">WH-OUT-2023-089</span>
-                                <p class="text-[10px] text-slate-400 font-bold" v-text="isArabic ? 'صرف مبيعات' : 'SO Delivery'"></p>
-                            </td>
-                            <td class="py-4">
-                                <span class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase"><i class="fas fa-arrow-up mr-1"></i> Outbound</span>
-                            </td>
-                            <td class="py-4">
-                                <span class="font-bold text-sm text-slate-600 flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px]">S</div> Sarah
-                                </span>
-                            </td>
-                            <td class="py-4 text-center">
-                                <button class="opacity-0 group-hover:opacity-100 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-blue-700 transition-all uppercase tracking-wider" v-text="isArabic ? 'اعتماد' : 'Validate'"></button>
-                            </td>
+                        <tr v-if="!wms_stats.pending_operations || wms_stats.pending_operations.length === 0">
+                            <td colspan="4" class="py-10 text-center text-slate-400 font-bold" v-text="isArabic ? 'لا توجد عمليات معلقة حالياً' : 'No pending operations'"></td>
                         </tr>
                     </tbody>
                 </table>

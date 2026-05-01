@@ -1955,6 +1955,43 @@ createApp({
                 this.showToast(this.isArabic ? "تم تحديد الرف الافتراضي تلقائياً" : "Default bin selected", 'success');
             }
         },
+
+        // 🚀 وظائف لوحة التحكم الحية (WMS Dashboard Actions)
+        openReceiptModal(poId) {
+            this.modalType = 'stock_entry';
+            this.activeOperation = 'po_receipt'; // وضع الاستلام من أمر شراء
+            this.forms.stock_entry.po_id = poId;
+            this.showModal = true;
+            this.fetchPODetailsForReceipt(); // جلب بيانات الأصناف للأمر
+        },
+
+        openDeliveryModal(soId) {
+            this.modalType = 'stock_entry';
+            this.activeOperation = 'so_delivery'; // وضع الصرف لأمر بيع
+            this.forms.stock_entry.so_id = soId;
+            this.showModal = true;
+            this.fetchSODetailsForDelivery(); // جلب بيانات الأصناف للأمر
+        },
+
+        printInventoryReport() {
+            this.showToast(this.isArabic ? "جاري تحضير تقرير الجرد..." : "Preparing Inventory Report...", 'info');
+            window.open('/api/inventory/print_audit/', '_blank');
+        },
+
+        openModal(type) {
+            this.modalType = type;
+            if (type === 'stock_entry') {
+                this.activeOperation = 'manual'; // الوضع اليدوي الافتراضي
+                this.forms.stock_entry = { receipt_type: 'PURCHASE', items: [{ material_id: '', quantity: 1, unit_cost: 0 }], target_plant: '', target_location: '' };
+            } else if (type === 'material') {
+                this.forms.material = { name: '', code: '', sku: '', category: '', unit: 'PCS', standard_price: 0 };
+            } else if (type === 'purchase_order') {
+                this.view = 'procurement_module';
+                this.modalType = 'purchase_order';
+                this.forms.po = { vendor: '', items: [{ material: '', quantity: 1, price: 0 }] };
+            }
+            this.showModal = true;
+        },
         async fetchPurchaseOrders() {
             try {
                 // هنجيب كل أوامر التوريد الخاصة بالشركة الحالية

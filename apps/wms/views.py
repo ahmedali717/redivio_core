@@ -34,27 +34,67 @@ def wms_stats(request):
     
     if not active_opco_id:
         return Response({
-            "plants": 0, "items": 0, "total_value": 0, "low_stock": 0
+            "plants": 0, "items": 0, "total_value": 0, "low_stock": 0,
+            "capacity": 0, "pending_operations": []
         })
     
+    # 1. الإحصائيات الأساسية
     quants = StockQuant.objects.filter(opco_id=active_opco_id)
-    plants_count = StorageLocation.objects.filter(plant__opco_id=active_opco_id).count()
+    plants_count = Plant.objects.filter(opco_id=active_opco_id).count()
     items_count = quants.values('material_id').distinct().count()
     
+    # 2. حساب القيمة الإجمالية
     total_value = 0
     try:
         agg = quants.annotate(
             val=F('quantity') * F('material__standard_price')
         ).aggregate(total=Sum('val'))
         total_value = agg['total'] if agg['total'] is not None else 0
-    except Exception as e:
-        print(f"Error in wms_stats: {e}")
+    except Exception: total_value = 0
         
+    # 3. حساب نسبة الإشغال (Capacity)
+    total_bins = StorageBin.objects.filter(storage_location__plant__opco_id=active_opco_id).count()
+    occupied_bins = quants.filter(quantity__gt=0).values('storage_bin').distinct().count()
+    capacity_pct = int((occupied_bins / total_bins * 100)) if total_bins > 0 else 0
+
+    # 4. طابور العمليات (Operations Queue)
+    # جلب أوامر الشراء المؤكدة (لم تستلم بالكامل بعد)
+    PurchaseOrder = apps.get_model('procurement', 'PurchaseOrder')
+    pending_pos = PurchaseOrder.objects.filter(opco_id=active_opco_id, status='CONFIRMED').order_by('-created_at')[:5]
+    
+    # جلب أوامر البيع المؤكدة (لم تشحن بالكامل بعد)
+    SalesOrder = apps.get_model('sales', 'SalesOrder')
+    pending_sos = SalesOrder.objects.filter(opco_id=active_opco_id, status='CONFIRMED').order_by('-created_at')[:5]
+    
+    operations = []
+    for po in pending_pos:
+        operations.append({
+            "id": po.id,
+            "ref": po.po_number,
+            "type": "IN",
+            "type_label": "استلام مشتريات" if request.LANGUAGE_CODE == 'ar' else "PO Receipt",
+            "owner": po.vendor.name,
+            "status": "Pending"
+        })
+    for so in pending_sos:
+        operations.append({
+            "id": so.id,
+            "ref": so.so_number,
+            "type": "OUT",
+            "type_label": "صرف مبيعات" if request.LANGUAGE_CODE == 'ar' else "SO Delivery",
+            "owner": so.customer.name,
+            "status": "Pending"
+        })
+
     return Response({
         "plants": plants_count,
         "items": items_count,
         "total_value": float(total_value),
-        "low_stock": quants.filter(quantity__lte=5).count()
+        "low_stock": quants.filter(quantity__lte=5).count(),
+        "capacity": capacity_pct,
+        "total_bins": total_bins,
+        "occupied_bins": occupied_bins,
+        "pending_operations": sorted(operations, key=lambda x: x['ref'], reverse=True)
     })
 
 # =========================================================
