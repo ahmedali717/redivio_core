@@ -71,7 +71,7 @@ createApp({
                 operations: [
                     { id: 'org_builder', name: { ar: 'بناء الهيكل', en: 'Org Builder' }, icon: 'fas fa-sitemap' },
                     // موديول واحد شامل للمخزون
-                    { id: 'inventory_module', name: { ar: 'RIMS (المخزون)', en: 'RIMS (Inventory)' }, icon: 'fas fa-boxes-stacked' },
+                    { id: 'inventory_module', name: { ar: 'RIMS (المخزون)', en: 'RIMS (Inventory)' }, icon: 'fas fa-archive' },
                     { id: 'procurement_module', name: { ar: 'RPMS (المشتريات)', en: 'RPMS (Procurement)' }, icon: 'fas fa-shopping-cart' },
                     { id: 'sales_module', name: { ar: 'إدارة المبيعات', en: 'Sales & CRM' }, icon: 'fas fa-cart-shopping' },
                     { id: 'accounting_module', name: { ar: 'المحاسبة والمالية', en: 'Accounting' }, icon: 'fas fa-file-invoice-dollar' }
