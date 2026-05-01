@@ -120,8 +120,8 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     def print_audit(self, request):
         """ توليد تقرير جرد للأصناف الحالية """
         from django.utils import timezone
-        opco_id = self._get_opco_id()
-        quants = StockQuant.objects.filter(opco_id=opco_id).select_related('material', 'storage_bin')
+        active_opco = self.get_active_opco()
+        quants = StockQuant.objects.filter(opco=active_opco).select_related('material', 'storage_bin')
         
         data = [{
             "material": q.material.name,
@@ -130,12 +130,9 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             "quantity": float(q.quantity)
         } for q in quants]
         
-        # محاولة جلب اسم الشركة
-        opco_name = OpCo.objects.get(id=opco_id).name if opco_id else "All Companies"
-        
         return Response({
             "report_date": timezone.now(),
-            "opco_name": opco_name,
+            "opco_name": active_opco.name,
             "items": data
         })
 
