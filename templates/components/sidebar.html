@@ -14,7 +14,8 @@
 
         <!-- 🚀 القائمة المتداخلة الجديدة (Nested Fly-out Menu) -->
         <div v-if="showBrandDropdown" 
-             class="absolute top-14 left-4 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] overflow-visible animate-in zoom-in-95 duration-200">
+             :class="isArabic ? 'right-4' : 'left-4'"
+             class="absolute top-14 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] overflow-visible animate-in zoom-in-95 duration-200">
             
             <div class="p-2 space-y-1">
                 <!-- قسم العمليات -->
