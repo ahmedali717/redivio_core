@@ -3,6 +3,9 @@ import { inventoryModule } from './modules/inventory.js';
 import { orgModule } from './modules/org_builder.js';
 import { itemMasterModule } from './modules/itemMaster.js';
 
+console.log("🚀 REDIVIO Core v1.0.5 Loaded");
+console.log("🌍 Current Language Mode (isArabic):", window.is_arabic);
+
 const { createApp } = Vue;
 
 createApp({
