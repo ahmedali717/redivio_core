@@ -4,24 +4,24 @@
     <!-- Header Control Bar -->
     <div class="bg-white rounded-[2rem] p-6 flex flex-col md:flex-row justify-between items-start md:items-center border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] gap-6">
         <div class="flex items-center gap-5">
-            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-purple-200 rotate-3 hover:rotate-0 transition-transform">
-                <i class="fas fa-truck-fast text-2xl"></i>
+            <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200 rotate-3 hover:rotate-0 transition-transform">
+                <i class="fas fa-shopping-cart text-2xl"></i>
             </div>
             <div>
-                <h1 class="text-3xl font-black text-slate-800 tracking-tight" v-text="isArabic ? 'إدارة المشتريات (Procurement Control)' : 'Procurement Control Center'"></h1>
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight" v-text="isArabic ? 'RPMS - لوحة التحكم' : 'RPMS Control Center'"></h1>
                 <p class="text-slate-500 text-sm font-bold uppercase tracking-wider flex items-center gap-2 mt-1">
                     <span class="flex h-2 w-2 relative">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
-                    <span v-text="isArabic ? 'تتبع الإمداد والموردين' : 'Supplier & Supply Chain Tracking'"></span>
+                    <span v-text="isArabic ? 'نظام إدارة المشتريات والتموين الذكي' : 'Redivio Procurement Management System'"></span>
                 </p>
             </div>
         </div>
         
         <!-- Quick Control Actions -->
         <div class="flex flex-wrap gap-3">
-            <button @click="openModal('po')" class="group bg-purple-50 hover:bg-purple-600 text-purple-600 hover:text-white px-5 py-3 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold tracking-wide">
+            <button @click="openModal('po')" class="group bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white px-5 py-3 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold tracking-wide">
                 <i class="fas fa-file-signature group-hover:scale-110 transition-transform"></i> <span v-text="isArabic ? 'إنشاء أمر توريد' : 'New Purchase Order'"></span>
             </button>
             <button @click="view = 'vendors_list'" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl shadow-lg transition-all flex items-center gap-2 font-bold tracking-wide">
@@ -101,11 +101,11 @@
             <div class="relative z-10 flex flex-col items-center justify-center my-8">
                 <div class="relative w-40 h-40 flex items-center justify-center rounded-full border-8 border-slate-800 bg-slate-800/50">
                     <svg class="absolute inset-0 w-full h-full -rotate-90">
-                        <circle cx="50%" cy="50%" r="48%" class="stroke-purple-500 transition-all duration-1000" stroke-width="12" fill="none" stroke-dasharray="100 100" stroke-dashoffset="65" stroke-linecap="round"></circle>
+                        <circle cx="50%" cy="50%" r="48%" class="stroke-emerald-500 transition-all duration-1000" stroke-width="12" fill="none" stroke-dasharray="100 100" stroke-dashoffset="65" stroke-linecap="round"></circle>
                     </svg>
                     <div class="text-center">
                         <span class="text-xl font-black text-white tech-font">[[ formatCurrency ? formatCurrency(85400) : '85,400' ]]</span>
-                        <p class="text-[9px] text-purple-400 font-bold uppercase mt-1">YTD Spend</p>
+                        <p class="text-[9px] text-emerald-400 font-bold uppercase mt-1">YTD Spend</p>
                     </div>
                 </div>
             </div>
@@ -158,7 +158,7 @@
                             </td>
                             <td class="py-4 text-center flex justify-center gap-2">
                                 <button v-if="po.status === 'draft'" class="opacity-0 group-hover:opacity-100 bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md hover:bg-rose-700 transition-all uppercase tracking-wider" v-text="isArabic ? 'اعتماد الطلب' : 'Validate'"></button>
-                                <button v-else-if="po.status === 'confirmed'" class="opacity-0 group-hover:opacity-100 bg-purple-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md hover:bg-purple-700 transition-all uppercase tracking-wider" v-text="isArabic ? 'استلام' : 'Receive'"></button>
+                                <button v-else-if="po.status === 'confirmed'" class="opacity-0 group-hover:opacity-100 bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md hover:bg-emerald-700 transition-all uppercase tracking-wider" v-text="isArabic ? 'استلام' : 'Receive'"></button>
                                 <button class="opacity-0 group-hover:opacity-100 bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md hover:bg-slate-200 transition-all uppercase tracking-wider" v-text="isArabic ? 'توسيع' : 'Expand'" @click="po.showDetails = !po.showDetails"></button>
                             </td>
                         </tr>

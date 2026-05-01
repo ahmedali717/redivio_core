@@ -53,10 +53,11 @@
             </a>
 
             <a href="#" @click.prevent="view = 'inventory'; getListData()" 
-               :class="view === 'inventory' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group">
-                <i class="fas fa-boxes-stacked w-5 text-center"></i>
-                <span class="font-medium text-sm">[[ isArabic ? 'إدارة المخزون' : 'Inventory' ]]</span>
+               :class="view === 'inventory' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group border-l-2"
+               :class="view === 'inventory' ? 'border-amber-400' : 'border-transparent'">
+                <i class="fas fa-boxes-stacked w-5 text-center" :class="view === 'inventory' ? 'text-white' : 'text-amber-500'"></i>
+                <span class="font-bold text-sm tracking-tight">[[ isArabic ? 'RIMS (إدارة المخزون)' : 'RIMS (Inventory)' ]]</span>
             </a>
 
             <a href="#" @click.prevent="view = 'item_master'"
@@ -67,10 +68,11 @@
             </a>
 
             <a href="#" @click.prevent="view = 'procurement_module'"
-               :class="view === 'procurement' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group">
-                <i class="fas fa-truck w-5 text-center"></i>
-                <span class="font-medium text-sm">[[ isArabic ? 'المشتريات' : 'Procurement' ]]</span>
+               :class="view === 'procurement_module' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group border-l-2"
+               :class="view === 'procurement_module' ? 'border-emerald-400' : 'border-transparent'">
+                <i class="fas fa-shopping-cart w-5 text-center" :class="view === 'procurement_module' ? 'text-white' : 'text-emerald-500'"></i>
+                <span class="font-bold text-sm tracking-tight">[[ isArabic ? 'RPMS (المشتريات)' : 'RPMS (Procurement)' ]]</span>
             </a>
         </div>
     </nav>

@@ -3,27 +3,27 @@
     <!-- Header Control Bar -->
     <div class="bg-white rounded-[2rem] p-6 flex flex-col md:flex-row justify-between items-start md:items-center border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] gap-6">
         <div class="flex items-center gap-5">
-            <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 rotate-3 hover:rotate-0 transition-transform">
+            <div class="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-200 rotate-3 hover:rotate-0 transition-transform">
                 <i class="fas fa-boxes-stacked text-2xl"></i>
             </div>
             <div>
-                <h1 class="text-3xl font-black text-slate-800 tracking-tight" v-text="isArabic ? 'لوحة تحكم المستودعات' : 'WMS Command Center'"></h1>
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight" v-text="isArabic ? 'RIMS - لوحة التحكم' : 'RIMS Command Center'"></h1>
                 <p class="text-slate-500 text-sm font-bold uppercase tracking-wider flex items-center gap-2 mt-1">
                     <span class="flex h-2 w-2 relative">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                     </span>
-                    <span v-text="isArabic ? 'مراقبة حية للمخزون' : 'Real-time Stock Monitoring'"></span>
+                    <span v-text="isArabic ? 'نظام إدارة المخزون الذكي' : 'Redivio Inventory Management System'"></span>
                 </p>
             </div>
         </div>
         
         <!-- Quick Control Actions -->
         <div class="flex flex-wrap gap-3">
-            <button @click="openModal('stock_entry')" class="group bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white px-5 py-3 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold tracking-wide">
+            <button @click="openModal('stock_entry')" class="group bg-amber-50 hover:bg-amber-600 text-amber-600 hover:text-white px-5 py-3 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold tracking-wide">
                 <i class="fas fa-truck-loading group-hover:animate-bounce"></i> <span v-text="isArabic ? 'إذن مخزني' : 'Stock Move'"></span>
             </button>
-            <button @click="openModal('material')" class="group bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white px-5 py-3 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold tracking-wide">
+            <button @click="openModal('material')" class="group bg-amber-100 hover:bg-amber-700 text-amber-700 hover:text-white px-5 py-3 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold tracking-wide">
                 <i class="fas fa-barcode group-hover:scale-110 transition-transform"></i> <span v-text="isArabic ? 'تعريف صنف' : 'New SKU'"></span>
             </button>
             <button @click="printInventoryReport()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl shadow-lg transition-all flex items-center gap-2 font-bold tracking-wide">
@@ -104,7 +104,7 @@
                 <!-- Circular Capacity Meter -->
                 <div class="relative w-40 h-40 flex items-center justify-center rounded-full border-8 border-slate-800">
                     <svg class="absolute inset-0 w-full h-full -rotate-90">
-                        <circle cx="50%" cy="50%" r="48%" class="stroke-indigo-500 transition-all duration-1000" stroke-width="12" fill="none" 
+                        <circle cx="50%" cy="50%" r="48%" class="stroke-amber-500 transition-all duration-1000" stroke-width="12" fill="none" 
                                 :stroke-dasharray="301" :stroke-dashoffset="301 - (301 * (wms_stats.capacity || 0) / 100)" stroke-linecap="round"></circle>
                     </svg>
                     <div class="text-center">
@@ -166,7 +166,7 @@
                             </td>
                             <td class="py-4 text-center">
                                 <button @click="op.type === 'IN' ? openReceiptModal(op.id) : openDeliveryModal(op.id)"
-                                        class="opacity-0 group-hover:opacity-100 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-blue-700 transition-all uppercase tracking-wider" 
+                                        class="opacity-0 group-hover:opacity-100 bg-amber-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-amber-700 transition-all uppercase tracking-wider" 
                                         v-text="isArabic ? 'اعتماد' : 'Validate'"></button>
                             </td>
                         </tr>
