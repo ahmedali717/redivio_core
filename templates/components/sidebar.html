@@ -39,7 +39,9 @@
                             <span class="text-[11px] font-bold">[[ isArabic ? 'لوحة التحكم' : 'Dashboard' ]]</span>
                         </button>
                         <button @click="view = 'inventory_module'; inventoryTab = 'levels'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-amber-600 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <i class="fas fa-archive w-5 text-center text-amber-500 group-hover/item:text-white"></i>
+                            <div class="w-5 h-5 flex items-center justify-center shrink-0">
+                                <img src="/static/brand/rims_icon.png" class="w-full h-full object-contain brightness-0 invert group-hover:brightness-100 group-hover:invert-0 transition-all" alt="RIMS">
+                            </div>
                             <span class="text-[11px] font-bold">[[ isArabic ? 'RIMS (المستودعات)' : 'RIMS (Inventory)' ]]</span>
                         </button>
                         <button @click="view = 'procurement_module'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-600 text-slate-400 hover:text-white text-left transition-all group/item">
@@ -78,7 +80,9 @@
             <a href="#" @click.prevent="inventoryTab = 'levels'" 
                :class="inventoryTab === 'levels' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
-                <i class="fas fa-archive w-6 text-center text-lg"></i>
+                <div class="w-6 h-6 flex items-center justify-center shrink-0">
+                    <img src="/static/brand/rims_icon.png" class="w-full h-full object-contain brightness-0 invert group-hover:brightness-100 group-hover:invert-0 transition-all" alt="RIMS">
+                </div>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'الأرصدة' : 'Stock Levels'"></span>
             </a>
             <a href="#" @click.prevent="inventoryTab = 'items'" 
