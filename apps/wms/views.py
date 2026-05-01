@@ -16,7 +16,6 @@ from django.apps import apps
 # Mixin & Models
 from apps.core.mixins import OpcoAwareMixin 
 from apps.core.models import OpCo
-from apps.procurement.models import PurchaseOrder
 from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
 from .serializers import (
     PlantSerializer, StorageLocationSerializer, 
