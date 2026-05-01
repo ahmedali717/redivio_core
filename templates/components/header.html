@@ -6,7 +6,9 @@
             <span v-if="['inventory', 'wms', 'inventory_module'].includes(view)" class="flex items-center justify-center">
                 <img src="/static/brand/rims_icon.png" class="w-6 h-6 object-contain" alt="RIMS">
             </span>
-            <span class="text-emerald-600" v-if="['procurement_module', 'vendors_list', 'vendor_ledger'].includes(view)"><i class="fas fa-shopping-cart"></i></span>
+            <span v-if="['procurement_module', 'vendors_list', 'vendor_ledger'].includes(view)" class="flex items-center justify-center">
+                <img src="/static/brand/rpms_icon.png" class="w-6 h-6 object-contain" alt="RPMS">
+            </span>
             <span class="text-blue-600" v-if="view === 'item_master'"><i class="fas fa-barcode"></i></span>
             <span class="text-blue-600" v-if="view === 'global_config'"><i class="fas fa-cogs"></i></span>
             
