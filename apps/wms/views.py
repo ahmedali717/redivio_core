@@ -55,14 +55,26 @@ def wms_stats(request):
     from django.db.models import Sum, F
     from django.db.models.functions import Coalesce
     
-    low_stock_count = Material.objects.filter(
+    low_stock_qs = Material.objects.filter(
         opco_id=active_opco_id,
         reorder_level__gt=0
     ).annotate(
         current_qty=Coalesce(Sum('stockquant__quantity'), Decimal('0'))
     ).filter(
         current_qty__lte=F('reorder_level')
-    ).count()
+    )
+    
+    low_stock_count = low_stock_qs.count()
+    low_stock_list = []
+    for m in low_stock_qs[:5]: # نأخذ أول 5 للتنبيهات
+        low_stock_list.append({
+            "id": m.id,
+            "sku": m.sku,
+            "name": m.name,
+            "current_qty": float(m.current_qty),
+            "reorder_level": float(m.reorder_level),
+            "max_level": float(m.max_level)
+        })
 
     # 3. حساب القيمة الإجمالية
     total_value = 0
@@ -119,6 +131,7 @@ def wms_stats(request):
         "items": items_count,
         "total_value": float(total_value),
         "low_stock": low_stock_count,
+        "low_stock_list": low_stock_list, # قائمة الأصناف للتنبيهات
         "stagnant_count": stagnant_count,
         "fulfillment_rate": fulfillment_rate,
         "capacity": capacity_pct,

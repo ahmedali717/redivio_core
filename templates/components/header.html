@@ -101,24 +101,22 @@
                         <span class="font-bold text-slate-700" v-text="isArabic ? 'الإشعارات' : 'Notifications'"></span>
                         <span class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full font-bold uppercase">2 New</span>
                     </div>
-                    <div class="max-h-80 overflow-y-auto">
-                        <div class="p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors flex gap-3 text-right" :dir="isArabic ? 'rtl' : 'ltr'">
-                            <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0"><i class="fas fa-box"></i></div>
+                        <div v-for="(n, idx) in notifications" :key="idx" 
+                             class="p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors flex gap-3 text-right" :dir="isArabic ? 'rtl' : 'ltr'">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                                 :class="n.type === 'low_stock' ? 'bg-indigo-50 text-indigo-500' : 'bg-rose-50 text-rose-500'">
+                                <i :class="n.type === 'low_stock' ? 'fas fa-box' : 'fas fa-bell'"></i>
+                            </div>
                             <div class="flex-1">
-                                <p class="text-sm text-slate-700 font-bold" v-text="isArabic ? 'انخفاض مخزون صنف' : 'Low Stock Alert'"></p>
-                                <p class="text-xs text-slate-500 mt-1 leading-relaxed" v-text="isArabic ? 'الصنف #ITEM-001 وصل للحد الأدنى المتوقع، يرجى إعادة الطلب.' : 'Item #ITEM-001 reached minimum level.'"></p>
-                                <p class="text-[10px] text-slate-400 mt-1">2 mins ago</p>
+                                <p class="text-sm text-slate-700 font-bold" v-text="n.title"></p>
+                                <p class="text-xs text-slate-500 mt-1 leading-relaxed" v-text="n.message"></p>
+                                <p class="text-[10px] text-slate-400 mt-1" v-text="n.time"></p>
                             </div>
                         </div>
-                        <div class="p-4 hover:bg-slate-50 cursor-pointer transition-colors flex gap-3 text-right" :dir="isArabic ? 'rtl' : 'ltr'">
-                            <div class="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center shrink-0"><i class="fas fa-file-invoice"></i></div>
-                            <div class="flex-1">
-                                <p class="text-sm text-slate-700 font-bold" v-text="isArabic ? 'تحديث النظام ' : 'System Alert'"></p>
-                                <p class="text-xs text-slate-500 mt-1 leading-relaxed" v-text="isArabic ? 'تم تحديث سياستك الضريبية بنجاح وتسجيل الفواتير المتبقية.' : 'System tax policies updated successfully.'"></p>
-                                <p class="text-[10px] text-slate-400 mt-1">1 hour ago</p>
-                            </div>
+                        <div v-if="notifications.length === 0" class="p-8 text-center text-slate-400 text-xs">
+                             <i class="fas fa-check-circle text-emerald-400 text-lg mb-2"></i>
+                             <p v-text="isArabic ? 'لا توجد إشعارات جديدة' : 'No new notifications'"></p>
                         </div>
-                    </div>
                     <div class="p-3 text-center border-t border-slate-100 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors text-xs font-bold text-blue-600">
                         <span v-text="isArabic ? 'عرض كل الإشعارات' : 'View All Notifications'"></span>
                     </div>

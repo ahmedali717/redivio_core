@@ -59,6 +59,7 @@ createApp({
             isArabic: window.is_arabic,
             isEditing: false,
             isAdvancedMode: false,
+            notifications: [],
 
             confirmModal: {
                 show: false,
@@ -2074,9 +2075,23 @@ createApp({
                 const res = await fetch(url);
                 if (res.ok) {
                     this.wms_stats = await res.json();
-                    // 🚀 التعديل: تحديث القيم داخل الهيكل الصحيح
                     this.kpis.inventory.total_value = this.wms_stats.total_value || 0;
                     this.kpis.inventory.critical_items = this.wms_stats.low_stock || 0;
+
+                    // 🚀 توليد الإشعارات ديناميكياً من بيانات المخزون المنخفض
+                    this.notifications = [];
+                    if (this.wms_stats.low_stock_list && this.wms_stats.low_stock_list.length > 0) {
+                        this.wms_stats.low_stock_list.forEach(item => {
+                            this.notifications.push({
+                                type: 'low_stock',
+                                title: this.isArabic ? 'انخفاض مخزون صنف' : 'Low Stock Alert',
+                                message: this.isArabic 
+                                    ? `الصنف #${item.sku} وصل للحد الأدنى (${item.current_qty})` 
+                                    : `Item #${item.sku} reached minimum level (${item.current_qty})`,
+                                time: this.isArabic ? 'الآن' : 'Now'
+                            });
+                        });
+                    }
                 }
             } catch (e) { console.error("Stats Error", e); }
         },
@@ -2137,20 +2152,62 @@ createApp({
             this.showToast(this.isArabic ? "جاري عرض الأصناف الحالية" : "Viewing Current Stock Levels", 'info');
         },
 
-        openModal(type) {
+        openModal(type, data = null) {
             this.modalType = type;
             if (type === 'stock_entry') {
-                this.activeOperation = 'manual'; // الوضع اليدوي الافتراضي
+                this.activeOperation = 'manual';
                 this.forms.stock_entry = { receipt_type: 'PURCHASE', items: [{ material_id: '', quantity: 1, unit_cost: 0 }], target_plant: '', target_location: '' };
             } else if (type === 'material') {
                 this.forms.material = { name: '', code: '', sku: '', category: '', unit: 'PCS', standard_price: 0 };
             } else if (type === 'po' || type === 'purchase_order') {
-                // 🚀 توحيد المسمى ليكون 'po' كما هو في modal.html
-                this.modalType = 'po';
-                this.forms.po = { vendor: '', po_number: `PO-${Date.now()}`, lines: [{ material: '', quantity: 1, unit_price: 0 }], tax_rate: 15, is_tax_inclusive: false };
-                this.fetchVendors(); // التأكد من جلب الموردين
+                // 🚀 التحقق من حالة النظام والموديولات المشتراة
+                const hasProcurement = this.purchasedModules && this.purchasedModules.includes('procurement');
+                if (this.systemMode === 'modular' && hasProcurement) {
+                    this.modalType = 'po';
+                    this.forms.po = { 
+                        vendor: '', 
+                        po_number: `PO-${Date.now()}`, 
+                        lines: data && data.items ? data.items : [{ material: '', quantity: 1, unit_price: 0 }], 
+                        tax_rate: 15, 
+                        is_tax_inclusive: false 
+                    };
+                    this.fetchVendors();
+                } else {
+                    // إذا كان Standalone أو لا يوجد موديول مشتريات، يفتح "إذن استلام مخزني"
+                    this.modalType = 'stock_entry';
+                    this.activeOperation = 'manual';
+                    this.forms.stock_entry = { 
+                        receipt_type: 'PURCHASE', 
+                        items: data && data.items ? data.items.map(i => ({
+                            material_id: i.material,
+                            quantity: i.quantity,
+                            unit_cost: i.unit_price
+                        })) : [{ material_id: '', quantity: 1, unit_cost: 0 }],
+                        target_plant: '', 
+                        target_location: '' 
+                    };
+                    this.showToast(this.isArabic ? "تم فتح إذن استلام (Standalone Mode)" : "Opened Stock Receipt (Standalone)", 'info');
+                }
             }
             this.showModal = true;
+        },
+
+        createPOFromLowStock() {
+            if (!this.wms_stats.low_stock_list || this.wms_stats.low_stock_list.length === 0) {
+                this.showToast(this.isArabic ? "لا توجد أصناف تحت حد الطلب" : "No items below reorder point", 'info');
+                return;
+            }
+
+            // حساب الكمية المطلوبة = الحد الأقصى - الرصيد الحالي
+            const lines = this.wms_stats.low_stock_list.map(item => ({
+                material: item.id,
+                sku: item.sku,
+                name: item.name,
+                quantity: Math.max(0, item.max_level - item.current_qty),
+                unit_price: 0
+            }));
+
+            this.openModal('purchase_order', { items: lines });
         },
         async fetchPurchaseOrders() {
             try {

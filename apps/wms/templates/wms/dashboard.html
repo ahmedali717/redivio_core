@@ -45,7 +45,7 @@
             <div class="relative z-10 mt-4">
                 <h3 class="text-4xl font-black text-red-600 tech-font" v-text="wms_stats.low_stock || 0"></h3>
                 <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'أصناف تجاوزت حد إعادة الطلب' : 'SKUs below reorder point'"></p>
-                <button @click="openModal('purchase_order')" class="mt-4 text-xs font-black text-red-600 hover:text-red-700 uppercase flex items-center gap-1 group/btn">
+                <button @click="createPOFromLowStock()" class="mt-4 text-xs font-black text-red-600 hover:text-red-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'إنشاء أمر شراء الآن' : 'Create PO Now'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
             </div>
