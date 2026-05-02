@@ -388,13 +388,14 @@ createApp({
             const entry = this.forms.stock_entry;
             if (!entry || !entry.items) return 0;
             return entry.items.reduce((sum, item) => {
-                const price = entry.receipt_type === 'PURCHASE' ? (item.unit_cost || 0) : (item.sales_price || 0);
-                return sum + ((item.quantity || 0) * price);
+                const qty = parseFloat(item.quantity) || 0;
+                const price = entry.receipt_type === 'PURCHASE' ? (parseFloat(item.unit_cost) || 0) : (parseFloat(item.sales_price) || 0);
+                return sum + (qty * price);
             }, 0);
         },
         manualMoveTaxAmount() {
             const entry = this.forms.stock_entry;
-            const rate = (entry.tax_rate || 0) / 100;
+            const rate = (parseFloat(entry.tax_rate) || 0) / 100;
             return this.manualMoveTotalBeforeTax * rate;
         },
         manualMoveGrandTotal() {

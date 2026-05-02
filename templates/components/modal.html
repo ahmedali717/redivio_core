@@ -77,10 +77,13 @@
             <div v-if="modalType === 'stock_entry'" class="space-y-6">
                 
                 <!-- 📋 Header Information Section -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-sm">
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">نوع الحركة (Move Type)</label>
-                        <select v-model="forms.stock_entry.receipt_type" class="w-full bg-white border border-slate-200 focus:border-emerald-500 p-2.5 rounded-xl font-bold text-slate-700 outline-none transition-all shadow-sm">
+                        <label class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                            <i class="fas fa-exchange-alt text-emerald-500"></i>
+                            {{ isArabic ? 'نوع العملية' : 'Move Type' }}
+                        </label>
+                        <select v-model="forms.stock_entry.receipt_type" class="w-full bg-white border border-slate-200 focus:border-emerald-500 p-3 rounded-xl font-bold text-slate-700 outline-none transition-all shadow-sm">
                             <option value="PURCHASE" v-text="isArabic ? 'إضافة (شراء)' : 'Inbound (Purchase)'"></option>
                             <option value="ISSUE" v-text="isArabic ? 'صرف (بيع / استهلاك)' : 'Outbound (Sale)'"></option>
                             <option value="TRANSFER" v-text="isArabic ? 'تحويل مخزني' : 'Internal Transfer'"></option>
@@ -88,9 +91,11 @@
                     </div>
                     
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1" 
-                               v-text="forms.stock_entry.receipt_type === 'PURCHASE' ? (isArabic ? 'طريقة الدفع' : 'Payment Method') : (isArabic ? 'طريقة التحصيل' : 'Collection Method')"></label>
-                        <select v-model="forms.stock_entry.payment_method" class="w-full bg-white border border-slate-200 focus:border-indigo-500 p-2.5 rounded-xl font-bold text-slate-700 outline-none transition-all shadow-sm">
+                        <label class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                            <i class="fas fa-wallet text-indigo-500"></i>
+                            <span v-text="forms.stock_entry.receipt_type === 'PURCHASE' ? (isArabic ? 'طريقة الدفع' : 'Payment Method') : (isArabic ? 'طريقة التحصيل' : 'Collection Method')"></span>
+                        </label>
+                        <select v-model="forms.stock_entry.payment_method" class="w-full bg-white border border-slate-200 focus:border-indigo-500 p-3 rounded-xl font-bold text-slate-700 outline-none transition-all shadow-sm">
                             <option value="CASH" v-text="isArabic ? 'كاش (نقدي)' : 'Cash'"></option>
                             <option value="BANK" v-text="isArabic ? 'تحويل بنكي / بطاقة' : 'Bank / Card'"></option>
                             <option value="CREDIT" v-text="isArabic ? 'آجل (على الحساب)' : 'Credit / On Account'"></option>
@@ -98,13 +103,18 @@
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1" v-text="isArabic ? 'المورد / العميل' : 'Vendor / Customer'"></label>
-                        <div class="flex gap-2">
-                            <select v-model="forms.stock_entry.contact_id" @change="forms.stock_entry.manual_contact_name = ''" class="flex-1 bg-white border border-slate-200 focus:border-emerald-500 p-2.5 rounded-xl font-bold text-slate-700 outline-none transition-all shadow-sm">
-                                <option value="">-- اختر من القائمة --</option>
+                        <label class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                            <i class="fas fa-user-tie text-emerald-500"></i>
+                            {{ isArabic ? 'المورد / العميل' : 'Vendor / Customer' }}
+                        </label>
+                        <div class="relative">
+                            <select v-model="forms.stock_entry.contact_id" @change="forms.stock_entry.manual_contact_name = ''" class="w-full bg-white border border-slate-200 focus:border-emerald-500 p-3 rounded-xl font-bold text-slate-700 outline-none transition-all shadow-sm">
+                                <option value="">-- {{ isArabic ? 'اختر من القائمة' : 'Select from list' }} --</option>
                                 <option v-for="c in (forms.stock_entry.receipt_type === 'PURCHASE' ? vendors : customers)" :key="c.id" :value="c.id" v-text="c.name"></option>
                             </select>
-                            <input v-if="!forms.stock_entry.contact_id" type="text" v-model="forms.stock_entry.manual_contact_name" class="flex-1 bg-white border border-slate-200 focus:border-indigo-500 p-2.5 rounded-xl font-bold text-slate-700 outline-none transition-all shadow-sm" placeholder="أو اكتب الاسم يدوياً">
+                            <div v-if="!forms.stock_entry.contact_id" class="mt-2">
+                                <input type="text" v-model="forms.stock_entry.manual_contact_name" class="w-full bg-white border border-slate-200 focus:border-indigo-500 p-3 rounded-xl font-bold text-slate-700 outline-none transition-all shadow-sm" :placeholder="isArabic ? 'أو اكتب الاسم هنا...' : 'Or type name here...'">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -159,32 +169,38 @@
                     </div>
                 </div>
 
-                <!-- 💰 Financial Summary Section -->
-                <div class="flex flex-col md:flex-row justify-between items-start gap-8 pt-4">
-                    <div class="flex-1 w-full p-6 bg-indigo-50/20 rounded-3xl border border-indigo-100/30">
-                         <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2">ملاحظات إضافية</label>
-                         <textarea class="w-full bg-white border border-indigo-50 rounded-xl p-3 outline-none focus:border-indigo-200 transition-all font-medium text-slate-600 text-xs shadow-sm" rows="2" placeholder="اكتب أي ملاحظات هنا..."></textarea>
+                <!-- 💰 Unified Financial Summary Section -->
+                <div class="flex flex-col lg:flex-row gap-6 items-stretch">
+                    <div class="flex-1 p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
+                         <label class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                             <i class="fas fa-sticky-note text-indigo-400"></i>
+                             {{ isArabic ? 'ملاحظات إضافية' : 'Additional Notes' }}
+                         </label>
+                         <textarea v-model="forms.stock_entry.reference" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:border-indigo-300 transition-all font-medium text-slate-600 text-sm" rows="3" :placeholder="isArabic ? 'اكتب أي ملاحظات أو مراجع هنا...' : 'Type any notes or references here...'"></textarea>
                     </div>
                     
-                    <div class="w-full max-w-sm space-y-4">
-                        <div class="flex justify-between items-center px-4">
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subtotal</span>
-                            <span class="text-xl font-bold text-slate-600" v-text="formatCurrency(manualMoveTotalBeforeTax)"></span>
-                        </div>
-                        <div class="flex justify-between items-center px-4">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">VAT</span>
-                                <input type="number" v-model="forms.stock_entry.tax_rate" class="w-16 bg-slate-100 border-none p-1.5 rounded-lg text-center font-black text-indigo-600 focus:ring-2 focus:ring-indigo-500/20 text-sm">
-                                <span class="text-[10px] font-black text-slate-400 font-mono">%</span>
+                    <div class="w-full lg:w-96 flex flex-col justify-between p-6 bg-slate-900 text-white rounded-3xl shadow-xl">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400 uppercase text-[10px] font-bold tracking-widest">{{ isArabic ? 'الإجمالي الفرعي' : 'Subtotal' }}</span>
+                                <span class="font-bold text-slate-100" v-text="formatCurrency(manualMoveTotalBeforeTax)"></span>
                             </div>
-                            <span class="text-xl font-bold text-indigo-600">+ <span v-text="formatCurrency(manualMoveTaxAmount)"></span></span>
-                        </div>
-                        <div class="p-6 bg-slate-900 rounded-[2rem] shadow-xl shadow-slate-200 relative overflow-hidden group">
-                            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full -mr-12 -mt-12 blur-xl"></div>
-                            <div class="flex justify-between items-center mb-1 relative">
-                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Grand Total</span>
+                            <div class="flex justify-between items-center text-sm border-t border-slate-800 pt-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-slate-400 uppercase text-[10px] font-bold tracking-widest">{{ isArabic ? 'الضريبة' : 'VAT' }}</span>
+                                    <div class="flex items-center bg-slate-800 rounded-lg px-2 py-0.5">
+                                        <input type="number" v-model="forms.stock_entry.tax_rate" class="w-10 bg-transparent text-center font-black text-indigo-400 focus:ring-0 text-[10px]">
+                                        <span class="text-[10px] font-bold text-slate-500">%</span>
+                                    </div>
+                                </div>
+                                <span class="font-bold text-emerald-400" v-text="'+ ' + formatCurrency(manualMoveTaxAmount)"></span>
                             </div>
-                            <div class="text-3xl font-black text-emerald-400 tracking-tighter font-mono relative" v-text="formatCurrency(manualMoveGrandTotal)">
+                        </div>
+                        
+                        <div class="mt-8 border-t border-slate-800 pt-6">
+                            <div class="flex justify-between items-end">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{{ isArabic ? 'الإجمالي النهائي' : 'Grand Total' }}</span>
+                                <span class="text-3xl font-black text-white tracking-tighter" v-text="formatCurrency(manualMoveGrandTotal)"></span>
                             </div>
                         </div>
                     </div>

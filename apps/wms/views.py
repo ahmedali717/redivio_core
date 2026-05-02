@@ -242,9 +242,11 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             if manual_contact_name:
                 try:
                     Vendor = apps.get_model('procurement', 'Vendor')
+                    # Use a slug-like code for manual entries
+                    manual_code = f"V-MAN-{manual_contact_name[:10].upper()}-{opco_id}"
                     vendor, _ = Vendor.objects.get_or_create(
                         opco_id=opco_id, name=manual_contact_name,
-                        defaults={'code': f'V-MANUAL-{opco_id}'}
+                        defaults={'code': manual_code}
                     )
                     reference_text = f"Receipt from {vendor.name}"
                 except Exception: reference_text = f"Receipt from {manual_contact_name}"
@@ -254,9 +256,10 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             if manual_contact_name:
                 try:
                     Customer = apps.get_model('sales', 'Customer')
+                    manual_code = f"C-MAN-{manual_contact_name[:10].upper()}-{opco_id}"
                     customer, _ = Customer.objects.get_or_create(
                         opco_id=opco_id, name=manual_contact_name,
-                        defaults={'code': f'C-MANUAL-{opco_id}'}
+                        defaults={'code': manual_code}
                     )
                     reference_text = f"Issue to {customer.name}"
                 except Exception: reference_text = f"Issue to {manual_contact_name}"
