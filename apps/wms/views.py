@@ -172,7 +172,7 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         """ جلب آخر سعر (شراء أو بيع) للصنف بناءً على نوع الحركة والشركة والطرف الثاني """
         material_id = request.query_params.get('material_id')
         move_type = request.query_params.get('move_type', 'IN')
-        opco_id = self._get_opco_id()
+        opco_id = self.get_active_opco().id
         
         if not material_id:
             return Response({"price": 0})
@@ -222,7 +222,7 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         data = request.data
-        opco_id = self._get_opco_id()
+        opco_id = self.get_active_opco().id
         
         receipt_type = data.get('receipt_type')
         move_type = data.get('move_type') or ('IN' if receipt_type == 'PURCHASE' else 'OUT' if receipt_type in ['ISSUE', 'SALE'] else 'TRANSFER')
