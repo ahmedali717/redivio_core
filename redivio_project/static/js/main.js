@@ -195,7 +195,7 @@ createApp({
                     lines: [{ material: '', quantity: 1, unit_price: 0 }]
                 },
 
-                stock_entry: { items: [], po_id: '', filterType: 'ALL', groupBy: 'none', payment_method: 'CASH' },
+                stock_entry: { items: [], po_id: '', filterType: 'ALL', groupBy: 'none', payment_method: 'CASH', tax_rate: 15 },
                 customer: { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' },
                 salesorder: {
                     id: null,
@@ -381,8 +381,25 @@ createApp({
             }
             
             return list;
-        }
+        },
 
+        // --- Manual Move Totals ---
+        manualMoveSubtotal() {
+            const entry = this.forms.stock_entry;
+            if (!entry || !entry.items) return 0;
+            return entry.items.reduce((sum, item) => {
+                const price = entry.receipt_type === 'PURCHASE' ? (item.unit_cost || 0) : (item.sales_price || 0);
+                return sum + ((item.quantity || 0) * price);
+            }, 0);
+        },
+        manualMoveTaxAmount() {
+            const entry = this.forms.stock_entry;
+            const rate = (entry.tax_rate || 0) / 100;
+            return this.manualMoveSubtotal * rate;
+        },
+        manualMoveGrandTotal() {
+            return this.manualMoveSubtotal + this.manualMoveTaxAmount;
+        }
     },
 
     watch: {
@@ -520,6 +537,7 @@ createApp({
             this.forms.stock_entry.items = [{ material_id: '', quantity: 1, unit_cost: 0, sales_price: 0 }];
             this.forms.stock_entry.po_id = '';
             this.forms.stock_entry.payment_method = 'CASH';
+            this.forms.stock_entry.tax_rate = 15;
 
             // لو العملية شراء، نجهز أوامر التوريد
             if (type === 'po_receipt') {
