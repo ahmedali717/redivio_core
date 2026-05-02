@@ -138,8 +138,8 @@
                                            class="w-full bg-emerald-50/30 border-2 border-emerald-50 focus:border-emerald-300 p-5 rounded-2xl font-black text-center text-emerald-700 outline-none transition-all shadow-sm" step="0.01">
                                 </td>
                                 <td class="p-6 text-center">
-                                    <div class="p-5 rounded-2xl bg-slate-50 font-black text-slate-900 text-lg shadow-inner">
-                                        {{ formatCurrency(manualMoveSubtotal(item)) }}
+                                    <div class="p-5 rounded-2xl bg-slate-100/50 font-black text-slate-900 text-lg shadow-inner">
+                                        <span v-text="formatCurrency(manualMoveSubtotal(item))"></span>
                                     </div>
                                 </td>
                                 <td class="p-6 text-center">
@@ -154,7 +154,7 @@
                         <button @click.prevent="forms.stock_entry.items.push({ material_id: '', quantity: 1, unit_cost: 0, sales_price: 0 })" 
                                 class="flex items-center gap-3 px-10 py-4 bg-white border-2 border-slate-200 rounded-2xl text-emerald-600 font-black text-sm uppercase tracking-widest hover:border-emerald-500 hover:text-emerald-700 transition-all shadow-sm">
                             <i class="fas fa-plus-circle text-xl"></i>
-                            {{ isArabic ? 'إضافة صنف جديد' : 'Add New Item' }}
+                            <span v-text="isArabic ? 'إضافة صنف جديد' : 'Add New Item'"></span>
                         </button>
                     </div>
                 </div>
@@ -169,7 +169,7 @@
                     <div class="w-full max-w-md space-y-6">
                         <div class="flex justify-between items-center px-6">
                             <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Subtotal</span>
-                            <span class="text-2xl font-bold text-slate-600">{{ formatCurrency(manualMoveTotalBeforeTax) }}</span>
+                            <span class="text-2xl font-bold text-slate-600" v-text="formatCurrency(manualMoveTotalBeforeTax)"></span>
                         </div>
                         <div class="flex justify-between items-center px-6">
                             <div class="flex items-center gap-3">
@@ -177,15 +177,14 @@
                                 <input type="number" v-model="forms.stock_entry.tax_rate" class="w-20 bg-slate-100 border-none p-2 rounded-xl text-center font-black text-indigo-600 focus:ring-4 focus:ring-indigo-500/20 text-lg">
                                 <span class="text-xs font-black text-slate-400 font-mono">%</span>
                             </div>
-                            <span class="text-2xl font-bold text-indigo-600">+ {{ formatCurrency(manualMoveTaxAmount) }}</span>
+                            <span class="text-2xl font-bold text-indigo-600">+ <span v-text="formatCurrency(manualMoveTaxAmount)"></span></span>
                         </div>
                         <div class="p-10 bg-slate-900 rounded-[3.5rem] shadow-2xl shadow-slate-200 relative overflow-hidden group">
                             <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
                             <div class="flex justify-between items-center mb-2 relative">
                                 <span class="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">Grand Total</span>
                             </div>
-                            <div class="text-5xl font-black text-emerald-400 tracking-tighter font-mono relative">
-                                {{ formatCurrency(manualMoveGrandTotal) }}
+                            <div class="text-5xl font-black text-emerald-400 tracking-tighter font-mono relative" v-text="formatCurrency(manualMoveGrandTotal)">
                             </div>
                         </div>
                     </div>
