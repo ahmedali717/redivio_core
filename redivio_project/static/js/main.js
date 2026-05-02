@@ -195,7 +195,7 @@ createApp({
                     lines: [{ material: '', quantity: 1, unit_price: 0 }]
                 },
 
-                stock_entry: { items: [], po_id: '' },
+                stock_entry: { items: [], po_id: '', filterType: 'ALL', groupBy: 'none' },
                 customer: { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' },
                 salesorder: {
                     id: null,
@@ -352,6 +352,37 @@ createApp({
             return this.isArabic ? current.ar : current.en;
         },
 
+        displayMoves() {
+            let list = this.inventoryMoves || [];
+            
+            // 1. Filter by Type
+            if (this.forms.stock_entry.filterType !== 'ALL') {
+                list = list.filter(m => m.move_type === this.forms.stock_entry.filterType);
+            }
+            
+            // 2. Filter by search if exists (optional but good)
+            if (this.searchQuery) {
+                const q = this.searchQuery.toLowerCase();
+                list = list.filter(m => 
+                    (m.material_name && m.material_name.toLowerCase().includes(q)) ||
+                    (m.vendor_name && m.vendor_name.toLowerCase().includes(q)) ||
+                    (m.reference && m.reference.toLowerCase().includes(q))
+                );
+            }
+            
+            // 3. Grouping logic
+            if (this.forms.stock_entry.groupBy === 'material') {
+                list = [...list].sort((a, b) => (a.material_name || '').localeCompare(b.material_name || ''));
+            } else if (this.forms.stock_entry.groupBy === 'contact') {
+                list = [...list].sort((a, b) => (a.vendor_name || '').localeCompare(b.vendor_name || ''));
+            } else {
+                // Default: Sort by date desc
+                list = [...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            }
+            
+            return list;
+        }
+
     },
 
     watch: {
@@ -379,6 +410,43 @@ createApp({
     },
 
     methods: {
+        async fetchInventoryMoves() {
+            try {
+                const url = this.activeOpcoId ? `/api/wms/moves/?opco=${this.activeOpcoId}` : '/api/wms/moves/';
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
+                }
+            } catch (e) { console.error("Moves Fetch Error", e); }
+        },
+
+        printMove(move) {
+            this.showToast(this.isArabic ? "جاري تحضير الطباعة..." : "Preparing Print...", "info");
+            window.open(`/api/wms/moves/${move.id}/print/`, '_blank');
+        },
+
+        editMove(move) {
+            this.isEditing = true;
+            this.modalType = 'stock_entry';
+            this.activeOperation = 'manual';
+            this.forms.stock_entry = {
+                id: move.id,
+                receipt_type: move.move_type === 'IN' ? 'PURCHASE' : 'SALE',
+                items: [{ 
+                    material_id: move.material, 
+                    material_name: move.material_name,
+                    quantity: move.quantity, 
+                    unit_cost: 0 
+                }],
+                bin_id: move.dest_bin || move.source_bin || '',
+                contact_id: move.vendor || '',
+                manual_contact_name: move.vendor_name || '',
+                reference: move.reference
+            };
+            this.showModal = true;
+        },
+
         formatCurrency(value) {
             return new Intl.NumberFormat(this.isArabic ? 'ar-SA' : 'en-US', {
                 style: 'currency',
@@ -1861,7 +1929,8 @@ createApp({
                     this.getListData(),
                     this.fetchWMSStats(),
                     this.fetchMaterialsList(),
-                    this.fetchPurchaseOrders()
+                    this.fetchPurchaseOrders(),
+                    this.fetchInventoryMoves()
                 ]);
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {
