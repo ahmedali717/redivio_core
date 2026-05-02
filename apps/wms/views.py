@@ -194,7 +194,6 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             
         location_id = self.request.query_params.get('location_id')
         if location_id and location_id.strip():
-            # إذا تم تحديد موقع، نفلتر الحركات الصادرة (source) أو الواردة (dest) المرتبطة بهذا الموقع
             queryset = queryset.filter(
                 models.Q(source_bin__storage_location_id=location_id) | 
                 models.Q(dest_bin__storage_location_id=location_id)
@@ -207,8 +206,47 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         date_to = self.request.query_params.get('date_to')
         if date_to:
             queryset = queryset.filter(created_at__date__lte=date_to)
-            
+
+        contact_id = self.request.query_params.get('contact_id')
+        if contact_id:
+            queryset = queryset.filter(
+                models.Q(customer_id=contact_id) | 
+                models.Q(vendor_id=contact_id)
+            )
+
         return queryset
+
+    @action(detail=False, methods=['get'])
+    def by_contact(self, request):
+        """ تجميع الحركات حسب العميل/المورد """
+        from django.db.models import Sum, Count, Q
+        active_opco_id = self._get_opco_id()
+        if not active_opco_id:
+            return Response({"error": "OpCo ID required"}, status=400)
+
+        # تجميع حركات الصادر (OUT) للعملاء
+        customers = StockMove.objects.filter(
+            opco_id=active_opco_id, customer__isnull=False, move_type='OUT'
+        ).values('customer_id', 'customer__name').annotate(
+            total_qty=Sum('quantity'),
+            total_value=Sum(models.F('quantity') * models.F('sales_price')),
+            move_count=Count('id')
+        )
+
+        # تجميع حركات الوارد (IN) من الموردين
+        vendors = StockMove.objects.filter(
+            opco_id=active_opco_id, vendor__isnull=False, move_type='IN'
+        ).values('vendor_id', 'vendor__name').annotate(
+            total_qty=Sum('quantity'),
+            total_value=Sum(models.F('quantity') * models.F('unit_cost')),
+            move_count=Count('id')
+        )
+
+        return Response({
+            "customers": list(customers),
+            "vendors": list(vendors)
+        })
+
 
     @action(detail=False, methods=['get'])
     def last_price(self, request):

@@ -196,7 +196,17 @@ createApp({
                     lines: [{ material: '', quantity: 1, unit_price: 0 }]
                 },
 
-                stock_entry: { items: [], po_id: '', filterType: 'ALL', groupBy: 'none', payment_method: 'CASH', tax_rate: 15 },
+                stock_entry: { 
+                    items: [], 
+                    po_id: '', 
+                    filterType: 'ALL', 
+                    groupBy: 'none', 
+                    payment_method: 'CASH', 
+                    tax_rate: 15,
+                    date_from: '',
+                    date_to: '',
+                    contact_search: ''
+                },
                 customer: { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' },
                 salesorder: {
                     id: null,
@@ -355,33 +365,88 @@ createApp({
 
         displayMoves() {
             let list = this.inventoryMoves || [];
+            const filters = this.forms.stock_entry;
             
-            // 1. Filter by Type
-            if (this.forms.stock_entry.filterType !== 'ALL') {
-                list = list.filter(m => m.move_type === this.forms.stock_entry.filterType);
+            // 1. Filter by Type (Receipts/Issues)
+            if (filters.filterType !== 'ALL') {
+                list = list.filter(m => m.move_type === filters.filterType);
             }
             
-            // 2. Filter by search if exists (optional but good)
+            // 2. Filter by Date Range
+            if (filters.date_from) {
+                list = list.filter(m => m.created_at.split('T')[0] >= filters.date_from);
+            }
+            if (filters.date_to) {
+                list = list.filter(m => m.created_at.split('T')[0] <= filters.date_to);
+            }
+
+            // 3. Filter by Contact Search
+            if (filters.contact_search) {
+                const q = filters.contact_search.toLowerCase();
+                list = list.filter(m => 
+                    (m.vendor_name && m.vendor_name.toLowerCase().includes(q)) ||
+                    (m.customer_name && m.customer_name.toLowerCase().includes(q))
+                );
+            }
+
+            // 4. Filter by Global Search
             if (this.searchQuery) {
                 const q = this.searchQuery.toLowerCase();
                 list = list.filter(m => 
                     (m.material_name && m.material_name.toLowerCase().includes(q)) ||
-                    (m.vendor_name && m.vendor_name.toLowerCase().includes(q)) ||
                     (m.reference && m.reference.toLowerCase().includes(q))
                 );
             }
             
-            // 3. Grouping logic
-            if (this.forms.stock_entry.groupBy === 'material') {
+            // 5. Grouping/Sorting logic
+            if (filters.groupBy === 'material') {
                 list = [...list].sort((a, b) => (a.material_name || '').localeCompare(b.material_name || ''));
-            } else if (this.forms.stock_entry.groupBy === 'contact') {
-                list = [...list].sort((a, b) => (a.vendor_name || '').localeCompare(b.vendor_name || ''));
+            } else if (filters.groupBy === 'contact') {
+                list = [...list].sort((a, b) => (a.vendor_name || a.customer_name || '').localeCompare(b.vendor_name || b.customer_name || ''));
             } else {
-                // Default: Sort by date desc
                 list = [...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             }
             
             return list;
+        },
+
+        contactAggregates() {
+            const list = this.inventoryMoves || [];
+            const aggregates = {};
+
+            list.forEach(m => {
+                const contactId = m.customer || m.vendor;
+                const contactName = m.vendor_name || (m.customer_name) || (m.customer ? this.customers.find(c => c.id === m.customer)?.name : null) || 'Unknown';
+                
+                if (!contactId && !m.vendor_name) return;
+
+                const key = contactId ? `id_${contactId}` : `name_${m.vendor_name}`;
+                if (!aggregates[key]) {
+                    aggregates[key] = {
+                        name: contactName,
+                        id: contactId,
+                        in_qty: 0,
+                        out_qty: 0,
+                        total_qty: 0,
+                        total_value: 0,
+                        move_count: 0
+                    };
+                }
+
+                const qty = parseFloat(m.quantity) || 0;
+                if (m.move_type === 'IN') {
+                    aggregates[key].in_qty += qty;
+                    aggregates[key].total_qty += qty;
+                    aggregates[key].total_value += (qty * (parseFloat(m.unit_cost) || 0));
+                } else {
+                    aggregates[key].out_qty += qty;
+                    aggregates[key].total_qty -= qty;
+                    aggregates[key].total_value += (qty * (parseFloat(m.sales_price) || 0));
+                }
+                aggregates[key].move_count++;
+            });
+
+            return Object.values(aggregates).sort((a, b) => b.total_value - a.total_value);
         },
 
         // --- Manual Move Totals ---
@@ -1970,7 +2035,9 @@ createApp({
                     this.fetchWMSStats(),
                     this.fetchMaterialsList(),
                     this.fetchPurchaseOrders(),
-                    this.fetchInventoryMoves()
+                    this.fetchInventoryMoves(),
+                    this.fetchCustomers(),
+                    this.fetchVendors()
                 ]);
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {
@@ -2189,7 +2256,7 @@ createApp({
                     bin_id: '', contact_id: '', manual_contact_name: '' 
                 };
             } else if (type === 'po' || type === 'purchase_order') {
-                const hasProcurement = this.purchasedModules && this.purchasedModules.includes('procurement');
+                const hasProcurement = this.purchasedModules && (this.purchasedModules.includes('procurement') || this.purchasedModules.includes('proc'));
                 if (this.systemMode === 'modular' && hasProcurement) {
                     this.modalType = 'po';
                     this.forms.po = { 

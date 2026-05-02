@@ -45,6 +45,30 @@
         </div>
     </div>
 
+    <!-- Filter Bar -->
+    <div class="px-8 py-4 bg-white border-b border-slate-100 flex flex-wrap items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200/60">
+            <i class="fas fa-calendar-alt text-slate-400 text-xs"></i>
+            <input type="date" v-model="forms.stock_entry.date_from" 
+                   class="bg-transparent text-[11px] font-bold outline-none text-slate-600 w-28">
+            <span class="text-slate-300">|</span>
+            <input type="date" v-model="forms.stock_entry.date_to" 
+                   class="bg-transparent text-[11px] font-bold outline-none text-slate-600 w-28">
+        </div>
+
+        <div class="flex-1 relative min-w-[200px]">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
+            <input type="text" v-model="forms.stock_entry.contact_search" 
+                   :placeholder="isArabic ? 'بحث باسم العميل أو المورد...' : 'Search by contact...'"
+                   class="w-full bg-slate-50 border border-slate-200/60 rounded-xl py-2.5 pl-10 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all">
+        </div>
+
+        <button @click="forms.stock_entry.date_from = ''; forms.stock_entry.date_to = ''; forms.stock_entry.contact_search = ''"
+                class="text-[10px] font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest px-2">
+            [[ isArabic ? 'مسح الفلاتر' : 'Clear' ]]
+        </button>
+    </div>
+
     <!-- Stats Row (Filterable) -->
     <div class="grid grid-cols-3 gap-4 px-8 py-5 shrink-0 bg-slate-50/30">
         <div @click="forms.stock_entry.filterType = 'IN'"
@@ -95,7 +119,41 @@
             </button>
         </div>
 
-        <!-- Moves List -->
+        <!-- Aggregation View (By Contact) -->
+        <div v-if="forms.stock_entry.groupBy === 'contact'" class="animate-in fade-in zoom-in-95 duration-500">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <table class="w-full text-right" :dir="isArabic ? 'rtl' : 'ltr'">
+                    <thead class="bg-slate-50/80 border-b border-slate-100">
+                        <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <th class="px-6 py-4">[[ isArabic ? 'الجهة (العميل/المورد)' : 'Contact' ]]</th>
+                            <th class="px-6 py-4 text-center">[[ isArabic ? 'عمليات' : 'Moves' ]]</th>
+                            <th class="px-6 py-4 text-center text-emerald-600">[[ isArabic ? 'إجمالي الوارد' : 'Total In' ]]</th>
+                            <th class="px-6 py-4 text-center text-rose-600">[[ isArabic ? 'إجمالي الصادر' : 'Total Out' ]]</th>
+                            <th class="px-6 py-4 text-center bg-slate-100/50">[[ isArabic ? 'الرصيد / القيمة' : 'Net / Value' ]]</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        <tr v-for="agg in contactAggregates" :key="agg.id || agg.name" class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="font-black text-slate-800">[[ agg.name ]]</div>
+                                <div class="text-[8px] text-slate-400 uppercase tracking-wider">Contact ID: [[ agg.id || 'N/A' ]]</div>
+                            </td>
+                            <td class="px-6 py-4 text-center font-bold text-slate-500">[[ agg.move_count ]]</td>
+                            <td class="px-6 py-4 text-center font-black text-emerald-600">+[[ agg.in_qty ]]</td>
+                            <td class="px-6 py-4 text-center font-black text-rose-600">-[[ agg.out_qty ]]</td>
+                            <td class="px-6 py-4 text-center bg-slate-50/50">
+                                <div class="font-black" :class="agg.total_qty >= 0 ? 'text-emerald-700' : 'text-rose-700'">
+                                    [[ agg.total_qty ]]
+                                </div>
+                                <div class="text-[10px] font-bold text-slate-400">[[ (agg.total_value).toLocaleString() ]] [[ activeOpco.currency ]]</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Moves List (Default / By Item) -->
         <div v-else class="space-y-3 pb-8">
             <div v-for="move in displayMoves" 
                  :key="move.id"
@@ -126,7 +184,7 @@
                     </div>
                     <p class="text-[11px] text-slate-500 font-bold mt-1 flex items-center gap-1.5">
                         <i class="fas fa-user-circle text-slate-300"></i>
-                        <span v-text="move.vendor_name || (isArabic ? 'بدون طرف' : 'No Contact')"></span>
+                        <span v-text="move.vendor_name || move.customer_name || (isArabic ? 'بدون طرف' : 'No Contact')"></span>
                         <span class="text-slate-200 mx-1">|</span>
                         <i class="fas fa-file-invoice text-slate-300"></i>
                         <span v-text="move.reference || '---'"></span>

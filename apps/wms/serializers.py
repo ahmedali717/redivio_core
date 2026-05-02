@@ -77,14 +77,15 @@ class StockMoveSerializer(serializers.ModelSerializer):
     # لمنع خطأ ImproperlyConfigured
     receipt_type = serializers.CharField(required=False, allow_blank=True, write_only=True)
     receipt_id = serializers.SerializerMethodField()
+    customer_name = serializers.CharField(source='customer.name', read_only=True)
 
     class Meta:
         model = StockMove
         fields = [
             'id', 'created_at', 'items', 'move_type', 'receipt_type', 'opco', 'reference', 
-            'vendor_name', 'payment_term', 'payment_method', 'dest_bin', 'source_bin',
+            'vendor_name', 'customer_name', 'payment_term', 'payment_method', 'dest_bin', 'source_bin',
             'material_name', 'source_loc', 'dest_loc', 'material', 'quantity', 'receipt_id',
-            'unit_cost', 'sales_price'
+            'unit_cost', 'sales_price', 'vendor', 'customer'
         ]
         extra_kwargs = {
             'material': {'required': False, 'allow_null': True},
@@ -124,6 +125,7 @@ class StockMoveSerializer(serializers.ModelSerializer):
             'move_type': validated_data.get('move_type'),
             'reference': validated_data.get('reference', 'MANUAL'),
             'vendor_name': validated_data.get('vendor_name', ""),
+            'customer_name': validated_data.get('customer_name', ""),
             'payment_term': validated_data.get('payment_term', "CASH"),
             'payment_method': validated_data.get('payment_method', "CASH"),
             'opco': validated_data.get('opco'),
