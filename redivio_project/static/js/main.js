@@ -452,17 +452,18 @@ createApp({
                 id: move.id,
                 receipt_type: move.move_type === 'IN' ? 'PURCHASE' : 'ISSUE',
                 items: [{ 
-                    material_id: move.material, 
+                    material_id: move.material_id || move.material, 
                     material_name: move.material_name,
-                    quantity: move.quantity, 
-                    unit_cost: move.unit_cost || 0,
-                    sales_price: move.sales_price || 0
+                    quantity: parseFloat(move.quantity) || 0, 
+                    unit_cost: parseFloat(move.unit_cost) || 0,
+                    sales_price: parseFloat(move.sales_price) || 0
                 }],
                 bin_id: move.dest_bin || move.source_bin || '',
-                contact_id: move.vendor || '',
+                contact_id: (move.vendor && typeof move.vendor === 'object') ? move.vendor.id : (move.vendor || ''),
                 manual_contact_name: move.vendor_name || '',
-                reference: move.reference,
-                payment_method: move.payment_method || 'CASH'
+                reference: move.reference || '',
+                payment_method: move.payment_method || 'CASH',
+                tax_rate: parseFloat(move.tax_rate) || 15
             };
             this.showModal = true;
         },
@@ -1790,14 +1791,7 @@ createApp({
             else if (type === 'customer') url = isEdit ? `/api/customers/${id}/` : `/api/customers/`;
             else if (type === 'delivery') url = '/api/stock-deliveries/';
             else if (type === 'stock_entry') {
-                // Route to receipts or deliveries depending on move type
-                if (this.forms.stock_entry.receipt_type === 'PURCHASE') {
-                    url = '/api/stock-receipts/';
-                } else if (this.forms.stock_entry.receipt_type === 'ISSUE') {
-                    url = '/api/stock-deliveries/';
-                } else {
-                    url = '/api/wms/moves/'; // Fallback for transfer
-                }
+                url = '/api/wms/moves/';
             }
 
             try {

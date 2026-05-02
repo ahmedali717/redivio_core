@@ -141,12 +141,12 @@
                                     </select>
                                 </td>
                                 <td class="p-3 text-center">
-                                    <input type="number" v-model="item.quantity" class="w-full bg-white border border-slate-100 focus:border-emerald-200 p-2.5 rounded-xl font-black text-center text-slate-800 outline-none transition-all" step="0.01">
+                                    <input type="number" v-model.number="item.quantity" class="w-full bg-white border border-slate-100 focus:border-emerald-200 p-2.5 rounded-xl font-black text-center text-slate-800 outline-none transition-all" step="0.01">
                                 </td>
                                 <td class="p-3 text-center">
-                                    <input v-if="forms.stock_entry.receipt_type === 'PURCHASE'" type="number" v-model="item.unit_cost" 
+                                    <input v-if="forms.stock_entry.receipt_type === 'PURCHASE'" type="number" v-model.number="item.unit_cost" 
                                            class="w-full bg-emerald-50/20 border border-emerald-100 focus:border-emerald-300 p-2.5 rounded-xl font-black text-center text-emerald-700 outline-none transition-all" step="0.01">
-                                    <input v-else type="number" v-model="item.sales_price" 
+                                    <input v-else type="number" v-model.number="item.sales_price" 
                                            class="w-full bg-emerald-50/20 border border-emerald-100 focus:border-emerald-300 p-2.5 rounded-xl font-black text-center text-emerald-700 outline-none transition-all" step="0.01">
                                 </td>
                                 <td class="p-3 text-center">
@@ -191,7 +191,7 @@
                                 <div class="flex items-center gap-2">
                                     <span class="text-slate-400 uppercase text-[10px] font-bold tracking-widest" v-text="isArabic ? 'الضريبة' : 'VAT'"></span>
                                     <div class="flex items-center bg-slate-800 rounded-lg px-2 py-0.5">
-                                        <input type="number" v-model="forms.stock_entry.tax_rate" class="w-10 bg-transparent text-center font-black text-indigo-400 focus:ring-0 text-[10px]">
+                                        <input type="number" v-model.number="forms.stock_entry.tax_rate" class="w-10 bg-transparent text-center font-black text-indigo-400 focus:ring-0 text-[10px]">
                                         <span class="text-[10px] font-bold text-slate-500">%</span>
                                     </div>
                                 </div>
