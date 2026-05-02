@@ -66,8 +66,18 @@
          x-transition:leave-end="opacity-0 scale-90" 
          class="absolute inset-0 flex flex-col items-center justify-center z-20 text-center px-4">
         
-        <h2 class="text-4xl font-bold text-white mb-2 tech-font">Select Modules</h2>
-        <p class="text-slate-400 mb-10">Choose the components to integrate.</p>
+        <h2 class="text-4xl font-bold text-white mb-2 tech-font">System Architecture</h2>
+        <p class="text-slate-400 mb-6">Choose your deployment model and components.</p>
+
+        <!-- System Mode Toggle -->
+        <div class="flex items-center gap-2 mb-10 bg-slate-900/60 p-2 rounded-xl border border-slate-700 w-fit mx-auto backdrop-blur-md">
+            <button @click="setMode('standalone')" :class="systemMode === 'standalone' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:text-white'" class="px-6 py-2 rounded-lg font-bold transition-all text-sm flex items-center gap-2">
+                <i class="fas fa-cube"></i> Stand Alone Module
+            </button>
+            <button @click="setMode('modular')" :class="systemMode === 'modular' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:text-white'" class="px-6 py-2 rounded-lg font-bold transition-all text-sm flex items-center gap-2">
+                <i class="fas fa-cubes"></i> Full ERP Package
+            </button>
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12 max-w-6xl w-full">
             <template x-for="mod in availableModules" :key="mod.id">
@@ -118,6 +128,7 @@
     function moduleBuilder() {
         return {
             phase: 'selection',
+            systemMode: 'modular',
             selectedModules: ['wms', 'sales'], 
             availableModules: [
                 {id: 'wms', name: 'WMS', icon: 'fas fa-warehouse', color: '#f59e0b', desc: 'Inventory'},
@@ -127,13 +138,34 @@
             ],
 
             isSelected(id) { return this.selectedModules.includes(id); },
+            
+            setMode(mode) {
+                this.systemMode = mode;
+                if (mode === 'standalone' && this.selectedModules.length > 1) {
+                    // Keep only the first selected module
+                    this.selectedModules = [this.selectedModules[0]];
+                }
+            },
+
             toggleModule(id) {
-                if (this.isSelected(id)) this.selectedModules = this.selectedModules.filter(m => m !== id);
-                else this.selectedModules.push(id);
+                if (this.isSelected(id)) {
+                    // Prevent deselecting if it's the only one left
+                    if (this.selectedModules.length > 1) {
+                        this.selectedModules = this.selectedModules.filter(m => m !== id);
+                    }
+                } else {
+                    if (this.systemMode === 'standalone') {
+                        // Only one module allowed, replace current
+                        this.selectedModules = [id];
+                    } else {
+                        this.selectedModules.push(id);
+                    }
+                }
             },
 
             startAssembly() {
                 localStorage.setItem('selectedModules', JSON.stringify(this.selectedModules));
+                localStorage.setItem('systemMode', this.systemMode);
                 this.phase = 'assembly';
                 this.$nextTick(() => this.runAnimation());
             },

@@ -102,15 +102,17 @@
                     <div><label class="text-xs text-slate-400 mb-1 block">Phone Number</label><input type="tel" x-model="form.phone" class="input-field" placeholder="+966 5X XXX XXXX"></div>
                 </div>
                 <div class="mb-4"><label class="text-xs text-slate-400 mb-1 block">Company Name</label><input type="text" x-model="form.company" class="input-field" placeholder="Company Name"></div>
-                <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="text-xs text-slate-400 mb-1 block">Industry</label>
                         <select x-model="form.industry" class="input-field">
-                            <option value="">Select</option><option value="Retail">Retail</option><option value="Tech">Technology</option><option value="Logistics">Logistics</option>
+                            <option value="">Select</option><option value="Retail">Retail</option><option value="Tech">Technology</option><option value="Logistics">Logistics</option><option value="Manufacturing">Manufacturing</option><option value="Construction">Construction</option>
                         </select>
                     </div>
-                    <div><label class="text-xs text-slate-400 mb-1 block">Password</label><input type="password" x-model="form.password" class="input-field" placeholder="••••••••"></div>
+                    <div><label class="text-xs text-slate-400 mb-1 block">Workspace ID (Database)</label><input type="text" x-model="form.database_name" class="input-field" placeholder="mycompany_db"></div>
                 </div>
+                <div class="mb-6"><label class="text-xs text-slate-400 mb-1 block">Password</label><input type="password" x-model="form.password" class="input-field" placeholder="••••••••"></div>
+
                 
                 <div class="mb-8">
                     <div class="flex items-center gap-3 cursor-pointer group select-none" @click="form.agree = !form.agree">
@@ -134,7 +136,7 @@
     function signupForm() {
         return {
             loading: false,
-            form: { name: '', email: '', phone: '', company: localStorage.getItem('companyName') || '', industry: '', password: '', agree: false },
+            form: { name: '', email: '', phone: '', company: localStorage.getItem('companyName') || '', industry: '', database_name: '', password: '', agree: false },
             submitForm() {
                 this.loading = true;
                 localStorage.setItem('signupData', JSON.stringify(this.form));

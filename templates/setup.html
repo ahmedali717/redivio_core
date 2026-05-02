@@ -59,13 +59,16 @@
                 // 1. تجميع البيانات من المراحل السابقة
                 const signupData = JSON.parse(localStorage.getItem('signupData') || '{}');
                 const selectedModules = JSON.parse(localStorage.getItem('selectedModules') || '[]');
+                const systemMode = localStorage.getItem('systemMode') || 'modular';
 
                 const payload = {
-                    ...signupData,          // name, email, password, phone, company, industry
+                    ...signupData,          // name, email, password, phone, company, industry, database_name
                     modules: selectedModules, // ['wms', 'sales', ...]
+                    system_mode: systemMode,
                     currency: this.currency,
                     fiscal_year: this.fiscalYear
                 };
+
 
                 // 2. محاكاة خطوات التسطيب (للعرض فقط)
                 const steps = ["Creating database schema...", "Configuring modules...", "Setting currency rates...", "Finalizing..."];
