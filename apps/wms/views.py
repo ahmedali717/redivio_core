@@ -46,11 +46,25 @@ def wms_stats(request):
         })
     
     # 1. الإحصائيات الأساسية
+    Material = apps.get_model('item_master', 'Material')
     quants = StockQuant.objects.filter(opco_id=active_opco_id)
     plants_count = Plant.objects.filter(opco_id=active_opco_id).count()
     items_count = quants.values('material_id').distinct().count()
+
+    # 2. حساب الأصناف الحرجة (Low Stock based on reorder_level)
+    from django.db.models import Sum, F
+    from django.db.models.functions import Coalesce
     
-    # 2. حساب القيمة الإجمالية
+    low_stock_count = Material.objects.filter(
+        opco_id=active_opco_id,
+        reorder_level__gt=0
+    ).annotate(
+        current_qty=Coalesce(Sum('stockquant__quantity'), Decimal('0'))
+    ).filter(
+        current_qty__lte=F('reorder_level')
+    ).count()
+
+    # 3. حساب القيمة الإجمالية
     total_value = 0
     try:
         agg = quants.annotate(
@@ -59,29 +73,28 @@ def wms_stats(request):
         total_value = agg['total'] if agg['total'] is not None else 0
     except Exception: total_value = 0
         
-    # 3. حساب نسبة الإشغال (Capacity)
+    # 4. حساب نسبة الإشغال (Capacity)
     total_bins = StorageBin.objects.filter(storage_location__plant__opco_id=active_opco_id).count()
     occupied_bins = quants.filter(quantity__gt=0).values('storage_bin').distinct().count()
     capacity_pct = int((occupied_bins / total_bins * 100)) if total_bins > 0 else 0
 
-    # 4. الأصناف الراكدة (Stagnant Items > 90 days)
+    # 5. الأصناف الراكدة (Stagnant Items > 90 days)
     from django.utils import timezone
     from datetime import timedelta
     ninety_days_ago = timezone.now() - timedelta(days=90)
     
-    # المواد التي لم يتم عمل أي حركة عليها في آخر 90 يوم
     stagnant_count = items_count - StockMove.objects.filter(
         opco_id=active_opco_id, created_at__gte=ninety_days_ago
     ).values('material_id').distinct().count()
     stagnant_count = max(0, stagnant_count)
 
-    # 5. معدل التلبية (Fulfillment Rate)
+    # 6. معدل التلبية (Fulfillment Rate)
     SalesOrder = apps.get_model('sales', 'SalesOrder')
     total_sos = SalesOrder.objects.filter(opco_id=active_opco_id).exclude(status='CANCELLED').count()
     shipped_sos = SalesOrder.objects.filter(opco_id=active_opco_id, status__in=['SHIPPED', 'DELIVERED']).count()
     fulfillment_rate = round((shipped_sos / total_sos * 100), 1) if total_sos > 0 else 0
 
-    # 6. طابور العمليات (Operations Queue)
+    # 7. طابور العمليات (Operations Queue)
     PurchaseOrder = apps.get_model('procurement', 'PurchaseOrder')
     pending_pos = PurchaseOrder.objects.filter(opco_id=active_opco_id, status='CONFIRMED').order_by('-created_at')[:5]
     pending_sos = SalesOrder.objects.filter(opco_id=active_opco_id, status='CONFIRMED').order_by('-created_at')[:5]
@@ -105,7 +118,7 @@ def wms_stats(request):
         "plants": plants_count,
         "items": items_count,
         "total_value": float(total_value),
-        "low_stock": quants.filter(quantity__lte=5).count(),
+        "low_stock": low_stock_count,
         "stagnant_count": stagnant_count,
         "fulfillment_rate": fulfillment_rate,
         "capacity": capacity_pct,
