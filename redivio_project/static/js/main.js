@@ -21,6 +21,10 @@ createApp({
             showBrandDropdown: false,
             showActivityLog: false,
             showNotificationsDropdown: false,
+            
+            // SaaS Configurations
+            systemMode: 'modular',
+            purchasedModules: [],
 
             // 🚀 التعديل الأول: ضيف السطرين دول هنا بالظبط
             showQtyModal: false,
@@ -1873,6 +1877,32 @@ createApp({
                         companyName: data.holding_name,
                         isExpired: data.days_remaining <= 0
                     };
+                    
+                    this.systemMode = data.system_mode || 'modular';
+                    this.purchasedModules = data.purchased_modules || [];
+                    
+                    // Filter Sidebar based on purchased modules
+                    if (this.purchasedModules.length > 0) {
+                        this.sidebarGroups.operations = this.sidebarGroups.operations.filter(mod => {
+                            if (mod.id === 'org_builder') return true; // Always allow Org Builder
+                            // Map sidebar ID to setup module ID
+                            const idMap = {
+                                'inventory_module': 'wms',
+                                'procurement_module': 'proc',
+                                'sales_module': 'sales',
+                                'accounting_module': 'sales' // Assuming accounting belongs to sales suite
+                            };
+                            return this.purchasedModules.includes(idMap[mod.id] || mod.id);
+                        });
+                    }
+                    
+                    // If Stand Alone, jump directly to the single module and skip Executive Command Center
+                    if (this.systemMode === 'standalone') {
+                        const defaultModule = this.sidebarGroups.operations.find(m => m.id !== 'org_builder');
+                        if (defaultModule) {
+                            this.view = defaultModule.id;
+                        }
+                    }
 
                     await this.fetchAll();
                     this.activeOpcoId = data.company_id || (this.allOpcos[0] ? this.allOpcos[0].id : null);

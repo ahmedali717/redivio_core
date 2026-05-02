@@ -132,7 +132,9 @@ class CheckAuthAPI(APIView):
             "days_remaining": days_remaining,
             "header_opcos": header_opcos,
             "is_superuser": request.user.is_superuser,
-            "role": 'Admin' if request.user.is_superuser else 'Manager'
+            "role": 'Admin' if request.user.is_superuser else 'Manager',
+            "system_mode": holding_opco.system_mode if holding_opco else 'modular',
+            "purchased_modules": holding_opco.purchased_modules if holding_opco else []
         })
 
 class LoginAPI(APIView):
