@@ -43,7 +43,7 @@
                 <span class="text-[10px] font-black text-red-600 uppercase tracking-widest bg-white/80 px-2 py-1 rounded-md border border-red-100">Action Required</span>
             </div>
             <div class="relative z-10 mt-4">
-                <h3 class="text-4xl font-black text-red-600 tech-font" v-text="kpis.low_stock_count || 3"></h3>
+                <h3 class="text-4xl font-black text-red-600 tech-font" v-text="wms_stats.low_stock || 0"></h3>
                 <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'أصناف تجاوزت حد إعادة الطلب' : 'SKUs below reorder point'"></p>
                 <button @click="openModal('purchase_order')" class="mt-4 text-xs font-black text-red-600 hover:text-red-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'إنشاء أمر شراء الآن' : 'Create PO Now'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
@@ -59,7 +59,7 @@
                 <span class="text-[10px] font-black text-amber-600 uppercase tracking-widest bg-white/80 px-2 py-1 rounded-md border border-amber-100">Review</span>
             </div>
             <div class="relative z-10 mt-4">
-                <h3 class="text-4xl font-black text-amber-600 tech-font" v-text="12"></h3>
+                <h3 class="text-4xl font-black text-amber-600 tech-font" v-text="wms_stats.stagnant_count || 0"></h3>
                 <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'أصناف راكدة لأكثر من 90 يوم' : 'Stagnant items > 90 days'"></p>
                 <button @click="viewStagnantStock()" class="mt-4 text-xs font-black text-amber-600 hover:text-amber-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'مراجعة الأصناف الراكدة' : 'Review Stagnant SKUs'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
@@ -76,7 +76,7 @@
             </div>
             <div class="relative z-10 mt-4">
                 <div class="flex items-end gap-1">
-                    <h3 class="text-4xl font-black text-emerald-600 tech-font">98.5</h3><span class="text-xl font-bold text-emerald-600 mb-1">%</span>
+                    <h3 class="text-4xl font-black text-emerald-600 tech-font" v-text="wms_stats.fulfillment_rate || 0"></h3><span class="text-xl font-bold text-emerald-600 mb-1">%</span>
                 </div>
                 <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'معدل تلبية أوامر المبيعات' : 'Order Fulfillment Rate'"></p>
                 <p class="mt-4 text-xs font-black text-slate-500 uppercase flex items-center gap-1">

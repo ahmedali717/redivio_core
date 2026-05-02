@@ -20,8 +20,12 @@ from .serializers import (
 # =========================================================
 class OpcoAwareMixin:
     def _get_opco_id(self):
-        # بنحاول نجيب الـ ID من الرابط، لو مفيش بنجيبه من الجلسة (Session)
-        return self.request.query_params.get('opco') or self.request.session.get('active_opco_id')
+        # 1. Check Query Params
+        # 2. Check Request Data (JSON/FormData)
+        # 3. Check Session
+        return (self.request.query_params.get('opco') or 
+                self.request.data.get('opco') or 
+                self.request.session.get('active_opco_id'))
 
     def get_queryset(self):
         # 1. بنجيب الـ queryset الأصلية المعرفة في الـ ViewSet

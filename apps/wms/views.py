@@ -29,7 +29,15 @@ from .serializers import (
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def wms_stats(request):
-    active_opco_id = request.query_params.get('opco') or request.session.get('active_opco_id')
+    def _get_opco_id():
+        # 1. Check Query Params
+        # 2. Check Request Data (JSON/FormData)
+        # 3. Check Session
+        return (request.query_params.get('opco') or 
+                request.data.get('opco') or 
+                request.session.get('active_opco_id'))
+
+    active_opco_id = _get_opco_id()
     
     if not active_opco_id:
         return Response({
@@ -56,34 +64,41 @@ def wms_stats(request):
     occupied_bins = quants.filter(quantity__gt=0).values('storage_bin').distinct().count()
     capacity_pct = int((occupied_bins / total_bins * 100)) if total_bins > 0 else 0
 
-    # 4. طابور العمليات (Operations Queue)
-    # جلب أوامر الشراء المؤكدة (لم تستلم بالكامل بعد)
+    # 4. الأصناف الراكدة (Stagnant Items > 90 days)
+    from django.utils import timezone
+    from datetime import timedelta
+    ninety_days_ago = timezone.now() - timedelta(days=90)
+    
+    # المواد التي لم يتم عمل أي حركة عليها في آخر 90 يوم
+    stagnant_count = items_count - StockMove.objects.filter(
+        opco_id=active_opco_id, created_at__gte=ninety_days_ago
+    ).values('material_id').distinct().count()
+    stagnant_count = max(0, stagnant_count)
+
+    # 5. معدل التلبية (Fulfillment Rate)
+    SalesOrder = apps.get_model('sales', 'SalesOrder')
+    total_sos = SalesOrder.objects.filter(opco_id=active_opco_id).exclude(status='CANCELLED').count()
+    shipped_sos = SalesOrder.objects.filter(opco_id=active_opco_id, status__in=['SHIPPED', 'DELIVERED']).count()
+    fulfillment_rate = round((shipped_sos / total_sos * 100), 1) if total_sos > 0 else 0
+
+    # 6. طابور العمليات (Operations Queue)
     PurchaseOrder = apps.get_model('procurement', 'PurchaseOrder')
     pending_pos = PurchaseOrder.objects.filter(opco_id=active_opco_id, status='CONFIRMED').order_by('-created_at')[:5]
-    
-    # جلب أوامر البيع المؤكدة (لم تشحن بالكامل بعد)
-    SalesOrder = apps.get_model('sales', 'SalesOrder')
     pending_sos = SalesOrder.objects.filter(opco_id=active_opco_id, status='CONFIRMED').order_by('-created_at')[:5]
     
     lang = getattr(request, 'LANGUAGE_CODE', 'en')
-    operations = [] # ✅ تهيئة القائمة
+    operations = []
     for po in pending_pos:
         operations.append({
-            "id": po.id,
-            "ref": po.po_number,
-            "type": "IN",
+            "id": po.id, "ref": po.po_number, "type": "IN",
             "type_label": "استلام مشتريات" if lang == 'ar' else "PO Receipt",
-            "owner": po.vendor.name,
-            "status": "Pending"
+            "owner": po.vendor.name if po.vendor else "Unknown", "status": "Pending"
         })
     for so in pending_sos:
         operations.append({
-            "id": so.id,
-            "ref": so.so_number,
-            "type": "OUT",
+            "id": so.id, "ref": so.so_number, "type": "OUT",
             "type_label": "صرف مبيعات" if lang == 'ar' else "SO Delivery",
-            "owner": so.customer.name,
-            "status": "Pending"
+            "owner": so.customer.name if so.customer else "Unknown", "status": "Pending"
         })
 
     return Response({
@@ -91,6 +106,8 @@ def wms_stats(request):
         "items": items_count,
         "total_value": float(total_value),
         "low_stock": quants.filter(quantity__lte=5).count(),
+        "stagnant_count": stagnant_count,
+        "fulfillment_rate": fulfillment_rate,
         "capacity": capacity_pct,
         "total_bins": total_bins,
         "occupied_bins": occupied_bins,
