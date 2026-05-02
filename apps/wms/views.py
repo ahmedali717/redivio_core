@@ -316,6 +316,7 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     payment_method=pay_method, move_type='IN', dest_bin=dest_bin,
                     vendor=resolved_vendor, # Set Foreign Key!
                     vendor_name=manual_contact_name, # Set Display Name
+                    tax_rate=Decimal(str(data.get('tax_rate', 15))),
                     reference=f"PO {po_id}" if po_id else reference_text
                 )
                 quant, _ = StockQuant.objects.get_or_create(
@@ -351,6 +352,7 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     payment_method=coll_method, move_type='OUT', source_bin=source_bin,
                     customer=resolved_customer, # Set Foreign Key!
                     vendor_name=manual_contact_name, # Set Display Name
+                    tax_rate=Decimal(str(data.get('tax_rate', 15))),
                     reference=f"SO {so_id}" if so_id else reference_text
                 )
                 quant.quantity -= qty

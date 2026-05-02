@@ -65,11 +65,14 @@ class StockMove(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     # أضف الحقول دي عشان السيريالايزر يشتغل صح
+    vendor = models.ForeignKey('procurement.Vendor', on_delete=models.SET_NULL, null=True, blank=True)
+    customer = models.ForeignKey('sales.Customer', on_delete=models.SET_NULL, null=True, blank=True)
     vendor_name = models.CharField(max_length=200, null=True, blank=True)
     payment_term = models.CharField(max_length=50, default="CASH")
     payment_method = models.CharField(max_length=50, default="CASH") # 🚀 طريقة الدفع/التحصيل
     unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0) # سعر الشراء
     sales_price = models.DecimalField(max_digits=12, decimal_places=2, default=0) # سعر البيع
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15) # 🚀 معدل الضريبة
     receipt_type = models.CharField(max_length=50, null=True, blank=True)
 
     def save(self, *args, **kwargs):
