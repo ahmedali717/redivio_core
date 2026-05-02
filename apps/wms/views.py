@@ -236,44 +236,59 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         if not items:
             return Response({"error": "No items provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 🚀 0. Auto-Create Contact logic
+        # 🚀 0. Auto-Create/Resolve Contact logic
         reference_text = "Manual Move"
+        resolved_vendor = None
+        resolved_customer = None
+        
         if move_type == 'IN':
             if manual_contact_name:
                 try:
                     Vendor = apps.get_model('procurement', 'Vendor')
-                    # Use a slug-like code for manual entries
                     manual_code = f"V-MAN-{manual_contact_name[:10].upper()}-{opco_id}"
-                    vendor, _ = Vendor.objects.get_or_create(
+                    resolved_vendor, _ = Vendor.objects.get_or_create(
                         opco_id=opco_id, name=manual_contact_name,
                         defaults={'code': manual_code}
                     )
-                    reference_text = f"Receipt from {vendor.name}"
+                    reference_text = f"Receipt from {resolved_vendor.name}"
+                    manual_contact_name = resolved_vendor.name # Sync name
                 except Exception: reference_text = f"Receipt from {manual_contact_name}"
             elif contact_id:
-                reference_text = f"Receipt from Vendor #{contact_id}"
+                try:
+                    Vendor = apps.get_model('procurement', 'Vendor')
+                    resolved_vendor = Vendor.objects.get(id=contact_id)
+                    manual_contact_name = resolved_vendor.name
+                    reference_text = f"Receipt from {resolved_vendor.name}"
+                except Exception: pass
+
         elif move_type == 'OUT':
             if manual_contact_name:
                 try:
                     Customer = apps.get_model('sales', 'Customer')
                     manual_code = f"C-MAN-{manual_contact_name[:10].upper()}-{opco_id}"
-                    customer, _ = Customer.objects.get_or_create(
+                    resolved_customer, _ = Customer.objects.get_or_create(
                         opco_id=opco_id, name=manual_contact_name,
                         defaults={'code': manual_code}
                     )
-                    reference_text = f"Issue to {customer.name}"
+                    reference_text = f"Issue to {resolved_customer.name}"
+                    manual_contact_name = resolved_customer.name # Sync name
                 except Exception: reference_text = f"Issue to {manual_contact_name}"
             elif contact_id:
-                reference_text = f"Issue to Customer #{contact_id}"
+                try:
+                    Customer = apps.get_model('sales', 'Customer')
+                    resolved_customer = Customer.objects.get(id=contact_id)
+                    manual_contact_name = resolved_customer.name
+                    reference_text = f"Issue to {resolved_customer.name}"
+                except Exception: pass
 
         # 🚀 1. Process Material Inbound (Receipt)
         if move_type == 'IN':
             for item in items:
-                qty = Decimal(str(item.get('received_qty', item.get('quantity', 0))))
+                qty = Decimal(str(item.get('quantity', 0)))
                 unit_cost = Decimal(str(item.get('unit_cost', 0)))
                 pay_method = data.get('payment_method', 'CASH')
                 if qty <= 0: continue
-                material_id = item.get('material_id') or item.get('material')
+                material_id = item.get('material_id')
                 
                 # Auto-resolve Bin
                 bin_id = item.get('bin_id')
@@ -290,21 +305,18 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     cost_before = Decimal(str(mat_obj.standard_price or 0))
                     total_qty_after = qty_before + qty
                     
-                    print(f"DEBUG WAC: Mat={mat_obj.name}, QtyBefore={qty_before}, CostBefore={cost_before}, NewQty={qty}, NewCost={unit_cost}")
-                    
                     if total_qty_after > 0 and unit_cost > 0:
                         new_wac = ((qty_before * cost_before) + (qty * unit_cost)) / total_qty_after
-                        mat_obj.standard_price = new_wac.quantize(Decimal('0.01'))
+                        mat_obj.standard_price = new_wac.quantize(Decimal('0.0001')) # Higher precision for WAC
                         mat_obj.save()
-                        print(f"DEBUG WAC: New Standard Price Saved = {mat_obj.standard_price}")
-                    else:
-                        print(f"DEBUG WAC: Update Skipped (UnitCost=0 or QtyAfter=0)")
                 except Exception as e: print(f"WAC Update Error: {e}")
 
                 move = StockMove.objects.create(
                     opco_id=opco_id, material_id=material_id, quantity=qty, unit_cost=unit_cost,
                     payment_method=pay_method, move_type='IN', dest_bin=dest_bin,
-                    reference=f"PO {po_id}" if po_id else reference_text, vendor_name=manual_contact_name
+                    vendor=resolved_vendor, # Set Foreign Key!
+                    vendor_name=manual_contact_name, # Set Display Name
+                    reference=f"PO {po_id}" if po_id else reference_text
                 )
                 quant, _ = StockQuant.objects.get_or_create(
                     opco_id=opco_id, material_id=material_id, storage_bin=dest_bin,
@@ -337,7 +349,9 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 move = StockMove.objects.create(
                     opco_id=opco_id, material_id=material_id, quantity=qty, sales_price=sales_price,
                     payment_method=coll_method, move_type='OUT', source_bin=source_bin,
-                    reference=f"SO {so_id}" if so_id else reference_text, vendor_name=manual_contact_name
+                    customer=resolved_customer, # Set Foreign Key!
+                    vendor_name=manual_contact_name, # Set Display Name
+                    reference=f"SO {so_id}" if so_id else reference_text
                 )
                 quant.quantity -= qty
                 quant.save()
