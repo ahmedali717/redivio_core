@@ -319,12 +319,7 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     tax_rate=Decimal(str(data.get('tax_rate', 15))),
                     reference=f"PO {po_id}" if po_id else reference_text
                 )
-                quant, _ = StockQuant.objects.get_or_create(
-                    opco_id=opco_id, material_id=material_id, storage_bin=dest_bin,
-                    defaults={'plant': dest_bin.storage_location.plant}
-                )
-                quant.quantity += qty
-                quant.save()
+                # Redundant update removed - handled by model
 
         # 🚚 2. Process Material Outbound (Delivery)
         elif move_type == 'OUT':
@@ -344,9 +339,8 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     source_bin = best_quant.storage_bin if best_quant else StorageBin.objects.filter(storage_location__plant__opco_id=opco_id).first()
                 if not source_bin: return Response({"error": "No storage bin configured"}, status=400)
 
-                quant = StockQuant.objects.filter(opco_id=opco_id, material_id=material_id, storage_bin=source_bin).first()
-                if not quant or quant.quantity < qty: return Response({"error": f"Insufficient stock for Material ID {material_id}"}, status=400)
-
+                # Allow negative stock for manual moves to avoid blocking user setup
+                # quant.save() is handled by model.save()
                 move = StockMove.objects.create(
                     opco_id=opco_id, material_id=material_id, quantity=qty, sales_price=sales_price,
                     payment_method=coll_method, move_type='OUT', source_bin=source_bin,
@@ -355,8 +349,6 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     tax_rate=Decimal(str(data.get('tax_rate', 15))),
                     reference=f"SO {so_id}" if so_id else reference_text
                 )
-                quant.quantity -= qty
-                quant.save()
 
         return Response({"status": "success"}, status=status.HTTP_201_CREATED)
 
