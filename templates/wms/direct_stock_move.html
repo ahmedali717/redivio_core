@@ -1,0 +1,112 @@
+<!-- ================================================================ -->
+<!-- شاشة الحركة المباشرة - Stand Alone Mode                         -->
+<!-- direct_stock_move.html                                           -->
+<!-- ================================================================ -->
+<div class="absolute inset-0 flex flex-col overflow-hidden bg-slate-950 rounded-[2rem]">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 shrink-0">
+        <div>
+            <h2 class="text-lg font-black text-white tracking-tight flex items-center gap-2">
+                <i class="fas fa-exchange-alt text-emerald-400"></i>
+                <span v-text="isArabic ? 'الحركات المخزنية' : 'Stock Moves'"></span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5"
+               v-text="isArabic ? 'إضافة وصرف المخزون يدوياً' : 'Manual stock receipts and issues'"></p>
+        </div>
+        <button @click="openModal('stock_entry')"
+                class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-black px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-900/40 active:scale-95">
+            <i class="fas fa-plus-circle"></i>
+            <span v-text="isArabic ? 'حركة جديدة' : 'New Move'"></span>
+        </button>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-3 gap-3 px-6 py-3 border-b border-slate-800/60 shrink-0">
+        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5 text-center">
+            <p class="text-emerald-400 font-black text-lg"
+               v-text="inventoryMoves.filter(m => m.move_type === 'IN').length"></p>
+            <p class="text-[10px] text-slate-500 uppercase tracking-wider"
+               v-text="isArabic ? 'إضافة' : 'Receipts'"></p>
+        </div>
+        <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-2.5 text-center">
+            <p class="text-rose-400 font-black text-lg"
+               v-text="inventoryMoves.filter(m => m.move_type === 'OUT').length"></p>
+            <p class="text-[10px] text-slate-500 uppercase tracking-wider"
+               v-text="isArabic ? 'صرف' : 'Issues'"></p>
+        </div>
+        <div class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-center">
+            <p class="text-white font-black text-lg" v-text="inventoryMoves.length"></p>
+            <p class="text-[10px] text-slate-500 uppercase tracking-wider"
+               v-text="isArabic ? 'الإجمالي' : 'Total'"></p>
+        </div>
+    </div>
+
+    <!-- Moves List -->
+    <div class="flex-1 overflow-y-auto px-6 py-4">
+
+        <!-- Empty State -->
+        <div v-if="!inventoryMoves || inventoryMoves.length === 0"
+             class="flex flex-col items-center justify-center h-full text-center">
+            <div class="w-20 h-20 rounded-2xl bg-slate-800 flex items-center justify-center mb-4">
+                <i class="fas fa-exchange-alt text-3xl text-slate-600"></i>
+            </div>
+            <p class="text-slate-400 font-bold"
+               v-text="isArabic ? 'لا توجد حركات مخزنية حتى الآن' : 'No inventory moves yet'"></p>
+            <p class="text-slate-600 text-xs mt-1 mb-6"
+               v-text="isArabic ? 'اضغط حركة جديدة لتسجيل أول حركة' : 'Click New Move to register the first entry'"></p>
+            <button @click="openModal('stock_entry')"
+                    class="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold px-5 py-2.5 rounded-xl border border-emerald-500/30 transition-all">
+                <i class="fas fa-plus-circle"></i>
+                <span v-text="isArabic ? 'إضافة أول حركة' : 'Add First Move'"></span>
+            </button>
+        </div>
+
+        <!-- Moves List -->
+        <div v-else class="space-y-2">
+            <div v-for="move in inventoryMoves" :key="move.id"
+                 class="flex items-center gap-4 bg-slate-900 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 rounded-2xl px-4 py-3 transition-all">
+
+                <!-- Icon -->
+                <div class="shrink-0">
+                    <div v-if="move.move_type === 'IN'"
+                         class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                        <i class="fas fa-arrow-down text-emerald-400 text-sm"></i>
+                    </div>
+                    <div v-else-if="move.move_type === 'OUT'"
+                         class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
+                        <i class="fas fa-arrow-up text-rose-400 text-sm"></i>
+                    </div>
+                    <div v-else
+                         class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                        <i class="fas fa-exchange-alt text-blue-400 text-sm"></i>
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-white truncate"
+                       v-text="move.material_name || '---'"></p>
+                    <p class="text-xs text-slate-500 truncate"
+                       v-text="move.reference || '---'"></p>
+                </div>
+
+                <!-- Qty Badge -->
+                <div class="text-right shrink-0">
+                    <p class="font-black text-base"
+                       :class="move.move_type === 'IN' ? 'text-emerald-400' : move.move_type === 'OUT' ? 'text-rose-400' : 'text-blue-400'"
+                       v-text="(move.move_type === 'OUT' ? '-' : '+') + move.quantity"></p>
+                    <p class="text-[10px] text-slate-600 uppercase tracking-wider"
+                       v-text="move.move_type === 'IN' ? (isArabic ? 'إضافة' : 'IN')
+                              : move.move_type === 'OUT' ? (isArabic ? 'صرف' : 'OUT')
+                              : (isArabic ? 'تحويل' : 'TRF')"></p>
+                </div>
+
+                <!-- Date -->
+                <div class="text-right shrink-0 hidden md:block">
+                    <p class="text-xs text-slate-500" v-text="formatDate(move.created_at)"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -348,6 +348,11 @@
             {% include "components/item_master_list.html" %}
         </div>
 
+        <!-- Stand Alone: شاشة الحركة المباشرة (Direct Move) -->
+        <div v-if="inventoryTab === 'direct_move'" class="absolute inset-0 bg-white rounded-[2rem] overflow-hidden">
+            {% include "wms/direct_stock_move.html" %}
+        </div>
+
         <div v-if="inventoryTab === 'moves'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
             {% include "wms/inventory_item_report.html" %}
         </div>

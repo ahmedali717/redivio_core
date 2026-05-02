@@ -75,12 +75,24 @@
                 <i class="fas fa-barcode w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'سجل الأصناف' : 'Item Master'"></span>
             </a>
-            <a href="#" @click.prevent="inventoryTab = 'item_ledger'" 
+
+            <!-- الخيار الثالث: يتغير حسب الاشتراك -->
+            <!-- Full Package: العمليات المخزنية -->
+            <a v-if="systemMode !== 'standalone'" href="#" @click.prevent="inventoryTab = 'item_ledger'" 
                :class="inventoryTab === 'item_ledger' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-exchange-alt w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'العمليات المخزنية' : 'Inventory Moves'"></span>
             </a>
+
+            <!-- Stand Alone: الحركة المباشرة -->
+            <a v-if="systemMode === 'standalone'" href="#" @click.prevent="inventoryTab = 'direct_move'" 
+               :class="inventoryTab === 'direct_move' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:bg-slate-800'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-plus-minus w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap" v-text="isArabic ? 'الحركة المباشرة' : 'Direct Move'"></span>
+            </a>
+
             <a href="#" @click.prevent="inventoryTab = 'moves'" 
                :class="inventoryTab === 'moves' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
