@@ -324,11 +324,11 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         # 🚚 2. Process Material Outbound (Delivery)
         elif move_type == 'OUT':
             for item in items:
-                qty = Decimal(str(item.get('received_qty', item.get('quantity', 0))))
+                qty = Decimal(str(item.get('quantity', 0)))
                 sales_price = Decimal(str(item.get('sales_price', 0)))
                 coll_method = data.get('payment_method', 'CASH')
                 if qty <= 0: continue
-                material_id = item.get('material_id') or item.get('material')
+                material_id = item.get('material_id')
                 
                 # Auto-resolve Bin
                 bin_id = item.get('bin_id')
