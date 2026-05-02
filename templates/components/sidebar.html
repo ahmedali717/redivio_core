@@ -19,47 +19,29 @@
              class="absolute top-14 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] overflow-visible animate-in zoom-in-95 duration-200">
             
             <div class="p-2 space-y-1">
-                <!-- قسم العمليات -->
-                <div class="relative group/nested">
-                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-800 cursor-pointer text-slate-300 hover:text-white transition-all group-hover/nested:bg-slate-800">
-                        <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-rocket text-blue-500 text-xs"></i>
-                            </div>
-                            <span class="text-[11px] font-black uppercase tracking-widest">[[ isArabic ? 'العمليات' : 'Operation' ]]</span>
+                <!-- Dashboard / Command Center (Only in Modular Mode) -->
+                <button v-if="systemMode !== 'standalone'" @click="view = 'dashboard'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-blue-600 text-slate-400 hover:text-white text-left transition-all group/item">
+                    <i class="fas fa-chart-pie w-5 text-center text-blue-500 group-hover/item:text-white transition-colors"></i>
+                    <span class="text-[11px] font-bold">[[ isArabic ? 'لوحة القيادة التنفيذية' : 'Command Center' ]]</span>
+                </button>
+
+                <!-- Dynamic Purchased Modules -->
+                <template v-for="mod in sidebarGroups.operations.filter(m => m.id !== 'org_builder')" :key="mod.id">
+                    <button @click="view = mod.id; showBrandDropdown = false; if(mod.id === 'inventory_module') inventoryTab = 'levels';" 
+                            class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white text-left transition-all group/item">
+                        
+                        <div v-if="mod.id === 'inventory_module'" class="w-5 h-5 flex items-center justify-center shrink-0">
+                            <img src="/static/brand/rims_icon.png" class="w-full h-full object-contain brightness-0 invert group-hover:brightness-100 group-hover:invert-0 transition-all" alt="RIMS">
                         </div>
-                        <i class="fas fa-chevron-right text-[10px] text-slate-600 transition-transform" :class="isArabic ? 'rotate-180 group-hover/nested:rotate-90' : 'group-hover/nested:rotate-90'"></i>
-                    </div>
-                    
-                    <!-- القائمة الفرعية: العمليات -->
-                    <div :class="isArabic ? 'right-full mr-1' : 'left-full ml-1'" 
-                         class="absolute top-0 w-60 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl opacity-0 invisible group-hover/nested:opacity-100 group-hover/nested:visible transition-all duration-300 p-2 space-y-1 z-[110]">
-                        <button @click="view = 'dashboard'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-blue-600 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <i class="fas fa-chart-pie w-5 text-center text-blue-500 group-hover/item:text-white"></i>
-                            <span class="text-[11px] font-bold">[[ isArabic ? 'لوحة التحكم' : 'Dashboard' ]]</span>
-                        </button>
-                        <button @click="view = 'inventory_module'; inventoryTab = 'levels'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-amber-600 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <div class="w-5 h-5 flex items-center justify-center shrink-0">
-                                <img src="/static/brand/rims_icon.png" class="w-full h-full object-contain brightness-0 invert group-hover:brightness-100 group-hover:invert-0 transition-all" alt="RIMS">
-                            </div>
-                            <span class="text-[11px] font-bold">[[ isArabic ? 'RIMS (المستودعات)' : 'RIMS (Inventory)' ]]</span>
-                        </button>
-                        <button @click="view = 'procurement_module'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-600 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <div class="w-5 h-5 flex items-center justify-center shrink-0">
-                                <img src="/static/brand/rpms_icon.png" class="w-full h-full object-contain brightness-0 invert group-hover:brightness-100 group-hover:invert-0 transition-all" alt="RPMS">
-                            </div>
-                            <span class="text-[11px] font-bold">[[ isArabic ? 'RPMS (المشتريات)' : 'RPMS (Procurement)' ]]</span>
-                        </button>
-                        <button @click="view = 'sales_module'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-rose-600 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <i class="fas fa-cart-shopping w-5 text-center text-rose-500 group-hover/item:text-white"></i>
-                            <span class="text-[11px] font-bold">[[ isArabic ? 'المبيعات' : 'Sales' ]]</span>
-                        </button>
-                        <button @click="view = 'accounting_module'; showBrandDropdown = false" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-amber-600 text-slate-400 hover:text-white text-left transition-all group/item">
-                            <i class="fas fa-file-invoice-dollar w-5 text-center text-amber-500 group-hover/item:text-white"></i>
-                            <span class="text-[11px] font-bold">[[ isArabic ? 'المحاسبة' : 'Accounting' ]]</span>
-                        </button>
-                    </div>
-                </div>
+                        <div v-else-if="mod.id === 'procurement_module'" class="w-5 h-5 flex items-center justify-center shrink-0">
+                            <img src="/static/brand/rpms_icon.png" class="w-full h-full object-contain brightness-0 invert group-hover:brightness-100 group-hover:invert-0 transition-all" alt="RPMS">
+                        </div>
+                        <i v-else :class="mod.icon" class="w-5 text-center text-slate-500 group-hover/item:text-white transition-colors"></i>
+                        
+                        <span class="text-[11px] font-bold" v-text="isArabic ? mod.name.ar : mod.name.en"></span>
+                    </button>
+                </template>
+
 
                 <div class="h-px bg-slate-800 my-2 mx-1"></div>
                 
