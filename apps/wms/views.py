@@ -289,11 +289,13 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     
                     print(f"DEBUG WAC: Mat={mat_obj.name}, QtyBefore={qty_before}, CostBefore={cost_before}, NewQty={qty}, NewCost={unit_cost}")
                     
-                    if total_qty_after > 0:
+                    if total_qty_after > 0 and unit_cost > 0:
                         new_wac = ((qty_before * cost_before) + (qty * unit_cost)) / total_qty_after
                         mat_obj.standard_price = new_wac.quantize(Decimal('0.01'))
                         mat_obj.save()
                         print(f"DEBUG WAC: New Standard Price Saved = {mat_obj.standard_price}")
+                    else:
+                        print(f"DEBUG WAC: Update Skipped (UnitCost=0 or QtyAfter=0)")
                 except Exception as e: print(f"WAC Update Error: {e}")
 
                 move = StockMove.objects.create(

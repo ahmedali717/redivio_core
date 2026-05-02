@@ -7,7 +7,7 @@
     <div class="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-6">
         <div>
             <h1 class="text-3xl font-black text-slate-900 uppercase tracking-tighter">
-                {{ is_receipt ? "Material Receipt Note" : "Material Delivery Note" }}
+                {% if is_receipt %}Material Receipt Note{% else %}Material Delivery Note{% endif %}
             </h1>
             <p class="text-slate-500 font-bold text-sm mt-1">Movement ID: #{{ move.id }}</p>
         </div>
@@ -33,7 +33,7 @@
         <div class="space-y-4">
             <div>
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
-                    {{ is_receipt ? "Vendor / Source" : "Customer / Destination" }}
+                    {% if is_receipt %}Vendor / Source{% else %}Customer / Destination{% endif %}
                 </label>
                 <div class="font-bold text-slate-700">{{ main_move.vendor_name|default:"---" }}</div>
             </div>
@@ -64,7 +64,7 @@
                     </td>
                     <td class="p-4 text-center font-bold text-slate-700">{{ move.quantity }}</td>
                     <td class="p-4 text-right font-mono text-slate-600">
-                        {{ is_receipt ? move.unit_cost : move.sales_price }}
+                        {% if is_receipt %}{{ move.unit_cost }}{% else %}{{ move.sales_price }}{% endif %}
                     </td>
                     <td class="p-4 text-right font-bold text-slate-900">
                         {% if is_receipt %}{{ move.unit_cost|default:0|floatformat:2 }}{% else %}{{ move.sales_price|default:0|floatformat:2 }}{% endif %}

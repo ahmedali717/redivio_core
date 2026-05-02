@@ -384,7 +384,7 @@ createApp({
         },
 
         // --- Manual Move Totals ---
-        manualMoveSubtotal() {
+        manualMoveTotalBeforeTax() {
             const entry = this.forms.stock_entry;
             if (!entry || !entry.items) return 0;
             return entry.items.reduce((sum, item) => {
@@ -395,10 +395,10 @@ createApp({
         manualMoveTaxAmount() {
             const entry = this.forms.stock_entry;
             const rate = (entry.tax_rate || 0) / 100;
-            return this.manualMoveSubtotal * rate;
+            return this.manualMoveTotalBeforeTax * rate;
         },
         manualMoveGrandTotal() {
-            return this.manualMoveSubtotal + this.manualMoveTaxAmount;
+            return this.manualMoveTotalBeforeTax + this.manualMoveTaxAmount;
         }
     },
 
@@ -466,6 +466,11 @@ createApp({
             this.showModal = true;
         },
 
+        manualMoveSubtotal(item) {
+            const price = this.forms.stock_entry.receipt_type === 'PURCHASE' ? (item.unit_cost || 0) : (item.sales_price || 0);
+            return (item.quantity || 0) * price;
+        },
+        
         async fetchLastPrice(item) {
             if (!item.material_id) return;
             try {
@@ -1373,15 +1378,6 @@ createApp({
             }
         },
 
-        async fetchVendors() {
-            try {
-                const res = await fetch(`/api/vendors/?opco=${this.activeOpcoId || ''}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    this.vendors = Array.isArray(data) ? data : (data.results || []);
-                }
-            } catch (e) { console.error(e); }
-        },
 
         async quickAddVendor() {
             const vendorName = prompt(this.isArabic ? "أدخل اسم المورد الجديد:" : "Enter new vendor name:");
@@ -1884,6 +1880,8 @@ createApp({
                 this.loading = true;
                 this.syncGlobalConfig(opcoId);
                 await this.getListData();
+                await this.fetchVendors();
+                await this.fetchCustomers();
                 await this.fetchWMSStats();
             } catch (error) {
                 console.error("Error during OpCo change:", error);
