@@ -202,7 +202,9 @@
                         <div class="mt-8 border-t border-slate-800 pt-6">
                             <div class="flex justify-between items-end">
                                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" v-text="isArabic ? 'الإجمالي النهائي' : 'Grand Total'"></span>
-                                <span class="text-3xl font-black text-white tracking-tighter" v-text="formatCurrency(manualMoveGrandTotal)"></span>
+                                <span class="text-3xl font-black text-white tracking-tighter">
+                                    <span v-text="formatCurrency(manualMoveGrandTotal)"></span>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -294,7 +296,9 @@
                         </div>
                         <div class="flex justify-between items-center p-4 bg-slate-900 rounded-2xl text-white">
                             <span class="text-xs font-bold">الإجمالي النهائي:</span>
-                            <span class="text-xl font-black text-emerald-400 font-mono"><span v-text="poGrandTotal.toFixed(2)"></span> <small class="text-[10px] text-white/50">EGP</small></span>
+                            <span class="text-xl font-black text-emerald-400 font-mono">
+                                <span v-text="formatCurrency(poGrandTotal)"></span>
+                            </span>
                         </div>
                     </div>
                 </div>

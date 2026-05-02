@@ -128,6 +128,8 @@ class CheckAuthAPI(APIView):
             "authenticated": True,
             "user": request.user.username,
             "company_id": user_opco.id if user_opco else None,
+            "company_name": user_opco.name if user_opco else "REDIVIO",
+            "currency": user_opco.currency if user_opco else "SAR",
             "holding_name": holding_opco.name if holding_opco else "REDIVIO Inc.",
             "days_remaining": days_remaining,
             "header_opcos": header_opcos,

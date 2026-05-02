@@ -491,9 +491,10 @@ createApp({
         },
 
         formatCurrency(value) {
+            const currency = (this.activeOpco && this.activeOpco.currency) ? this.activeOpco.currency.toUpperCase() : 'SAR';
             return new Intl.NumberFormat(this.isArabic ? 'ar-SA' : 'en-US', {
                 style: 'currency',
-                currency: 'SAR',
+                currency: currency,
                 maximumFractionDigits: 0
             }).format(value || 0);
         },
@@ -649,7 +650,10 @@ createApp({
             const url = this.activeOpcoId ? `/api/customers/?opco=${this.activeOpcoId}` : '/api/customers/';
             try {
                 const res = await fetch(url);
-                if (res.ok) this.customers = await res.json();
+                if (res.ok) {
+                    const data = await res.json();
+                    this.customers = Array.isArray(data) ? data : (data.results || []);
+                }
             } catch (e) { console.error("Error fetching customers:", e); }
         },
 
@@ -733,7 +737,8 @@ createApp({
                     : '/api/vendors/';
                 const res = await fetch(url);
                 if (res.ok) {
-                    this.vendors = await res.json();
+                    const data = await res.json();
+                    this.vendors = Array.isArray(data) ? data : (data.results || []);
                 }
             } catch (e) {
                 console.error("Error fetching vendors:", e);
@@ -2019,6 +2024,11 @@ createApp({
 
                     await this.fetchAll();
                     this.activeOpcoId = data.company_id || (this.allOpcos[0] ? this.allOpcos[0].id : null);
+                    this.activeOpco = {
+                        id: this.activeOpcoId,
+                        name: data.company_name || 'REDIVIO',
+                        currency: data.currency || 'SAR'
+                    };
                     this.syncGlobalConfig(this.activeOpcoId);
                     await this.refreshAllData();
                 }
