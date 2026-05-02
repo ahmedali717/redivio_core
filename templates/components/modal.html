@@ -74,11 +74,88 @@
                 </div>
             </div>
 
-            <div v-if="modalType === 'stock_entry'" class="space-y-4">
-                <select v-model="forms.stock_entry.receipt_type" class="w-full border-2 border-indigo-500 p-3 rounded-xl font-bold text-indigo-700">
-                    <option value="PURCHASE" v-text="isArabic ? 'توريد مشتريات' : 'Purchase Receipt'"></option>
-                    <option value="TRANSFER" v-text="isArabic ? 'تحويل مخزني' : 'Stock Transfer'"></option>
-                </select>
+            <div v-if="modalType === 'stock_entry'" class="space-y-6">
+                
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">نوع الحركة (Move Type)</label>
+                            <select v-model="forms.stock_entry.receipt_type" class="w-full border border-slate-200 focus:border-indigo-500 p-3 rounded-xl font-bold text-slate-700 outline-none transition-colors">
+                                <option value="PURCHASE" v-text="isArabic ? 'إضافة (توريد)' : 'Inbound (Receipt)'"></option>
+                                <option value="ISSUE" v-text="isArabic ? 'صرف (مبيعات / استهلاك)' : 'Outbound (Issue)'"></option>
+                                <option value="TRANSFER" v-text="isArabic ? 'تحويل مخزني' : 'Internal Transfer'"></option>
+                            </select>
+                        </div>
+                        
+                        <!-- Dynamic Contact Field based on SaaS Architecture -->
+                        <div v-if="forms.stock_entry.receipt_type === 'PURCHASE'" class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">المورد (Vendor)</label>
+                            
+                            <!-- Modular: Dropdown -->
+                            <div v-if="purchasedModules.includes('proc')" class="flex gap-2">
+                                <select v-model="forms.stock_entry.contact_id" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
+                                    <option value="">اختر المورد...</option>
+                                    <option v-for="v in vendors" :key="v.id" :value="v.id" v-text="v.name"></option>
+                                </select>
+                            </div>
+                            
+                            <!-- Stand Alone: Text Input -->
+                            <div v-else>
+                                <input type="text" v-model="forms.stock_entry.manual_contact_name" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="اسم المورد (Manual Entry)">
+                            </div>
+                        </div>
+
+                        <div v-if="forms.stock_entry.receipt_type === 'ISSUE'" class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">العميل (Customer)</label>
+                            
+                            <!-- Modular: Dropdown -->
+                            <div v-if="purchasedModules.includes('sales')" class="flex gap-2">
+                                <select v-model="forms.stock_entry.contact_id" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
+                                    <option value="">اختر العميل...</option>
+                                    <option v-for="c in customers" :key="c.id" :value="c.id" v-text="c.name"></option>
+                                </select>
+                            </div>
+                            
+                            <!-- Stand Alone: Text Input -->
+                            <div v-else>
+                                <input type="text" v-model="forms.stock_entry.manual_contact_name" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="اسم العميل (Manual Entry)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
+                            <tr>
+                                <th class="p-3">الصنف (Item)</th>
+                                <th class="p-3 text-center">الكمية</th>
+                                <th class="p-3 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="(item, index) in forms.stock_entry.items" :key="index" class="group">
+                                <td class="p-2">
+                                    <select v-model="item.material_id" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-indigo-200 rounded-lg p-2 text-xs font-bold transition-all" required>
+                                        <option value="">اختر الصنف...</option>
+                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="m.name"></option>
+                                    </select>
+                                </td>
+                                <td class="p-2">
+                                    <input type="number" v-model="item.quantity" class="w-24 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-indigo-200 rounded-lg p-2 text-center font-bold text-xs outline-none" required>
+                                </td>
+                                <td class="p-2 text-center">
+                                    <button @click.prevent="forms.stock_entry.items.splice(index, 1)" class="text-slate-300 hover:text-red-500 transition-colors">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button @click.prevent="forms.stock_entry.items.push({ material_id: '', quantity: 1, unit_cost: 0 })" class="w-full py-3 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-indigo-600 transition-all border-t border-dashed border-slate-200">
+                        <i class="fas fa-plus-circle mr-1"></i> إضافة صنف
+                    </button>
+                </div>
             </div>
 
             <div v-if="modalType === 'po'" class="space-y-6 animate-in zoom-in-95 duration-300">

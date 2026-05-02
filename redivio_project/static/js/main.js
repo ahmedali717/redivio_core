@@ -1683,6 +1683,16 @@ createApp({
             else if (type === 'salesorder') url = isEdit ? `/api/sales-orders/${id}/` : `/api/sales-orders/`;
             else if (type === 'customer') url = isEdit ? `/api/customers/${id}/` : `/api/customers/`;
             else if (type === 'delivery') url = '/api/stock-deliveries/';
+            else if (type === 'stock_entry') {
+                // Route to receipts or deliveries depending on move type
+                if (this.forms.stock_entry.receipt_type === 'PURCHASE') {
+                    url = '/api/stock-receipts/';
+                } else if (this.forms.stock_entry.receipt_type === 'ISSUE') {
+                    url = '/api/stock-deliveries/';
+                } else {
+                    url = '/api/wms/moves/'; // Fallback for transfer
+                }
+            }
 
             try {
                 this.loading = true;
@@ -2284,7 +2294,8 @@ createApp({
                     items: [{ material_id: '', quantity: 1, unit_cost: 0 }],
                     target_plant: this.activePlantId || '',
                     bin_id: '',
-                    quantity: 1
+                    contact_id: '',
+                    manual_contact_name: ''
                 };
             } else if (type === 'po') {
                 const autoNo = `PO-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
