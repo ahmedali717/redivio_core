@@ -100,27 +100,23 @@
                         <!-- Dynamic Contact Field -->
                         <div v-if="forms.stock_entry.receipt_type === 'PURCHASE'" class="space-y-2">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">المورد (Vendor)</label>
-                            <div v-if="purchasedModules.includes('proc')" class="flex gap-2">
-                                <select v-model="forms.stock_entry.contact_id" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
-                                    <option value="">اختر المورد...</option>
+                            <div class="flex gap-2">
+                                <select v-model="forms.stock_entry.contact_id" @change="forms.stock_entry.manual_contact_name = ''" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
+                                    <option value="">-- اختر المورد (اختياري) --</option>
                                     <option v-for="v in vendors" :key="v.id" :value="v.id" v-text="v.name"></option>
                                 </select>
-                            </div>
-                            <div v-else>
-                                <input type="text" v-model="forms.stock_entry.manual_contact_name" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="اسم المورد (Manual Entry)">
+                                <input v-if="!forms.stock_entry.contact_id" type="text" v-model="forms.stock_entry.manual_contact_name" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="أو اكتب اسم المورد يدوياً">
                             </div>
                         </div>
 
                         <div v-if="forms.stock_entry.receipt_type === 'ISSUE'" class="space-y-2">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">العميل (Customer)</label>
-                            <div v-if="purchasedModules.includes('sales')" class="flex gap-2">
-                                <select v-model="forms.stock_entry.contact_id" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
-                                    <option value="">اختر العميل...</option>
+                            <div class="flex gap-2">
+                                <select v-model="forms.stock_entry.contact_id" @change="forms.stock_entry.manual_contact_name = ''" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
+                                    <option value="">-- اختر العميل (اختياري) --</option>
                                     <option v-for="c in customers" :key="c.id" :value="c.id" v-text="c.name"></option>
                                 </select>
-                            </div>
-                            <div v-else>
-                                <input type="text" v-model="forms.stock_entry.manual_contact_name" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="اسم العميل (Manual Entry)">
+                                <input v-if="!forms.stock_entry.contact_id" type="text" v-model="forms.stock_entry.manual_contact_name" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="أو اكتب اسم العميل يدوياً">
                             </div>
                         </div>
                     </div>

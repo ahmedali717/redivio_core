@@ -189,54 +189,56 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             
         return Response({"price": 0})
 
+    @action(detail=True, methods=['get'])
+    def print(self, request, pk=None):
+        """ توليد صفحة طباعة للحركة المخزنية """
+        move = self.get_object()
+        from django.shortcuts import redirect
+        return redirect(f'/api/print/grn/{move.id}/' if move.move_type == 'IN' else f'/api/print/delivery/{move.id}/')
+
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         data = request.data
+        opco_id = self._get_opco_id()
         
-        # Mapping from SaaS Frontend payload to Backend expected variables
         receipt_type = data.get('receipt_type')
-        move_type = data.get('move_type') or ('IN' if receipt_type == 'PURCHASE' else 'OUT' if receipt_type == 'ISSUE' else 'TRANSFER')
+        move_type = data.get('move_type') or ('IN' if receipt_type == 'PURCHASE' else 'OUT' if receipt_type in ['ISSUE', 'SALE'] else 'TRANSFER')
         items = data.get('items', [])
         
         po_id = data.get('po_id')
         so_id = data.get('so_id')
-        opco_id = self._get_opco_id()
-        
         contact_id = data.get('contact_id')
         manual_contact_name = data.get('manual_contact_name')
 
         if not items:
             return Response({"error": "No items provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 🚀 0. Auto-Create Contact for Standalone Users
+        # 🚀 0. Auto-Create Contact logic
         reference_text = "Manual Move"
-        if move_type == 'IN' and manual_contact_name:
-            try:
-                Vendor = apps.get_model('procurement', 'Vendor')
-                vendor, _ = Vendor.objects.get_or_create(
-                    opco_id=opco_id, 
-                    name=manual_contact_name,
-                    defaults={'code': f'V-MANUAL-{opco_id}'}
-                )
-                reference_text = f"Receipt from {vendor.name}"
-            except Exception:
-                reference_text = f"Receipt from {manual_contact_name}"
-        elif move_type == 'IN' and contact_id:
-            reference_text = f"Receipt from Vendor #{contact_id}"
-            
-        if move_type == 'OUT' and manual_contact_name:
-            try:
-                Customer = apps.get_model('sales', 'Customer')
-                customer, _ = Customer.objects.get_or_create(
-                    opco_id=opco_id, 
-                    name=manual_contact_name,
-                    defaults={'code': f'C-MANUAL-{opco_id}'}
-                )
-                reference_text = f"Issue to {customer.name}"
-            except Exception:
-                reference_text = f"Issue to {manual_contact_name}"
-        elif move_type == 'OUT' and contact_id:
-            reference_text = f"Issue to Customer #{contact_id}"
+        if move_type == 'IN':
+            if manual_contact_name:
+                try:
+                    Vendor = apps.get_model('procurement', 'Vendor')
+                    vendor, _ = Vendor.objects.get_or_create(
+                        opco_id=opco_id, name=manual_contact_name,
+                        defaults={'code': f'V-MANUAL-{opco_id}'}
+                    )
+                    reference_text = f"Receipt from {vendor.name}"
+                except Exception: reference_text = f"Receipt from {manual_contact_name}"
+            elif contact_id:
+                reference_text = f"Receipt from Vendor #{contact_id}"
+        elif move_type == 'OUT':
+            if manual_contact_name:
+                try:
+                    Customer = apps.get_model('sales', 'Customer')
+                    customer, _ = Customer.objects.get_or_create(
+                        opco_id=opco_id, name=manual_contact_name,
+                        defaults={'code': f'C-MANUAL-{opco_id}'}
+                    )
+                    reference_text = f"Issue to {customer.name}"
+                except Exception: reference_text = f"Issue to {manual_contact_name}"
+            elif contact_id:
+                reference_text = f"Issue to Customer #{contact_id}"
 
         # 🚀 1. Process Material Inbound (Receipt)
         if move_type == 'IN':
@@ -244,59 +246,36 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 qty = Decimal(str(item.get('received_qty', item.get('quantity', 0))))
                 unit_cost = Decimal(str(item.get('unit_cost', 0)))
                 pay_method = data.get('payment_method', 'CASH')
-                
                 if qty <= 0: continue
-                
                 material_id = item.get('material_id') or item.get('material')
                 
-                # Auto-resolve Bin if missing
+                # Auto-resolve Bin
                 bin_id = item.get('bin_id')
                 dest_bin = None
-                if bin_id:
-                    dest_bin = StorageBin.objects.get(id=bin_id)
-                else:
-                    dest_bin = StorageBin.objects.filter(storage_location__plant__opco_id=opco_id).first()
+                if bin_id: dest_bin = StorageBin.objects.get(id=bin_id)
+                else: dest_bin = StorageBin.objects.filter(storage_location__plant__opco_id=opco_id).first()
+                if not dest_bin: return Response({"error": "No storage bin configured"}, status=400)
                 
-                if not dest_bin:
-                    return Response({"error": "No storage bin configured"}, status=400)
-                
-                # --- 📈 WAC Calculation (Weighted Average Cost) ---
+                # --- 📈 WAC Calculation ---
                 try:
                     Material = apps.get_model('item_master', 'Material')
                     mat_obj = Material.objects.get(id=material_id)
-                    
-                    qty_before = Decimal(str(mat_obj.total_on_hand))
-                    cost_before = mat_obj.standard_price
-                    
-                    total_val_before = qty_before * cost_before
-                    total_val_new = qty * unit_cost
+                    qty_before = StockQuant.objects.filter(opco_id=opco_id, material_id=material_id).aggregate(total=Sum('quantity'))['total'] or Decimal('0')
+                    cost_before = Decimal(str(mat_obj.standard_price or 0))
                     total_qty_after = qty_before + qty
-                    
                     if total_qty_after > 0:
-                        new_wac = (total_val_before + total_val_new) / total_qty_after
+                        new_wac = ((qty_before * cost_before) + (qty * unit_cost)) / total_qty_after
                         mat_obj.standard_price = new_wac.quantize(Decimal('0.01'))
                         mat_obj.save()
-                except Exception as e:
-                    print(f"WAC Update Error: {e}")
+                except Exception as e: print(f"WAC Update Error: {e}")
 
-                # Create StockMove
                 move = StockMove.objects.create(
-                    opco_id=opco_id,
-                    material_id=material_id,
-                    quantity=qty,
-                    unit_cost=unit_cost,
-                    payment_method=pay_method,
-                    move_type='IN',
-                    dest_bin=dest_bin,
-                    reference=f"PO {po_id}" if po_id else reference_text,
-                    vendor_name=manual_contact_name
+                    opco_id=opco_id, material_id=material_id, quantity=qty, unit_cost=unit_cost,
+                    payment_method=pay_method, move_type='IN', dest_bin=dest_bin,
+                    reference=f"PO {po_id}" if po_id else reference_text, vendor_name=manual_contact_name
                 )
-                
-                # Update StockQuant
-                quant, created = StockQuant.objects.get_or_create(
-                    opco_id=opco_id,
-                    material_id=material_id,
-                    storage_bin=dest_bin,
+                quant, _ = StockQuant.objects.get_or_create(
+                    opco_id=opco_id, material_id=material_id, storage_bin=dest_bin,
                     defaults={'plant': dest_bin.storage_location.plant}
                 )
                 quant.quantity += qty
@@ -308,50 +287,26 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 qty = Decimal(str(item.get('received_qty', item.get('quantity', 0))))
                 sales_price = Decimal(str(item.get('sales_price', 0)))
                 coll_method = data.get('payment_method', 'CASH')
-
                 if qty <= 0: continue
-
                 material_id = item.get('material_id') or item.get('material')
                 
-                # Auto-resolve Bin if missing
+                # Auto-resolve Bin
                 bin_id = item.get('bin_id')
                 source_bin = None
-                if bin_id:
-                    source_bin = StorageBin.objects.get(id=bin_id)
+                if bin_id: source_bin = StorageBin.objects.get(id=bin_id)
                 else:
-                    best_quant = StockQuant.objects.filter(
-                        opco_id=opco_id, material_id=material_id, quantity__gte=qty
-                    ).order_by('-quantity').first()
-                    if best_quant:
-                        source_bin = best_quant.storage_bin
-                    else:
-                        source_bin = StorageBin.objects.filter(storage_location__plant__opco_id=opco_id).first()
+                    best_quant = StockQuant.objects.filter(opco_id=opco_id, material_id=material_id, quantity__gte=qty).order_by('-quantity').first()
+                    source_bin = best_quant.storage_bin if best_quant else StorageBin.objects.filter(storage_location__plant__opco_id=opco_id).first()
+                if not source_bin: return Response({"error": "No storage bin configured"}, status=400)
 
-                if not source_bin:
-                    return Response({"error": "No storage bin configured"}, status=400)
+                quant = StockQuant.objects.filter(opco_id=opco_id, material_id=material_id, storage_bin=source_bin).first()
+                if not quant or quant.quantity < qty: return Response({"error": f"Insufficient stock for Material ID {material_id}"}, status=400)
 
-                # Check Availability
-                quant = StockQuant.objects.filter(
-                    opco_id=opco_id, material_id=material_id, storage_bin=source_bin
-                ).first()
-                
-                if not quant or quant.quantity < qty:
-                    return Response({"error": f"Insufficient stock for Material ID {material_id}"}, status=400)
-
-                # Create StockMove
                 move = StockMove.objects.create(
-                    opco_id=opco_id,
-                    material_id=material_id,
-                    quantity=qty,
-                    sales_price=sales_price,
-                    payment_method=coll_method,
-                    move_type='OUT',
-                    source_bin=source_bin,
-                    reference=f"SO {so_id}" if so_id else reference_text,
-                    vendor_name=manual_contact_name
+                    opco_id=opco_id, material_id=material_id, quantity=qty, sales_price=sales_price,
+                    payment_method=coll_method, move_type='OUT', source_bin=source_bin,
+                    reference=f"SO {so_id}" if so_id else reference_text, vendor_name=manual_contact_name
                 )
-
-                # Update StockQuant
                 quant.quantity -= qty
                 quant.save()
 
