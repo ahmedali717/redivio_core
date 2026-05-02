@@ -83,7 +83,7 @@ class StockReceipt(models.Model):
     opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
     # رقم مسلسل تلقائي GRN-2026-0001
     receipt_number = models.CharField(max_length=50, unique=True, blank=True)
-    po = models.ForeignKey('PurchaseOrder', on_delete=models.CASCADE, related_name='receipts')
+    po = models.ForeignKey('PurchaseOrder', on_delete=models.CASCADE, related_name='receipts', null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True)
 
@@ -110,7 +110,7 @@ class StockReceiptLine(models.Model):
     material = models.ForeignKey('item_master.Material', on_delete=models.CASCADE)
     quantity = models.DecimalField(max_digits=12, decimal_places=2) # الكمية المستلمة "الآن"
     # الرف الذي تم التخزين فيه
-    storage_bin = models.ForeignKey('wms.StorageBin', on_delete=models.CASCADE)
+    storage_bin = models.ForeignKey('wms.StorageBin', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"{self.receipt.receipt_number} - {self.material.name}"

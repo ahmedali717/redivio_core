@@ -223,7 +223,7 @@ import datetime
 class StockDelivery(models.Model):
     opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
     delivery_number = models.CharField(max_length=50, unique=True, blank=True)
-    so = models.ForeignKey(SalesOrder, on_delete=models.CASCADE, related_name='deliveries')
+    so = models.ForeignKey(SalesOrder, on_delete=models.CASCADE, related_name='deliveries', null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True)
 
@@ -245,6 +245,6 @@ class StockDeliveryLine(models.Model):
     delivery = models.ForeignKey(StockDelivery, related_name='items', on_delete=models.CASCADE)
     material = models.ForeignKey('item_master.Material', on_delete=models.CASCADE)
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
-    storage_bin = models.ForeignKey('wms.StorageBin', on_delete=models.CASCADE)
+    storage_bin = models.ForeignKey('wms.StorageBin', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self): return f"{self.delivery.delivery_number} - {self.material.name}"
