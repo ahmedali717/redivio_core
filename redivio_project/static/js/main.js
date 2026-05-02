@@ -364,40 +364,15 @@ createApp({
         },
 
         displayMoves() {
-            let list = this.inventoryMoves || [];
+            // ... same logic as before, just used for the main list
+            let list = this.filteredMovesForStats || [];
             const filters = this.forms.stock_entry;
             
-            // 1. Filter by Type (Receipts/Issues)
+            // Apply Type Filter only for the list/table display
             if (filters.filterType !== 'ALL') {
                 list = list.filter(m => m.move_type === filters.filterType);
             }
-            
-            // 2. Filter by Date Range
-            if (filters.date_from) {
-                list = list.filter(m => m.created_at.split('T')[0] >= filters.date_from);
-            }
-            if (filters.date_to) {
-                list = list.filter(m => m.created_at.split('T')[0] <= filters.date_to);
-            }
 
-            // 3. Filter by Contact Search
-            if (filters.contact_search) {
-                const q = filters.contact_search.toLowerCase();
-                list = list.filter(m => 
-                    (m.vendor_name && m.vendor_name.toLowerCase().includes(q)) ||
-                    (m.customer_name && m.customer_name.toLowerCase().includes(q))
-                );
-            }
-
-            // 4. Filter by Global Search
-            if (this.searchQuery) {
-                const q = this.searchQuery.toLowerCase();
-                list = list.filter(m => 
-                    (m.material_name && m.material_name.toLowerCase().includes(q)) ||
-                    (m.reference && m.reference.toLowerCase().includes(q))
-                );
-            }
-            
             // 5. Grouping/Sorting logic
             if (filters.groupBy === 'material') {
                 list = [...list].sort((a, b) => (a.material_name || '').localeCompare(b.material_name || ''));
@@ -410,8 +385,43 @@ createApp({
             return list;
         },
 
+        filteredMovesForStats() {
+            let list = this.inventoryMoves || [];
+            const filters = this.forms.stock_entry;
+            
+            // 1. Filter by Date Range
+            if (filters.date_from) {
+                list = list.filter(m => m.created_at.split('T')[0] >= filters.date_from);
+            }
+            if (filters.date_to) {
+                list = list.filter(m => m.created_at.split('T')[0] <= filters.date_to);
+            }
+
+            // 2. Filter by Contact Search
+            if (filters.contact_search) {
+                const q = filters.contact_search.toLowerCase();
+                list = list.filter(m => 
+                    (m.vendor_name && m.vendor_name.toLowerCase().includes(q)) ||
+                    (m.customer_name && m.customer_name.toLowerCase().includes(q))
+                );
+            }
+
+            // 3. Filter by Global Search
+            if (this.searchQuery) {
+                const q = this.searchQuery.toLowerCase();
+                list = list.filter(m => 
+                    (m.material_name && m.material_name.toLowerCase().includes(q)) ||
+                    (m.reference && m.reference.toLowerCase().includes(q))
+                );
+            }
+            
+            // Sort by date desc by default
+            return [...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        },
+
         contactAggregates() {
-            const list = this.inventoryMoves || [];
+            // ✅ Fix: Use displayMoves instead of inventoryMoves so top filters work on aggregation too
+            const list = this.displayMoves || [];
             const aggregates = {};
 
             list.forEach(m => {
@@ -2189,6 +2199,15 @@ createApp({
                 this.forms.stock_entry.bin_id = primary.storage_bin;
                 this.showToast(this.isArabic ? "تم تحديد الرف الافتراضي تلقائياً" : "Default bin selected", 'success');
             }
+        },
+
+        drillDownContact(agg) {
+            // 1. Set the contact search filter
+            this.forms.stock_entry.contact_search = agg.name;
+            // 2. Switch back to "All" view to see individual moves
+            this.forms.stock_entry.groupBy = 'none';
+            // 3. Optional: Clear other filters if needed
+            this.forms.stock_entry.filterType = 'ALL';
         },
 
         // 🚀 وظائف لوحة التحكم الحية (WMS Dashboard Actions)
