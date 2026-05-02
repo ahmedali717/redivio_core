@@ -2105,7 +2105,7 @@ createApp({
                     this.activeOpco = {
                         id: this.activeOpcoId,
                         name: data.company_name || 'REDIVIO',
-                        currency: data.currency || 'SAR'
+                        currency: data.currency || 'USD'
                     };
                     this.syncGlobalConfig(this.activeOpcoId);
                     await this.refreshAllData();
