@@ -144,7 +144,9 @@
                                     <input type="number" v-model="item.quantity" class="w-full bg-white border border-slate-100 focus:border-emerald-200 p-2.5 rounded-xl font-black text-center text-slate-800 outline-none transition-all" step="0.01">
                                 </td>
                                 <td class="p-3 text-center">
-                                    <input type="number" v-model="forms.stock_entry.receipt_type === 'PURCHASE' ? item.unit_cost : item.sales_price" 
+                                    <input v-if="forms.stock_entry.receipt_type === 'PURCHASE'" type="number" v-model="item.unit_cost" 
+                                           class="w-full bg-emerald-50/20 border border-emerald-100 focus:border-emerald-300 p-2.5 rounded-xl font-black text-center text-emerald-700 outline-none transition-all" step="0.01">
+                                    <input v-else type="number" v-model="item.sales_price" 
                                            class="w-full bg-emerald-50/20 border border-emerald-100 focus:border-emerald-300 p-2.5 rounded-xl font-black text-center text-emerald-700 outline-none transition-all" step="0.01">
                                 </td>
                                 <td class="p-3 text-center">
