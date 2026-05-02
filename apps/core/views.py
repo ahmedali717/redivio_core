@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.db import transaction
 from django.db.models import Sum, Q
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.conf import settings
 
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
@@ -161,6 +162,8 @@ class LoginAPI(APIView):
         else:
             return Response({"error": "Invalid email or password"}, status=401)
 
+from django.core.mail import send_mail
+
 class TenantSignupAPI(APIView):
     permission_classes = [AllowAny]
 
@@ -170,6 +173,14 @@ class TenantSignupAPI(APIView):
         email = data.get('email')
         password = data.get('password')
         currency = data.get('currency', 'USD')
+        
+        # New SaaS Fields
+        contact_name = data.get('name', '')
+        contact_phone = data.get('phone', '')
+        industry = data.get('industry', '')
+        database_name = data.get('database_name', '')
+        system_mode = data.get('system_mode', 'modular')
+        purchased_modules = data.get('modules', [])
 
         if not (company_name and email):
             return Response({"error": "Missing required fields"}, status=400)
@@ -195,7 +206,13 @@ class TenantSignupAPI(APIView):
                         'code': random_code, 
                         'currency': currency,
                         'owner': user,
-                        'is_holding': False 
+                        'is_holding': False,
+                        'contact_name': contact_name,
+                        'contact_phone': contact_phone,
+                        'industry': industry,
+                        'database_name': database_name,
+                        'system_mode': system_mode,
+                        'purchased_modules': purchased_modules
                     }
                 )
                 
@@ -205,6 +222,38 @@ class TenantSignupAPI(APIView):
                 if created:
                     plant = Plant.objects.create(opco=opco, code="MAIN", name=f"{company_name} HQ")
                     StorageLocation.objects.create(plant=plant, code="IN-1", name="Receiving")
+                    
+                    # إرسال بريد إلكتروني بالترحيب وبيانات التسجيل
+                    try:
+                        subject = f"Welcome to Redivio ERP - {company_name}"
+                        message = f"""
+                        Dear {contact_name},
+                        
+                        Welcome to Redivio ERP! Your workspace has been successfully created.
+                        
+                        Subscription Details:
+                        --------------------
+                        Company: {company_name}
+                        Registration Code: {random_code}
+                        System Mode: {system_mode}
+                        Active Modules: {', '.join(purchased_modules) if purchased_modules else 'None'}
+                        Login Email: {email}
+                        
+                        You can login to your dashboard directly.
+                        
+                        Best regards,
+                        Redivio Support Team
+                        """
+                        send_mail(
+                            subject,
+                            message,
+                            settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@redivio.com',
+                            [email],
+                            fail_silently=True,
+                        )
+                    except Exception as e:
+                        # Log email error but don't stop the signup process
+                        print(f"Failed to send email: {str(e)}")
 
                 return Response({
                     "success": True,

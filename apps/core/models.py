@@ -72,6 +72,21 @@ class OpCo(models.Model):
     cr_number = models.CharField(max_length=50, blank=True, null=True, verbose_name="السجل التجاري")
     logo = models.ImageField(upload_to='company_logos/', blank=True, null=True, verbose_name="شعار الشركة")
 
+    # ✅ بيانات المشترك الأساسية (SaaS Data)
+    contact_name = models.CharField(max_length=150, blank=True, null=True, verbose_name="اسم المشترك")
+    contact_phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="رقم الهاتف")
+    industry = models.CharField(max_length=100, blank=True, null=True, verbose_name="النشاط")
+    database_name = models.CharField(max_length=50, blank=True, null=True, verbose_name="اسم قاعدة البيانات", unique=True)
+    
+    # ✅ إعدادات الرخصة ونوع النظام (License & Architecture)
+    system_mode = models.CharField(
+        max_length=20,
+        choices=[("standalone", "Stand Alone"), ("modular", "Full Package")],
+        default="modular",
+        verbose_name="نوع النظام"
+    )
+    purchased_modules = models.JSONField(default=list, blank=True, verbose_name="الموديولات المشتراة")
+
     # ✅ المانيجرز:objects العادي لا يفلتر لكي يرى السيرفر كل الشركات في الهيدر
     objects = models.Manager() 
     all_objects = models.Manager() 
