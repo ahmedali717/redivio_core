@@ -39,6 +39,9 @@
                 </div>
             </div>
             <div class="col-5 text-start border-start ps-4">
+                {% if opco.logo %}
+                    <img src="{{ opco.logo.url }}" style="max-height: 70px; width: auto; margin-bottom: 15px; display: block;">
+                {% endif %}
                 <h4 class="fw-bold mb-1">{{ opco.name }}</h4>
                 <p class="small text-muted mb-0">{{ opco.address|default:"" }}</p>
                 <p class="small text-muted">{{ opco.email|default:"" }}</p>
