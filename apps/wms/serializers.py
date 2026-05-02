@@ -64,7 +64,7 @@ class StockMoveItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockMove
-        fields = ['material_id', 'quantity', 'unit_cost']
+        fields = ['material_id', 'quantity', 'unit_cost', 'sales_price']
 
 class StockMoveSerializer(serializers.ModelSerializer):
     items = StockMoveItemSerializer(many=True, write_only=True)
@@ -82,8 +82,9 @@ class StockMoveSerializer(serializers.ModelSerializer):
         model = StockMove
         fields = [
             'id', 'created_at', 'items', 'move_type', 'receipt_type', 'opco', 'reference', 
-            'vendor_name', 'payment_term', 'dest_bin', 'source_bin',
-            'material_name', 'source_loc', 'dest_loc', 'material', 'quantity', 'receipt_id'
+            'vendor_name', 'payment_term', 'payment_method', 'dest_bin', 'source_bin',
+            'material_name', 'source_loc', 'dest_loc', 'material', 'quantity', 'receipt_id',
+            'unit_cost', 'sales_price'
         ]
         extra_kwargs = {
             'material': {'required': False, 'allow_null': True},
@@ -124,6 +125,7 @@ class StockMoveSerializer(serializers.ModelSerializer):
             'reference': validated_data.get('reference', 'MANUAL'),
             'vendor_name': validated_data.get('vendor_name', ""),
             'payment_term': validated_data.get('payment_term', "CASH"),
+            'payment_method': validated_data.get('payment_method', "CASH"),
             'opco': validated_data.get('opco'),
             'dest_bin': validated_data.get('dest_bin'),
             'source_bin': validated_data.get('source_bin'),
@@ -135,6 +137,7 @@ class StockMoveSerializer(serializers.ModelSerializer):
                 material_id=item['material_id'],
                 quantity=item['quantity'],
                 unit_cost=item.get('unit_cost', 0),
+                sales_price=item.get('sales_price', 0),
                 **common_info
             )
         

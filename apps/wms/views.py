@@ -220,6 +220,9 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         if move_type == 'IN':
             for item in items:
                 qty = Decimal(str(item.get('received_qty', item.get('quantity', 0))))
+                unit_cost = Decimal(str(item.get('unit_cost', 0)))
+                pay_method = data.get('payment_method', 'CASH')
+                
                 if qty <= 0: continue
                 
                 material_id = item.get('material_id') or item.get('material')
@@ -230,26 +233,49 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 if bin_id:
                     dest_bin = StorageBin.objects.get(id=bin_id)
                 else:
-                    # Fallback to a default bin for the opco
                     dest_bin = StorageBin.objects.filter(storage_location__plant__opco_id=opco_id).first()
-                    if not dest_bin:
-                        return Response({"error": "No storage bin configured for this organization"}, status=400)
                 
+                if not dest_bin:
+                    return Response({"error": "No storage bin configured"}, status=400)
+                
+                # --- 📈 WAC Calculation (Weighted Average Cost) ---
+                try:
+                    Material = apps.get_model('item_master', 'Material')
+                    mat_obj = Material.objects.get(id=material_id)
+                    
+                    qty_before = Decimal(str(mat_obj.total_on_hand))
+                    cost_before = mat_obj.standard_price
+                    
+                    total_val_before = qty_before * cost_before
+                    total_val_new = qty * unit_cost
+                    total_qty_after = qty_before + qty
+                    
+                    if total_qty_after > 0:
+                        new_wac = (total_val_before + total_val_new) / total_qty_after
+                        mat_obj.standard_price = new_wac.quantize(Decimal('0.01'))
+                        mat_obj.save()
+                except Exception as e:
+                    print(f"WAC Update Error: {e}")
+
                 # Create StockMove
                 move = StockMove.objects.create(
                     opco_id=opco_id,
                     material_id=material_id,
                     quantity=qty,
+                    unit_cost=unit_cost,
+                    payment_method=pay_method,
                     move_type='IN',
                     dest_bin=dest_bin,
-                    reference=f"PO {po_id}" if po_id else reference_text
+                    reference=f"PO {po_id}" if po_id else reference_text,
+                    vendor_name=manual_contact_name
                 )
                 
                 # Update StockQuant
                 quant, created = StockQuant.objects.get_or_create(
                     opco_id=opco_id,
                     material_id=material_id,
-                    storage_bin=dest_bin
+                    storage_bin=dest_bin,
+                    defaults={'plant': dest_bin.storage_location.plant}
                 )
                 quant.quantity += qty
                 quant.save()
@@ -258,6 +284,9 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         elif move_type == 'OUT':
             for item in items:
                 qty = Decimal(str(item.get('received_qty', item.get('quantity', 0))))
+                sales_price = Decimal(str(item.get('sales_price', 0)))
+                coll_method = data.get('payment_method', 'CASH')
+
                 if qty <= 0: continue
 
                 material_id = item.get('material_id') or item.get('material')
@@ -268,7 +297,6 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 if bin_id:
                     source_bin = StorageBin.objects.get(id=bin_id)
                 else:
-                    # Get the bin with the most stock for this material
                     best_quant = StockQuant.objects.filter(
                         opco_id=opco_id, material_id=material_id, quantity__gte=qty
                     ).order_by('-quantity').first()
@@ -282,22 +310,23 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
                 # Check Availability
                 quant = StockQuant.objects.filter(
-                    opco_id=opco_id,
-                    material_id=material_id,
-                    storage_bin=source_bin
+                    opco_id=opco_id, material_id=material_id, storage_bin=source_bin
                 ).first()
                 
                 if not quant or quant.quantity < qty:
-                    return Response({"error": f"Insufficient stock for Material ID {material_id} in bin {source_bin.code}"}, status=400)
+                    return Response({"error": f"Insufficient stock for Material ID {material_id}"}, status=400)
 
                 # Create StockMove
                 move = StockMove.objects.create(
                     opco_id=opco_id,
                     material_id=material_id,
                     quantity=qty,
+                    sales_price=sales_price,
+                    payment_method=coll_method,
                     move_type='OUT',
                     source_bin=source_bin,
-                    reference=f"SO {so_id}" if so_id else reference_text
+                    reference=f"SO {so_id}" if so_id else reference_text,
+                    vendor_name=manual_contact_name
                 )
 
                 # Update StockQuant

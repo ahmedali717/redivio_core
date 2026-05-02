@@ -67,8 +67,10 @@ class StockMove(models.Model):
     # أضف الحقول دي عشان السيريالايزر يشتغل صح
     vendor_name = models.CharField(max_length=200, null=True, blank=True)
     payment_term = models.CharField(max_length=50, default="CASH")
-    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    receipt_type = models.CharField(max_length=50, null=True, blank=True) # اللي كان عامل المشكلة
+    payment_method = models.CharField(max_length=50, default="CASH") # 🚀 طريقة الدفع/التحصيل
+    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0) # سعر الشراء
+    sales_price = models.DecimalField(max_digits=12, decimal_places=2, default=0) # سعر البيع
+    receipt_type = models.CharField(max_length=50, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None

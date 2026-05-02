@@ -195,7 +195,7 @@ createApp({
                     lines: [{ material: '', quantity: 1, unit_price: 0 }]
                 },
 
-                stock_entry: { items: [], po_id: '', filterType: 'ALL', groupBy: 'none' },
+                stock_entry: { items: [], po_id: '', filterType: 'ALL', groupBy: 'none', payment_method: 'CASH' },
                 customer: { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' },
                 salesorder: {
                     id: null,
@@ -432,17 +432,19 @@ createApp({
             this.activeOperation = 'manual';
             this.forms.stock_entry = {
                 id: move.id,
-                receipt_type: move.move_type === 'IN' ? 'PURCHASE' : 'SALE',
+                receipt_type: move.move_type === 'IN' ? 'PURCHASE' : 'ISSUE',
                 items: [{ 
                     material_id: move.material, 
                     material_name: move.material_name,
                     quantity: move.quantity, 
-                    unit_cost: 0 
+                    unit_cost: move.unit_cost || 0,
+                    sales_price: move.sales_price || 0
                 }],
                 bin_id: move.dest_bin || move.source_bin || '',
                 contact_id: move.vendor || '',
                 manual_contact_name: move.vendor_name || '',
-                reference: move.reference
+                reference: move.reference,
+                payment_method: move.payment_method || 'CASH'
             };
             this.showModal = true;
         },
@@ -515,8 +517,9 @@ createApp({
             this.forms.stock_entry.move_type = incomingOps.includes(type) ? 'IN' : 'OUT';
 
             // تصفير البيانات للبدء في عملية جديدة
-            this.forms.stock_entry.items = [];
+            this.forms.stock_entry.items = [{ material_id: '', quantity: 1, unit_cost: 0, sales_price: 0 }];
             this.forms.stock_entry.po_id = '';
+            this.forms.stock_entry.payment_method = 'CASH';
 
             // لو العملية شراء، نجهز أوامر التوريد
             if (type === 'po_receipt') {
@@ -527,6 +530,9 @@ createApp({
             if (type === 'so_delivery') {
                 this.fetchSalesOrders();
             }
+            
+            this.showModal = true;
+            this.modalType = 'stock_entry';
         },
 
         async generateItemReport() {

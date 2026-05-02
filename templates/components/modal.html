@@ -81,25 +81,31 @@
                         <div class="space-y-2">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">نوع الحركة (Move Type)</label>
                             <select v-model="forms.stock_entry.receipt_type" class="w-full border border-slate-200 focus:border-indigo-500 p-3 rounded-xl font-bold text-slate-700 outline-none transition-colors">
-                                <option value="PURCHASE" v-text="isArabic ? 'إضافة (توريد)' : 'Inbound (Receipt)'"></option>
-                                <option value="ISSUE" v-text="isArabic ? 'صرف (مبيعات / استهلاك)' : 'Outbound (Issue)'"></option>
+                                <option value="PURCHASE" v-text="isArabic ? 'إضافة (شراء)' : 'Inbound (Purchase)'"></option>
+                                <option value="ISSUE" v-text="isArabic ? 'صرف (بيع / استهلاك)' : 'Outbound (Sale)'"></option>
                                 <option value="TRANSFER" v-text="isArabic ? 'تحويل مخزني' : 'Internal Transfer'"></option>
                             </select>
                         </div>
                         
-                        <!-- Dynamic Contact Field based on SaaS Architecture -->
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1" 
+                                   v-text="forms.stock_entry.receipt_type === 'PURCHASE' ? (isArabic ? 'طريقة الدفع' : 'Payment Method') : (isArabic ? 'طريقة التحصيل' : 'Collection Method')"></label>
+                            <select v-model="forms.stock_entry.payment_method" class="w-full border border-slate-200 focus:border-indigo-500 p-3 rounded-xl font-bold text-slate-700 outline-none transition-colors">
+                                <option value="CASH" v-text="isArabic ? 'كاش (نقدي)' : 'Cash'"></option>
+                                <option value="BANK" v-text="isArabic ? 'تحويل بنكي / بطاقة' : 'Bank / Card'"></option>
+                                <option value="CREDIT" v-text="isArabic ? 'آجل (على الحساب)' : 'Credit / On Account'"></option>
+                            </select>
+                        </div>
+
+                        <!-- Dynamic Contact Field -->
                         <div v-if="forms.stock_entry.receipt_type === 'PURCHASE'" class="space-y-2">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">المورد (Vendor)</label>
-                            
-                            <!-- Modular: Dropdown -->
                             <div v-if="purchasedModules.includes('proc')" class="flex gap-2">
                                 <select v-model="forms.stock_entry.contact_id" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
                                     <option value="">اختر المورد...</option>
                                     <option v-for="v in vendors" :key="v.id" :value="v.id" v-text="v.name"></option>
                                 </select>
                             </div>
-                            
-                            <!-- Stand Alone: Text Input -->
                             <div v-else>
                                 <input type="text" v-model="forms.stock_entry.manual_contact_name" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="اسم المورد (Manual Entry)">
                             </div>
@@ -107,16 +113,12 @@
 
                         <div v-if="forms.stock_entry.receipt_type === 'ISSUE'" class="space-y-2">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">العميل (Customer)</label>
-                            
-                            <!-- Modular: Dropdown -->
                             <div v-if="purchasedModules.includes('sales')" class="flex gap-2">
                                 <select v-model="forms.stock_entry.contact_id" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
                                     <option value="">اختر العميل...</option>
                                     <option v-for="c in customers" :key="c.id" :value="c.id" v-text="c.name"></option>
                                 </select>
                             </div>
-                            
-                            <!-- Stand Alone: Text Input -->
                             <div v-else>
                                 <input type="text" v-model="forms.stock_entry.manual_contact_name" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="اسم العميل (Manual Entry)">
                             </div>
@@ -130,6 +132,7 @@
                             <tr>
                                 <th class="p-3">الصنف (Item)</th>
                                 <th class="p-3 text-center">الكمية</th>
+                                <th class="p-3 text-center" v-text="forms.stock_entry.receipt_type === 'PURCHASE' ? (isArabic ? 'سعر الشراء' : 'Unit Cost') : (isArabic ? 'سعر البيع' : 'Sales Price')"></th>
                                 <th class="p-3 w-10"></th>
                             </tr>
                         </thead>
@@ -142,7 +145,11 @@
                                     </select>
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" v-model="item.quantity" class="w-24 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-indigo-200 rounded-lg p-2 text-center font-bold text-xs outline-none" required>
+                                    <input type="number" v-model="item.quantity" class="w-20 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-indigo-200 rounded-lg p-2 text-center font-bold text-xs outline-none" required>
+                                </td>
+                                <td class="p-2">
+                                    <input v-if="forms.stock_entry.receipt_type === 'PURCHASE'" type="number" v-model="item.unit_cost" class="w-24 mx-auto bg-emerald-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-center font-bold text-xs outline-none" step="0.01">
+                                    <input v-else type="number" v-model="item.sales_price" class="w-24 mx-auto bg-rose-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-center font-bold text-xs outline-none" step="0.01">
                                 </td>
                                 <td class="p-2 text-center">
                                     <button @click.prevent="forms.stock_entry.items.splice(index, 1)" class="text-slate-300 hover:text-red-500 transition-colors">
@@ -152,7 +159,7 @@
                             </tr>
                         </tbody>
                     </table>
-                    <button @click.prevent="forms.stock_entry.items.push({ material_id: '', quantity: 1, unit_cost: 0 })" class="w-full py-3 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-indigo-600 transition-all border-t border-dashed border-slate-200">
+                    <button @click.prevent="forms.stock_entry.items.push({ material_id: '', quantity: 1, unit_cost: 0, sales_price: 0 })" class="w-full py-3 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-indigo-600 transition-all border-t border-dashed border-slate-200">
                         <i class="fas fa-plus-circle mr-1"></i> إضافة صنف
                     </button>
                 </div>
