@@ -66,6 +66,7 @@ def wms_stats(request):
     pending_sos = SalesOrder.objects.filter(opco_id=active_opco_id, status='CONFIRMED').order_by('-created_at')[:5]
     
     lang = getattr(request, 'LANGUAGE_CODE', 'en')
+    operations = [] # ✅ تهيئة القائمة
     for po in pending_pos:
         operations.append({
             "id": po.id,
