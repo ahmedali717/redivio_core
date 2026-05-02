@@ -2229,7 +2229,7 @@ createApp({
 
         printInventoryReport() {
             this.showToast(this.isArabic ? "جاري تحضير تقرير الجرد..." : "Preparing Inventory Report...", 'info');
-            window.open('/api/wms/inventory/print_audit/', '_blank');
+            window.open('/api/wms/inventory/print_audit/?format=pdf', '_blank');
         },
 
         viewStagnantStock() {

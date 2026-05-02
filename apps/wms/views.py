@@ -164,6 +164,8 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     def print_audit(self, request):
         """ توليد تقرير جرد للأصناف الحالية """
         from django.utils import timezone
+        from redivio_project.utils.pdf import render_to_pdf
+        
         active_opco = self.get_active_opco()
         quants = StockQuant.objects.filter(opco=active_opco).select_related('material', 'storage_bin')
         
@@ -174,8 +176,17 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             "quantity": float(q.quantity)
         } for q in quants]
         
-        return Response({
+        context = {
             "report_date": timezone.now(),
+            "opco": active_opco,
+            "items": data
+        }
+
+        if request.query_params.get('format') == 'pdf':
+            return render_to_pdf('wms/print_audit.html', context)
+        
+        return Response({
+            "report_date": context["report_date"],
             "opco_name": active_opco.name,
             "items": data
         })
