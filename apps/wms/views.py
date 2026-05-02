@@ -191,10 +191,33 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def print(self, request, pk=None):
-        """ توليد صفحة طباعة للحركة المخزنية """
-        move = self.get_object()
-        from django.shortcuts import redirect
-        return redirect(f'/api/print/grn/{move.id}/' if move.move_type == 'IN' else f'/api/print/delivery/{move.id}/')
+        """ توليد صفحة طباعة مخصصة للحركة المخزنية اليدوية (تدعم تعدد الأصناف) """
+        current_move = self.get_object()
+        
+        # جلب كل الحركات اللي ليها نفس المرجع وفي نفس التوقيت تقريباً
+        all_moves = StockMove.objects.filter(
+            reference=current_move.reference,
+            opco=current_move.opco,
+            move_type=current_move.move_type
+        ).filter(created_at__gte=current_move.created_at - models.DurationField().to_python('00:01:00')) # في حدود دقيقة
+        
+        # حساب الإجماليات
+        total_val = sum(
+            (m.quantity * (m.unit_cost if m.move_type == 'IN' else m.sales_price))
+            for m in all_moves
+        )
+        
+        from django.shortcuts import render
+        context = {
+            'main_move': current_move,
+            'moves': all_moves,
+            'is_receipt': current_move.move_type == 'IN',
+            'opco': current_move.opco,
+            'total_val': total_val,
+            'vat_amount': total_val * Decimal('0.15'),
+            'grand_total': total_val * Decimal('1.15')
+        }
+        return render(request, 'wms/print_move.html', context)
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):
@@ -263,10 +286,14 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     qty_before = StockQuant.objects.filter(opco_id=opco_id, material_id=material_id).aggregate(total=Sum('quantity'))['total'] or Decimal('0')
                     cost_before = Decimal(str(mat_obj.standard_price or 0))
                     total_qty_after = qty_before + qty
+                    
+                    print(f"DEBUG WAC: Mat={mat_obj.name}, QtyBefore={qty_before}, CostBefore={cost_before}, NewQty={qty}, NewCost={unit_cost}")
+                    
                     if total_qty_after > 0:
                         new_wac = ((qty_before * cost_before) + (qty * unit_cost)) / total_qty_after
                         mat_obj.standard_price = new_wac.quantize(Decimal('0.01'))
                         mat_obj.save()
+                        print(f"DEBUG WAC: New Standard Price Saved = {mat_obj.standard_price}")
                 except Exception as e: print(f"WAC Update Error: {e}")
 
                 move = StockMove.objects.create(

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-8 bg-white shadow-lg my-10 print:shadow-none print:my-0" id="printable-area">
+    <!-- Header -->
+    <div class="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-6">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 uppercase tracking-tighter">
+                {{ is_receipt ? "Material Receipt Note" : "Material Delivery Note" }}
+            </h1>
+            <p class="text-slate-500 font-bold text-sm mt-1">Movement ID: #{{ move.id }}</p>
+        </div>
+        <div class="text-right">
+            <h2 class="text-xl font-bold text-slate-800">{{ opco.name }}</h2>
+            <p class="text-slate-500 text-xs">{{ opco.address }}</p>
+            <p class="text-slate-500 text-xs">{{ opco.email }}</p>
+        </div>
+    </div>
+
+    <!-- Info Grid -->
+    <div class="grid grid-cols-2 gap-8 mb-8">
+        <div class="space-y-4">
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Date & Time</label>
+                <div class="font-bold text-slate-700">{{ main_move.created_at|date:"Y-m-d H:i" }}</div>
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Reference</label>
+                <div class="font-bold text-indigo-600">{{ main_move.reference }}</div>
+            </div>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                    {{ is_receipt ? "Vendor / Source" : "Customer / Destination" }}
+                </label>
+                <div class="font-bold text-slate-700">{{ main_move.vendor_name|default:"---" }}</div>
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Payment Method</label>
+                <div class="font-bold text-emerald-600">{{ main_move.payment_method }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="border rounded-2xl overflow-hidden mb-8">
+        <table class="w-full text-left">
+            <thead class="bg-slate-900 text-white text-[10px] font-black uppercase">
+                <tr>
+                    <th class="p-4">Material / Item</th>
+                    <th class="p-4 text-center">Quantity</th>
+                    <th class="p-4 text-right">Unit Price</th>
+                    <th class="p-4 text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for move in moves %}
+                <tr>
+                    <td class="p-4">
+                        <div class="font-bold text-slate-800">{{ move.material.name }}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">{{ move.material.sku }}</div>
+                    </td>
+                    <td class="p-4 text-center font-bold text-slate-700">{{ move.quantity }}</td>
+                    <td class="p-4 text-right font-mono text-slate-600">
+                        {{ is_receipt ? move.unit_cost : move.sales_price }}
+                    </td>
+                    <td class="p-4 text-right font-bold text-slate-900">
+                        {% if is_receipt %}{{ move.unit_cost|default:0|floatformat:2 }}{% else %}{{ move.sales_price|default:0|floatformat:2 }}{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Totals -->
+    <div class="flex justify-end mb-10">
+        <div class="w-full md:w-64 space-y-2">
+            <div class="flex justify-between text-xs text-slate-500 font-bold uppercase">
+                <span>Subtotal</span>
+                <span>SAR {{ total_val|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-500 font-bold uppercase">
+                <span>VAT (15%)</span>
+                <span>SAR {{ vat_amount|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-slate-900 rounded-xl text-white mt-4">
+                <span class="text-[10px] font-black uppercase tracking-widest">Grand Total</span>
+                <span class="text-xl font-black text-emerald-400 font-mono">SAR {{ grand_total|floatformat:2 }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Signatures -->
+    <div class="grid grid-cols-3 gap-8 mt-20 pt-10 border-t border-dashed border-slate-200">
+        <div class="text-center">
+            <div class="border-b border-slate-300 mb-2 h-10 w-full"></div>
+            <label class="text-[10px] font-black text-slate-400 uppercase">Prepared By</label>
+        </div>
+        <div class="text-center">
+            <div class="border-b border-slate-300 mb-2 h-10 w-full"></div>
+            <label class="text-[10px] font-black text-slate-400 uppercase">Store Keeper</label>
+        </div>
+        <div class="text-center">
+            <div class="border-b border-slate-300 mb-2 h-10 w-full"></div>
+            <label class="text-[10px] font-black text-slate-400 uppercase">Authorized Signature</label>
+        </div>
+    </div>
+</div>
+
+<div class="fixed bottom-8 right-8 flex gap-4 print:hidden">
+    <button onclick="window.print()" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-2xl hover:bg-indigo-600 transition-all flex items-center gap-2">
+        <i class="fas fa-print"></i> Print Document
+    </button>
+</div>
+
+<style>
+@media print {
+    body { background: white !important; }
+    #printable-area { border: none !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
+}
+</style>
+{% endblock %}
