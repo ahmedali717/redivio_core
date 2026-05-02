@@ -2153,14 +2153,42 @@ createApp({
         },
 
         openModal(type, data = null) {
+            this.isEditing = false;
             this.modalType = type;
-            if (type === 'stock_entry') {
-                this.activeOperation = 'manual';
-                this.forms.stock_entry = { receipt_type: 'PURCHASE', items: [{ material_id: '', quantity: 1, unit_cost: 0 }], target_plant: '', target_location: '' };
+            this.materialTab = 'general';
+            this.showModal = true;
+            this.imagePreview = null;
+            this.selectedFile = null;
+
+            if (type === 'salesorder') {
+                this.forms.salesorder = {
+                    id: null, customer: '', so_number: `SO-${Date.now()}`,
+                    status: 'DRAFT', total_amount: 0, tax_amount: 0, grand_total: 0,
+                    lines: [{ material: '', quantity: 1, unit_price: 0 }]
+                };
+            } else if (type === 'customer') {
+                this.forms.customer = { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' };
+            } else if (type === 'plant') {
+                this.forms.plant = { id: null, opco: this.activeOpcoId, code: '', name: '' };
+            } else if (type === 'location') {
+                this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
+            } else if (type === 'bin') {
+                this.forms.bin = { id: null, storage_location: this.activeLocationId, code: '' };
             } else if (type === 'material') {
-                this.forms.material = { name: '', code: '', sku: '', category: '', unit: 'PCS', standard_price: 0 };
+                this.forms.material = {
+                    id: null, sku: '', name: '', category: '', base_uom: 'PCS', barcode: '',
+                    company_assignments: [{ opco_id: this.activeOpcoId, bins: [], primary_bin: null }],
+                    tracking: 'none', reorder_level: 0, max_level: 0
+                };
+            } else if (type === 'stock_entry') {
+                this.activeOperation = 'manual';
+                this.forms.stock_entry = { 
+                    receipt_type: 'PURCHASE', 
+                    items: data && data.items ? data.items : [{ material_id: '', quantity: 1, unit_cost: 0 }], 
+                    target_plant: this.activePlantId || '', 
+                    bin_id: '', contact_id: '', manual_contact_name: '' 
+                };
             } else if (type === 'po' || type === 'purchase_order') {
-                // 🚀 التحقق من حالة النظام والموديولات المشتراة
                 const hasProcurement = this.purchasedModules && this.purchasedModules.includes('procurement');
                 if (this.systemMode === 'modular' && hasProcurement) {
                     this.modalType = 'po';
@@ -2168,12 +2196,10 @@ createApp({
                         vendor: '', 
                         po_number: `PO-${Date.now()}`, 
                         lines: data && data.items ? data.items : [{ material: '', quantity: 1, unit_price: 0 }], 
-                        tax_rate: 15, 
-                        is_tax_inclusive: false 
+                        tax_rate: 15, is_tax_inclusive: false 
                     };
                     this.fetchVendors();
                 } else {
-                    // إذا كان Standalone أو لا يوجد موديول مشتريات، يفتح "إذن استلام مخزني"
                     this.modalType = 'stock_entry';
                     this.activeOperation = 'manual';
                     this.forms.stock_entry = { 
@@ -2183,13 +2209,17 @@ createApp({
                             quantity: i.quantity,
                             unit_cost: i.unit_price
                         })) : [{ material_id: '', quantity: 1, unit_cost: 0 }],
-                        target_plant: '', 
-                        target_location: '' 
+                        target_plant: this.activePlantId || '', 
+                        bin_id: '', contact_id: '', manual_contact_name: '' 
                     };
                     this.showToast(this.isArabic ? "تم فتح إذن استلام (Standalone Mode)" : "Opened Stock Receipt (Standalone)", 'info');
                 }
+            } else if (type === 'opco') {
+                this.forms.opco = {
+                    id: null, code: data ? data.code : '', name: '',
+                    currency: 'USD', parent: data ? data.parent : (this.activeOpcoId || null), is_holding: false
+                };
             }
-            this.showModal = true;
         },
 
         createPOFromLowStock() {
@@ -2412,83 +2442,6 @@ createApp({
             return loc ? loc.name : '...';
         },
 
-        openModal(type, data = null) {
-            this.isEditing = false;
-            this.modalType = type;
-            this.materialTab = 'general';
-            this.showModal = true;
-            this.imagePreview = null;
-            this.selectedFile = null;
-
-            if (type === 'salesorder') {
-                this.forms.salesorder = {
-                    id: null,
-                    customer: '',
-                    so_number: `SO-${Date.now()}`,
-                    status: 'DRAFT',
-                    total_amount: 0,
-                    tax_amount: 0,
-                    grand_total: 0,
-                    lines: [{ material: '', quantity: 1, unit_price: 0 }]
-                };
-            } else if (type === 'customer') {
-                this.forms.customer = { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' };
-            } else if (type === 'plant') {
-                this.forms.plant = { id: null, opco: this.activeOpcoId, code: '', name: '' };
-            } else if (type === 'location') {
-                this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
-            } else if (type === 'bin') {
-                this.forms.bin = { id: null, storage_location: this.activeLocationId, code: '' };
-            } else if (type === 'material') {
-                this.forms.material = {
-                    id: null,
-                    sku: '',
-                    name: '',
-                    category: '',
-                    base_uom: 'PCS',
-                    barcode: '',
-                    company_assignments: [
-                        {
-                            opco_id: this.activeOpcoId,
-                            bins: [],
-                            primary_bin: null
-                        }
-                    ],
-                    tracking: 'none',
-                    reorder_level: 0,
-                    max_level: 0
-                };
-            } else if (type === 'stock_entry') {
-                this.forms.stock_entry = {
-                    receipt_type: 'PURCHASE',
-                    items: [{ material_id: '', quantity: 1, unit_cost: 0 }],
-                    target_plant: this.activePlantId || '',
-                    bin_id: '',
-                    contact_id: '',
-                    manual_contact_name: ''
-                };
-            } else if (type === 'po') {
-                const autoNo = `PO-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-                this.forms.po = {
-                    id: null,
-                    vendor: '',
-                    po_number: autoNo,
-                    is_tax_inclusive: false,
-                    tax_rate: 15,
-                    lines: [{ material: '', quantity: 1, unit_price: 0 }]
-                };
-                this.fetchVendors();
-            } else if (type === 'opco') {
-                this.forms.opco = {
-                    id: null,
-                    code: data ? data.code : '',
-                    name: '',
-                    currency: 'USD',
-                    parent: data ? data.parent : (this.activeOpcoId || null),
-                    is_holding: false
-                };
-            }
-        }
     },
 
     mounted() {
