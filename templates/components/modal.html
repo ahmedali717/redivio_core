@@ -140,7 +140,9 @@
                         <tbody class="divide-y divide-slate-100">
                             <tr v-for="(item, index) in forms.stock_entry.items" :key="index" class="group">
                                 <td class="p-2">
-                                    <select v-model="item.material_id" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-indigo-200 rounded-lg p-2 text-xs font-bold transition-all" required>
+                                    <select v-model="item.material_id" 
+                                            @change="fetchLastPrice(item)"
+                                            class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-indigo-200 rounded-lg p-2 text-xs font-bold transition-all" required>
                                         <option value="">اختر الصنف...</option>
                                         <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="m.name"></option>
                                     </select>

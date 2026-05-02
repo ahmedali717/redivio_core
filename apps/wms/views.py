@@ -167,6 +167,28 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             
         return queryset
 
+    @action(detail=False, methods=['get'])
+    def last_price(self, request):
+        """ جلب آخر سعر (شراء أو بيع) للصنف بناءً على نوع الحركة والشركة والطرف الثاني """
+        material_id = request.query_params.get('material_id')
+        move_type = request.query_params.get('move_type', 'IN')
+        opco_id = self._get_opco_id()
+        
+        if not material_id:
+            return Response({"price": 0})
+            
+        last_move = StockMove.objects.filter(
+            opco_id=opco_id,
+            material_id=material_id,
+            move_type=move_type
+        ).order_by('-created_at').first()
+        
+        if last_move:
+            price = last_move.unit_cost if move_type == 'IN' else last_move.sales_price
+            return Response({"price": float(price)})
+            
+        return Response({"price": 0})
+
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         data = request.data

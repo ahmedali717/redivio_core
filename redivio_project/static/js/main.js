@@ -466,6 +466,23 @@ createApp({
             this.showModal = true;
         },
 
+        async fetchLastPrice(item) {
+            if (!item.material_id) return;
+            try {
+                const moveType = this.forms.stock_entry.receipt_type === 'PURCHASE' ? 'IN' : 'OUT';
+                const url = `/api/wms/moves/last_price/?material_id=${item.material_id}&move_type=${moveType}&opco=${this.activeOpcoId}`;
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (this.forms.stock_entry.receipt_type === 'PURCHASE') {
+                        item.unit_cost = data.price;
+                    } else {
+                        item.sales_price = data.price;
+                    }
+                }
+            } catch (e) { console.error("Last Price Error:", e); }
+        },
+
         formatCurrency(value) {
             return new Intl.NumberFormat(this.isArabic ? 'ar-SA' : 'en-US', {
                 style: 'currency',
