@@ -182,7 +182,7 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             "items": data
         }
 
-        if request.query_params.get('format') == 'pdf':
+        if request.query_params.get('pdf') == '1':
             return render_to_pdf('wms/print_audit.html', context)
         
         return Response({
