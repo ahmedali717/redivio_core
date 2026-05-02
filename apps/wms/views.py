@@ -169,7 +169,7 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         
         data = [{
             "material": q.material.name,
-            "sku": getattr(q.material, 'sku', q.material.code),
+            "sku": getattr(q.material, 'sku', "N/A"),
             "bin": q.storage_bin.code,
             "quantity": float(q.quantity)
         } for q in quants]
