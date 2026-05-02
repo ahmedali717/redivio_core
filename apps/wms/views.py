@@ -183,7 +183,8 @@ class StockQuantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         }
 
         if request.query_params.get('pdf') == '1':
-            return render_to_pdf('wms/print_audit.html', context)
+            # ✅ Fix: Use standard render instead of render_to_pdf for perfect Arabic support via Browser Print
+            return render(request, 'wms/print_audit.html', context)
         
         return Response({
             "report_date": context["report_date"],

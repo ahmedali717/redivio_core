@@ -94,8 +94,35 @@
         </table>
     </div>
 
-    <div class="footer">
-        تم إنشاء هذا التقرير آلياً بواسطة نظام REDIVIO ERP - منصة إدارة المخزون الذكية
+    <div class="footer no-print">
+        <button onclick="window.print()" style="background: #3b82f6; color: white; padding: 12px 30px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">
+            <i class="fas fa-print"></i> طباعة التقرير (أو حفظ PDF)
+        </button>
+        <div style="margin-top: 10px;">تم إنشاء هذا التقرير آلياً بواسطة نظام REDIVIO ERP</div>
     </div>
+
+    <script>
+        // فتح حوار الطباعة تلقائياً بعد ثانية واحدة
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 1000);
+        };
+    </script>
 </body>
 </html>
+
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        body { margin: 0; padding: 20px; background: white; }
+        .header-table { border-bottom: 2px solid #000 !important; }
+    }
+    .no-print {
+        text-align: center;
+        padding: 40px;
+        background: #f8fafc;
+        border-top: 2px solid #e2e8f0;
+        margin-top: 100px;
+    }
+</style>
