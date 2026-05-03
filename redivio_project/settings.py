@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "apps.wms",
     "apps.procurement",
     "apps.sales",
+    "apps.restaurant_pos",
 ]
 
 # =========================================================
@@ -196,8 +197,8 @@ JAZZMIN_SETTINGS = {
     "site_brand": "REDIVIO",
     "site_logo": "brand/logo_r.png",
     "login_logo": "brand/logo_r.png",
-    "search_model": ["item_master.Material", "sales.SalesOrder", "procurement.PurchaseOrder"],
-    "order_with_respect_to": ["core", "item_master", "wms", "procurement", "sales"],
+    "search_model": ["item_master.Material", "sales.SalesOrder", "procurement.PurchaseOrder", "restaurant_pos.Recipe", "restaurant_pos.POSOrder"],
+    "order_with_respect_to": ["core", "item_master", "wms", "procurement", "sales", "restaurant_pos"],
     "icons": {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
@@ -210,6 +211,8 @@ JAZZMIN_SETTINGS = {
         "procurement.Vendor": "fas fa-truck",
         "sales.SalesOrder": "fas fa-file-invoice-dollar",
         "sales.Customer": "fas fa-users",
+        "restaurant_pos.Recipe": "fas fa-utensils",
+        "restaurant_pos.POSOrder": "fas fa-cash-register",
     },
     "show_ui_builder": False,
 }
