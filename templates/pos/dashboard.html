@@ -13,116 +13,185 @@
         </div>
     </div>
 
-    <!-- 📊 KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
-            <div class="flex justify-between items-start mb-4">
-                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl">
-                    <i class="fas fa-coins"></i>
+            <!-- 💰 SECTION 1: SALES SUMMARY -->
+    <div class="space-y-4">
+        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2 px-2">
+            <i class="fas fa-shopping-basket text-blue-500"></i>
+            [[ isArabic ? 'ملخص المبيعات' : 'Sales Summary' ]]
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg uppercase">Revenue</span>
                 </div>
-                <span class="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg uppercase">Revenue</span>
+                <div>
+                    <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.total_revenue || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'إجمالي المبيعات' : 'Total Sales' ]]</p>
+                </div>
             </div>
-            <div>
-                <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.total_revenue || 0) ]]</p>
-                <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'إجمالي مبيعات اليوم' : 'Total sales today' ]]</p>
-            </div>
-        </div>
 
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
-            <div class="flex justify-between items-start mb-4">
-                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl">
-                    <i class="fas fa-money-bill-wave"></i>
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-1 rounded-lg uppercase">Cash</span>
                 </div>
-                <span class="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-1 rounded-lg uppercase">Cash</span>
+                <div>
+                    <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.cash_sales || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'مبيعات كاش' : 'Cash Sales' ]]</p>
+                </div>
             </div>
-            <div>
-                <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.cash_total || 0) ]]</p>
-                <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'المحصل نقداً' : 'Cash collected' ]]</p>
-            </div>
-        </div>
 
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
-            <div class="flex justify-between items-start mb-4">
-                <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-xl">
-                    <i class="fas fa-qrcode"></i>
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-purple-500 bg-purple-50 px-2 py-1 rounded-lg uppercase">InstaPay</span>
                 </div>
-                <span class="text-[10px] font-black text-purple-500 bg-purple-50 px-2 py-1 rounded-lg uppercase">InstaPay</span>
+                <div>
+                    <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.instapay_sales || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'تحويلات إلكترونية' : 'InstaPay' ]]</p>
+                </div>
             </div>
-            <div>
-                <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.instapay_total || 0) ]]</p>
-                <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'تحويلات إلكترونية' : 'Electronic transfers' ]]</p>
-            </div>
-        </div>
 
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
-            <div class="flex justify-between items-start mb-4">
-                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl">
-                    <i class="fas fa-truck-loading"></i>
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-orange-500 bg-orange-50 px-2 py-1 rounded-lg uppercase">Credit</span>
                 </div>
-                <span class="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg uppercase">Purchases</span>
-            </div>
-            <div>
-                <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.total_purchases || 0) ]]</p>
-                <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'مشتريات المخزون' : 'Stock Purchases' ]]</p>
+                <div>
+                    <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.credit_sales || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'مبيعات آجلة' : 'Credit Sales' ]]</p>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- 💰 Financial Performance Row -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <!-- Expenses Card -->
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-rose-500">
-            <div class="flex justify-between items-start mb-4">
-                <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl">
-                    <i class="fas fa-arrow-up-right-from-square"></i>
+
+    <!-- 💸 SECTION 2: CASH FLOW (التدفق النقدي) -->
+    <div class="space-y-4">
+        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2 px-2">
+            <i class="fas fa-exchange-alt text-amber-500"></i>
+            [[ isArabic ? 'التدفق النقدي (حركة الصندوق)' : 'Cash Flow' ]]
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-slate-400">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-slate-50 text-slate-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-door-open"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-slate-400 uppercase">Opening</span>
                 </div>
-                <span class="text-[10px] font-black text-rose-500 bg-rose-50 px-2 py-1 rounded-lg uppercase">Expenses</span>
+                <div>
+                    <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.opening_balance || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'رصيد أول المدة' : 'Opening Balance' ]]</p>
+                </div>
             </div>
-            <div>
-                <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.total_expenses || 0) ]]</p>
-                <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'إجمالي المصروفات' : 'Total Cash Out' ]]</p>
+
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-blue-400">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-blue-400 uppercase">Purchases</span>
+                </div>
+                <div>
+                    <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.total_purchases || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'مشتريات بضاعة (-)' : 'Stock Purchases' ]]</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-rose-400">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-external-link-alt"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-rose-400 uppercase">Expenses</span>
+                </div>
+                <div>
+                    <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.total_expenses || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'مصروفات أخرى (-)' : 'Operational Exp.' ]]</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-emerald-500 bg-emerald-50/20">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-emerald-200">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-emerald-600 uppercase">Drawer Cash</span>
+                </div>
+                <div>
+                    <p class="text-3xl font-black text-emerald-700">[[ formatCurrency(posStats.net_income || 0) ]]</p>
+                    <p class="text-xs text-emerald-600/70 mt-1 font-bold">[[ isArabic ? 'النقدية بالخزينة' : 'Cash in Drawer' ]]</p>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Net Income (Cash Flow) -->
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-amber-500">
-            <div class="flex justify-between items-start mb-4">
-                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl">
-                    <i class="fas fa-hand-holding-usd"></i>
+    <!-- 📈 SECTION 3: PROFITABILITY (نتيجة النشاط) -->
+    <div class="space-y-4">
+        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2 px-2">
+            <i class="fas fa-chart-line text-emerald-500"></i>
+            [[ isArabic ? 'نتيجة النشاط (الأرباح والخسائر)' : 'Profitability' ]]
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-slate-200">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-slate-400 uppercase">COGS</span>
                 </div>
-                <span class="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg uppercase">Net Income</span>
+                <div>
+                    <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.total_cogs || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'تكلفة البضاعة المباعة' : 'Cost of Goods Sold' ]]</p>
+                </div>
             </div>
-            <div>
-                <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.net_income || 0) ]]</p>
-                <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'صافي الدخل (نقدي)' : 'Net Income (Cash)' ]]</p>
-            </div>
-        </div>
 
-        <!-- Cost of Sales (COGS) -->
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-slate-400">
-            <div class="flex justify-between items-start mb-4">
-                <div class="w-12 h-12 bg-slate-50 text-slate-600 rounded-2xl flex items-center justify-center text-xl">
-                    <i class="fas fa-tags"></i>
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-amber-400">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-amber-400 uppercase">Gross Profit</span>
                 </div>
-                <span class="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-lg uppercase">Cost of Sales</span>
+                <div>
+                    <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.gross_profit || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'مجمل الربح' : 'Gross Profit' ]]</p>
+                </div>
             </div>
-            <div>
-                <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.total_cogs || 0) ]]</p>
-                <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'تكلفة المبيعات' : 'Cost of Goods' ]]</p>
-            </div>
-        </div>
 
-        <!-- Net Profit -->
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-emerald-500 bg-gradient-to-br from-white to-emerald-50/30">
-            <div class="flex justify-between items-start mb-4">
-                <div class="w-12 h-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-emerald-200">
-                    <i class="fas fa-chart-line"></i>
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border-l-4 border-l-rose-300">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-rose-50 text-rose-400 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-hand-holding-heart"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-rose-400 uppercase">General Exp.</span>
                 </div>
-                <span class="text-[10px] font-black text-white bg-emerald-600 px-2 py-1 rounded-lg uppercase">Net Profit</span>
+                <div>
+                    <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.total_expenses || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'المصروفات التشغيلية' : 'General Expenses' ]]</p>
+                </div>
             </div>
-            <div>
-                <p class="text-3xl font-black text-emerald-700">[[ formatCurrency(posStats.net_profit || 0) ]]</p>
-                <p class="text-xs text-emerald-600/70 mt-1 font-bold">[[ isArabic ? 'صافي الأرباح' : 'Net Profit' ]]</p>
+
+            <div class="bg-slate-900 p-6 rounded-[2rem] shadow-xl flex flex-col justify-between hover:scale-[1.02] transition-all border-l-4 border-l-emerald-400">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-emerald-500/50">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-emerald-400 uppercase">Net Profit</span>
+                </div>
+                <div>
+                    <p class="text-3xl font-black text-white">[[ formatCurrency(posStats.net_profit || 0) ]]</p>
+                    <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'صافي الربح النهائي' : 'Final Net Profit' ]]</p>
+                </div>
             </div>
         </div>
     </div>

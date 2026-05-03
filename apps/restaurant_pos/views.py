@@ -199,6 +199,7 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         # 4. Expenses & Profitability Stats
         session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
         total_expenses = session.total_expenses if session else 0
+        opening_balance = session.opening_balance if session else 0
         
         from django.db.models import F
         from apps.wms.models import StockMove
@@ -212,13 +213,15 @@ class POSOrderViewSet(viewsets.ModelViewSet):
 
         return Response({
             'total_revenue': float(total_revenue),
-            'cash_total': float(cash_total),
-            'credit_total': float(credit_total),
-            'instapay_total': float(instapay_total),
+            'cash_sales': float(cash_total),
+            'credit_sales': float(credit_total),
+            'instapay_sales': float(instapay_total),
             'total_expenses': float(total_expenses),
             'total_purchases': float(total_purchases),
             'total_cogs': float(total_cogs),
-            'net_income': float(total_revenue) - float(total_expenses),
+            'opening_balance': float(opening_balance),
+            'gross_profit': float(total_revenue) - float(total_cogs),
+            'net_income': float(opening_balance) + float(cash_total) - float(total_expenses) - float(total_purchases),
             'net_profit': float(total_revenue) - float(total_cogs) - float(total_expenses),
             'top_items': top_items,
             'ingredients': list(consumption.values())
