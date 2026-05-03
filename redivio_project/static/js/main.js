@@ -723,6 +723,7 @@ createApp({
                         
                         this.posCart = [];
                         this.refreshKpis();
+                        this.fetchMaterialsList(); // 🚀 التحديث الفوري للأرصدة بعد البيع
                     } else {
                         const err = await payRes.json();
                         this.showToast(err.error || "Payment Failed", "error");
