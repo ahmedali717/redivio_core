@@ -1085,12 +1085,26 @@ createApp({
             this.selectedSession = session;
             try {
                 this.loading = true;
-                const res = await fetch(`/api/pos/orders/?opco=${this.activeOpcoId}&session=${session.id}`);
-                if (res.ok) {
-                    this.posOrdersHistory = await res.json();
-                }
+                // جلب الطلبات والمصروفات لنفس الجلسة
+                const [ordersRes, transRes] = await Promise.all([
+                    fetch(`/api/pos/orders/?opco=${this.activeOpcoId}&session=${session.id}`),
+                    fetch(`/api/pos/orders/cash_transactions/?opco=${this.activeOpcoId}&session=${session.id}`)
+                ]);
+
+                let orders = [];
+                let trans = [];
+
+                if (ordersRes.ok) orders = await ordersRes.json();
+                if (transRes.ok) trans = await transRes.json();
+
+                // دمج القائمتين مع تمييز النوع
+                this.posOrdersHistory = [
+                    ...orders.map(o => ({ ...o, is_order: true })),
+                    ...trans.map(t => ({ ...t, is_transaction: true, order_ref: 'CASH-OUT', total_amount: t.amount, status: 'paid', customer_name: t.reason }))
+                ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
             } catch (e) {
-                console.error("Fetch Session Orders Error:", e);
+                console.error("Fetch Session Details Error:", e);
             } finally {
                 this.loading = false;
             }
@@ -1127,10 +1141,22 @@ createApp({
         async fetchOrdersHistory() {
             try {
                 this.loading = true;
-                const res = await fetch('/api/pos/orders/?opco=' + this.activeOpcoId);
-                if (res.ok) {
-                    this.posOrdersHistory = await res.json();
-                }
+                const [ordersRes, transRes] = await Promise.all([
+                    fetch('/api/pos/orders/?opco=' + this.activeOpcoId),
+                    fetch('/api/pos/orders/cash_transactions/?opco=' + this.activeOpcoId)
+                ]);
+
+                let orders = [];
+                let trans = [];
+
+                if (ordersRes.ok) orders = await ordersRes.json();
+                if (transRes.ok) trans = await transRes.json();
+
+                this.posOrdersHistory = [
+                    ...orders.map(o => ({ ...o, is_order: true })),
+                    ...trans.map(t => ({ ...t, is_transaction: true, order_ref: 'CASH-OUT', total_amount: t.amount, status: 'paid', customer_name: t.reason }))
+                ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
             } catch (e) {
                 console.error("Fetch Orders Error:", e);
             } finally {

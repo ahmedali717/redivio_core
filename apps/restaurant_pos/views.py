@@ -83,17 +83,24 @@ class POSOrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def add_transaction(self, request):
-        """إضافة حركة نقدية (مصاريف / مرتجع)"""
+        """تسجيل حركة نقدية (مصروفات / توريد)"""
         opco_id = request.data.get('opco')
         session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
         if not session:
             return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
             
         from .models import POSCashTransaction
+        from decimal import Decimal
+        
+        try:
+            amount = Decimal(str(request.data.get('amount', 0)))
+        except:
+            return Response({'error': 'Invalid amount'}, status=400)
+
         trans = POSCashTransaction.objects.create(
             session=session,
             type=request.data.get('type'), # 'IN' or 'OUT'
-            amount=request.data.get('amount'),
+            amount=amount,
             reason=request.data.get('reason')
         )
         
@@ -179,14 +186,46 @@ class POSOrderViewSet(viewsets.ModelViewSet):
                         consumption[name] = {'name': name, 'total_qty': 0, 'uom': line.material.base_uom}
                     consumption[name]['total_qty'] += float(line.qty)
         
+        # 4. Expenses Stats
+        session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
+        total_expenses = session.total_expenses if session else 0
+
         return Response({
             'total_revenue': total_revenue,
             'cash_total': cash_total,
             'credit_total': credit_total,
             'instapay_total': instapay_total,
+            'total_expenses': total_expenses,
+            'net_cash': float(cash_total) - float(total_expenses),
             'top_items': top_items,
             'ingredients': list(consumption.values())
         })
+
+    @action(detail=False, methods=['get'])
+    def cash_transactions(self, request):
+        """جلب الحركات النقدية (المصروفات) للوردية الحالية أو لشركة معينة"""
+        opco_id = request.query_params.get('opco')
+        session_id = request.query_params.get('session')
+        
+        from .models import POSCashTransaction
+        queryset = POSCashTransaction.objects.filter(session__opco_id=opco_id)
+        if session_id:
+            queryset = queryset.filter(session_id=session_id)
+        else:
+            # افتراضياً نجلب حركات الوردية المفتوحة
+            queryset = queryset.filter(session__is_closed=False)
+            
+        data = [{
+            'id': t.id,
+            'type': t.type,
+            'amount': float(t.amount),
+            'reason': t.reason,
+            'created_at': t.created_at,
+            'cashier': t.session.cashier_name,
+            'is_transaction': True # علم لتمييزها في الواجهة
+        } for t in queryset.order_by('-created_at')]
+        
+        return Response(data)
 
     @action(detail=False, methods=['get'])
     def last_session_balance(self, request):
