@@ -684,8 +684,16 @@ createApp({
             const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
             const orderRef = order.order_ref || 'DRAFT-POS';
             
-            // Logo path (using the generated one)
-            const logoUrl = 'file:///C:/Users/ahmed.ali/.gemini/antigravity/brain/3e4678c3-9403-4a4b-b3a2-3b52466fe619/restaurant_logo_placeholder_1777816083101.png';
+            // Premium SVG Logo (Compact & Clear)
+            const logoSvg = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="48" fill="none" stroke="black" stroke-width="2"/>
+                <circle cx="50" cy="50" r="42" fill="none" stroke="black" stroke-width="1"/>
+                <text x="50" y="45" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" letter-spacing="2">REDIVIO</text>
+                <text x="50" y="60" font-family="Arial" font-size="8" text-anchor="middle" letter-spacing="1">PREMIUM DINING</text>
+                <path d="M30 68 H70" stroke="black" stroke-width="1"/>
+                <text x="50" y="80" font-family="Arial" font-size="6" text-anchor="middle">EST. 2024</text>
+            </svg>`;
+            const logoUrl = `data:image/svg+xml;base64,${btoa(logoSvg)}`;
             
             // Barcode and QR APIs
             const barcodeUrl = `https://barcode.tec-it.com/barcode.ashx?data=${orderRef}&code=Code128&translate-esc=true`;
