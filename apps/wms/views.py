@@ -197,33 +197,33 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockMoveSerializer
 
     def get_queryset(self):
+        from django.db.models import Q
         queryset = super().get_queryset()
         
-        # دعم الفلترة المرسلة من الواجهة الأمامية
         material_id = self.request.query_params.get('material_id')
-        if material_id:
+        if material_id and material_id != 'null':
             queryset = queryset.filter(material_id=material_id)
             
         location_id = self.request.query_params.get('location_id')
-        if location_id and location_id.strip():
+        if location_id and location_id.strip() and location_id != 'null':
             queryset = queryset.filter(
-                models.Q(source_bin__storage_location_id=location_id) | 
-                models.Q(dest_bin__storage_location_id=location_id)
+                Q(source_bin__storage_location_id=location_id) | 
+                Q(dest_bin__storage_location_id=location_id)
             )
             
         date_from = self.request.query_params.get('date_from')
-        if date_from:
+        if date_from and date_from != 'null':
             queryset = queryset.filter(created_at__date__gte=date_from)
             
         date_to = self.request.query_params.get('date_to')
-        if date_to:
+        if date_to and date_to != 'null':
             queryset = queryset.filter(created_at__date__lte=date_to)
 
         contact_id = self.request.query_params.get('contact_id')
-        if contact_id:
+        if contact_id and contact_id != 'null':
             queryset = queryset.filter(
-                models.Q(customer_id=contact_id) | 
-                models.Q(vendor_id=contact_id)
+                Q(customer_id=contact_id) | 
+                Q(vendor_id=contact_id)
             )
 
         return queryset

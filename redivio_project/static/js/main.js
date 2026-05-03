@@ -722,8 +722,7 @@ createApp({
                         this.printReceipt(order, this.posCart);
                         
                         this.posCart = [];
-                        this.refreshKpis();
-                        this.fetchMaterialsList(); // 🚀 التحديث الفوري للأرصدة بعد البيع
+                        this.refreshAllData(); // 🚀 تحديث شامل لكل البيانات والتقارير وحركات المخزن فوراً
                     } else {
                         const err = await payRes.json();
                         this.showToast(err.error || "Payment Failed", "error");
@@ -1202,14 +1201,22 @@ createApp({
         },
 
         async fetchInventoryMoves() {
+            this.loading = true;
             try {
-                const url = this.activeOpcoId ? `/api/wms/moves/?opco=${this.activeOpcoId}` : '/api/wms/moves/';
+                let url = `/api/wms/moves/?opco=${this.activeOpcoId || ''}`;
+                if (this.reportFilters) {
+                    if (this.reportFilters.material_id) url += `&material_id=${this.reportFilters.material_id}`;
+                    if (this.reportFilters.location_id) url += `&location_id=${this.reportFilters.location_id}`;
+                    if (this.reportFilters.date_from) url += `&date_from=${this.reportFilters.date_from}`;
+                    if (this.reportFilters.date_to) url += `&date_to=${this.reportFilters.date_to}`;
+                }
                 const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
                     this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
                 }
             } catch (e) { console.error("Moves Fetch Error", e); }
+            finally { this.loading = false; }
         },
 
         printMove(move) {
@@ -2029,25 +2036,6 @@ createApp({
                 }
             } catch (error) {
                 console.error("Failed to load moves:", error);
-            }
-        },
-        // دالة لجلب سجل الحركات
-        // الدالة الموحدة لجلب الحركات وعرضها في التقارير
-        async fetchInventoryMoves() {
-            this.loading = true;
-            try {
-                // نربط الفلاتر بالرابط (URL)
-                let url = `/api/wms/moves/?material=${this.reportFilters.material_id}&location=${this.reportFilters.location_id}&from=${this.reportFilters.date_from}&to=${this.reportFilters.date_to}`;
-
-                const response = await fetch(url);
-                if (response.ok) {
-                    const data = await response.json();
-                    this.inventoryMoves = Array.isArray(data) ? data : (data.results || []);
-                }
-            } catch (error) {
-                console.error("Error fetching report:", error);
-            } finally {
-                this.loading = false;
             }
         },
 
