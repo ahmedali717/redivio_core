@@ -186,17 +186,24 @@ class POSOrderViewSet(viewsets.ModelViewSet):
                         consumption[name] = {'name': name, 'total_qty': 0, 'uom': line.material.base_uom}
                     consumption[name]['total_qty'] += float(line.qty)
         
-        # 4. Expenses Stats
+        # 4. Expenses & Profitability Stats
         session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
         total_expenses = session.total_expenses if session else 0
+        
+        from django.db.models import F
+        total_cogs = POSOrderLine.objects.filter(order__in=orders).aggregate(
+            total=Sum(F('qty') * F('material__standard_price'))
+        )['total'] or 0
 
         return Response({
-            'total_revenue': total_revenue,
-            'cash_total': cash_total,
-            'credit_total': credit_total,
-            'instapay_total': instapay_total,
-            'total_expenses': total_expenses,
-            'net_cash': float(cash_total) - float(total_expenses),
+            'total_revenue': float(total_revenue),
+            'cash_total': float(cash_total),
+            'credit_total': float(credit_total),
+            'instapay_total': float(instapay_total),
+            'total_expenses': float(total_expenses),
+            'total_cogs': float(total_cogs),
+            'net_income': float(total_revenue) - float(total_expenses),
+            'net_profit': float(total_revenue) - float(total_cogs) - float(total_expenses),
             'top_items': top_items,
             'ingredients': list(consumption.values())
         })
