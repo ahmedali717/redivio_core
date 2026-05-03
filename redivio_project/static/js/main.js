@@ -50,6 +50,11 @@ createApp({
             posStats: { total_revenue: 0, cash_total: 0, instapay_total: 0, credit_total: 0, top_items: [], ingredients: [] },
             posSelectedCartIndex: null,
             posShowNumpad: false,
+            // 📅 فلاتر لوحة تحكم المطعم
+            posDashboardFilters: {
+                from: '',
+                to: ''
+            },
             posNumpadBuffer: '',
             posOrderType: 'DINE_IN',
             posTableNumber: '',
@@ -1056,7 +1061,11 @@ createApp({
         async fetchPOSDashboard() {
             try {
                 this.loading = true;
-                const res = await fetch('/api/pos/orders/dashboard_stats/?opco=' + this.activeOpcoId);
+                let url = `/api/pos/orders/dashboard_stats/?opco=${this.activeOpcoId}`;
+                if (this.posDashboardFilters.from) url += `&from=${this.posDashboardFilters.from}`;
+                if (this.posDashboardFilters.to) url += `&to=${this.posDashboardFilters.to}`;
+                
+                const res = await fetch(url);
                 if (res.ok) {
                     this.posStats = await res.json();
                 }
@@ -1064,6 +1073,36 @@ createApp({
                 this.showToast("Error fetching stats", "error");
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async selectPOSDateRange() {
+            const { value: formValues } = await Swal.fire({
+                title: this.isArabic ? 'اختر الفترة الزمنية' : 'Select Date Range',
+                html: `
+                    <div style="text-align:right" dir="rtl">
+                        <label>من تاريخ:</label>
+                        <input id="swal-from" class="swal2-input" type="date" value="${this.posDashboardFilters.from}">
+                        <label>إلى تاريخ:</label>
+                        <input id="swal-to" class="swal2-input" type="date" value="${this.posDashboardFilters.to}">
+                    </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'تطبيق الفلتر' : 'Apply Filter',
+                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
+                preConfirm: () => {
+                    return {
+                        from: document.getElementById('swal-from').value,
+                        to: document.getElementById('swal-to').value
+                    }
+                }
+            });
+
+            if (formValues) {
+                this.posDashboardFilters.from = formValues.from;
+                this.posDashboardFilters.to = formValues.to;
+                this.fetchPOSDashboard();
             }
         },
 

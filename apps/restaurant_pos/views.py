@@ -137,11 +137,21 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def dashboard_stats(self, request):
         opco_id = request.query_params.get('opco')
-        from django.db.models import Sum, Count
+        date_from = request.query_params.get('from')
+        date_to = request.query_params.get('to')
+        
+        from django.db.models import Sum, Count, Q
         from django.utils import timezone
         
         today = timezone.now().date()
-        orders = POSOrder.objects.filter(opco_id=opco_id, status='paid', created_at__date=today)
+        orders = POSOrder.objects.filter(opco_id=opco_id, status='paid')
+        
+        if date_from:
+            orders = orders.filter(created_at__date__gte=date_from)
+        if date_to:
+            orders = orders.filter(created_at__date__lte=date_to)
+        if not date_from and not date_to:
+            orders = orders.filter(created_at__date=today)
         
         # 1. Financial Stats
         total_revenue = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
