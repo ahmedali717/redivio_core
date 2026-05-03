@@ -14,8 +14,9 @@ class POSOrderSerializer(serializers.ModelSerializer):
         model = POSOrder
         fields = [
             'id', 'opco', 'session', 'order_ref', 'order_type', 
-            'table_number', 'total_amount', 'status', 'created_at', 'lines'
+            'table_number', 'total_amount', 'payment_method', 'status', 'created_at', 'lines'
         ]
+        read_only_fields = ['order_ref']
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines')

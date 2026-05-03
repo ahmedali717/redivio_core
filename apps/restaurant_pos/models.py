@@ -128,11 +128,11 @@ class POSOrder(models.Model):
     order_ref = models.CharField(max_length=50, unique=True)
     
     ORDER_TYPES = [
-        ('dine_in', 'Dine In (محلي)'),
-        ('takeaway', 'Takeaway (سفري)'),
-        ('delivery', 'Delivery (توصيل)')
+        ('DINE_IN', 'Dine In (محلي)'),
+        ('TAKEAWAY', 'Takeaway (سفري)'),
+        ('DELIVERY', 'Delivery (توصيل)')
     ]
-    order_type = models.CharField(max_length=20, choices=ORDER_TYPES, default='takeaway')
+    order_type = models.CharField(max_length=20, choices=ORDER_TYPES, default='TAKEAWAY')
     table_number = models.CharField(max_length=20, null=True, blank=True)
     
     PAYMENT_METHODS = [
@@ -152,6 +152,12 @@ class POSOrder(models.Model):
         ('cancelled', 'Cancelled (ملغي)')
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+
+    def save(self, *args, **kwargs):
+        if not self.order_ref:
+            import time
+            self.order_ref = f"POS-{int(time.time())}"
+        super().save(*args, **kwargs)
     
     # لمعرفة هل تم خصم المخزون بالفعل أم لا في الخلفية؟
     inventory_deducted = models.BooleanField(default=False)
