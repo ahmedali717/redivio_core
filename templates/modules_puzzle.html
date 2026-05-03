@@ -53,8 +53,10 @@
     /* ألوان الموديولات */
     .p-wms.energized { color: #f59e0b; box-shadow: 0 0 60px #f59e0b; }
     .p-sales.energized { color: #10b981; box-shadow: 0 0 60px #10b981; }
-    .p-proc.energized { color: #a855f7; box-shadow: 0 0 60px #a855f7; }
-    .p-hr.energized { color: #3b82f6; box-shadow: 0 0 60px #3b82f6; }
+    .p-procurement.energized { color: #a855f7; box-shadow: 0 0 60px #a855f7; }
+    .p-teams.energized { color: #3b82f6; box-shadow: 0 0 60px #3b82f6; }
+    .p-restaurant_pos.energized { color: #ef4444; box-shadow: 0 0 60px #ef4444; }
+    .p-item_master.energized { color: #14b8a6; box-shadow: 0 0 60px #14b8a6; }
 
     .p-icon { font-size: 2.5rem; margin-bottom: 8px; }
 </style>
@@ -129,13 +131,8 @@
         return {
             phase: 'selection',
             systemMode: 'modular',
-            selectedModules: ['wms', 'sales'], 
-            availableModules: [
-                {id: 'wms', name: 'WMS', icon: 'fas fa-warehouse', color: '#f59e0b', desc: 'Inventory'},
-                {id: 'sales', name: 'SALES', icon: 'fas fa-chart-line', color: '#10b981', desc: 'CRM'},
-                {id: 'proc', name: 'SUPPLY', icon: 'fas fa-truck-fast', color: '#a855f7', desc: 'Procurement'},
-                {id: 'hr', name: 'TEAMS', icon: 'fas fa-users', color: '#3b82f6', desc: 'HR'},
-            ],
+            selectedModules: [], 
+            availableModules: JSON.parse('{{ available_modules_json|escapejs }}' || '[]'),
 
             isSelected(id) { return this.selectedModules.includes(id); },
             
