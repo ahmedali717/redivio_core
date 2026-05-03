@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import POSOrder, POSOrderLine, POSSession, Recipe, RecipeItem
+from .models import POSOrder, POSOrderLine, POSSession, Recipe, RecipeItem, POSCashTransaction
 
 class POSOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.CharField(source='material.name', read_only=True)
