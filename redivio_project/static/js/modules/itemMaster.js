@@ -26,6 +26,9 @@ export const itemMasterModule = {
                 volume: 0,
                 reorder_level: 0,
                 max_level: 0,
+                standard_price: 0,
+                sales_price: 0,
+                tax_rate: 15,
                 // 🚀 POS & Recipe extensions
                 is_pos_item: false,
                 expiry_date: null,
@@ -113,6 +116,8 @@ export const itemMasterModule = {
                 
                 tracking: material.tracking || 'none',
                 standard_price: material.standard_price || 0,
+                sales_price: material.sales_price || 0,
+                tax_rate: material.tax_rate || 15,
                 weight: material.weight || 0,
                 volume: material.volume || 0,
                 reorder_level: material.reorder_level || 0,
