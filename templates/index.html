@@ -75,7 +75,15 @@
                          </div>
                          {% include "components/item_master_list.html" %}
                     </div>
-                    <div v-if="posTab === 'kitchen'" class="absolute inset-0 bg-slate-900 overflow-hidden flex flex-col">
+                    <div v-if="posTab === 'dashboard'" class="absolute inset-0 bg-white rounded-tl-3xl shadow-lg overflow-y-auto">
+                        {% include "pos/dashboard.html" %}
+                    </div>
+                    
+                    <div v-if="posTab === 'direct_move'" class="absolute inset-0 bg-white rounded-tl-3xl shadow-lg overflow-hidden">
+                        {% include "wms/direct_stock_move.html" %}
+                    </div>
+
+                    <div v-if="posTab === 'kitchen'" class="absolute inset-0 bg-white rounded-tl-3xl shadow-lg overflow-y-auto p-6">
                         <div class="flex items-center justify-center h-full text-slate-500 font-bold text-xl">Kitchen Display (KDS) Coming Soon</div>
                     </div>
                     <div v-if="posTab === 'orders'" class="absolute inset-0 bg-white rounded-tl-3xl shadow-lg overflow-y-auto p-6">

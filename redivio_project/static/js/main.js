@@ -46,6 +46,8 @@ createApp({
             posCart: [],
             posSearch: '',
             posCategory: 'all',
+            posPaymentMethod: 'cash',
+            posStats: { total_revenue: 0, cash_total: 0, instapay_total: 0, credit_total: 0, top_items: [], ingredients: [] },
             posOrderType: 'DINE_IN',
             posOrdersHistory: [],
             salesTab: 'dashboard',
@@ -579,28 +581,22 @@ createApp({
             
             try {
                 this.loading = true;
-                const payload = {
-                    opco: this.activeOpcoId,
-                    session: this.activePOSSession.id,
-                    order_ref: 'POS-' + Date.now(),
-                    order_type: this.posOrderType.toLowerCase(),
-                    total_amount: this.cartTotal,
-                    lines: this.posCart.map(item => ({
-                        material: item.id,
-                        qty: item.qty,
-                        unit_price: item.price,
-                        subtotal: item.price * item.qty
-                    }))
-                };
-
-                // 1. Create Order
                 const res = await fetch('/api/pos/orders/', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.getCookie('csrftoken')
-                    },
-                    body: JSON.stringify(payload)
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        session: this.activePOSSession.id,
+                        order_type: this.posOrderType,
+                        payment_method: this.posPaymentMethod,
+                        total_amount: this.cartTotal,
+                        lines: this.posCart.map(i => ({
+                            material: i.id,
+                            qty: i.qty,
+                            unit_price: i.price,
+                            subtotal: i.price * i.qty
+                        }))
+                    })
                 });
 
                 if (res.ok) {
@@ -638,56 +634,83 @@ createApp({
         },
         printReceipt(order, cart) {
             const date = new Date().toLocaleString();
-            let itemsHtml = cart.map(i => `
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span>${i.name || i.material_name} x${i.qty}</span>
-                    <span>${((i.price || i.unit_price) * i.qty).toFixed(2)}</span>
+            const itemsHtml = cart.map(i => `
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom: 1px dotted #eee; padding-bottom: 4px;">
+                    <div style="flex:1">
+                        <div style="font-weight:bold">${i.name || i.material_name}</div>
+                        <div style="font-size:10px; color:#666">Qty: ${i.qty} x ${Number(i.price || i.unit_price).toFixed(2)}</div>
+                    </div>
+                    <div style="font-weight:bold">${((i.price || i.unit_price) * i.qty).toFixed(2)}</div>
                 </div>
             `).join('');
 
-            const subtotal = this.cartSubtotal;
-            const tax = this.cartTax;
-            const total = this.cartTotal;
+            const total = order.total_amount || this.cartTotal;
             const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
+            const orderRef = order.order_ref || 'DRAFT-POS';
+            
+            // Barcode and QR APIs
+            const barcodeUrl = `https://barcode.tec-it.com/barcode.ashx?data=${orderRef}&code=Code128&translate-esc=true`;
+            const qrData = `REDIVIO-POS|${orderRef}|${total}|${this.activeOpco?.name || 'Restaurant'}`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrData)}`;
 
-            const printWindow = window.open('', '_blank', 'width=400,height=600');
-            printWindow.document.write(`
+            const printWindow = window.open('', '_blank', 'width=450,height=700');
+            const html = `
                 <html>
                 <head>
-                    <title>Receipt - ${order.order_ref}</title>
+                    <title>Receipt - ${orderRef}</title>
                     <style>
-                        body { font-family: 'Courier New', monospace; padding: 20px; font-size: 14px; color: #000; }
-                        .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
-                        .footer { text-align: center; border-top: 1px dashed #000; padding-top: 10px; margin-top: 20px; }
-                        .total-row { display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px; }
+                        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+                        body { font-family: 'Courier Prime', monospace; padding: 30px; color: #1a1a1a; max-width: 400px; margin: 0 auto; background: #fff; }
+                        .header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #000; padding-bottom: 15px; }
+                        .logo { font-size: 32px; font-weight: 900; letter-spacing: -1px; margin-bottom: 5px; }
+                        .divider { border-top: 2px dashed #000; margin: 15px 0; }
+                        .total-section { font-size: 20px; font-weight: 700; margin-top: 15px; display: flex; justify-content: space-between; border-top: 2px solid #000; padding-top: 10px; }
+                        .barcodes { margin-top: 30px; text-align: center; }
+                        .footer { text-align: center; margin-top: 30px; font-size: 11px; color: #666; border-top: 1px solid #eee; padding-top: 15px; }
                     </style>
                 </head>
                 <body>
                     <div class="header">
-                        <h2 style="margin:0">REDIVIO POS</h2>
-                        <p style="margin:5px 0">${this.activeOpco ? this.activeOpco.name : 'Restaurant'}</p>
-                        <p style="font-size:10px">${date}</p>
-                        <p style="font-size:10px">Ref: ${order.order_ref || 'Draft'}</p>
+                        <div class="logo">REDIVIO</div>
+                        <div style="text-transform: uppercase; font-weight: bold; font-size: 14px;">${this.activeOpco ? this.activeOpco.name : 'Restaurant'}</div>
+                        <div style="font-size: 11px; margin-top: 5px;">${date}</div>
+                        <div style="font-size: 12px; margin-top: 3px; font-weight: bold;">ORDER: ${orderRef}</div>
+                        <div style="font-size: 11px; margin-top: 2px; color: #666;">Type: ${order.order_type || 'Takeaway'} | Pay: ${order.payment_method || 'Cash'}</div>
                     </div>
+
                     <div class="items">
                         ${itemsHtml}
                     </div>
-                    <div style="margin-top:10px; border-top:1px solid #eee; padding-top:5px">
-                        <div class="total-row"><span>TOTAL:</span> <span>${Number(order.total_amount || total).toFixed(2)} ${currency}</span></div>
+
+                    <div class="total-section">
+                        <span>TOTAL</span>
+                        <span>${Number(total).toFixed(2)} ${currency}</span>
                     </div>
+
+                    <div class="barcodes">
+                        <img src="${barcodeUrl}" style="height: 50px; width: auto; margin-bottom: 15px;">
+                        <div style="font-size: 10px; margin-bottom: 10px;">SCAN FOR DIGITAL INVOICE</div>
+                        <img src="${qrUrl}" style="width: 120px; height: 120px; border: 1px solid #eee; padding: 5px;">
+                    </div>
+
                     <div class="footer">
-                        <p>Thank You For Visiting Us!</p>
-                        <p style="font-size:10px">Powered by REDIVIO</p>
+                        <p>INSTAPAY: ${this.activeOpco?.name || 'REDIVIO'}</p>
+                        <p style="margin-top: 10px; font-weight: bold;">THANK YOU FOR YOUR VISIT!</p>
+                        <p style="font-size: 9px; opacity: 0.5;">Tax Invoice | Powered by REDIVIO Cloud</p>
                     </div>
                 </body>
                 </html>
-            `);
+            `;
+            
+            printWindow.document.open();
+            printWindow.document.write(html);
             printWindow.document.close();
+            
             setTimeout(() => {
                 printWindow.focus();
                 printWindow.print();
                 printWindow.close();
-            }, 500);
+            }, 600);
         },
 
         async endSession() {
@@ -803,6 +826,20 @@ createApp({
                 }
             } catch (e) {
                 this.showToast("Error recording transaction", "error");
+            }
+        },
+
+        async fetchPOSDashboard() {
+            try {
+                this.loading = true;
+                const res = await fetch('/api/pos/orders/dashboard_stats/?opco=' + this.activeOpcoId);
+                if (res.ok) {
+                    this.posStats = await res.json();
+                }
+            } catch (e) {
+                this.showToast("Error fetching stats", "error");
+            } finally {
+                this.loading = false;
             }
         },
 

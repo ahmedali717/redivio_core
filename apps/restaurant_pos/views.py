@@ -80,6 +80,55 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         
         return Response({'success': True})
 
+    @action(detail=False, methods=['get'])
+    def dashboard_stats(self, request):
+        opco_id = request.query_params.get('opco')
+        from django.db.models import Sum, Count
+        from django.utils import timezone
+        
+        today = timezone.now().date()
+        orders = POSOrder.objects.filter(opco_id=opco_id, status='paid', created_at__date=today)
+        
+        # 1. Financial Stats
+        total_revenue = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        cash_total = orders.filter(payment_method='cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        credit_total = orders.filter(payment_method='credit').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        instapay_total = orders.filter(payment_method='instapay').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        
+        # 2. Top Items
+        from .models import POSOrderLine
+        top_items_raw = POSOrderLine.objects.filter(order__in=orders).values('material__name').annotate(total_qty=Sum('qty')).order_order_by('-total_qty')[:5]
+        top_items = []
+        max_qty = top_items_raw[0]['total_qty'] if top_items_raw else 1
+        for i, item in enumerate(top_items_raw):
+            top_items.append({
+                'rank': i + 1,
+                'name': item['material__name'],
+                'qty': item['total_qty'],
+                'percentage': (item['total_qty'] / max_qty) * 100
+            })
+
+        # 3. Ingredient Consumption (BOM)
+        from .models import RecipeItem
+        consumption = {}
+        for line in POSOrderLine.objects.filter(order__in=orders):
+            recipe = getattr(line.material, 'recipe', None)
+            if recipe:
+                for ing in recipe.ingredients.all():
+                    name = ing.ingredient.name
+                    if name not in consumption:
+                        consumption[name] = {'name': name, 'total_qty': 0, 'uom': ing.uom}
+                    consumption[name]['total_qty'] += ing.quantity * line.qty
+        
+        return Response({
+            'total_revenue': total_revenue,
+            'cash_total': cash_total,
+            'credit_total': credit_total,
+            'instapay_total': instapay_total,
+            'top_items': top_items,
+            'ingredients': list(consumption.values())
+        })
+
     @action(detail=False, methods=['post'])
     def close_session(self, request):
         opco_id = request.data.get('opco')

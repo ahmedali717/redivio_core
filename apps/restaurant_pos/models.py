@@ -135,6 +135,13 @@ class POSOrder(models.Model):
     order_type = models.CharField(max_length=20, choices=ORDER_TYPES, default='takeaway')
     table_number = models.CharField(max_length=20, null=True, blank=True)
     
+    PAYMENT_METHODS = [
+        ('cash', 'Cash (كاش)'),
+        ('credit', 'Credit (آجل)'),
+        ('instapay', 'InstaPay (إلكتروني)')
+    ]
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='cash')
+    
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     
