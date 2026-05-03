@@ -30,9 +30,15 @@
 
             <div class="p-5 bg-slate-50 flex justify-between items-center mt-auto">
                 <span class="text-sm font-black text-slate-900">[[ formatCurrency(order.total_amount) ]]</span>
-                <button @click="printReceipt(order, order.lines.map(l => ({ name: l.material_name, qty: l.qty, price: l.unit_price })))" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold flex items-center gap-1">
-                    <i class="fas fa-print"></i> [[ isArabic ? 'طباعة' : 'Print' ]]
-                </button>
+                <div class="flex gap-3 items-center">
+                    <button @click="printReceipt(order, order.lines.map(l => ({ name: l.material_name, qty: l.qty, price: l.unit_price })))" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold flex items-center gap-1">
+                        <i class="fas fa-print"></i> [[ isArabic ? 'طباعة' : 'Print' ]]
+                    </button>
+                    <button v-if="order.status === 'paid' && !order.is_refunded" @click="refundOrder(order)" class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center gap-1">
+                        <i class="fas fa-undo"></i> [[ isArabic ? 'مرتجع' : 'Return' ]]
+                    </button>
+                    <span v-if="order.is_refunded" class="text-red-600 text-[10px] font-black uppercase">[[ isArabic ? 'تم الإرجاع' : 'Refunded' ]]</span>
+                </div>
             </div>
         </div>
     </div>

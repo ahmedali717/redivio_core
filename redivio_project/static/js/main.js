@@ -849,6 +849,34 @@ createApp({
             }
         },
 
+        async refundOrder(order) {
+            const { isConfirmed } = await Swal.fire({
+                title: this.isArabic ? 'هل أنت متأكد؟' : 'Are you sure?',
+                text: this.isArabic ? `سيتم إرجاع مبلغ ${order.total_amount} وخصمه من الدرج` : `Amount of ${order.total_amount} will be refunded and deducted from drawer`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'تأكيد الإرجاع' : 'Confirm Refund'
+            });
+
+            if (!isConfirmed) return;
+
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/pos/orders/${order.id}/refund_order/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم إرجاع الطلب بنجاح" : "Order refunded successfully", "success");
+                    this.fetchOrdersHistory();
+                }
+            } catch (e) {
+                this.showToast("Error refunding order", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async fetchOrdersHistory() {
             try {
                 this.loading = true;

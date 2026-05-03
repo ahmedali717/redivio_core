@@ -150,9 +150,11 @@ class POSOrder(models.Model):
         ('draft', 'Draft (لم يدفع)'),
         ('paid', 'Paid (تم الدفع - في المطبخ)'),
         ('done', 'Done (جاهز للاستلام)'),
+        ('refunded', 'Refunded (مرتجع)'),
         ('cancelled', 'Cancelled (ملغي)')
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    is_refunded = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.order_ref:

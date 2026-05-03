@@ -77,7 +77,31 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         if trans.type == 'OUT':
             session.total_expenses += trans.amount
         session.save()
+        return Response({'success': True})
+
+    @action(detail=True, methods=['post'])
+    def refund_order(self, request, pk=None):
+        """إرجاع فاتورة بالكامل"""
+        order = self.get_object()
+        if order.is_refunded:
+            return Response({'error': 'Order already refunded'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        order.status = 'refunded'
+        order.is_refunded = True
+        order.save()
         
+        # إذا كان الدفع كاش، نقوم بإخراج المبلغ من الدرج وتسجيل حركة
+        if order.payment_method == 'cash':
+            from .models import POSCashTransaction
+            POSCashTransaction.objects.create(
+                session=order.session,
+                type='OUT',
+                amount=order.total_amount,
+                reason=f"Refund Order {order.order_ref}"
+            )
+            order.session.total_expenses += order.total_amount
+            order.session.save()
+            
         return Response({'success': True})
 
     @action(detail=False, methods=['get'])
