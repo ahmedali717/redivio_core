@@ -92,12 +92,12 @@ class MaterialSerializer(serializers.ModelSerializer):
             )
             
             # Save Recipe if provided
-            recipe_data = request.data.get('recipe_lines', [])
-            if isinstance(recipe_data, str):
-                try: recipe_data = json.loads(recipe_data)
-                except: recipe_data = []
-            
-            if recipe_data:
+            recipe_data = request.data.get('recipe_lines')
+            if recipe_data is not None:
+                if isinstance(recipe_data, str):
+                    try: recipe_data = json.loads(recipe_data)
+                    except: recipe_data = []
+                
                 from apps.restaurant_pos.models import Recipe, RecipeItem
                 recipe, _ = Recipe.objects.update_or_create(
                     opco=mat.opco, finished_good=mat,
@@ -162,12 +162,12 @@ class MaterialSerializer(serializers.ModelSerializer):
                 )
 
                 # Save Recipe
-                recipe_data = request.data.get('recipe_lines', [])
-                if isinstance(recipe_data, str):
-                    try: recipe_data = json.loads(recipe_data)
-                    except: recipe_data = []
-                
-                if recipe_data:
+                recipe_data = request.data.get('recipe_lines')
+                if recipe_data is not None:
+                    if isinstance(recipe_data, str):
+                        try: recipe_data = json.loads(recipe_data)
+                        except: recipe_data = []
+                    
                     from apps.restaurant_pos.models import Recipe, RecipeItem
                     recipe, _ = Recipe.objects.update_or_create(
                         opco=mat.opco, finished_good=mat,
