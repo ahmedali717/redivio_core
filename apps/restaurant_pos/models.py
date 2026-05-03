@@ -127,6 +127,71 @@ class POSOrder(models.Model):
     # لمعرفة هل تم خصم المخزون بالفعل أم لا في الخلفية؟
     inventory_deducted = models.BooleanField(default=False)
 
+    def deduct_inventory(self):
+        """
+        محرك خصم المكونات (BOM Engine)
+        يتم استدعاؤه عند تأكيد الطلب أو دفع الفاتورة
+        """
+        if self.inventory_deducted:
+            return
+        
+        from apps.wms.models import StockMove
+        from apps.item_master.models import MaterialLocation
+        
+        for line in self.lines.all():
+            material = line.material
+            
+            # 1. تحقق من وجود وصفة (Recipe) لتفكيكها
+            try:
+                recipe = material.recipe
+                for ingredient_line in recipe.ingredients.all():
+                    qty_to_deduct = ingredient_line.quantity * line.qty
+                    ingredient = ingredient_line.ingredient
+                    
+                    # البحث عن الرف الرئيسي للمكون في هذه الشركة
+                    # (يمكن تخصيص هذا لاحقاً ليكون رف "المطبخ" الافتراضي)
+                    primary_loc = MaterialLocation.objects.filter(
+                        material=ingredient,
+                        material__opco=self.opco,
+                        is_primary=True
+                    ).first()
+                    
+                    source_bin = primary_loc.storage_bin if primary_loc else None
+                    
+                    # إنشاء حركة مخزنية (صرف - OUT)
+                    StockMove.objects.create(
+                        opco=self.opco,
+                        material=ingredient,
+                        source_bin=source_bin,
+                        dest_bin=None,
+                        quantity=qty_to_deduct,
+                        reference=f"POS Order {self.order_ref} (BOM)",
+                        move_type='OUT'
+                    )
+            except:
+                # 2. إذا لم تكن هناك وصفة، يتم خصم المنتج نفسه إذا كان POS Item
+                if material.is_pos_item:
+                    primary_loc = MaterialLocation.objects.filter(
+                        material=material,
+                        material__opco=self.opco,
+                        is_primary=True
+                    ).first()
+                    
+                    source_bin = primary_loc.storage_bin if primary_loc else None
+                    
+                    StockMove.objects.create(
+                        opco=self.opco,
+                        material=material,
+                        source_bin=source_bin,
+                        dest_bin=None,
+                        quantity=line.qty,
+                        reference=f"POS Order {self.order_ref}",
+                        move_type='OUT'
+                    )
+        
+        self.inventory_deducted = True
+        self.save()
+
     def __str__(self):
         return f"Order {self.order_ref} - {self.status}"
 

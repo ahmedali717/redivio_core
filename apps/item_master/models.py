@@ -49,6 +49,10 @@ class Material(models.Model):
     reorder_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     max_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
+    # --- 🍽️ Restaurant POS Extensions ---
+    is_pos_item = models.BooleanField(default=False, help_text="هل هذا الصنف متاح في قائمة البيع للمطعم؟")
+    expiry_date = models.DateField(null=True, blank=True, help_text="تاريخ انتهاء الصلاحية لهذا الصنف (اختياري)")
+    
     # التزامن مع القابضة
     is_template = models.BooleanField(default=False) # هل هذا صنف مرجعي للقابضة؟
     created_at = models.DateTimeField(auto_now_add=True, null=True)

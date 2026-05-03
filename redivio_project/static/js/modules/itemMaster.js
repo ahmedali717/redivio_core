@@ -25,12 +25,27 @@ export const itemMasterModule = {
                 weight: 0,
                 volume: 0,
                 reorder_level: 0,
-                max_level: 0
+                max_level: 0,
+                // 🚀 POS & Recipe extensions
+                is_pos_item: false,
+                expiry_date: null,
+                recipe_lines: []
             }
         }
     },
 
     methods: {
+        addRecipeLine(instance) {
+            if (!instance.forms.material.recipe_lines) {
+                instance.forms.material.recipe_lines = [];
+            }
+            instance.forms.material.recipe_lines.push({
+                ingredient_id: '',
+                quantity: 1,
+                uom: 'KG'
+            });
+        },
+
         handleImageUpload(event, instance) {
             const file = event.target.files[0];
             if (file) {
@@ -102,6 +117,11 @@ export const itemMasterModule = {
                 volume: material.volume || 0,
                 reorder_level: material.reorder_level || 0,
                 max_level: material.max_level || 0,
+
+                // 🚀 POS & Recipe
+                is_pos_item: material.is_pos_item || false,
+                expiry_date: material.expiry_date || null,
+                recipe_lines: material.recipe_lines || [],
                 
                 // 🚀 البيانات الجديدة لعرض الأرصدة (Odoo 19 Modal)
                 on_hand: material.on_hand || 0,

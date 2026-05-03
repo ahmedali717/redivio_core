@@ -54,6 +54,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('i18n/', include('django.conf.urls.i18n')), # ✅ رابط تغيير اللغة
     path('api/', include(router.urls)),
+    path('api/pos/', include('apps.restaurant_pos.urls')),
     path('api/wms/', include('apps.wms.urls')),
     path('api/print/po/<int:pk>/', print_po_pdf, name='print_po_pdf'),
     path('api/print/grn/<int:pk>/', print_grn_pdf, name='print_grn'),

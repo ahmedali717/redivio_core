@@ -244,7 +244,9 @@ createApp({
             return Array.from(cats);
         },
         filteredPosItems() {
-            let items = this.materials_list || [];
+            // فلترة الأصناف التي تحمل علامة POS Item فقط
+            let items = (this.materials_list || []).filter(i => i.is_pos_item);
+            
             if (this.posCategory !== 'all') {
                 items = items.filter(i => i.category === this.posCategory);
             }
@@ -557,10 +559,65 @@ createApp({
                 this.posCart.splice(idx, 1);
             }
         },
-        checkoutOrder() {
-            this.showToast(this.isArabic ? "تم تأكيد الطلب بنجاح!" : "Order Confirmed!", "success");
-            this.posCart = [];
-            // Future integration: send order to API to deduct inventory and save POS Order.
+        async checkoutOrder() {
+            if (this.posCart.length === 0) {
+                this.showToast(this.isArabic ? "العربة فارغة!" : "Cart is empty!", "error");
+                return;
+            }
+            
+            try {
+                this.loading = true;
+                const payload = {
+                    opco: this.activeOpcoId,
+                    session: 1, // Temporarily hardcoded, will be dynamic after session management
+                    order_ref: 'POS-' + Date.now(),
+                    order_type: this.posOrderType.toLowerCase(),
+                    total_amount: this.cartTotal,
+                    lines: this.posCart.map(item => ({
+                        material: item.id,
+                        qty: item.qty,
+                        unit_price: item.price,
+                        subtotal: item.price * item.qty
+                    }))
+                };
+
+                // 1. Create Order
+                const res = await fetch('/api/pos/orders/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const order = await res.json();
+                    
+                    // 2. Process Payment & Deduct Inventory (BOM Deduction)
+                    const payRes = await fetch(`/api/pos/orders/${order.id}/process_payment/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                    });
+
+                    if (payRes.ok) {
+                        this.showToast(this.isArabic ? "تم تأكيد الطلب وخصم المكونات بنجاح!" : "Order Confirmed & Ingredients Deducted!", "success");
+                        this.posCart = [];
+                        this.refreshKpis();
+                    } else {
+                        const err = await payRes.json();
+                        this.showToast(err.error || "Payment Failed", "error");
+                    }
+                } else {
+                    const err = await res.json();
+                    this.showToast(JSON.stringify(err), "error");
+                }
+            } catch (e) {
+                console.error("POS Checkout Error:", e);
+                this.showToast("Network Error", "error");
+            } finally {
+                this.loading = false;
+            }
         },
 
         async fetchInventoryMoves() {
@@ -1761,6 +1818,10 @@ createApp({
             itemMasterModule.methods.editMaterial(material, this);
         },
 
+        addRecipeLine() {
+            itemMasterModule.methods.addRecipeLine(this);
+        },
+
         editItem(type, item) {
 
             if (type === 'po' && ['Received', 'Confirmed'].includes(item.status)) {
@@ -1955,7 +2016,10 @@ createApp({
                             const validAssignments = data[key].filter(assign => assign.opco_id);
                             payload.append('company_assignments', JSON.stringify(validAssignments));
                         }
-                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments'].includes(key)) {
+                        else if (type === 'material' && key === 'recipe_lines') {
+                            payload.append('recipe_lines', JSON.stringify(data[key]));
+                        }
+                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments', 'recipe_lines'].includes(key)) {
                             let val = data[key];
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             payload.append(key, val);

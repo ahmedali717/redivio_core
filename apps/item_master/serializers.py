@@ -11,15 +11,27 @@ class MaterialSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     company_assignments = serializers.SerializerMethodField()
     on_hand = serializers.DecimalField(source='total_on_hand', max_digits=12, decimal_places=2, read_only=True)
-    stock_details = serializers.SerializerMethodField()
-
+    recipe_lines = serializers.SerializerMethodField()
+    
     class Meta:
         model = Material
         fields = [
             'id', 'sku', 'name', 'category', 'category_name', 
             'base_uom', 'barcode', 'company_assignments','standard_price',
-            'image', 'tracking', 'reorder_level', 'max_level', 'on_hand', 'stock_details'
+            'image', 'tracking', 'reorder_level', 'max_level', 'on_hand', 'stock_details',
+            'is_pos_item', 'expiry_date', 'recipe_lines'
         ]
+
+    def get_recipe_lines(self, obj):
+        try:
+            recipe = obj.recipe # OneToOneField related_name='recipe'
+            return [{
+                'ingredient_id': item.ingredient_id,
+                'quantity': item.quantity,
+                'uom': item.uom
+            } for item in recipe.ingredients.all()]
+        except:
+            return []
 
     def get_stock_details(self, obj):
         """إرجاع الأرصدة مقسمة بالأرفف للأودو 19 موديول"""
@@ -70,10 +82,37 @@ class MaterialSerializer(serializers.ModelSerializer):
                     'base_uom': validated_data.get('base_uom'),
                     'barcode': validated_data.get('barcode'),
                     'tracking': validated_data.get('tracking', 'none'),
-                    'image': validated_data.get('image')
+                    'image': validated_data.get('image'),
+                    'is_pos_item': validated_data.get('is_pos_item', False),
+                    'expiry_date': validated_data.get('expiry_date'),
+                    'standard_price': validated_data.get('standard_price', 0),
+                    'reorder_level': validated_data.get('reorder_level', 0),
+                    'max_level': validated_data.get('max_level', 0)
                 }
             )
             
+            # Save Recipe if provided
+            recipe_data = request.data.get('recipe_lines', [])
+            if isinstance(recipe_data, str):
+                try: recipe_data = json.loads(recipe_data)
+                except: recipe_data = []
+            
+            if recipe_data:
+                from apps.restaurant_pos.models import Recipe, RecipeItem
+                recipe, _ = Recipe.objects.update_or_create(
+                    opco=mat.opco, finished_good=mat,
+                    defaults={'name': f"Recipe for {mat.name}"}
+                )
+                recipe.ingredients.all().delete()
+                for r_line in recipe_data:
+                    if r_line.get('ingredient_id'):
+                        RecipeItem.objects.create(
+                            recipe=recipe,
+                            ingredient_id=r_line.get('ingredient_id'),
+                            quantity=r_line.get('quantity', 0),
+                            uom=r_line.get('uom', 'KG')
+                        )
+
             bins = assign.get('bins', [])
             primary = assign.get('primary_bin')
             mat.material_bins.all().delete()
@@ -113,9 +152,36 @@ class MaterialSerializer(serializers.ModelSerializer):
                         'category': instance.category,
                         'base_uom': instance.base_uom,
                         'barcode': instance.barcode,
-                        'image': instance.image
+                        'image': instance.image,
+                        'is_pos_item': instance.is_pos_item,
+                        'expiry_date': instance.expiry_date,
+                        'standard_price': instance.standard_price,
+                        'reorder_level': instance.reorder_level,
+                        'max_level': instance.max_level
                     }
                 )
+
+                # Save Recipe
+                recipe_data = request.data.get('recipe_lines', [])
+                if isinstance(recipe_data, str):
+                    try: recipe_data = json.loads(recipe_data)
+                    except: recipe_data = []
+                
+                if recipe_data:
+                    from apps.restaurant_pos.models import Recipe, RecipeItem
+                    recipe, _ = Recipe.objects.update_or_create(
+                        opco=mat.opco, finished_good=mat,
+                        defaults={'name': f"Recipe for {mat.name}"}
+                    )
+                    recipe.ingredients.all().delete()
+                    for r_line in recipe_data:
+                        if r_line.get('ingredient_id'):
+                            RecipeItem.objects.create(
+                                recipe=recipe,
+                                ingredient_id=r_line.get('ingredient_id'),
+                                quantity=r_line.get('quantity', 0),
+                                uom=r_line.get('uom', 'KG')
+                            )
                 
                 bins = assign.get('bins', [])
                 primary = assign.get('primary_bin')
