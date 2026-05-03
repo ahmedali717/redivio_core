@@ -79,7 +79,7 @@
                         <div class="flex items-center justify-center h-full text-slate-500 font-bold text-xl">Kitchen Display (KDS) Coming Soon</div>
                     </div>
                     <div v-if="posTab === 'orders'" class="absolute inset-0 bg-white rounded-tl-3xl shadow-lg overflow-y-auto p-6">
-                        <div class="flex items-center justify-center h-full text-slate-400 font-bold text-xl">Orders History Coming Soon</div>
+                        {% include "pos/order_history.html" %}
                     </div>
                 </div>
             </div>

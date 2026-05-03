@@ -142,27 +142,14 @@ class POSOrder(models.Model):
             material = line.material
             
             # 1. تحقق من وجود وصفة (Recipe) لتفكيكها
-            try:
-                recipe = material.recipe
+            recipe = getattr(material, 'recipe', None)
+            if recipe:
                 for ingredient_line in recipe.ingredients.all():
                     qty_to_deduct = ingredient_line.quantity * line.qty
                     ingredient = ingredient_line.ingredient
                     
-                    # البحث عن الرف الرئيسي للمكون في هذه الشركة
-                    primary_loc = MaterialLocation.objects.filter(
-                        material=ingredient,
-                        material__opco=self.opco,
-                        is_primary=True
-                    ).first()
-                    
-                    if not primary_loc:
-                        # Fallback: خذ أول رف مرتبط بهذا الصنف في هذه الشركة
-                        primary_loc = MaterialLocation.objects.filter(
-                            material=ingredient,
-                            material__opco=self.opco
-                        ).first()
-                    
-                    source_bin = primary_loc.storage_bin if primary_loc else None
+                    # البحث عن الرف الرئيسي أو أول رف به رصيد
+                    source_bin = self._find_best_bin(ingredient)
                     
                     # إنشاء حركة مخزنية (صرف - OUT)
                     StockMove.objects.create(
@@ -174,22 +161,10 @@ class POSOrder(models.Model):
                         reference=f"POS Order {self.order_ref} (BOM)",
                         move_type='OUT'
                     )
-            except:
+            else:
                 # 2. إذا لم تكن هناك وصفة، يتم خصم المنتج نفسه إذا كان POS Item
                 if material.is_pos_item:
-                    primary_loc = MaterialLocation.objects.filter(
-                        material=material,
-                        material__opco=self.opco,
-                        is_primary=True
-                    ).first()
-
-                    if not primary_loc:
-                        primary_loc = MaterialLocation.objects.filter(
-                            material=material,
-                            material__opco=self.opco
-                        ).first()
-                    
-                    source_bin = primary_loc.storage_bin if primary_loc else None
+                    source_bin = self._find_best_bin(material)
                     
                     StockMove.objects.create(
                         opco=self.opco,
@@ -203,6 +178,30 @@ class POSOrder(models.Model):
         
         self.inventory_deducted = True
         self.save()
+
+    def _find_best_bin(self, material):
+        """
+        البحث عن أفضل رف للخصم منه:
+        1. الرف الرئيسي (Primary)
+        2. أول رف مرتبط بالصنف
+        3. أول رف به رصيد فعلي (StockQuant)
+        """
+        from apps.item_master.models import MaterialLocation
+        from apps.wms.models import StockQuant
+        
+        # 1. الرف الرئيسي
+        loc = MaterialLocation.objects.filter(material=material, material__opco=self.opco, is_primary=True).first()
+        if loc: return loc.storage_bin
+        
+        # 2. أي رف مرتبط بالصنف
+        loc = MaterialLocation.objects.filter(material=material, material__opco=self.opco).first()
+        if loc: return loc.storage_bin
+        
+        # 3. أي رف به رصيد
+        quant = StockQuant.objects.filter(material=material, opco=self.opco, quantity__gt=0).first()
+        if quant: return quant.storage_bin
+        
+        return None
 
     def __str__(self):
         return f"Order {self.order_ref} - {self.status}"

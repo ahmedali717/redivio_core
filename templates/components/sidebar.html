@@ -293,7 +293,7 @@
                     v-text="isArabic ? 'شاشة المطبخ KDS' : 'Kitchen Display'"></span>
             </a>
             
-            <a href="#" @click.prevent="posTab = 'orders'"
+            <a href="#" @click.prevent="posTab = 'orders'; fetchOrdersHistory()"
                 :class="posTab === 'orders' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-receipt w-6 text-center text-lg"></i>

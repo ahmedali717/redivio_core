@@ -47,6 +47,7 @@ createApp({
             posSearch: '',
             posCategory: 'all',
             posOrderType: 'DINE_IN',
+            posOrdersHistory: [],
             salesTab: 'dashboard',
             soSearch: '',
             accountingTab: 'dashboard',
@@ -639,8 +640,8 @@ createApp({
             const date = new Date().toLocaleString();
             let itemsHtml = cart.map(i => `
                 <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span>${i.name} x${i.qty}</span>
-                    <span>${(i.price * i.qty).toFixed(2)}</span>
+                    <span>${i.name || i.material_name} x${i.qty}</span>
+                    <span>${((i.price || i.unit_price) * i.qty).toFixed(2)}</span>
                 </div>
             `).join('');
 
@@ -726,6 +727,20 @@ createApp({
                 }
             } catch (e) {
                 this.showToast("Network Error", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchOrdersHistory() {
+            try {
+                this.loading = true;
+                const res = await fetch('/api/pos/orders/?opco=' + this.activeOpcoId);
+                if (res.ok) {
+                    this.posOrdersHistory = await res.json();
+                }
+            } catch (e) {
+                console.error("Fetch Orders Error:", e);
             } finally {
                 this.loading = false;
             }
