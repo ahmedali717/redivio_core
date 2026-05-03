@@ -97,7 +97,7 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         
         # 2. Top Items
         from .models import POSOrderLine
-        top_items_raw = POSOrderLine.objects.filter(order__in=orders).values('material__name').annotate(total_qty=Sum('qty')).order_order_by('-total_qty')[:5]
+        top_items_raw = POSOrderLine.objects.filter(order__in=orders).values('material__name').annotate(total_qty=Sum('qty')).order_by('-total_qty')[:5]
         top_items = []
         max_qty = top_items_raw[0]['total_qty'] if top_items_raw else 1
         for i, item in enumerate(top_items_raw):
