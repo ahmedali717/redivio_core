@@ -51,6 +51,8 @@ createApp({
             posOrderType: 'DINE_IN',
             posTableNumber: '',
             posGuestCount: 1,
+            posSessionsHistory: [],
+            selectedSession: null,
             posOrdersHistory: [],
             salesTab: 'dashboard',
             soSearch: '',
@@ -267,6 +269,17 @@ createApp({
         },
         cartTax() {
             return this.cartSubtotal * 0.15; // 15% tax hardcoded for now
+        },
+        groupedSessions() {
+            const groups = {};
+            this.posSessionsHistory.forEach(s => {
+                const date = new Date(s.start_time).toLocaleDateString(this.isArabic ? 'ar-EG' : 'en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+                if (!groups[date]) groups[date] = [];
+                groups[date].push(s);
+            });
+            return groups;
         },
         cartTotal() {
             return this.cartSubtotal + this.cartTax;
@@ -844,6 +857,35 @@ createApp({
                 }
             } catch (e) {
                 this.showToast("Error fetching stats", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchSessionsHistory() {
+            try {
+                this.loading = true;
+                const res = await fetch('/api/pos/orders/session_history/?opco=' + this.activeOpcoId);
+                if (res.ok) {
+                    this.posSessionsHistory = await res.json();
+                }
+            } catch (e) {
+                console.error("Fetch Sessions Error:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async viewSessionDetails(session) {
+            this.selectedSession = session;
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/pos/orders/?opco=${this.activeOpcoId}&session=${session.id}`);
+                if (res.ok) {
+                    this.posOrdersHistory = await res.json();
+                }
+            } catch (e) {
+                console.error("Fetch Session Orders Error:", e);
             } finally {
                 this.loading = false;
             }

@@ -17,8 +17,31 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             return POSSession.objects.filter(opco_id=opco_id, is_closed=False)
             
         if opco_id:
-            return self.queryset.filter(opco_id=opco_id)
+            queryset = self.queryset.filter(opco_id=opco_id)
+            session_id = self.request.query_params.get('session')
+            if session_id:
+                queryset = queryset.filter(session_id=session_id)
+            return queryset
         return self.queryset
+
+    @action(detail=False, methods=['get'])
+    def session_history(self, request):
+        opco_id = request.query_params.get('opco')
+        sessions = POSSession.objects.filter(opco_id=opco_id).order_by('-start_time')
+        data = []
+        for s in sessions:
+            data.append({
+                'id': s.id,
+                'cashier': s.cashier_name,
+                'start_time': s.start_time,
+                'end_time': s.end_time,
+                'is_closed': s.is_closed,
+                'total_sales': s.total_sales,
+                'opening_balance': s.opening_balance,
+                'actual_balance': s.actual_closing_balance,
+                'order_count': s.orders.count()
+            })
+        return Response(data)
 
     @action(detail=False, methods=['post'])
     def start_session(self, request):
