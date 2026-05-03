@@ -914,29 +914,44 @@ createApp({
         },
 
         async addCashTransaction() {
+            if (!this.activePOSSession) {
+                this.showToast(this.isArabic ? "برجاء فتح وردية أولاً!" : "Please start a session first!", "error");
+                return;
+            }
+
             const { value: formValues } = await Swal.fire({
-                title: this.isArabic ? 'حركة نقدية خارجة / مصاريف' : 'Cash Out / Expense',
+                title: this.isArabic ? 'صرف نقدية / مصروفات' : 'Cash Out / Expense',
                 html: `
                     <div style="text-align:right" dir="rtl">
-                        <label>المبلغ</label>
-                        <input id="swal-amount" class="swal2-input" type="number" step="0.01">
-                        <label>السبب / البيان</label>
-                        <input id="swal-reason" class="swal2-input" type="text" placeholder="مثلاً: شراء خضروات، عهدة، إلخ">
+                        <label style="font-weight:bold; font-size:12px; color:#666">المبلغ المطلوب صرفه</label>
+                        <input id="swal-amount" class="swal2-input" type="number" step="0.01" placeholder="0.00">
+                        <label style="font-weight:bold; font-size:12px; color:#666; margin-top:10px; display:block">السبب / البيان</label>
+                        <input id="swal-reason" class="swal2-input" type="text" placeholder="مثلاً: شراء خضروات، عجز عهده...">
                     </div>
                 `,
                 focusConfirm: false,
                 showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'تأكيد وصرف' : 'Confirm & Cash Out',
+                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
                 preConfirm: () => {
-                    return {
-                        amount: document.getElementById('swal-amount').value,
-                        reason: document.getElementById('swal-reason').value
+                    const amount = document.getElementById('swal-amount').value;
+                    const reason = document.getElementById('swal-reason').value;
+                    if (!amount || amount <= 0) {
+                        Swal.showValidationMessage(this.isArabic ? 'برجاء إدخال مبلغ صحيح' : 'Please enter a valid amount');
+                        return false;
                     }
+                    if (!reason) {
+                        Swal.showValidationMessage(this.isArabic ? 'برجاء إدخال سبب الصرف' : 'Please enter a reason');
+                        return false;
+                    }
+                    return { amount, reason };
                 }
             });
 
-            if (!formValues || !formValues.amount) return;
+            if (!formValues) return;
 
             try {
+                this.loading = true;
                 const res = await fetch('/api/pos/orders/add_transaction/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
@@ -947,12 +962,96 @@ createApp({
                         reason: formValues.reason
                     })
                 });
+                
                 if (res.ok) {
-                    this.showToast(this.isArabic ? "تم تسجيل العملية بنجاح" : "Transaction recorded");
+                    this.showToast(this.isArabic ? "تم تسجيل العملية وطباعة الإيصال" : "Transaction recorded & Receipt printed", "success");
+                    
+                    // 🚀 طباعة إيصال المصروفات
+                    this.printExpenseReceipt({
+                        amount: formValues.amount,
+                        reason: formValues.reason,
+                        cashier: this.user.name || 'Admin',
+                        session_id: this.activePOSSession.id
+                    });
+                    
+                    this.refreshAllData();
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Error", "error");
                 }
             } catch (e) {
-                this.showToast("Error recording transaction", "error");
+                this.showToast("Network Error", "error");
+            } finally {
+                this.loading = false;
             }
+        },
+
+        printExpenseReceipt(data) {
+            const date = new Date().toLocaleString();
+            const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
+            const companyName = this.activeOpco ? this.activeOpco.name : 'REDIVIO POS';
+            
+            const printWindow = window.open('', '_blank', 'width=450,height=500');
+            const html = `
+                <html>
+                <head>
+                    <title>Expense Voucher</title>
+                    <style>
+                        body { font-family: 'Courier New', Courier, monospace; padding: 20px; text-align: center; line-height: 1.4; }
+                        .header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+                        .title { font-size: 20px; font-weight: bold; text-transform: uppercase; margin: 10px 0; }
+                        .detail-row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 14px; }
+                        .amount-box { border: 2px solid #000; padding: 15px; font-size: 24px; font-weight: bold; margin: 20px 0; }
+                        .footer { margin-top: 30px; font-size: 12px; border-top: 1px dashed #000; padding-top: 10px; }
+                        .signature { margin-top: 40px; display: flex; justify-content: space-between; }
+                        .sig-line { border-top: 1px solid #000; width: 100px; padding-top: 5px; }
+                    </style>
+                </head>
+                <body onload="window.print(); window.close();">
+                    <div class="header">
+                        <div class="title">${this.isArabic ? 'إيصال صرف نقدية' : 'CASH OUT VOUCHER'}</div>
+                        <div>${companyName}</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <span>Date / الوقت:</span>
+                        <span>${date}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Session ID / الوردية:</span>
+                        <span>#${data.session_id}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Cashier / الكاشير:</span>
+                        <span>${data.cashier}</span>
+                    </div>
+                    
+                    <div class="divider" style="border-top:1px dashed #000; margin:15px 0;"></div>
+                    
+                    <div style="text-align:left; margin-bottom:10px; font-weight:bold;">Reason / البيان:</div>
+                    <div style="text-align:left; font-size:16px; margin-bottom:20px; padding:10px; background:#f9f9f9;">${data.reason}</div>
+                    
+                    <div class="amount-box">
+                        ${Number(data.amount).toFixed(2)} ${currency}
+                    </div>
+                    
+                    <div class="signature">
+                        <div>
+                            <div class="sig-line">Cashier</div>
+                        </div>
+                        <div>
+                            <div class="sig-line">Recipient</div>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>REDIVIO POS System - Printed on ${date}</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            printWindow.document.write(html);
+            printWindow.document.close();
         },
 
         async fetchPOSDashboard() {
