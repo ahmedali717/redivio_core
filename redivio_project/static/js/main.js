@@ -656,7 +656,7 @@ createApp({
                 <head>
                     <title>Receipt - ${order.order_ref}</title>
                     <style>
-                        body { font-family: 'Courier New', monospace; padding: 20px; font-size: 14px; }
+                        body { font-family: 'Courier New', monospace; padding: 20px; font-size: 14px; color: #000; }
                         .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
                         .footer { text-align: center; border-top: 1px dashed #000; padding-top: 10px; margin-top: 20px; }
                         .total-row { display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px; }
@@ -673,25 +673,21 @@ createApp({
                         ${itemsHtml}
                     </div>
                     <div style="margin-top:10px; border-top:1px solid #eee; padding-top:5px">
-                        <div class="total-row"><span>Subtotal:</span> <span>${subtotal.toFixed(2)} ${currency}</span></div>
-                        <div class="total-row"><span>Tax (15%):</span> <span>${tax.toFixed(2)} ${currency}</span></div>
-                        <div class="total-row" style="font-size:18px; margin-top:10px"><span>TOTAL:</span> <span>${total.toFixed(2)} ${currency}</span></div>
+                        <div class="total-row"><span>TOTAL:</span> <span>${Number(order.total_amount || total).toFixed(2)} ${currency}</span></div>
                     </div>
                     <div class="footer">
                         <p>Thank You For Visiting Us!</p>
                         <p style="font-size:10px">Powered by REDIVIO</p>
                     </div>
-                    <script>
-                        window.onload = function() { window.print(); window.close(); };
-                    </script>
                 </body>
                 </html>
             `);
             printWindow.document.close();
             setTimeout(() => {
+                printWindow.focus();
                 printWindow.print();
                 printWindow.close();
-            }, 300);
+            }, 500);
         },
 
         async endSession() {
