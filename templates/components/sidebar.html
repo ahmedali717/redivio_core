@@ -260,6 +260,46 @@
             </a>
         </template>
 
+        <!-- Restaurant POS Context -->
+        <template v-else-if="view === 'restaurant_pos_module'">
+            <div class="text-[10px] font-bold text-red-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
+                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'إدارة المطاعم' : 'Restaurant Mgmt'"></span>
+                <hr v-show="sidebarCollapsed" class="border-red-800">
+            </div>
+
+            <a href="#" @click.prevent="posTab = 'cashier'"
+                :class="posTab === 'cashier' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-desktop w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
+                    v-text="isArabic ? 'شاشة الكاشير' : 'POS Terminal'"></span>
+            </a>
+            
+            <a href="#" @click.prevent="posTab = 'recipes'"
+                :class="posTab === 'recipes' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-book-open w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
+                    v-text="isArabic ? 'هندسة المنيو' : 'Menu Engineering'"></span>
+            </a>
+            
+            <a href="#" @click.prevent="posTab = 'kitchen'"
+                :class="posTab === 'kitchen' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-fire-burner w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
+                    v-text="isArabic ? 'شاشة المطبخ KDS' : 'Kitchen Display'"></span>
+            </a>
+            
+            <a href="#" @click.prevent="posTab = 'orders'"
+                :class="posTab === 'orders' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
+                <i class="fas fa-receipt w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
+                    v-text="isArabic ? 'سجل الطلبات' : 'Orders History'"></span>
+            </a>
+        </template>
+
         <!-- Default Context (Dashboard or Generic) -->
         <template v-else>
             <div class="text-[10px] font-bold text-blue-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
