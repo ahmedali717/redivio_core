@@ -745,17 +745,23 @@ createApp({
                         title: this.isArabic ? 'إغلاق الوردية وتصفية الحساب' : 'Close Shift & Settlement',
                         html: `
                             <div style="text-align:right; font-size: 14px;" dir="rtl">
-                                <p>رصيد البداية: <b>${summary.opening_balance}</b></p>
-                                <p>إجمالي المبيعات (+): <b style="color:green">${summary.total_sales}</b></p>
-                                <p>إجمالي المصاريف (-): <b style="color:red">${summary.total_expenses}</b></p>
+                                <p>رصيد البداية: <b>${Number(summary.opening_balance).toFixed(2)}</b></p>
+                                <div style="margin: 10px 0; padding: 10px; bg-slate-50; border-radius: 10px; border: 1px solid #eee;">
+                                    <p style="color:#059669">مبيعات كاش (+): <b>${Number(summary.cash_sales).toFixed(2)}</b></p>
+                                    <p style="color:#6366f1">مبيعات إلكترونية (InstaPay): <b>${Number(summary.instapay_sales).toFixed(2)}</b></p>
+                                    <p style="color:#f43f5e">مبيعات آجلة (Credit): <b>${Number(summary.credit_sales).toFixed(2)}</b></p>
+                                </div>
+                                <p>إجمالي المصاريف (-): <b style="color:red">${Number(summary.total_expenses).toFixed(2)}</b></p>
                                 <hr>
-                                <p style="font-size:18px">الرصيد المتوقع: <b>${summary.expected_balance}</b></p>
+                                <p style="font-size:18px">الرصيد الكاش المتوقع: <b style="color:#0f172a">${Number(summary.expected_cash).toFixed(2)}</b></p>
+                                <p style="font-size:10px; color:#666">*(لا يشمل الفيزا أو الأونلاين)*</p>
                                 <br>
                                 <label>أدخل المبلغ الفعلي الموجود في الدرج الآن:</label>
                             </div>
                         `,
                         input: 'number',
                         inputAttributes: { step: '0.01' },
+                        inputValue: summary.expected_cash,
                         showCancelButton: true,
                         confirmButtonText: this.isArabic ? 'تأكيد الإغلاق' : 'Confirm Close'
                     });

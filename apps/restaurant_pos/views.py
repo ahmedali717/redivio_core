@@ -144,11 +144,22 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         if not session:
             return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
         
+        from .models import POSOrder
+        from django.db.models import Sum
+        orders = POSOrder.objects.filter(session=session, status='paid')
+        total_sales = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        cash_sales = orders.filter(payment_method='cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        instapay_sales = orders.filter(payment_method='instapay').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        credit_sales = orders.filter(payment_method='credit').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        
         return Response({
             'opening_balance': session.opening_balance,
-            'total_sales': session.total_sales,
+            'total_sales': total_sales,
+            'cash_sales': cash_sales,
+            'instapay_sales': instapay_sales,
+            'credit_sales': credit_sales,
             'total_expenses': session.total_expenses,
-            'expected_balance': float(session.opening_balance) + float(session.total_sales) - float(session.total_expenses),
+            'expected_cash': float(session.opening_balance) + float(cash_sales) - float(session.total_expenses),
             'cashier': session.cashier_name
         })
 
@@ -160,9 +171,16 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         
         if not session:
             return Response({'error': 'No active session found'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
+        from .models import POSOrder
+        from django.db.models import Sum
+        orders = POSOrder.objects.filter(session=session, status='paid')
+        cash_sales = orders.filter(payment_method='cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        total_sales = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        
         session.actual_closing_balance = actual_balance
-        session.expected_closing_balance = float(session.opening_balance) + float(session.total_sales) - float(session.total_expenses)
+        session.total_sales = total_sales
+        session.expected_closing_balance = float(session.opening_balance) + float(cash_sales) - float(session.total_expenses)
         
         session.is_closed = True
         session.end_time = timezone.now()
@@ -172,10 +190,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             'success': True, 
             'session_id': session.id,
             'opening_balance': session.opening_balance,
-            'total_sales': session.total_sales,
+            'total_sales': total_sales,
+            'cash_sales': cash_sales,
             'total_expenses': session.total_expenses,
             'expected_balance': session.expected_closing_balance,
             'actual_balance': session.actual_closing_balance,
-            'difference': session.actual_closing_balance - session.expected_closing_balance,
+            'difference': float(session.actual_closing_balance) - float(session.expected_closing_balance),
             'cashier': session.cashier_name
         })
