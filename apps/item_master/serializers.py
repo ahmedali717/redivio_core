@@ -12,6 +12,7 @@ class MaterialSerializer(serializers.ModelSerializer):
     company_assignments = serializers.SerializerMethodField()
     on_hand = serializers.DecimalField(source='total_on_hand', max_digits=12, decimal_places=2, read_only=True)
     recipe_lines = serializers.SerializerMethodField()
+    stock_details = serializers.SerializerMethodField()
     
     class Meta:
         model = Material
