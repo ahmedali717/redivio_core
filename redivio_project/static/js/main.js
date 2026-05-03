@@ -1987,10 +1987,18 @@ createApp({
         formatDate(dateStr) {
             if (!dateStr) return '---';
             const date = new Date(dateStr);
-            return date.toLocaleDateString('ar-EG', {
+            return date.toLocaleDateString(this.isArabic ? 'ar-EG' : 'en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+        formatTime(dateStr) {
+            if (!dateStr) return '---';
+            const date = new Date(dateStr);
+            return date.toLocaleTimeString(this.isArabic ? 'ar-EG' : 'en-US', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
