@@ -149,12 +149,18 @@ class POSOrder(models.Model):
                     ingredient = ingredient_line.ingredient
                     
                     # البحث عن الرف الرئيسي للمكون في هذه الشركة
-                    # (يمكن تخصيص هذا لاحقاً ليكون رف "المطبخ" الافتراضي)
                     primary_loc = MaterialLocation.objects.filter(
                         material=ingredient,
                         material__opco=self.opco,
                         is_primary=True
                     ).first()
+                    
+                    if not primary_loc:
+                        # Fallback: خذ أول رف مرتبط بهذا الصنف في هذه الشركة
+                        primary_loc = MaterialLocation.objects.filter(
+                            material=ingredient,
+                            material__opco=self.opco
+                        ).first()
                     
                     source_bin = primary_loc.storage_bin if primary_loc else None
                     
@@ -176,6 +182,12 @@ class POSOrder(models.Model):
                         material__opco=self.opco,
                         is_primary=True
                     ).first()
+
+                    if not primary_loc:
+                        primary_loc = MaterialLocation.objects.filter(
+                            material=material,
+                            material__opco=self.opco
+                        ).first()
                     
                     source_bin = primary_loc.storage_bin if primary_loc else None
                     

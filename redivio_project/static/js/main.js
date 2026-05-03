@@ -278,9 +278,9 @@ createApp({
                 });
             }
 
-            // 2. تصفية إضافية لموديول المطاعم - تبويب الوصفات
+            // 2. تصفية إضافية لموديول المطاعم (اختياري: يمكنك فلترة الأصناف هنا إذا رغبت)
             if (this.view === 'restaurant_pos_module' && this.posTab === 'recipes') {
-                list = list.filter(item => item.is_pos_item);
+                // سنعرض كل الأصناف حالياً لتمكين إدارة المكونات أيضاً
             }
 
             // 2. فلترة بنص البحث (لو المستخدم كتب حاجة)
@@ -612,7 +612,12 @@ createApp({
                     });
 
                     if (payRes.ok) {
+                        const payData = await payRes.json();
                         this.showToast(this.isArabic ? "تم تأكيد الطلب وخصم المكونات بنجاح!" : "Order Confirmed & Ingredients Deducted!", "success");
+                        
+                        // 🖨️ طباعة الإيصال تلقائياً
+                        this.printReceipt(order, this.posCart);
+                        
                         this.posCart = [];
                         this.refreshKpis();
                     } else {
@@ -625,6 +630,101 @@ createApp({
                 }
             } catch (e) {
                 console.error("POS Checkout Error:", e);
+                this.showToast("Network Error", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+        printReceipt(order, cart) {
+            const date = new Date().toLocaleString();
+            let itemsHtml = cart.map(i => `
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>${i.name} x${i.qty}</span>
+                    <span>${(i.price * i.qty).toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            const subtotal = this.cartSubtotal;
+            const tax = this.cartTax;
+            const total = this.cartTotal;
+            const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
+
+            const printWindow = window.open('', '_blank', 'width=400,height=600');
+            printWindow.document.write(\`
+                <html>
+                <head>
+                    <title>Receipt - \${order.order_ref}</title>
+                    <style>
+                        body { font-family: 'Courier New', monospace; padding: 20px; font-size: 14px; }
+                        .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
+                        .footer { text-align: center; border-top: 1px dashed #000; padding-top: 10px; margin-top: 20px; }
+                        .total-row { display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2 style="margin:0">REDIVIO POS</h2>
+                        <p style="margin:5px 0">\${this.activeOpco ? this.activeOpco.name : 'Restaurant'}</p>
+                        <p style="font-size:10px">\${date}</p>
+                        <p style="font-size:10px">Ref: \${order.order_ref || 'Draft'}</p>
+                    </div>
+                    <div class="items">
+                        \${itemsHtml}
+                    </div>
+                    <div style="margin-top:10px; border-top:1px solid #eee; padding-top:5px">
+                        <div class="total-row"><span>Subtotal:</span> <span>\${subtotal.toFixed(2)} \${currency}</span></div>
+                        <div class="total-row"><span>Tax (15%):</span> <span>\${tax.toFixed(2)} \${currency}</span></div>
+                        <div class="total-row" style="font-size:18px; margin-top:10px"><span>TOTAL:</span> <span>\${total.toFixed(2)} \${currency}</span></div>
+                    </div>
+                    <div class="footer">
+                        <p>Thank You For Visiting Us!</p>
+                        <p style="font-size:10px">Powered by REDIVIO</p>
+                    </div>
+                    <script>
+                        window.onload = function() { window.print(); window.close(); };
+                    </script>
+                </body>
+                </html>
+            \`);
+            printWindow.document.close();
+        },
+
+        async endSession() {
+            if (!confirm(this.isArabic ? "هل أنت متأكد من إنهاء الوردية الحالية؟" : "Are you sure you want to end the current shift?")) return;
+            
+            try {
+                this.loading = true;
+                const res = await fetch('/api/pos/orders/close_session/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ opco: this.activeOpcoId })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    this.activePOSSession = null;
+                    
+                    // إظهار ملخص الوردية (تسميع الإيراد)
+                    Swal.fire({
+                        title: this.isArabic ? 'تم إنهاء الوردية بنجاح' : 'Shift Ended Successfully',
+                        html: `
+                            <div style="text-align:right" dir="rtl">
+                                <p><b>الكاشير:</b> ${data.cashier}</p>
+                                <hr>
+                                <p style="font-size:24px; color:#059669"><b>إجمالي المبيعات:</b> ${data.total_revenue.toFixed(2)} ${this.activeOpco ? this.activeOpco.currency : 'EGP'}</p>
+                            </div>
+                        `,
+                        icon: 'success',
+                        confirmButtonText: this.isArabic ? 'حسناً' : 'OK'
+                    });
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Failed to close session", "error");
+                }
+            } catch (e) {
                 this.showToast("Network Error", "error");
             } finally {
                 this.loading = false;

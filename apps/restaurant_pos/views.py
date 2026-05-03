@@ -52,3 +52,26 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             return Response({'success': True, 'order_ref': order.order_ref})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'])
+    def close_session(self, request):
+        opco_id = request.data.get('opco')
+        session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
+        
+        if not session:
+            return Response({'error': 'No active session found'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # حساب الإيرادات (تسميع الإيراد)
+        from django.db.models import Sum
+        total_revenue = POSOrder.objects.filter(session=session, status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        
+        session.is_closed = True
+        session.end_time = timezone.now()
+        session.save()
+        
+        return Response({
+            'success': True, 
+            'session_id': session.id,
+            'total_revenue': total_revenue,
+            'cashier': session.cashier_name
+        })
