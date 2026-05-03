@@ -2086,9 +2086,10 @@ createApp({
                             // Map sidebar ID to setup module ID
                             const idMap = {
                                 'inventory_module': 'wms',
-                                'procurement_module': 'proc',
+                                'procurement_module': 'procurement',
                                 'sales_module': 'sales',
-                                'accounting_module': 'sales' // Assuming accounting belongs to sales suite
+                                'accounting_module': 'sales', // Assuming accounting belongs to sales suite
+                                'restaurant_pos_module': 'restaurant_pos'
                             };
                             return this.purchasedModules.includes(idMap[mod.id] || mod.id);
                         });
