@@ -134,6 +134,7 @@ class POSOrder(models.Model):
     ]
     order_type = models.CharField(max_length=20, choices=ORDER_TYPES, default='TAKEAWAY')
     table_number = models.CharField(max_length=20, null=True, blank=True)
+    guest_count = models.IntegerField(default=1)
     
     PAYMENT_METHODS = [
         ('cash', 'Cash (كاش)'),
@@ -220,9 +221,10 @@ class POSOrder(models.Model):
         1. الرف الرئيسي (Primary)
         2. أول رف مرتبط بالصنف
         3. أول رف به رصيد فعلي (StockQuant)
+        4. أول رف متاح في النظام للشركة (Fallback)
         """
         from apps.item_master.models import MaterialLocation
-        from apps.wms.models import StockQuant
+        from apps.wms.models import StockQuant, StorageBin
         
         # 1. الرف الرئيسي
         loc = MaterialLocation.objects.filter(material=material, material__opco=self.opco, is_primary=True).first()
@@ -236,7 +238,9 @@ class POSOrder(models.Model):
         quant = StockQuant.objects.filter(material=material, opco=self.opco, quantity__gt=0).first()
         if quant: return quant.storage_bin
         
-        return None
+        # 4. الملاذ الأخير: أي رف متاح في الشركة
+        fallback_bin = StorageBin.objects.filter(storage_location__plant__opco=self.opco, is_active=True).first()
+        return fallback_bin
 
     def __str__(self):
         return f"Order {self.order_ref} - {self.status}"

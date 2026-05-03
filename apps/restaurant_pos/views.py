@@ -129,6 +129,29 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             'ingredients': list(consumption.values())
         })
 
+    @action(detail=False, methods=['get'])
+    def last_session_balance(self, request):
+        opco_id = request.query_params.get('opco')
+        from .models import POSSession
+        last_session = POSSession.objects.filter(opco_id=opco_id, is_closed=True).order_by('-end_time').first()
+        balance = last_session.actual_closing_balance if last_session else 0
+        return Response({'last_balance': balance})
+
+    @action(detail=False, methods=['get'])
+    def session_preview(self, request):
+        opco_id = request.query_params.get('opco')
+        session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
+        if not session:
+            return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({
+            'opening_balance': session.opening_balance,
+            'total_sales': session.total_sales,
+            'total_expenses': session.total_expenses,
+            'expected_balance': float(session.opening_balance) + float(session.total_sales) - float(session.total_expenses),
+            'cashier': session.cashier_name
+        })
+
     @action(detail=False, methods=['post'])
     def close_session(self, request):
         opco_id = request.data.get('opco')

@@ -49,6 +49,8 @@ createApp({
             posPaymentMethod: 'cash',
             posStats: { total_revenue: 0, cash_total: 0, instapay_total: 0, credit_total: 0, top_items: [], ingredients: [] },
             posOrderType: 'DINE_IN',
+            posTableNumber: '',
+            posGuestCount: 1,
             posOrdersHistory: [],
             salesTab: 'dashboard',
             soSearch: '',
@@ -589,6 +591,8 @@ createApp({
                         session: this.activePOSSession.id,
                         order_type: this.posOrderType,
                         payment_method: this.posPaymentMethod,
+                        table_number: this.posTableNumber,
+                        guest_count: this.posGuestCount,
                         total_amount: this.cartTotal,
                         lines: this.posCart.map(i => ({
                             material: i.id,
@@ -714,71 +718,50 @@ createApp({
         },
 
         async endSession() {
-            const { value: actualBalance } = await Swal.fire({
-                title: this.isArabic ? 'إغلاق الوردية وتصفية الحساب' : 'Close Shift & Settlement',
-                input: 'number',
-                inputLabel: this.isArabic ? 'المبلغ الفعلي الموجود في الدرج الآن' : 'Actual Cash in Drawer',
-                inputAttributes: { step: '0.01' },
-                showCancelButton: true,
-                confirmButtonText: this.isArabic ? 'تأكيد الإغلاق' : 'Confirm Close'
-            });
-
-            if (actualBalance === undefined || actualBalance === null) return;
-            
+            // 1. Show Preview First
             try {
                 this.loading = true;
-                const res = await fetch('/api/pos/orders/close_session/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({ 
-                        opco: this.activeOpcoId,
-                        actual_balance: actualBalance
-                    })
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    this.activePOSSession = null;
-                    
-                    Swal.fire({
-                        title: this.isArabic ? 'تقرير إغلاق الوردية' : 'Shift Closing Report',
+                const prevRes = await fetch('/api/pos/orders/session_preview/?opco=' + this.activeOpcoId);
+                if (prevRes.ok) {
+                    const summary = await prevRes.json();
+                    const { value: actualBalance } = await Swal.fire({
+                        title: this.isArabic ? 'إغلاق الوردية وتصفية الحساب' : 'Close Shift & Settlement',
                         html: `
-                            <div style="text-align:right" dir="rtl">
-                                <p><b>الكاشير:</b> ${data.cashier}</p>
+                            <div style="text-align:right; font-size: 14px;" dir="rtl">
+                                <p>رصيد البداية: <b>${summary.opening_balance}</b></p>
+                                <p>إجمالي المبيعات (+): <b style="color:green">${summary.total_sales}</b></p>
+                                <p>إجمالي المصاريف (-): <b style="color:red">${summary.total_expenses}</b></p>
                                 <hr>
-                                <div style="display:flex; justify-content:space-between; margin:10px 0">
-                                    <span>رصيد البداية:</span>
-                                    <b>${Number(data.opening_balance).toFixed(2)}</b>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; margin:10px 0">
-                                    <span>إجمالي المبيعات:</span>
-                                    <b style="color:#059669">+ ${Number(data.total_sales).toFixed(2)}</b>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; margin:10px 0">
-                                    <span>إجمالي المصاريف:</span>
-                                    <b style="color:#dc2626">- ${Number(data.total_expenses).toFixed(2)}</b>
-                                </div>
-                                <hr>
-                                <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:18px">
-                                    <span>الرصيد المتوقع:</span>
-                                    <b>${Number(data.expected_balance).toFixed(2)}</b>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:18px">
-                                    <span>الرصيد الفعلي:</span>
-                                    <b>${Number(data.actual_balance).toFixed(2)}</b>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:20px; border-top:2px solid #eee; padding-top:10px">
-                                    <span>الفارق (عجز/زيادة):</span>
-                                    <b style="color:${data.difference >= 0 ? '#059669' : '#dc2626'}">${Number(data.difference).toFixed(2)}</b>
-                                </div>
+                                <p style="font-size:18px">الرصيد المتوقع: <b>${summary.expected_balance}</b></p>
+                                <br>
+                                <label>أدخل المبلغ الفعلي الموجود في الدرج الآن:</label>
                             </div>
                         `,
-                        icon: data.difference === 0 ? 'success' : 'warning',
-                        confirmButtonText: this.isArabic ? 'حسناً' : 'OK'
+                        input: 'number',
+                        inputAttributes: { step: '0.01' },
+                        showCancelButton: true,
+                        confirmButtonText: this.isArabic ? 'تأكيد الإغلاق' : 'Confirm Close'
                     });
+
+                    if (actualBalance === undefined || actualBalance === null) return;
+                    
+                    const res = await fetch('/api/pos/orders/close_session/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({ 
+                            opco: this.activeOpcoId,
+                            actual_balance: actualBalance
+                        })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.activePOSSession = null;
+                        this.showToast(this.isArabic ? "تم إغلاق الوردية" : "Shift closed");
+                    }
                 }
             } catch (e) {
                 this.showToast("Error closing session", "error");
