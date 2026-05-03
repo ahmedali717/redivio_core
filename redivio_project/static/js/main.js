@@ -678,9 +678,14 @@ createApp({
                 </div>
             `).join('');
 
-            const total = order.total_amount || this.cartTotal;
+            const total = Number(order.total_amount || this.cartTotal);
+            const subtotal = total / 1.15;
+            const vat = total - subtotal;
             const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
             const orderRef = order.order_ref || 'DRAFT-POS';
+            
+            // Logo path (using the generated one)
+            const logoUrl = 'file:///C:/Users/ahmed.ali/.gemini/antigravity/brain/3e4678c3-9403-4a4b-b3a2-3b52466fe619/restaurant_logo_placeholder_1777816083101.png';
             
             // Barcode and QR APIs
             const barcodeUrl = `https://barcode.tec-it.com/barcode.ashx?data=${orderRef}&code=Code128&translate-esc=true`;
@@ -694,43 +699,60 @@ createApp({
                     <title>Receipt - ${orderRef}</title>
                     <style>
                         @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-                        body { font-family: 'Courier Prime', monospace; padding: 30px; color: #1a1a1a; max-width: 400px; margin: 0 auto; background: #fff; }
-                        .header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #000; padding-bottom: 15px; }
-                        .logo { font-size: 32px; font-weight: 900; letter-spacing: -1px; margin-bottom: 5px; }
-                        .divider { border-top: 2px dashed #000; margin: 15px 0; }
-                        .total-section { font-size: 20px; font-weight: 700; margin-top: 15px; display: flex; justify-content: space-between; border-top: 2px solid #000; padding-top: 10px; }
-                        .barcodes { margin-top: 30px; text-align: center; }
-                        .footer { text-align: center; margin-top: 30px; font-size: 11px; color: #666; border-top: 1px solid #eee; padding-top: 15px; }
+                        body { font-family: 'Courier Prime', monospace; padding: 20px; color: #000; max-width: 350px; margin: 0 auto; background: #fff; line-height: 1.2; }
+                        .header { text-align: center; margin-bottom: 20px; }
+                        .logo-img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px; }
+                        .company-name { font-size: 20px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
+                        .divider { border-top: 1px dashed #000; margin: 10px 0; }
+                        .summary-line { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
+                        .total-line { display: flex; justify-content: space-between; font-size: 18px; font-weight: 900; margin-top: 10px; border-top: 1px solid #000; padding-top: 5px; }
+                        .barcodes { margin-top: 20px; text-align: center; }
+                        .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #444; border-top: 1px dashed #ccc; padding-top: 10px; }
                     </style>
                 </head>
                 <body>
                     <div class="header">
-                        <div class="logo">REDIVIO</div>
-                        <div style="text-transform: uppercase; font-weight: bold; font-size: 14px;">${this.activeOpco ? this.activeOpco.name : 'Restaurant'}</div>
-                        <div style="font-size: 11px; margin-top: 5px;">${date}</div>
-                        <div style="font-size: 12px; margin-top: 3px; font-weight: bold;">ORDER: ${orderRef}</div>
-                        <div style="font-size: 11px; margin-top: 2px; color: #666;">Type: ${order.order_type || 'Takeaway'} | Pay: ${order.payment_method || 'Cash'}</div>
+                        <img src="${logoUrl}" class="logo-img">
+                        <div class="company-name">${this.activeOpco ? this.activeOpco.name : 'REDIVIO POS'}</div>
+                        <div style="font-size: 10px;">${date}</div>
+                        <div class="divider"></div>
+                        <div style="font-weight: bold; font-size: 14px;">ORDER: ${orderRef}</div>
+                        <div style="font-size: 11px; margin-top: 4px;">
+                            ${this.isArabic ? 'النوع' : 'Type'}: <b>${order.order_type}</b> | 
+                            ${this.isArabic ? 'الدفع' : 'Pay'}: <b>${order.payment_method}</b>
+                        </div>
                     </div>
 
                     <div class="items">
                         ${itemsHtml}
                     </div>
 
-                    <div class="total-section">
-                        <span>TOTAL</span>
-                        <span>${Number(total).toFixed(2)} ${currency}</span>
+                    <div class="divider"></div>
+                    
+                    <div class="summary-line">
+                        <span>${this.isArabic ? 'المجموع الفرعي' : 'Subtotal'}</span>
+                        <span>${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-line">
+                        <span>${this.isArabic ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)'}</span>
+                        <span>${vat.toFixed(2)}</span>
+                    </div>
+
+                    <div class="total-line">
+                        <span>${this.isArabic ? 'الإجمالي' : 'TOTAL'}</span>
+                        <span>${total.toFixed(2)} ${currency}</span>
                     </div>
 
                     <div class="barcodes">
-                        <img src="${barcodeUrl}" style="height: 50px; width: auto; margin-bottom: 15px;">
-                        <div style="font-size: 10px; margin-bottom: 10px;">SCAN FOR DIGITAL INVOICE</div>
-                        <img src="${qrUrl}" style="width: 120px; height: 120px; border: 1px solid #eee; padding: 5px;">
+                        <img src="${barcodeUrl}" style="height: 40px; width: auto; margin-bottom: 10px;">
+                        <br>
+                        <img src="${qrUrl}" style="width: 100px; height: 100px; border: 1px solid #eee; padding: 5px;">
+                        <div style="font-size: 9px; margin-top: 5px;">SCAN TO VERIFY INVOICE</div>
                     </div>
 
                     <div class="footer">
-                        <p>INSTAPAY: ${this.activeOpco?.name || 'REDIVIO'}</p>
-                        <p style="margin-top: 10px; font-weight: bold;">THANK YOU FOR YOUR VISIT!</p>
-                        <p style="font-size: 9px; opacity: 0.5;">Tax Invoice | Powered by REDIVIO Cloud</p>
+                        <p>${this.isArabic ? 'شكراً لزيارتكم!' : 'THANK YOU FOR YOUR VISIT!'}</p>
+                        <p style="font-size: 8px; margin-top: 5px; opacity: 0.6;">Tax Invoice - Powered by REDIVIO</p>
                     </div>
                 </body>
                 </html>
