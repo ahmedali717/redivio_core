@@ -412,7 +412,26 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     tax_rate=Decimal(str(data.get('tax_rate', 15))),
                     reference=f"PO {po_id}" if po_id else reference_text
                 )
-                # Redundant update removed - handled by model
+
+        # 🚀 3. Link to POS Cash Flow if payment is CASH
+        if move_type == 'IN' and data.get('payment_method') == 'CASH':
+            try:
+                POSSession = apps.get_model('restaurant_pos', 'POSSession')
+                POSCashTransaction = apps.get_model('restaurant_pos', 'POSCashTransaction')
+                session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
+                if session:
+                    total_purchase_val = sum(Decimal(str(i.get('quantity', 0))) * Decimal(str(i.get('unit_cost', 0))) for i in items)
+                    if total_purchase_val > 0:
+                        POSCashTransaction.objects.create(
+                            session=session,
+                            type='OUT',
+                            amount=total_purchase_val,
+                            reason=f"Stock Purchase: {reference_text}"
+                        )
+                        session.total_expenses += total_purchase_val
+                        session.save()
+            except Exception as e: 
+                print(f"POS Link Error: {e}")
 
         # 🚚 2. Process Material Outbound (Delivery)
         elif move_type == 'OUT':

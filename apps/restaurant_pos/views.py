@@ -201,6 +201,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         total_expenses = session.total_expenses if session else 0
         
         from django.db.models import F
+        from apps.wms.models import StockMove
+        total_purchases = StockMove.objects.filter(opco_id=opco_id, move_type='IN', created_at__date=today).aggregate(
+            total=Sum(F('quantity') * F('unit_cost'))
+        )['total'] or 0
+
         total_cogs = POSOrderLine.objects.filter(order__in=orders).aggregate(
             total=Sum(F('qty') * F('material__standard_price'))
         )['total'] or 0
@@ -211,6 +216,7 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             'credit_total': float(credit_total),
             'instapay_total': float(instapay_total),
             'total_expenses': float(total_expenses),
+            'total_purchases': float(total_purchases),
             'total_cogs': float(total_cogs),
             'net_income': float(total_revenue) - float(total_expenses),
             'net_profit': float(total_revenue) - float(total_cogs) - float(total_expenses),

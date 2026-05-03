@@ -56,14 +56,14 @@
 
         <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
             <div class="flex justify-between items-start mb-4">
-                <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl">
-                    <i class="fas fa-user-clock"></i>
+                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl">
+                    <i class="fas fa-truck-loading"></i>
                 </div>
-                <span class="text-[10px] font-black text-rose-500 bg-rose-50 px-2 py-1 rounded-lg uppercase">Credit</span>
+                <span class="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg uppercase">Purchases</span>
             </div>
             <div>
-                <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.credit_total || 0) ]]</p>
-                <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'مبيعات آجلة' : 'On account sales' ]]</p>
+                <p class="text-3xl font-black text-slate-800">[[ formatCurrency(posStats.total_purchases || 0) ]]</p>
+                <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'مشتريات المخزون' : 'Stock Purchases' ]]</p>
             </div>
         </div>
     </div>
