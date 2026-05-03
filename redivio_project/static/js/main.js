@@ -193,6 +193,8 @@ createApp({
                     base_uom: 'PCS',
                     barcode: '',
                     standard_price: 0,
+                    sales_price: 0,
+                    tax_rate: 15,
                     // 🚀 الهيكل الجديد لدعم تعدد الشركات
                     company_assignments: [
                         { opco_id: null, bins: [], primary_bin: null }
@@ -268,7 +270,12 @@ createApp({
             return this.posCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
         },
         cartTax() {
-            return this.cartSubtotal * 0.15; // 15% tax hardcoded for now
+            let totalTax = 0;
+            this.posCart.forEach(item => {
+                const rate = (parseFloat(item.tax_rate) || 15) / 100;
+                totalTax += (parseFloat(item.price) * parseFloat(item.qty)) * rate;
+            });
+            return Math.round(totalTax * 100) / 100;
         },
         groupedSessions() {
             const groups = {};
@@ -282,7 +289,7 @@ createApp({
             return groups;
         },
         cartTotal() {
-            return this.cartSubtotal + this.cartTax;
+            return Math.round((this.cartSubtotal + this.cartTax) * 100) / 100;
         },
 
         filteredMaterials() {
@@ -573,6 +580,7 @@ createApp({
                     id: item.id,
                     name: item.name,
                     price: price,
+                    tax_rate: item.tax_rate || 15,
                     qty: 1
                 });
             }
@@ -679,8 +687,8 @@ createApp({
             `).join('');
 
             const total = Number(order.total_amount || this.cartTotal);
-            const subtotal = total / 1.15;
-            const vat = total - subtotal;
+            const vat = Number(this.cartTax);
+            const subtotal = total - vat;
             const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
             const orderRef = order.order_ref || 'DRAFT-POS';
             

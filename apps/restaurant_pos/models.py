@@ -180,7 +180,12 @@ class POSOrder(models.Model):
             material = line.material
             
             # 1. تحقق من وجود وصفة (Recipe) لتفكيكها
-            recipe = getattr(material, 'recipe', None)
+            recipe = None
+            try:
+                recipe = material.recipe
+            except:
+                recipe = None
+                
             if recipe:
                 for ingredient_line in recipe.ingredients.all():
                     qty_to_deduct = ingredient_line.quantity * line.qty

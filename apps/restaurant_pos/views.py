@@ -159,13 +159,25 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         from .models import RecipeItem
         consumption = {}
         for line in POSOrderLine.objects.filter(order__in=orders):
-            recipe = getattr(line.material, 'recipe', None)
+            recipe = None
+            try:
+                recipe = line.material.recipe
+            except:
+                recipe = None
+
             if recipe:
                 for ing in recipe.ingredients.all():
                     name = ing.ingredient.name
                     if name not in consumption:
                         consumption[name] = {'name': name, 'total_qty': 0, 'uom': ing.uom}
-                    consumption[name]['total_qty'] += ing.quantity * line.qty
+                    consumption[name]['total_qty'] += float(ing.quantity) * float(line.qty)
+            else:
+                # المنتجات التي ليس لها وصفة (مثل بيبسي/مياه)
+                if line.material.is_pos_item:
+                    name = line.material.name
+                    if name not in consumption:
+                        consumption[name] = {'name': name, 'total_qty': 0, 'uom': line.material.base_uom}
+                    consumption[name]['total_qty'] += float(line.qty)
         
         return Response({
             'total_revenue': total_revenue,

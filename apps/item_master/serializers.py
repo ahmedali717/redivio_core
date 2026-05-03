@@ -18,7 +18,7 @@ class MaterialSerializer(serializers.ModelSerializer):
         model = Material
         fields = [
             'id', 'sku', 'name', 'category', 'category_name', 
-            'base_uom', 'barcode', 'company_assignments','standard_price',
+            'base_uom', 'barcode', 'company_assignments','standard_price', 'sales_price', 'tax_rate',
             'image', 'tracking', 'reorder_level', 'max_level', 'on_hand', 'stock_details',
             'is_pos_item', 'expiry_date', 'recipe_lines'
         ]
@@ -87,6 +87,8 @@ class MaterialSerializer(serializers.ModelSerializer):
                     'is_pos_item': validated_data.get('is_pos_item', False),
                     'expiry_date': validated_data.get('expiry_date'),
                     'standard_price': validated_data.get('standard_price', 0),
+                    'sales_price': validated_data.get('sales_price', 0),
+                    'tax_rate': validated_data.get('tax_rate', 15),
                     'reorder_level': validated_data.get('reorder_level', 0),
                     'max_level': validated_data.get('max_level', 0)
                 }
@@ -157,6 +159,8 @@ class MaterialSerializer(serializers.ModelSerializer):
                         'is_pos_item': instance.is_pos_item,
                         'expiry_date': instance.expiry_date,
                         'standard_price': instance.standard_price,
+                        'sales_price': instance.sales_price,
+                        'tax_rate': instance.tax_rate,
                         'reorder_level': instance.reorder_level,
                         'max_level': instance.max_level
                     }

@@ -145,23 +145,36 @@
                 </div>
 
                 <!-- Stock Levels -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-8 p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'متوسط التكلفة (السعر)' : 'Standard Price' ]]</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'متوسط التكلفة' : 'Standard Cost' ]]</label>
                         <div class="relative">
-                            <input type="number" step="0.01" v-model="forms.material.standard_price" class="w-full text-sm border-slate-300 rounded-lg p-2.5 pl-10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                            <input type="number" step="0.01" v-model.number="forms.material.standard_price" class="w-full text-sm border-slate-300 rounded-lg p-2.5 pl-10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
                             <span class="absolute left-3 top-3 text-xs text-slate-400 font-black">[[ activeOpco ? activeOpco.currency : 'USD' ]]</span>
                         </div>
                     </div>
-                    
+
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'حد إعادة الطلب (Min)' : 'Reorder Level' ]]</label>
-                        <input type="number" v-model="forms.material.reorder_level" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                        <label class="block text-xs font-bold text-rose-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'سعر البيع' : 'Sales Price' ]]</label>
+                        <div class="relative">
+                            <input type="number" step="0.01" v-model.number="forms.material.sales_price" class="w-full text-sm border-rose-300 rounded-lg p-2.5 pl-10 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 font-bold">
+                            <span class="absolute left-3 top-3 text-xs text-rose-400 font-black">[[ activeOpco ? activeOpco.currency : 'USD' ]]</span>
+                        </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'الحد الأقصى (Max)' : 'Maximum Level' ]]</label>
-                        <input type="number" v-model="forms.material.max_level" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'نسبة الضريبة %' : 'VAT Rate %' ]]</label>
+                        <input type="number" step="0.01" v-model.number="forms.material.tax_rate" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'حد الطلب (Min)' : 'Min Level' ]]</label>
+                        <input type="number" step="0.01" v-model.number="forms.material.reorder_level" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'الحد الأقصى (Max)' : 'Max Level' ]]</label>
+                        <input type="number" step="0.01" v-model.number="forms.material.max_level" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
                     </div>
                 </div>
             </div>
