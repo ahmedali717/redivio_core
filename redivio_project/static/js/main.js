@@ -1001,6 +1001,7 @@ createApp({
             const { value: openingBalance } = await Swal.fire({
                 title: this.isArabic ? 'فتح وردية جديدة' : 'Open New Shift',
                 input: 'number',
+                inputAttributes: { step: '0.01' },
                 inputLabel: this.isArabic ? 'رصيد بداية الدرج (Cash Start)' : 'Opening Cash Balance',
                 inputValue: lastBalance,
                 showCancelButton: true,
