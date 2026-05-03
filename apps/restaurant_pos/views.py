@@ -165,14 +165,14 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             except:
                 recipe = None
 
-            if recipe:
+            if recipe and recipe.ingredients.exists():
                 for ing in recipe.ingredients.all():
                     name = ing.ingredient.name
                     if name not in consumption:
                         consumption[name] = {'name': name, 'total_qty': 0, 'uom': ing.uom}
                     consumption[name]['total_qty'] += float(ing.quantity) * float(line.qty)
             else:
-                # المنتجات التي ليس لها وصفة (مثل بيبسي/مياه)
+                # المنتجات التي ليس لها وصفة (أو وصفة فارغة مثل بيبسي/مياه)
                 if line.material.is_pos_item:
                     name = line.material.name
                     if name not in consumption:

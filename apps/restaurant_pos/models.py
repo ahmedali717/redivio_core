@@ -186,18 +186,14 @@ class POSOrder(models.Model):
             except:
                 recipe = None
                 
-            if recipe:
+            if recipe and recipe.ingredients.exists():
                 for ingredient_line in recipe.ingredients.all():
                     qty_to_deduct = ingredient_line.quantity * line.qty
-                    ingredient = ingredient_line.ingredient
+                    source_bin = self._find_best_bin(ingredient_line.ingredient)
                     
-                    # البحث عن الرف الرئيسي أو أول رف به رصيد
-                    source_bin = self._find_best_bin(ingredient)
-                    
-                    # إنشاء حركة مخزنية (صرف - OUT)
                     StockMove.objects.create(
                         opco=self.opco,
-                        material=ingredient,
+                        material=ingredient_line.ingredient,
                         source_bin=source_bin,
                         dest_bin=None,
                         quantity=qty_to_deduct,
@@ -205,7 +201,7 @@ class POSOrder(models.Model):
                         move_type='OUT'
                     )
             else:
-                # 2. إذا لم تكن هناك وصفة، يتم خصم المنتج نفسه إذا كان POS Item
+                # 2. إذا لم تكن هناك وصفة (أو وصفة فارغة)، يتم خصم المنتج نفسه إذا كان POS Item
                 if material.is_pos_item:
                     source_bin = self._find_best_bin(material)
                     

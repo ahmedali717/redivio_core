@@ -2274,6 +2274,10 @@ createApp({
                     reorder_level: itemData.reorder_level || 0,
                     max_level: itemData.max_level || 0,
                     standard_price: itemData.standard_price || 0,
+                    sales_price: itemData.sales_price || 0,
+                    tax_rate: itemData.tax_rate || 15,
+                    is_pos_item: itemData.is_pos_item || false,
+                    recipe_lines: itemData.recipe_lines || [],
                     // 🚀 التعديل الجوهري هنا لملء الجدول الديناميكي عند التعديل
                     // نحول البيانات المسطحة القادمة من السيرفر إلى مصفوفة الـ Assignments
                     company_assignments: itemData.company_assignments || [
@@ -2811,8 +2815,9 @@ createApp({
             } else if (type === 'material') {
                 this.forms.material = {
                     id: null, sku: '', name: '', category: '', base_uom: 'PCS', barcode: '',
+                    standard_price: 0, sales_price: 0, tax_rate: 15, is_pos_item: false,
                     company_assignments: [{ opco_id: this.activeOpcoId, bins: [], primary_bin: null }],
-                    tracking: 'none', reorder_level: 0, max_level: 0
+                    tracking: 'none', reorder_level: 0, max_level: 0, recipe_lines: []
                 };
             } else if (type === 'stock_entry') {
                 this.activeOperation = 'manual';
