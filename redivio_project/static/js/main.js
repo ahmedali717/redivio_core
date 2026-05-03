@@ -575,24 +575,85 @@ createApp({
     methods: {
         addToCart(item) {
             const price = parseFloat(item.sales_price || item.standard_price || 0);
+            const onHand = parseFloat(item.on_hand || 0);
+            const hasNoBOM = !item.recipe_lines || item.recipe_lines.length === 0;
+
             const existing = this.posCart.find(i => i.id === item.id);
             if (existing) {
+                if (hasNoBOM && existing.qty + 1 > onHand) {
+                    this.showToast(this.isArabic ? `عفواً، الرصيد المتاح ${onHand} فقط` : `Sorry, only ${onHand} available in stock`, "error");
+                    return;
+                }
                 existing.qty++;
             } else {
+                if (hasNoBOM && onHand <= 0) {
+                    this.showToast(this.isArabic ? "عفواً، الصنف غير متوفر في المخزن" : "Sorry, item is out of stock", "error");
+                    return;
+                }
                 this.posCart.push({
                     id: item.id,
                     name: item.name,
                     price: price,
                     tax_rate: item.tax_rate || 15,
-                    qty: 1
+                    qty: 1,
+                    on_hand: onHand,
+                    has_no_bom: hasNoBOM
                 });
             }
+            this.posSelectedCartIndex = this.posCart.findIndex(i => i.id === item.id);
+            this.posNumpadBuffer = '';
+            this.posShowNumpad = true;
+        },
+
+        handleNumpadInput(val) {
+            if (this.posSelectedCartIndex === null || this.posSelectedCartIndex >= this.posCart.length) return;
+            const item = this.posCart[this.posSelectedCartIndex];
+            
+            let currentBuffer = this.posNumpadBuffer;
+            if (val === 'BS') {
+                currentBuffer = currentBuffer.slice(0, -1);
+            } else if (val === 'C') {
+                currentBuffer = '';
+            } else if (val === '.') {
+                if (!currentBuffer.includes('.')) currentBuffer += '.';
+            } else {
+                if (currentBuffer.length < 5) currentBuffer += val;
+            }
+            
+            const newQty = parseFloat(currentBuffer) || 0;
+            
+            // 🚀 Stock Validation
+            if (item.has_no_bom && newQty > item.on_hand) {
+                this.showToast(this.isArabic ? `عفواً، أقصى كمية متاحة هي ${item.on_hand}` : `Max available stock is ${item.on_hand}`, "error");
+                return;
+            }
+
+            this.posNumpadBuffer = currentBuffer;
+            if (newQty > 0) {
+                item.qty = newQty;
+            } else if (this.posNumpadBuffer === '') {
+                item.qty = 1;
+            }
+        },
+
+        selectCartItem(index) {
+            this.posSelectedCartIndex = index;
+            this.posNumpadBuffer = '';
+            this.posShowNumpad = true;
         },
         updateCartQty(idx, delta) {
             const item = this.posCart[idx];
+            
+            // 🚀 Stock Validation for increment
+            if (delta > 0 && item.has_no_bom && item.qty + delta > item.on_hand) {
+                this.showToast(this.isArabic ? `عفواً، الرصيد المتاح ${item.on_hand} فقط` : `Sorry, only ${item.on_hand} available in stock`, "error");
+                return;
+            }
+
             item.qty += delta;
             if (item.qty <= 0) {
                 this.posCart.splice(idx, 1);
+                if (this.posSelectedCartIndex === idx) this.posSelectedCartIndex = null;
             }
         },
         async checkoutOrder() {
