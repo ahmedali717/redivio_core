@@ -40,6 +40,8 @@ class Material(models.Model):
     tracking = models.CharField(max_length=10, choices=TRACKING_CHOICES, default='none')
 
     standard_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    sales_price = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="سعر البيع للجمهور")
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15.00, help_text="نسبة ضريبة القيمة المضافة")
     
     # القياسات والأوزان (للحسابات المتقدمة في الشحن والتخزين)
     weight = models.DecimalField(max_digits=10, decimal_places=2, default=0)

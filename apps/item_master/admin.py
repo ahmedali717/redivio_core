@@ -3,7 +3,7 @@ from .models import Material, Category
 
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
-    list_display = ('sku', 'name', 'opco')
+    list_display = ('sku', 'name', 'opco', 'standard_price', 'sales_price', 'tax_rate')
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
