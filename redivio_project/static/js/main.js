@@ -688,10 +688,23 @@ createApp({
                 </html>
             `);
             printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 300);
         },
 
         async endSession() {
-            if (!confirm(this.isArabic ? "هل أنت متأكد من إنهاء الوردية الحالية؟" : "Are you sure you want to end the current shift?")) return;
+            const { value: actualBalance } = await Swal.fire({
+                title: this.isArabic ? 'إغلاق الوردية وتصفية الحساب' : 'Close Shift & Settlement',
+                input: 'number',
+                inputLabel: this.isArabic ? 'المبلغ الفعلي الموجود في الدرج الآن' : 'Actual Cash in Drawer',
+                inputAttributes: { step: '0.01' },
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'تأكيد الإغلاق' : 'Confirm Close'
+            });
+
+            if (actualBalance === undefined || actualBalance === null) return;
             
             try {
                 this.loading = true;
@@ -701,34 +714,99 @@ createApp({
                         'Content-Type': 'application/json',
                         'X-CSRFToken': this.getCookie('csrftoken')
                     },
-                    body: JSON.stringify({ opco: this.activeOpcoId })
+                    body: JSON.stringify({ 
+                        opco: this.activeOpcoId,
+                        actual_balance: actualBalance
+                    })
                 });
 
                 if (res.ok) {
                     const data = await res.json();
                     this.activePOSSession = null;
                     
-                    // إظهار ملخص الوردية (تسميع الإيراد)
                     Swal.fire({
-                        title: this.isArabic ? 'تم إنهاء الوردية بنجاح' : 'Shift Ended Successfully',
+                        title: this.isArabic ? 'تقرير إغلاق الوردية' : 'Shift Closing Report',
                         html: `
                             <div style="text-align:right" dir="rtl">
                                 <p><b>الكاشير:</b> ${data.cashier}</p>
                                 <hr>
-                                <p style="font-size:24px; color:#059669"><b>إجمالي المبيعات:</b> ${data.total_revenue.toFixed(2)} ${this.activeOpco ? this.activeOpco.currency : 'EGP'}</p>
+                                <div style="display:flex; justify-content:space-between; margin:10px 0">
+                                    <span>رصيد البداية:</span>
+                                    <b>${Number(data.opening_balance).toFixed(2)}</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin:10px 0">
+                                    <span>إجمالي المبيعات:</span>
+                                    <b style="color:#059669">+ ${Number(data.total_sales).toFixed(2)}</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin:10px 0">
+                                    <span>إجمالي المصاريف:</span>
+                                    <b style="color:#dc2626">- ${Number(data.total_expenses).toFixed(2)}</b>
+                                </div>
+                                <hr>
+                                <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:18px">
+                                    <span>الرصيد المتوقع:</span>
+                                    <b>${Number(data.expected_balance).toFixed(2)}</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:18px">
+                                    <span>الرصيد الفعلي:</span>
+                                    <b>${Number(data.actual_balance).toFixed(2)}</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:20px; border-top:2px solid #eee; padding-top:10px">
+                                    <span>الفارق (عجز/زيادة):</span>
+                                    <b style="color:${data.difference >= 0 ? '#059669' : '#dc2626'}">${Number(data.difference).toFixed(2)}</b>
+                                </div>
                             </div>
                         `,
-                        icon: 'success',
+                        icon: data.difference === 0 ? 'success' : 'warning',
                         confirmButtonText: this.isArabic ? 'حسناً' : 'OK'
                     });
-                } else {
-                    const err = await res.json();
-                    this.showToast(err.error || "Failed to close session", "error");
                 }
             } catch (e) {
-                this.showToast("Network Error", "error");
+                this.showToast("Error closing session", "error");
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async addCashTransaction() {
+            const { value: formValues } = await Swal.fire({
+                title: this.isArabic ? 'حركة نقدية خارجة / مصاريف' : 'Cash Out / Expense',
+                html: `
+                    <div style="text-align:right" dir="rtl">
+                        <label>المبلغ</label>
+                        <input id="swal-amount" class="swal2-input" type="number" step="0.01">
+                        <label>السبب / البيان</label>
+                        <input id="swal-reason" class="swal2-input" type="text" placeholder="مثلاً: شراء خضروات، عهدة، إلخ">
+                    </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                preConfirm: () => {
+                    return {
+                        amount: document.getElementById('swal-amount').value,
+                        reason: document.getElementById('swal-reason').value
+                    }
+                }
+            });
+
+            if (!formValues || !formValues.amount) return;
+
+            try {
+                const res = await fetch('/api/pos/orders/add_transaction/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        type: 'OUT',
+                        amount: formValues.amount,
+                        reason: formValues.reason
+                    })
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تسجيل العملية بنجاح" : "Transaction recorded");
+                }
+            } catch (e) {
+                this.showToast("Error recording transaction", "error");
             }
         },
 

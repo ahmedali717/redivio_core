@@ -28,3 +28,8 @@ class POSSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = POSSession
         fields = '__all__'
+
+class POSCashTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = POSCashTransaction
+        fields = '__all__'

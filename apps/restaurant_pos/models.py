@@ -84,17 +84,39 @@ class Modifier(models.Model):
 
 class POSSession(models.Model):
     """
-    وردية الكاشير
+    وردية الكاشير -Shift Management
     """
     opco = models.ForeignKey(OpCo, on_delete=models.CASCADE)
     session_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     cashier_name = models.CharField(max_length=100)
+    
+    opening_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    total_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    total_expenses = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    
+    expected_closing_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    actual_closing_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
     is_closed = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Session {self.session_id} - {self.cashier_name}"
+        return f"Shift {self.id} ({self.cashier_name})"
+
+class POSCashTransaction(models.Model):
+    """
+    حركات النقدية الخارجة والداخلة (مصاريف، عجز، زيادة)
+    """
+    session = models.ForeignKey(POSSession, on_delete=models.CASCADE, related_name='transactions')
+    TRANS_TYPES = [('IN', 'إيداع'), ('OUT', 'صرف / مصاريف')]
+    type = models.CharField(max_length=10, choices=TRANS_TYPES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    reason = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.type} - {self.amount} ({self.reason})"
 
 
 class POSOrder(models.Model):
