@@ -581,6 +581,23 @@ createApp({
                 return;
             }
             
+            // 🚀 Prompt for Payment Method during Checkout
+            const { value: method } = await Swal.fire({
+                title: this.isArabic ? 'اختر طريقة الدفع' : 'Select Payment Method',
+                input: 'radio',
+                inputOptions: {
+                    'cash': this.isArabic ? 'نقداً (Cash)' : 'Cash',
+                    'instapay': this.isArabic ? 'إلكتروني (InstaPay)' : 'InstaPay',
+                    'credit': this.isArabic ? 'آجل (Credit)' : 'Credit'
+                },
+                inputValue: this.posPaymentMethod,
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'تأكيد ودفع' : 'Confirm & Pay'
+            });
+
+            if (!method) return;
+            this.posPaymentMethod = method;
+            
             try {
                 this.loading = true;
                 const res = await fetch('/api/pos/orders/', {
@@ -854,6 +871,27 @@ createApp({
         },
 
         async startPOSSession() {
+            let lastBalance = 0;
+            try {
+                const res = await fetch(`/api/pos/orders/last_session_balance/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    lastBalance = Number(data.last_balance || 0);
+                }
+            } catch (e) { console.error("Balance fetch error", e); }
+
+            const { value: openingBalance } = await Swal.fire({
+                title: this.isArabic ? 'فتح وردية جديدة' : 'Open New Shift',
+                input: 'number',
+                inputLabel: this.isArabic ? 'رصيد بداية الدرج (Cash Start)' : 'Opening Cash Balance',
+                inputValue: lastBalance,
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'بدء الوردية' : 'Start Shift',
+                footer: `<div style="text-align:center">${this.isArabic ? 'رصيد إغلاق آخر وردية: ' : 'Last shift closing balance: '} <b>${lastBalance}</b></div>`
+            });
+
+            if (openingBalance === undefined || openingBalance === null) return;
+
             try {
                 this.loading = true;
                 const res = await fetch('/api/pos/orders/start_session/', {
@@ -864,7 +902,8 @@ createApp({
                     },
                     body: JSON.stringify({
                         opco: this.activeOpcoId,
-                        cashier_name: this.user.name || 'Admin'
+                        cashier_name: this.user.name || 'Admin',
+                        opening_balance: openingBalance
                     })
                 });
                 
