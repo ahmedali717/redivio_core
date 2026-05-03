@@ -1,0 +1,172 @@
+<div class="flex-1 flex flex-col md:flex-row h-full w-full bg-slate-100 overflow-hidden" v-cloak>
+    
+    <!-- LEFT SIDE: Menu & Categories (approx 65%) -->
+    <div class="flex-[2] flex flex-col h-full bg-slate-50 relative">
+        <!-- POS Top Bar -->
+        <div class="bg-white p-4 flex items-center justify-between border-b border-slate-200 shadow-sm z-10 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-600 rounded-xl text-white flex items-center justify-center shadow-lg shadow-red-200">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div>
+                    <h2 class="font-black text-slate-800 text-lg leading-tight" v-text="isArabic ? 'نقطة البيع الرئيسية' : 'Main Cashier'"></h2>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">[[ activeOpco ? activeOpco.name : 'Restaurant' ]] • [[ user.name ]]</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <div class="relative">
+                    <i class="fas fa-search absolute top-1/2 -translate-y-1/2 left-3 text-slate-400"></i>
+                    <input type="text" v-model="posSearch" :placeholder="isArabic ? 'ابحث عن صنف...' : 'Search item...'" class="bg-slate-100 border-none rounded-full py-2 pl-9 pr-4 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-red-500 w-48 transition-all">
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Scroller -->
+        <div class="bg-white border-b border-slate-100 px-4 py-3 flex gap-3 overflow-x-auto whitespace-nowrap hide-scrollbar z-10 shadow-sm shrink-0">
+            <button @click="posCategory = 'all'" :class="posCategory === 'all' ? 'bg-slate-800 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-5 py-2 rounded-full text-xs font-bold transition-all shrink-0">
+                <i class="fas fa-star mr-1" v-if="posCategory === 'all'"></i> [[ isArabic ? 'الكل' : 'All Items' ]]
+            </button>
+            <button v-for="cat in posCategories" :key="cat" @click="posCategory = cat" :class="posCategory === cat ? 'bg-slate-800 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-5 py-2 rounded-full text-xs font-bold transition-all shrink-0">
+                [[ cat ]]
+            </button>
+        </div>
+
+        <!-- Menu Items Grid -->
+        <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-20">
+                
+                <div v-for="item in filteredPosItems" :key="item.id" @click="addToCart(item)" class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-red-300 cursor-pointer transition-all duration-200 overflow-hidden group flex flex-col">
+                    <div class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center p-4">
+                        <img v-if="item.image" :src="fixImagePath(item.image)" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300">
+                        <i v-else class="fas fa-hamburger text-4xl text-slate-300 group-hover:scale-110 group-hover:text-red-300 transition-all duration-300"></i>
+                        
+                        <!-- <div v-if="item.stock_qty <= 0" class="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                            <span class="bg-red-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-lg">Out of stock</span>
+                        </div> -->
+                    </div>
+                    <div class="p-3 flex-1 flex flex-col justify-between">
+                        <h4 class="text-sm font-bold text-slate-800 leading-tight mb-2 line-clamp-2" v-text="item.name"></h4>
+                        <div class="flex items-center justify-between mt-auto">
+                            <span class="text-xs text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded truncate max-w-[50%]" v-text="item.category || 'General'"></span>
+                            <span class="font-black text-red-600 text-sm shrink-0">[[ formatCurrency(item.sales_price || item.standard_price) ]]</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="!filteredPosItems.length" class="col-span-full py-12 flex flex-col items-center justify-center text-slate-400">
+                    <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300 border-2 border-dashed border-slate-200">
+                        <i class="fas fa-box-open text-2xl"></i>
+                    </div>
+                    <p class="font-bold">[[ isArabic ? 'لا توجد أصناف تطابق البحث' : 'No items match your search' ]]</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDE: Cart / Ticket (approx 35%) -->
+    <div class="flex-1 min-w-[320px] max-w-md bg-white border-l border-slate-200 shadow-2xl z-20 flex flex-col h-full relative shrink-0">
+        
+        <!-- Cart Header -->
+        <div class="h-[74px] px-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold">
+                    <i class="fas fa-receipt text-xs"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-slate-800 uppercase tracking-wide text-sm">Current Order</h3>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase" v-text="isArabic ? 'رقم الطلب #0001' : 'Ticket #0001'"></p>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button @click="posCart = []" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors shadow-sm" title="Clear Order">
+                    <i class="fas fa-trash-alt text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Order Type Selector -->
+        <div class="p-4 border-b border-slate-100 bg-white shrink-0">
+            <div class="bg-slate-100 p-1 rounded-xl flex">
+                <button @click="posOrderType = 'DINE_IN'" :class="posOrderType === 'DINE_IN' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-chair"></i> Dine-In
+                </button>
+                <button @click="posOrderType = 'TAKEAWAY'" :class="posOrderType === 'TAKEAWAY' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-bag-shopping"></i> Takeaway
+                </button>
+                <button @click="posOrderType = 'DELIVERY'" :class="posOrderType === 'DELIVERY' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-motorcycle"></i> Delivery
+                </button>
+            </div>
+        </div>
+
+        <!-- Cart Items Scroller -->
+        <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/30">
+            
+            <div v-if="!posCart.length" class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60">
+                <img src="/static/brand/rpms_icon.png" class="w-16 h-16 object-contain mb-4 filter grayscale opacity-30">
+                <p class="font-bold text-sm">[[ isArabic ? 'الطلب فارغ' : 'Cart is empty' ]]</p>
+                <p class="text-[10px] uppercase tracking-widest mt-1">Tap items to add</p>
+            </div>
+
+            <div v-else class="space-y-3">
+                <div v-for="(line, idx) in posCart" :key="idx" class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col animate-in slide-in-from-right-4 duration-300">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1 pr-2">
+                            <h5 class="font-bold text-slate-800 text-sm leading-tight" v-text="line.name"></h5>
+                            <p class="text-[10px] text-slate-400 font-bold mt-0.5">[[ formatCurrency(line.price) ]]</p>
+                        </div>
+                        <span class="font-black text-slate-800 text-sm">[[ formatCurrency(line.price * line.qty) ]]</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between mt-2">
+                        <button class="text-[10px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded transition-colors">
+                            <i class="fas fa-plus-circle mr-1"></i> Notes
+                        </button>
+                        
+                        <div class="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+                            <button @click="updateCartQty(idx, -1)" class="w-7 h-7 flex items-center justify-center rounded-md bg-white text-slate-600 shadow-sm hover:text-red-600 transition-colors">
+                                <i :class="line.qty <= 1 ? 'fas fa-trash-alt' : 'fas fa-minus'" class="text-[10px]"></i>
+                            </button>
+                            <span class="w-8 text-center text-xs font-black text-slate-800">[[ line.qty ]]</span>
+                            <button @click="updateCartQty(idx, 1)" class="w-7 h-7 flex items-center justify-center rounded-md bg-white text-slate-600 shadow-sm hover:text-emerald-600 transition-colors">
+                                <i class="fas fa-plus text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Totals & Checkout -->
+        <div class="bg-slate-900 text-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-6 relative overflow-hidden shrink-0 mt-auto">
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none"></div>
+            
+            <div class="relative z-10 space-y-2 mb-4">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400 font-bold">[[ isArabic ? 'المجموع الفرعي' : 'Subtotal' ]]</span>
+                    <span class="font-bold font-mono">[[ formatCurrency(cartSubtotal) ]]</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400 font-bold">[[ isArabic ? 'الضريبة (15%)' : 'Tax (15%)' ]]</span>
+                    <span class="font-bold font-mono">[[ formatCurrency(cartTax) ]]</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400 font-bold">[[ isArabic ? 'الخصم' : 'Discount' ]]</span>
+                    <span class="font-bold font-mono text-emerald-400">- [[ formatCurrency(0) ]]</span>
+                </div>
+                <div class="border-t border-slate-700/50 my-2 pt-2 flex justify-between items-center">
+                    <span class="text-lg font-black uppercase tracking-wider text-slate-300">[[ isArabic ? 'الإجمالي' : 'Total' ]]</span>
+                    <span class="text-2xl font-black text-emerald-400 tech-font">[[ formatCurrency(cartTotal) ]]</span>
+                </div>
+            </div>
+
+            <button @click="checkoutOrder" :disabled="!posCart.length" class="relative z-10 w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black text-lg py-4 rounded-2xl shadow-lg shadow-emerald-900/50 transition-all uppercase tracking-widest flex items-center justify-center gap-3 group">
+                <i class="fas fa-credit-card group-hover:scale-110 transition-transform"></i>
+                <span>[[ isArabic ? 'تأكيد الدفع' : 'Pay Order' ]]</span>
+            </button>
+        </div>
+        
+    </div>
+</div>

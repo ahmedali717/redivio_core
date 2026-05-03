@@ -42,6 +42,10 @@ createApp({
             // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
             inventoryTab: 'levels',
             posTab: 'cashier',
+            posCart: [],
+            posSearch: '',
+            posCategory: 'all',
+            posOrderType: 'DINE_IN',
             salesTab: 'dashboard',
             soSearch: '',
             accountingTab: 'dashboard',
@@ -232,7 +236,33 @@ createApp({
     },
 
     computed: {
-
+        posCategories() {
+            const cats = new Set();
+            (this.materials_list || []).forEach(m => {
+                if (m.category) cats.add(m.category);
+            });
+            return Array.from(cats);
+        },
+        filteredPosItems() {
+            let items = this.materials_list || [];
+            if (this.posCategory !== 'all') {
+                items = items.filter(i => i.category === this.posCategory);
+            }
+            if (this.posSearch) {
+                const q = this.posSearch.toLowerCase();
+                items = items.filter(i => (i.name && i.name.toLowerCase().includes(q)) || (i.sku && i.sku.toLowerCase().includes(q)));
+            }
+            return items;
+        },
+        cartSubtotal() {
+            return this.posCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        },
+        cartTax() {
+            return this.cartSubtotal * 0.15; // 15% tax hardcoded for now
+        },
+        cartTotal() {
+            return this.cartSubtotal + this.cartTax;
+        },
 
         filteredMaterials() {
             let list = this.materials_list || [];
@@ -506,6 +536,33 @@ createApp({
     },
 
     methods: {
+        addToCart(item) {
+            const price = parseFloat(item.sales_price || item.standard_price || 0);
+            const existing = this.posCart.find(i => i.id === item.id);
+            if (existing) {
+                existing.qty++;
+            } else {
+                this.posCart.push({
+                    id: item.id,
+                    name: item.name,
+                    price: price,
+                    qty: 1
+                });
+            }
+        },
+        updateCartQty(idx, delta) {
+            const item = this.posCart[idx];
+            item.qty += delta;
+            if (item.qty <= 0) {
+                this.posCart.splice(idx, 1);
+            }
+        },
+        checkoutOrder() {
+            this.showToast(this.isArabic ? "تم تأكيد الطلب بنجاح!" : "Order Confirmed!", "success");
+            this.posCart = [];
+            // Future integration: send order to API to deduct inventory and save POS Order.
+        },
+
         async fetchInventoryMoves() {
             try {
                 const url = this.activeOpcoId ? `/api/wms/moves/?opco=${this.activeOpcoId}` : '/api/wms/moves/';
