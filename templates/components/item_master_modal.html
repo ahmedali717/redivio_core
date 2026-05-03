@@ -40,6 +40,7 @@
                 <i class="fas fa-boxes ml-1"></i> [[ isArabic ? 'المخزون والرفوف' : 'Inventory & Bins' ]]
             </button>
             <button @click="materialTab = 'recipe'" 
+                    v-if="view === 'restaurant_pos_module' || purchasedModules.includes('restaurant_pos')"
                     :class="materialTab === 'recipe' ? 'border-red-600 text-red-600' : 'border-transparent text-slate-500'"
                     class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
                 <i class="fas fa-mortar-pestle ml-1"></i> [[ isArabic ? 'الرسبي / المكونات' : 'Recipe / BOM' ]]

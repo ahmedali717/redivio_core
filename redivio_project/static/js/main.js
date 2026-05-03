@@ -278,6 +278,11 @@ createApp({
                 });
             }
 
+            // 2. تصفية إضافية لموديول المطاعم - تبويب الوصفات
+            if (this.view === 'restaurant_pos_module' && this.posTab === 'recipes') {
+                list = list.filter(item => item.is_pos_item);
+            }
+
             // 2. فلترة بنص البحث (لو المستخدم كتب حاجة)
             if (!this.searchQuery) return list;
 
