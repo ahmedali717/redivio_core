@@ -169,4 +169,33 @@
         </div>
         
     </div>
+
+    <!-- 🚀 OVERLAY: Start Session (v-if no active session) -->
+    <div v-if="!activePOSSession" class="absolute inset-0 z-[100] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-6">
+        <div class="bg-white rounded-[2rem] p-10 max-w-md w-full shadow-2xl text-center animate-in zoom-in-95 duration-300">
+            <div class="w-24 h-24 bg-red-600 rounded-3xl mx-auto flex items-center justify-center text-white text-4xl shadow-2xl shadow-red-500/40 mb-8">
+                <i class="fas fa-key"></i>
+            </div>
+            <h2 class="text-3xl font-black text-slate-800 mb-2">[[ isArabic ? 'نقطة البيع مغلقة' : 'POS is Locked' ]]</h2>
+            <p class="text-slate-500 font-bold mb-8">[[ isArabic ? 'برجاء فتح وردية جديدة لبدء استقبال الطلبات' : 'Please start a new session to begin taking orders' ]]</p>
+            
+            <div class="bg-slate-50 rounded-2xl p-4 mb-8 border border-slate-100 flex items-center gap-4 text-left">
+                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Active Cashier</p>
+                    <p class="font-bold text-slate-700">[[ user.name || 'Administrator' ]]</p>
+                </div>
+            </div>
+
+            <button @click="startPOSSession" :disabled="loading" class="w-full bg-red-600 hover:bg-red-500 text-white font-black text-xl py-5 rounded-2xl shadow-xl shadow-red-900/40 transition-all flex items-center justify-center gap-3">
+                <i v-if="loading" class="fas fa-spinner animate-spin"></i>
+                <i v-else class="fas fa-play"></i>
+                [[ isArabic ? 'فتح وردية جديدة' : 'Open New Session' ]]
+            </button>
+            
+            <p class="mt-6 text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">REDIVIO POS • SECURITY LAYER</p>
+        </div>
+    </div>
 </div>

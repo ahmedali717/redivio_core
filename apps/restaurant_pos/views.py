@@ -11,9 +11,30 @@ class POSOrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         opco_id = self.request.query_params.get('opco')
+        active_session = self.request.query_params.get('active_session')
+        
+        if active_session == 'true':
+            return POSSession.objects.filter(opco_id=opco_id, is_closed=False)
+            
         if opco_id:
             return self.queryset.filter(opco_id=opco_id)
         return self.queryset
+
+    @action(detail=False, methods=['post'])
+    def start_session(self, request):
+        opco_id = request.data.get('opco')
+        cashier_name = request.data.get('cashier_name', 'Admin')
+        
+        # Close previous sessions for this OpCo just in case
+        POSSession.objects.filter(opco_id=opco_id, is_closed=False).update(is_closed=True, end_time=timezone.now())
+        
+        session = POSSession.objects.create(
+            opco_id=opco_id,
+            cashier_name=cashier_name,
+            is_closed=False
+        )
+        from .serializers import POSSessionSerializer
+        return Response(POSSessionSerializer(session).data)
 
     @action(detail=True, methods=['post'])
     def process_payment(self, request, pk=None):

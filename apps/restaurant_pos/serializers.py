@@ -23,3 +23,8 @@ class POSOrderSerializer(serializers.ModelSerializer):
         for line_data in lines_data:
             POSOrderLine.objects.create(order=order, **line_data)
         return order
+
+class POSSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = POSSession
+        fields = '__all__'

@@ -42,6 +42,7 @@ createApp({
             // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
             inventoryTab: 'levels',
             posTab: 'cashier',
+            activePOSSession: null,
             posCart: [],
             posSearch: '',
             posCategory: 'all',
@@ -535,6 +536,7 @@ createApp({
         
         // Initial KPI calculation
         this.refreshKpis();
+        this.checkActivePOSSession();
     },
 
     methods: {
@@ -560,6 +562,10 @@ createApp({
             }
         },
         async checkoutOrder() {
+            if (!this.activePOSSession) {
+                this.showToast(this.isArabic ? "برجاء فتح وردية أولاً!" : "Please start a session first!", "error");
+                return;
+            }
             if (this.posCart.length === 0) {
                 this.showToast(this.isArabic ? "العربة فارغة!" : "Cart is empty!", "error");
                 return;
@@ -569,7 +575,7 @@ createApp({
                 this.loading = true;
                 const payload = {
                     opco: this.activeOpcoId,
-                    session: 1, // Temporarily hardcoded, will be dynamic after session management
+                    session: this.activePOSSession.id,
                     order_ref: 'POS-' + Date.now(),
                     order_type: this.posOrderType.toLowerCase(),
                     total_amount: this.cartTotal,
@@ -615,6 +621,45 @@ createApp({
             } catch (e) {
                 console.error("POS Checkout Error:", e);
                 this.showToast("Network Error", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async checkActivePOSSession() {
+            try {
+                const res = await fetch('/api/pos/orders/?active_session=true&opco=' + this.activeOpcoId);
+                // I'll need to update the ViewSet to handle this query param
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.length > 0) {
+                        this.activePOSSession = data[0];
+                    }
+                }
+            } catch (e) { console.error("Session Check Error", e); }
+        },
+
+        async startPOSSession() {
+            try {
+                this.loading = true;
+                const res = await fetch('/api/pos/orders/start_session/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        cashier_name: this.user.name || 'Admin'
+                    })
+                });
+                
+                if (res.ok) {
+                    this.activePOSSession = await res.json();
+                    this.showToast(this.isArabic ? "تم فتح الوردية بنجاح" : "Session started successfully", "success");
+                }
+            } catch (e) {
+                this.showToast("Error starting session", "error");
             } finally {
                 this.loading = false;
             }

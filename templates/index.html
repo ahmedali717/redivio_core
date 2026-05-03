@@ -63,8 +63,17 @@
                     <div v-if="posTab === 'cashier'" class="absolute inset-0 bg-slate-100 overflow-hidden flex flex-col">
                         {% include "pos/terminal.html" %}
                     </div>
+                    <div v-if="posTab === 'items'" class="absolute inset-0 bg-white rounded-tl-3xl shadow-lg overflow-y-auto p-6">
+                        {% include "components/item_master_list.html" %}
+                    </div>
                     <div v-if="posTab === 'recipes'" class="absolute inset-0 bg-white rounded-tl-3xl shadow-lg overflow-y-auto p-6">
-                        <div class="flex items-center justify-center h-full text-slate-400 font-bold text-xl">Menu Engineering Coming Soon</div>
+                         <div class="mb-6 flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-black text-slate-800">[[ isArabic ? 'هندسة المكونات والوصفات' : 'Recipe Engineering & BOM' ]]</h2>
+                                <p class="text-slate-500 text-sm">[[ isArabic ? 'إدارة المكونات الخام وربطها بالمنتجات النهائية' : 'Manage raw materials and link them to finished products' ]]</p>
+                            </div>
+                         </div>
+                         {% include "components/item_master_list.html" %}
                     </div>
                     <div v-if="posTab === 'kitchen'" class="absolute inset-0 bg-slate-900 overflow-hidden flex flex-col">
                         <div class="flex items-center justify-center h-full text-slate-500 font-bold text-xl">Kitchen Display (KDS) Coming Soon</div>
