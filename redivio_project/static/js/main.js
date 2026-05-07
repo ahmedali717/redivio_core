@@ -299,12 +299,37 @@ createApp({
             return Math.round((this.cartSubtotal + this.cartTax) * 100) / 100;
         },
         activeOpco() {
-            if (!this.activeOpcoId || !this.opcos.length) return null;
-            const opco = this.opcos.find(o => parseInt(o.id) === parseInt(this.activeOpcoId));
+            if (!this.activeOpcoId || !this.allOpcos.length) return null;
+            
+            // البحث عن الشركة الحالية
+            const opco = this.allOpcos.find(o => parseInt(o.id) === parseInt(this.activeOpcoId));
             if (!opco) return null;
+
+            // 🚀 منطق الوراثة (Inheritance Logic)
+            // إذا كانت الشركة فرعية وليس لها لوجو، نبحث في الشركة الأم وهكذا
+            let current = opco;
+            let finalLogo = current.logo;
+            let finalColor = current.brand_color;
+
+            // محاولة جلب اللوجو واللون من الهيكل الهرمي
+            let depth = 0;
+            while ((!finalLogo || !finalColor) && current.parent && depth < 5) {
+                const parentId = parseInt(current.parent);
+                const parent = this.allOpcos.find(o => o.id === parentId);
+                if (parent) {
+                    if (!finalLogo) finalLogo = parent.logo;
+                    if (!finalColor || finalColor === '#6366f1') finalColor = parent.brand_color;
+                    current = parent;
+                    depth++;
+                } else {
+                    break;
+                }
+            }
+
             return {
                 ...opco,
-                logo: this.fixImagePath(opco.logo)
+                logo: this.fixImagePath(finalLogo),
+                brand_color: finalColor || '#6366f1'
             };
         },
 
@@ -2432,14 +2457,26 @@ createApp({
 
         fixImagePath(path) {
             if (!path) return null;
+            
+            // If it's already a full URL or data URI, return as is
+            if (path.startsWith('http') || path.startsWith('data:')) {
+                return path;
+            }
+
+            // Clean up localhost paths from dev environments
             if (path.includes('localhost') || path.includes('127.0.0.1')) {
                 const parts = path.split('/media/');
-                return '/media/' + parts[1];
+                if (parts.length > 1) path = parts[1];
             }
-            if (!path.startsWith('http') && !path.startsWith('/')) {
-                return '/' + path;
+
+            // Ensure it starts with /media/
+            let cleanPath = path;
+            if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
+            if (!cleanPath.startsWith('media/')) {
+                cleanPath = 'media/' + cleanPath;
             }
-            return path;
+            
+            return '/' + cleanPath;
         },
 
         getCookie(name) {
