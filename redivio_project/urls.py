@@ -14,7 +14,7 @@ from apps.core.views import (
     logout_view
 )
 # 👈 مسحنا FieldDefinitionViewSet من السطر ده
-from apps.item_master.views import MaterialViewSet, CategoryViewSet
+from apps.item_master.views import MaterialViewSet, CategoryViewSet, SaleGroupViewSet
 from apps.wms.views import StockQuantViewSet, StockMoveViewSet
 # عدل السطر ده ليتضمن الدالة الجديدة
 from apps.procurement.views import VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, print_po_pdf, print_grn_pdf, StockReceiptViewSet
@@ -32,6 +32,7 @@ router.register(r'bins', StorageBinViewSet, basename='bin')
 
 router.register(r'materials', MaterialViewSet, basename='material')
 router.register(r'categories', CategoryViewSet, basename='category')
+router.register(r'sale-groups', SaleGroupViewSet, basename='salegroup')
 # 👈 مسحنا سطر تسجيل الـ fields من هنا
 
 router.register(r'inventory', StockQuantViewSet, basename='stockquant')
