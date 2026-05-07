@@ -1,4 +1,4 @@
-﻿import { utils } from './modules/utils.js';
+import { utils } from './modules/utils.js';
 import { inventoryModule } from './modules/inventory.js';
 import { orgModule } from './modules/org_builder.js';
 import { itemMasterModule } from './modules/itemMaster.js';
@@ -3263,122 +3263,10 @@ createApp({
         // دالة لبدء عملية الصرف بناءً على أمر البيع
         startDelivery(so) {
             this.view = 'inventory_module';
-            this.activeOperation = 'so_delivery'; // تحديد نوع العملية (صورة 2)
+            this.activeOperation = 'so_delivery';
             this.modalType = 'delivery';
             this.showModal = true;
-
-            // تجهيز �                } catch (e) { this.showToast("Error", 'error'); }
-            }
         },
-
-        // --- Kitchen Display System (KDS) Methods ---
-        async fetchKDSOrders() {
-            try {
-                const res = await fetch(`/api/pos/orders/kds_orders/?opco=${this.activeOpcoId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    
-                    // التنبيه الصوتي عند وجود طلبات جديدة
-                    if (data.length > this.kdsOrders.length) {
-                        const sound = this.$refs.notificationSound;
-                        if (sound) sound.play().catch(e => console.log("Sound blocked"));
-                    }
-                    
-                    this.kdsOrders = data;
-                }
-            } catch (e) { console.error("KDS Fetch Error", e); }
-        },
-
-        onKDSDragStart(event, order) {
-            this.draggedOrder = order;
-            event.dataTransfer.effectAllowed = 'move';
-            // إضافة تأثير بصري للعنصر المسحوب
-            event.target.classList.add('opacity-50');
-        },
-
-        async onKDSDrop(event, targetStatus) {
-            if (!this.draggedOrder) return;
-            
-            const order = this.draggedOrder;
-            if (order.status === targetStatus) return;
-
-            try {
-                const res = await fetch(`/api/pos/orders/${order.id}/update_kitchen_status/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({ status: targetStatus })
-                });
-
-                if (res.ok) {
-                    // تحديث محلي سريع للواجهة (Optimistic UI)
-                    order.status = targetStatus;
-                    if (targetStatus === 'inprogress') order.started_at = new Date().toISOString();
-                    this.showToast(this.isArabic ? "تم تحديث حالة الطلب" : "Order status updated", "success");
-                    await this.fetchKDSOrders();
-                }
-            } catch (e) {
-                this.showToast("KDS Update Error", "error");
-            } finally {
-                this.draggedOrder = null;
-            }
-        },
-
-        getWaitTime(timestamp) {
-            if (!timestamp) return '0m';
-            const start = new Date(timestamp);
-            const now = this.kdsCurrentTime;
-            const diff = Math.floor((now - start) / 1000); // بالثواني
-            
-            if (diff < 60) return `${diff}s`;
-            const mins = Math.floor(diff / 60);
-            const secs = diff % 60;
-            return `${mins}m ${secs}s`;
-        },
-
-        formatTime(isoString) {
-            if (!isoString) return '--:--';
-            const date = new Date(isoString);
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-    },
-
-    mounted() {
-        this.checkAuth();
-        this.startClock();
-        this.fetchAll();
-        this.fetchMaterialsList();
-        this.fetchWMSStats();
-    }
-}).mount('#app');
--payments/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.getCookie('csrftoken')
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    this.showToast(this.isArabic ? "تم تسجيل الدفعة بنجاح" : "Payment recorded", 'success');
-                    this.showModal = false;
-                    await this.fetchSalesInvoices();
-                    await this.fetchCustomers();
-                    await this.fetchPayments();
-                } else {
-                    const err = await res.json();
-                    this.showToast(err.error || "Payment failed", 'error');
-                }
-            } catch (e) {
-                this.showToast("Network Error", 'error');
-            } finally {
-                this.loading = false;
-            }
-        },
-
         async updateSOStatus(soId, newStatus) {
             try {
                 this.loading = true;
@@ -3393,7 +3281,7 @@ createApp({
 
                 if (res.ok) {
                     this.showToast(this.isArabic ? "تم تأكيد الأمر بنجاح" : "Order Confirmed", 'success');
-                    await this.fetchSalesOrders(); // تحديث القائمة عشان زرار الشاحنة يظهر
+                    await this.fetchSalesOrders();
                 }
             } catch (e) {
                 this.showToast("Error", 'error');
@@ -3465,13 +3353,10 @@ createApp({
                 const res = await fetch(`/api/pos/orders/kds_orders/?opco=${this.activeOpcoId}`);
                 if (res.ok) {
                     const data = await res.json();
-                    
-                    // التنبيه الصوتي عند وجود طلبات جديدة
                     if (data.length > this.kdsOrders.length) {
                         const sound = this.$refs.notificationSound;
                         if (sound) sound.play().catch(e => console.log("Sound blocked"));
                     }
-                    
                     this.kdsOrders = data;
                 }
             } catch (e) { console.error("KDS Fetch Error", e); }
@@ -3480,16 +3365,13 @@ createApp({
         onKDSDragStart(event, order) {
             this.draggedOrder = order;
             event.dataTransfer.effectAllowed = 'move';
-            // إضافة تأثير بصري للعنصر المسحوب
             event.target.classList.add('opacity-50');
         },
 
         async onKDSDrop(event, targetStatus) {
             if (!this.draggedOrder) return;
-            
             const order = this.draggedOrder;
             if (order.status === targetStatus) return;
-
             try {
                 const res = await fetch(`/api/pos/orders/${order.id}/update_kitchen_status/`, {
                     method: 'POST',
@@ -3499,9 +3381,7 @@ createApp({
                     },
                     body: JSON.stringify({ status: targetStatus })
                 });
-
                 if (res.ok) {
-                    // تحديث محلي سريع للواجهة (Optimistic UI)
                     order.status = targetStatus;
                     if (targetStatus === 'inprogress') order.started_at = new Date().toISOString();
                     this.showToast(this.isArabic ? "تم تحديث حالة الطلب" : "Order status updated", "success");
@@ -3518,15 +3398,14 @@ createApp({
             if (!timestamp) return '0m';
             const start = new Date(timestamp);
             const now = this.kdsCurrentTime;
-            const diff = Math.floor((now - start) / 1000); // بالثواني
-            
+            const diff = Math.floor((now - start) / 1000);
             if (diff < 60) return `${diff}s`;
             const mins = Math.floor(diff / 60);
             const secs = diff % 60;
             return `${mins}m ${secs}s`;
         },
 
-                formatTime(isoString) {
+        formatTime(isoString) {
             if (!isoString) return '--:--';
             const date = new Date(isoString);
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
