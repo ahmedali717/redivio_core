@@ -3,8 +3,8 @@ from rest_framework import viewsets, exceptions
 from rest_framework.decorators import action # 👈 استيراد الـ action
 from rest_framework.response import Response # 👈 استيراد الـ Response الخاص بـ DRF
 
-from .models import Category, Material
-from .serializers import CategorySerializer, MaterialSerializer
+from .models import Category, Material, SaleGroup
+from .serializers import CategorySerializer, MaterialSerializer, SaleGroupSerializer
 
 # =========================================================
 #  1. Mixins (لإعادة الاستخدام)
@@ -34,6 +34,17 @@ class CategoryViewSet(viewsets.ModelViewSet):
     """ إدارة مجموعات الأصناف (Groups) """
     queryset = Category.objects.all().order_by('code')
     serializer_class = CategorySerializer
+
+class SaleGroupViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    """ إدارة المجموعات البيعية (POS Groups) """
+    queryset = SaleGroup.objects.all().order_by('name')
+    serializer_class = SaleGroupSerializer
+    
+    def get_queryset(self):
+        active_opco_id = self.request.session.get('active_opco_id')
+        if active_opco_id:
+            return SaleGroup.objects.filter(opco_id=active_opco_id).order_by('name')
+        return self.queryset
 
 
 class MaterialViewSet(OpcoAwareMixin, viewsets.ModelViewSet):

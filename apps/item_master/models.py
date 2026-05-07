@@ -18,6 +18,15 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+# 1.5. المجموعات البيعية (Sale Groups - POS Categories)
+class SaleGroup(TenantBaseModel):
+    name = models.CharField(max_length=100)
+    image = models.ImageField(upload_to='sale_groups/', null=True, blank=True)
+    color = models.CharField(max_length=20, default='#6366f1') # Default indigo
+
+    def __str__(self):
+        return self.name
+
 # 2. الموديل الأساسي للصنف (Material / Product)
 class Material(models.Model):
     # ✅ تفضل core.OpCo لأن تطبيق core هو اللي فيه الشركة
@@ -27,6 +36,7 @@ class Material(models.Model):
     sku = models.CharField(max_length=50)
     name = models.CharField(max_length=200)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    sale_group = models.ForeignKey(SaleGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name='materials')
     base_uom = models.CharField(max_length=50, default='PCS')
     barcode = models.CharField(max_length=100, null=True, blank=True)
     image = models.ImageField(upload_to='materials/', null=True, blank=True)
@@ -53,6 +63,7 @@ class Material(models.Model):
     
     # --- 🍽️ Restaurant POS Extensions ---
     is_pos_item = models.BooleanField(default=False, help_text="هل هذا الصنف متاح في قائمة البيع للمطعم؟")
+    is_combo = models.BooleanField(default=False, help_text="هل هذا الصنف عبارة عن عرض (Combo)؟")
     expiry_date = models.DateField(null=True, blank=True, help_text="تاريخ انتهاء الصلاحية لهذا الصنف (اختياري)")
     
     # التزامن مع القابضة
@@ -64,6 +75,16 @@ class Material(models.Model):
 
     def __str__(self):
         return f"[{self.sku}] {self.name}"
+
+# 2.5. مكونات الـ Combo (Combo Items)
+class ComboItem(models.Model):
+    parent_material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name='combo_items')
+    item = models.ForeignKey(Material, on_delete=models.CASCADE, related_name='included_in_combos')
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    extra_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="سعر إضافي عند اختيار هذا الصنف في العرض")
+
+    def __str__(self):
+        return f"{self.quantity} x {self.item.name} in {self.parent_material.name}"
 
     @property
     def total_on_hand(self):

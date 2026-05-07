@@ -148,6 +148,7 @@ createApp({
             locations: [],
             bins: [],
             materials_list: [],
+            sale_groups: [],
             inventoryList: [],
             wms_stats: {},
             selectedItemCard: null,
@@ -2665,7 +2666,10 @@ createApp({
                         else if (type === 'material' && key === 'recipe_lines') {
                             payload.append('recipe_lines', JSON.stringify(data[key]));
                         }
-                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments', 'recipe_lines'].includes(key)) {
+                        else if (type === 'material' && key === 'combo_lines') {
+                            payload.append('combo_lines', JSON.stringify(data[key]));
+                        }
+                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments', 'recipe_lines', 'combo_lines'].includes(key)) {
                             let val = data[key];
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             payload.append(key, val);
@@ -2897,6 +2901,8 @@ createApp({
                 this.plants = results[1];
                 this.locations = results[2];
                 this.bins = results[3];
+                
+                this.fetchSaleGroups();
                 // تحميل الموردين والمشتريات أيضاً
                 this.fetchVendors();
                 this.fetchPurchaseOrders();
@@ -3032,10 +3038,10 @@ createApp({
                 this.forms.bin = { id: null, storage_location: this.activeLocationId, code: '' };
             } else if (type === 'material') {
                 this.forms.material = {
-                    id: null, sku: '', name: '', category: '', base_uom: 'PCS', barcode: '',
-                    standard_price: 0, sales_price: 0, tax_rate: 15, is_pos_item: false,
+                    id: null, sku: '', name: '', category: '', sale_group: '', base_uom: 'PCS', barcode: '',
+                    standard_price: 0, sales_price: 0, tax_rate: 15, is_pos_item: false, is_combo: false,
                     company_assignments: [{ opco_id: this.activeOpcoId, bins: [], primary_bin: null }],
-                    tracking: 'none', reorder_level: 0, max_level: 0, recipe_lines: []
+                    tracking: 'none', reorder_level: 0, max_level: 0, recipe_lines: [], combo_lines: []
                 };
             } else if (type === 'stock_entry') {
                 this.activeOperation = 'manual';
@@ -3297,6 +3303,45 @@ createApp({
             if (!bin) return '...';
             const loc = this.locations.find(l => l.id === bin.storage_location);
             return loc ? loc.name : '...';
+        },
+
+        async fetchSaleGroups() {
+            try {
+                const res = await fetch('/api/sale-groups/');
+                if (res.ok) {
+                    this.sale_groups = await res.json();
+                }
+            } catch (e) { console.error("Error fetching sale groups:", e); }
+        },
+
+        async addSaleGroup() {
+            const { value: name } = await Swal.fire({
+                title: this.isArabic ? 'إضافة مجموعة بيعية جديدة' : 'Add New Sale Group',
+                input: 'text',
+                inputPlaceholder: this.isArabic ? 'اسم المجموعة (مثلاً: مشروبات، بيتزا...)' : 'Group Name (e.g. Drinks, Pizza...)',
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'حفظ' : 'Save'
+            });
+
+            if (name) {
+                try {
+                    const res = await fetch('/api/sale-groups/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({ 
+                            name: name,
+                            opco: this.activeOpcoId
+                        })
+                    });
+                    if (res.ok) {
+                        this.showToast(this.isArabic ? "تمت الإضافة بنجاح" : "Group added successfully", 'success');
+                        this.fetchSaleGroups();
+                    }
+                } catch (e) { this.showToast("Error", 'error'); }
+            }
         },
 
     },

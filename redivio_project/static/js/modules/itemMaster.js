@@ -31,8 +31,11 @@ export const itemMasterModule = {
                 tax_rate: 15,
                 // 🚀 POS & Recipe extensions
                 is_pos_item: false,
+                is_combo: false,
+                sale_group: '',
                 expiry_date: null,
-                recipe_lines: []
+                recipe_lines: [],
+                combo_lines: []
             }
         }
     },
@@ -46,6 +49,17 @@ export const itemMasterModule = {
                 ingredient_id: '',
                 quantity: 1,
                 uom: 'KG'
+            });
+        },
+
+        addComboLine(instance) {
+            if (!instance.forms.material.combo_lines) {
+                instance.forms.material.combo_lines = [];
+            }
+            instance.forms.material.combo_lines.push({
+                item_id: '',
+                quantity: 1,
+                extra_price: 0
             });
         },
 
@@ -123,10 +137,13 @@ export const itemMasterModule = {
                 reorder_level: material.reorder_level || 0,
                 max_level: material.max_level || 0,
 
-                // 🚀 POS & Recipe
+                // 🚀 POS & Recipe & Combo
                 is_pos_item: material.is_pos_item || false,
+                is_combo: material.is_combo || false,
+                sale_group: material.sale_group || '',
                 expiry_date: material.expiry_date || null,
                 recipe_lines: material.recipe_lines || [],
+                combo_lines: material.combo_lines || [],
                 
                 // 🚀 البيانات الجديدة لعرض الأرصدة (Odoo 19 Modal)
                 on_hand: material.on_hand || 0,
