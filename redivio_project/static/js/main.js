@@ -256,18 +256,16 @@ createApp({
 
     computed: {
         posCategories() {
-            const cats = new Set();
-            (this.materials_list || []).forEach(m => {
-                if (m.category) cats.add(m.category);
-            });
-            return Array.from(cats);
+            // سنستخدم المجموعات البيعية بدلاً من الفئات العامة في الـ POS
+            return this.sale_groups || [];
         },
         filteredPosItems() {
             // فلترة الأصناف التي تحمل علامة POS Item فقط
             let items = (this.materials_list || []).filter(i => i.is_pos_item);
             
             if (this.posCategory !== 'all') {
-                items = items.filter(i => i.category === this.posCategory);
+                // الفلترة هنا تتم بناءً على ID المجموعة البيعية
+                items = items.filter(i => i.sale_group === this.posCategory);
             }
             if (this.posSearch) {
                 const q = this.posSearch.toLowerCase();
