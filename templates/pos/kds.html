@@ -1,0 +1,166 @@
+<div class="h-full flex flex-col bg-slate-50 overflow-hidden" v-cloak>
+    <!-- Header -->
+    <div class="p-6 bg-white border-b border-slate-200 flex justify-between items-center shadow-sm z-10">
+        <div>
+            <h2 class="text-2xl font-black text-slate-800 flex items-center gap-3">
+                <i class="fas fa-fire-burner text-red-500"></i>
+                [[ isArabic ? 'شاشة تحضير الطعام (KDS)' : 'Kitchen Display System' ]]
+            </h2>
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">[[ activeOpco ? activeOpco.name : 'Restaurant' ]] • Live Station</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs font-black text-slate-600">[[ kdsOrders.length ]] [[ isArabic ? 'طلبات نشطة' : 'Active Orders' ]]</span>
+            </div>
+            <button @click="fetchKDSOrders" class="p-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-700 transition-all shadow-lg shadow-slate-200">
+                <i class="fas fa-sync-alt" :class="loading ? 'fa-spin' : ''"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- KDS Board -->
+    <div class="flex-1 p-6 overflow-x-auto">
+        <div class="flex gap-6 h-full min-w-[1200px]">
+            
+            <!-- 1. Received (Paid) -->
+            <div class="flex-1 flex flex-col bg-slate-100/50 rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-inner"
+                 @dragover.prevent @drop="onKDSDrop($event, 'paid')">
+                <div class="p-5 flex justify-between items-center border-b border-slate-200 bg-white/50 backdrop-blur-md">
+                    <h3 class="font-black text-slate-700 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        [[ isArabic ? 'الطلبات الجديدة' : 'Received' ]]
+                    </h3>
+                    <span class="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-[10px] font-black uppercase">
+                        [[ kdsOrders.filter(o => o.status === 'paid').length ]]
+                    </span>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div v-for="order in kdsOrders.filter(o => o.status === 'paid')" 
+                         :key="order.id"
+                         draggable="true"
+                         @dragstart="onKDSDragStart($event, order)"
+                         class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all cursor-move group relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-xs font-black text-blue-600 mb-1">#[[ order.order_ref ]]</p>
+                                <p class="text-sm font-bold text-slate-800">[[ order.order_type ]] [[ order.table ? '• T' + order.table : '' ]]</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-black text-slate-400">[[ formatTime(order.created_at) ]]</p>
+                                <div class="flex items-center gap-1 mt-1">
+                                    <i class="far fa-clock text-[10px] text-red-500 animate-pulse"></i>
+                                    <span class="text-[10px] font-black text-red-500">[[ getWaitTime(order.created_at) ]]</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-2 border-t border-slate-50 pt-3">
+                            <div v-for="line in order.lines" :key="line.id" class="flex justify-between items-center">
+                                <p class="text-xs text-slate-700 font-medium">
+                                    <span class="inline-block w-6 h-6 bg-slate-100 rounded-lg text-center leading-6 text-[10px] font-black text-slate-500 mr-1">[[ line.qty ]]</span>
+                                    [[ line.name ]]
+                                </p>
+                                <p v-if="line.notes" class="text-[9px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-bold">[[ line.notes ]]</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. In Progress -->
+            <div class="flex-1 flex flex-col bg-slate-100/50 rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-inner"
+                 @dragover.prevent @drop="onKDSDrop($event, 'inprogress')">
+                <div class="p-5 flex justify-between items-center border-b border-slate-200 bg-white/50 backdrop-blur-md">
+                    <h3 class="font-black text-slate-700 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        [[ isArabic ? 'جاري التحضير' : 'In Progress' ]]
+                    </h3>
+                    <span class="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-[10px] font-black uppercase">
+                        [[ kdsOrders.filter(o => o.status === 'inprogress').length ]]
+                    </span>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div v-for="order in kdsOrders.filter(o => o.status === 'inprogress')" 
+                         :key="order.id"
+                         draggable="true"
+                         @dragstart="onKDSDragStart($event, order)"
+                         class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all cursor-move group relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-amber-500"></div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-xs font-black text-amber-600 mb-1">#[[ order.order_ref ]]</p>
+                                <p class="text-sm font-bold text-slate-800">[[ order.order_type ]] [[ order.table ? '• T' + order.table : '' ]]</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-black text-slate-400">[[ formatTime(order.started_at) ]]</p>
+                                <div class="flex items-center gap-1 mt-1">
+                                    <i class="fas fa-fire-flame-curved text-[10px] text-amber-500 animate-bounce"></i>
+                                    <span class="text-[10px] font-black text-amber-600">[[ getWaitTime(order.started_at) ]]</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-2 border-t border-slate-50 pt-3">
+                            <div v-for="line in order.lines" :key="line.id" class="flex justify-between items-center">
+                                <p class="text-xs text-slate-700 font-medium">
+                                    <span class="inline-block w-6 h-6 bg-amber-50 text-center leading-6 text-[10px] font-black text-amber-500 mr-1">[[ line.qty ]]</span>
+                                    [[ line.name ]]
+                                </p>
+                                <p v-if="line.notes" class="text-[9px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-bold">[[ line.notes ]]</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Done -->
+            <div class="flex-1 flex flex-col bg-slate-100/50 rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-inner"
+                 @dragover.prevent @drop="onKDSDrop($event, 'done')">
+                <div class="p-5 flex justify-between items-center border-b border-slate-200 bg-white/50 backdrop-blur-md">
+                    <h3 class="font-black text-slate-700 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        [[ isArabic ? 'جاهز للاستلام' : 'Done' ]]
+                    </h3>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div v-for="order in kdsOrders.filter(o => o.status === 'done')" 
+                         :key="order.id"
+                         class="bg-white/80 p-5 rounded-3xl border border-slate-200 shadow-sm opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all group relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-xs font-black text-emerald-600 mb-1">#[[ order.order_ref ]]</p>
+                                <p class="text-sm font-bold text-slate-800">[[ order.order_type ]]</p>
+                            </div>
+                            <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Cancelled -->
+            <div class="w-48 flex flex-col bg-slate-100/50 rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-inner"
+                 @dragover.prevent @drop="onKDSDrop($event, 'cancelled')">
+                <div class="p-5 border-b border-slate-200 bg-white/50">
+                    <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest flex items-center gap-2">
+                        <i class="fas fa-trash-alt"></i>
+                        [[ isArabic ? 'الملغاة' : 'Cancel' ]]
+                    </h3>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                    <div v-for="order in kdsOrders.filter(o => o.status === 'cancelled')" :key="order.id"
+                         class="bg-white p-3 rounded-2xl border border-slate-200 opacity-40 text-[10px] font-bold">
+                        #[[ order.order_ref ]]
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <!-- Audio notification (Hidden) -->
+    <audio ref="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+</div>

@@ -148,13 +148,20 @@ class POSOrder(models.Model):
     
     STATUS_CHOICES = [
         ('draft', 'Draft (لم يدفع)'),
-        ('paid', 'Paid (تم الدفع - في المطبخ)'),
+        ('paid', 'Received (تم الاستلام - في المطبخ)'),
+        ('inprogress', 'In Progress (جاري التحضير)'),
         ('done', 'Done (جاهز للاستلام)'),
         ('refunded', 'Refunded (مرتجع)'),
         ('cancelled', 'Cancelled (ملغي)')
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     is_refunded = models.BooleanField(default=False)
+    
+    # KDS Timestamps
+    kitchen_received_at = models.DateTimeField(null=True, blank=True)
+    kitchen_started_at = models.DateTimeField(null=True, blank=True)
+    kitchen_done_at = models.DateTimeField(null=True, blank=True)
+    kitchen_cancelled_at = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.order_ref:

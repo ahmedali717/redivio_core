@@ -68,6 +68,7 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Order already processed'}, status=status.HTTP_400_BAD_REQUEST)
         
         order.status = 'paid'
+        order.kitchen_received_at = timezone.now()
         order.save()
         
         # Update session total sales
@@ -80,6 +81,65 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             return Response({'success': True, 'order_ref': order.order_ref})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def kds_orders(self, request):
+        """جلب طلبات المطبخ الخاصة بمجموعة الطعام (Food)"""
+        opco_id = request.query_params.get('opco')
+        
+        # فلترة الطلبات التي لم تنتهِ بعد
+        queryset = POSOrder.objects.filter(
+            opco_id=opco_id, 
+            status__in=['paid', 'inprogress']
+        ).prefetch_related('lines', 'lines__material', 'lines__material__sale_group').order_by('created_at')
+        
+        data = []
+        for order in queryset:
+            # فلترة الأصناف التي تنتمي لمجموعة الـ Food فقط
+            food_lines = order.lines.filter(material__sale_group__name__icontains='Food')
+            
+            if food_lines.exists():
+                lines = []
+                for line in food_lines:
+                    lines.append({
+                        'id': line.id,
+                        'name': line.material.name,
+                        'qty': line.qty,
+                        'notes': line.kitchen_notes,
+                        'group': line.material.sale_group.name if line.material.sale_group else 'Other'
+                    })
+                
+                data.append({
+                    'id': order.id,
+                    'order_ref': order.order_ref,
+                    'status': order.status,
+                    'order_type': order.order_type,
+                    'table': order.table_number,
+                    'created_at': order.created_at,
+                    'received_at': order.kitchen_received_at,
+                    'started_at': order.kitchen_started_at,
+                    'lines': lines
+                })
+        return Response(data)
+
+    @action(detail=True, methods=['post'])
+    def update_kitchen_status(self, request, pk=None):
+        order = self.get_object()
+        new_status = request.data.get('status')
+        
+        if new_status not in ['inprogress', 'done', 'cancelled']:
+            return Response({'error': 'Invalid status'}, status=400)
+            
+        order.status = new_status
+        if new_status == 'inprogress':
+            order.kitchen_started_at = timezone.now()
+        elif new_status == 'done':
+            order.kitchen_done_at = timezone.now()
+        elif new_status == 'cancelled':
+            order.kitchen_cancelled_at = timezone.now()
+            
+        order.save()
+        return Response({'success': True})
 
     @action(detail=False, methods=['post'])
     def add_transaction(self, request):
