@@ -197,9 +197,27 @@ class POSOrderViewSet(viewsets.ModelViewSet):
                     consumption[name]['total_qty'] += float(line.qty)
         
         # 4. Expenses & Profitability Stats
-        session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
-        total_expenses = session.total_expenses if session else 0
-        opening_balance = session.opening_balance if session else 0
+        from .models import POSCashTransaction
+        expenses_qs = POSCashTransaction.objects.filter(session__opco_id=opco_id, type='OUT')
+        if date_from:
+            expenses_qs = expenses_qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            expenses_qs = expenses_qs.filter(created_at__date__lte=date_to)
+        if not date_from and not date_to:
+            expenses_qs = expenses_qs.filter(created_at__date=today)
+
+        total_expenses = expenses_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        # Get opening balance for the first session in the range
+        first_session = POSSession.objects.filter(opco_id=opco_id)
+        if date_from:
+            first_session = first_session.filter(start_time__date__gte=date_from)
+        if date_to:
+            first_session = first_session.filter(start_time__date__lte=date_to)
+        if not date_from and not date_to:
+            first_session = first_session.filter(start_time__date=today)
+        
+        opening_balance = first_session.order_by('start_time').first().opening_balance if first_session.exists() else 0
         
         from django.db.models import F
         from apps.wms.models import StockMove
