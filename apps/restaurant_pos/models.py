@@ -165,8 +165,9 @@ class POSOrder(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.order_ref:
-            import time
-            self.order_ref = f"POS-{int(time.time())}"
+            import time, random
+            # Added a random suffix to prevent 500 errors from duplicate keys
+            self.order_ref = f"POS-{int(time.time())}-{random.randint(1000, 9999)}"
         super().save(*args, **kwargs)
     
     # لمعرفة هل تم خصم المخزون بالفعل أم لا في الخلفية؟

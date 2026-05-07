@@ -752,12 +752,12 @@ createApp({
                         payment_method: this.posPaymentMethod,
                         table_number: this.posTableNumber,
                         guest_count: this.posGuestCount,
-                        total_amount: this.cartTotal,
+                        total_amount: parseFloat(this.cartTotal.toFixed(2)),
                         lines: this.posCart.map(i => ({
                             material: i.id,
                             qty: i.qty,
-                            unit_price: i.price,
-                            subtotal: i.price * i.qty
+                            unit_price: parseFloat(i.price.toFixed(2)),
+                            subtotal: parseFloat((i.price * i.qty).toFixed(2))
                         }))
                     })
                 });
