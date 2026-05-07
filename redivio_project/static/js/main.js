@@ -298,6 +298,15 @@ createApp({
         cartTotal() {
             return Math.round((this.cartSubtotal + this.cartTax) * 100) / 100;
         },
+        activeOpco() {
+            if (!this.activeOpcoId || !this.opcos.length) return null;
+            const opco = this.opcos.find(o => parseInt(o.id) === parseInt(this.activeOpcoId));
+            if (!opco) return null;
+            return {
+                ...opco,
+                logo: this.fixImagePath(opco.logo)
+            };
+        },
 
         filteredMaterials() {
             let list = this.materials_list || [];
@@ -2927,11 +2936,6 @@ createApp({
 
                     await this.fetchAll();
                     this.activeOpcoId = data.company_id || (this.allOpcos[0] ? this.allOpcos[0].id : null);
-                    this.activeOpco = {
-                        id: this.activeOpcoId,
-                        name: data.company_name || 'REDIVIO',
-                        currency: data.currency || 'USD'
-                    };
                     this.syncGlobalConfig(this.activeOpcoId);
                     await this.refreshAllData();
                 }
