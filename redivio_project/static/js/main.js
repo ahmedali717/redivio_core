@@ -3307,7 +3307,8 @@ createApp({
 
         async fetchSaleGroups() {
             try {
-                const res = await fetch('/api/sale-groups/');
+                const url = this.activeOpcoId ? `/api/sale-groups/?opco=${this.activeOpcoId}` : '/api/sale-groups/';
+                const res = await fetch(url);
                 if (res.ok) {
                     this.sale_groups = await res.json();
                 }

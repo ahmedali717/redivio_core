@@ -41,10 +41,10 @@ class SaleGroupViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = SaleGroupSerializer
     
     def get_queryset(self):
-        active_opco_id = self.request.session.get('active_opco_id')
-        if active_opco_id:
-            return SaleGroup.objects.filter(opco_id=active_opco_id).order_by('name')
-        return self.queryset
+        opco_id = self.request.query_params.get('opco') or self.request.session.get('active_opco_id')
+        if opco_id:
+            return SaleGroup.objects.filter(opco_id=opco_id).order_by('name')
+        return SaleGroup.objects.all().order_by('name')
 
 
 class MaterialViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
@@ -52,10 +52,10 @@ class MaterialViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = MaterialSerializer
 
     def get_queryset(self):
-        active_opco_id = self.request.session.get('active_opco_id')
-        if active_opco_id:
-            return Material.objects.filter(opco_id=active_opco_id).order_by('-id')
-        return Material.objects.filter(opco_id=active_opco_id).order_by('-id')
+        opco_id = self.request.query_params.get('opco') or self.request.session.get('active_opco_id')
+        if opco_id:
+            return Material.objects.filter(opco_id=opco_id).order_by('-id')
+        return Material.objects.all().order_by('-id')
 
     # =========================================================
     # 🚀 3. دالة الاستيراد الجديدة (تعمل على مسار /api/materials/import/)
