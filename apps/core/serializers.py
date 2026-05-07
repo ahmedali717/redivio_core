@@ -11,7 +11,7 @@ class OpCoSerializer(serializers.ModelSerializer):
         model = OpCo
         fields = [
             'id', 'name', 'code', 'created_at', 'is_holding', 
-            'plan', 'tax_id', 'cr_number', 'logo', 'parent', 'currency'
+            'plan', 'tax_id', 'cr_number', 'logo', 'brand_color', 'parent', 'currency'
         ]
 
     # ✅ تعديل لضمان سلاسة التعامل مع الهيكل الهرمي في Vue.js

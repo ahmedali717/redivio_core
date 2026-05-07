@@ -71,6 +71,7 @@ class OpCo(models.Model):
     tax_id = models.CharField(max_length=50, blank=True, null=True, verbose_name="الرقم الضريبي")
     cr_number = models.CharField(max_length=50, blank=True, null=True, verbose_name="السجل التجاري")
     logo = models.ImageField(upload_to='company_logos/', blank=True, null=True, verbose_name="شعار الشركة")
+    brand_color = models.CharField(max_length=20, default="#6366f1", verbose_name="لون العلامة التجارية")
 
     # ✅ بيانات المشترك الأساسية (SaaS Data)
     contact_name = models.CharField(max_length=150, blank=True, null=True, verbose_name="اسم المشترك")

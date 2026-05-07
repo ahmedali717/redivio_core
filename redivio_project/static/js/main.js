@@ -757,6 +757,7 @@ createApp({
             const total = Number(order.total_amount || this.cartTotal);
             const vat = Number(this.cartTax);
             const subtotal = total - vat;
+            const brandColor = this.activeOpco && this.activeOpco.brand_color ? this.activeOpco.brand_color : '#1e293b';
             const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
             const orderRef = order.order_ref || 'DRAFT-POS';
             
@@ -769,8 +770,8 @@ createApp({
                 }
             } else {
                 const logoSvg = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="48" fill="none" stroke="black" stroke-width="2"/>
-                    <text x="50" y="55" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">LOGO</text>
+                    <circle cx="50" cy="50" r="48" fill="none" stroke="${brandColor}" stroke-width="2"/>
+                    <text x="50" y="55" font-family="Arial" font-size="14" font-weight="bold" fill="${brandColor}" text-anchor="middle">LOGO</text>
                 </svg>`;
                 logoUrl = `data:image/svg+xml;base64,${btoa(logoSvg)}`;
             }
@@ -780,67 +781,119 @@ createApp({
             const qrData = `REDIVIO-POS|${orderRef}|${total}|${this.activeOpco?.name || 'Restaurant'}`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrData)}`;
 
-            const printWindow = window.open('', '_blank', 'width=450,height=700');
+            const printWindow = window.open('', '_blank', 'width=450,height=850');
             const html = `
                 <html>
                 <head>
                     <title>Receipt - ${orderRef}</title>
                     <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-                        body { font-family: 'Courier Prime', monospace; padding: 20px; color: #000; max-width: 350px; margin: 0 auto; background: #fff; line-height: 1.2; }
-                        .header { text-align: center; margin-bottom: 20px; }
-                        .logo-img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px; }
-                        .company-name { font-size: 20px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
-                        .divider { border-top: 1px dashed #000; margin: 10px 0; }
-                        .summary-line { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
-                        .total-line { display: flex; justify-content: space-between; font-size: 18px; font-weight: 900; margin-top: 10px; border-top: 1px solid #000; padding-top: 5px; }
-                        .barcodes { margin-top: 20px; text-align: center; }
-                        .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #444; border-top: 1px dashed #ccc; padding-top: 10px; }
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+                        body { 
+                            font-family: 'Inter', sans-serif; 
+                            padding: 30px 20px; 
+                            color: #1e293b; 
+                            max-width: 380px; 
+                            margin: 0 auto; 
+                            background: #fff; 
+                            line-height: 1.4; 
+                        }
+                        .header { text-align: center; margin-bottom: 25px; border-bottom: 3px solid ${brandColor}; padding-bottom: 20px; }
+                        .logo-img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 15px; }
+                        .company-name { font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; color: ${brandColor}; }
+                        .order-info { 
+                            background: #f8fafc; 
+                            padding: 15px; 
+                            border-radius: 12px; 
+                            margin: 20px 0; 
+                            text-align: center;
+                            border: 1px solid #e2e8f0;
+                        }
+                        .order-ref { font-weight: 900; font-size: 16px; color: ${brandColor}; margin-bottom: 5px; }
+                        .order-meta { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+                        
+                        .items { margin: 20px 0; }
+                        .item-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+                        .item-info { flex: 1; }
+                        .item-name { font-weight: 800; font-size: 14px; color: #0f172a; }
+                        .item-details { font-size: 11px; color: #64748b; font-weight: 600; }
+                        .item-price { font-weight: 800; font-size: 14px; color: #0f172a; }
+                        
+                        .divider { border-top: 1px dashed #e2e8f0; margin: 15px 0; }
+                        
+                        .summary { margin-top: 20px; background: #f1f5f9; padding: 15px; border-radius: 12px; }
+                        .summary-line { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 5px; }
+                        .total-line { 
+                            display: flex; 
+                            justify-content: space-between; 
+                            font-size: 22px; 
+                            font-weight: 900; 
+                            margin-top: 10px; 
+                            padding-top: 10px; 
+                            border-top: 2px solid ${brandColor}; 
+                            color: ${brandColor};
+                        }
+                        
+                        .barcodes { margin-top: 30px; text-align: center; }
+                        .footer { text-align: center; margin-top: 30px; font-size: 10px; color: #94a3b8; font-weight: 600; }
+                        
+                        @media print {
+                            body { padding: 10px; }
+                        }
                     </style>
                 </head>
-                <body>
+                <body onload="window.print()">
                     <div class="header">
                         <img src="${logoUrl}" class="logo-img">
-                        <div class="company-name">${this.activeOpco ? this.activeOpco.name : 'REDIVIO POS'}</div>
-                        <div style="font-size: 10px;">${date}</div>
-                        <div class="divider"></div>
-                        <div style="font-weight: bold; font-size: 14px;">ORDER: ${orderRef}</div>
-                        <div style="font-size: 11px; margin-top: 4px;">
-                            ${this.isArabic ? 'النوع' : 'Type'}: <b>${order.order_type}</b> | 
-                            ${this.isArabic ? 'الدفع' : 'Pay'}: <b>${order.payment_method}</b>
+                        <div class="company-name">${this.activeOpco ? this.activeOpco.name : 'REDIVIO ERP'}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-top: 5px;">${date}</div>
+                    </div>
+
+                    <div class="order-info">
+                        <div class="order-ref"># ${orderRef}</div>
+                        <div class="order-meta">
+                            ${this.isArabic ? 'النوع' : 'Type'}: ${order.order_type} | 
+                            ${this.isArabic ? 'الدفع' : 'Pay'}: ${order.payment_method}
                         </div>
                     </div>
 
                     <div class="items">
-                        ${itemsHtml}
+                        ${cart.map(i => `
+                            <div class="item-row">
+                                <div class="item-info">
+                                    <div class="item-name">${i.name || i.material_name}</div>
+                                    <div class="item-details">${i.qty} x ${Number(i.price || i.unit_price).toFixed(2)}</div>
+                                </div>
+                                <div class="item-price">${((i.price || i.unit_price) * i.qty).toFixed(2)}</div>
+                            </div>
+                        `).join('')}
                     </div>
 
-                    <div class="divider"></div>
-                    
-                    <div class="summary-line">
-                        <span>${this.isArabic ? 'المجموع الفرعي' : 'Subtotal'}</span>
-                        <span>${subtotal.toFixed(2)}</span>
-                    </div>
-                    <div class="summary-line">
-                        <span>${this.isArabic ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)'}</span>
-                        <span>${vat.toFixed(2)}</span>
-                    </div>
-
-                    <div class="total-line">
-                        <span>${this.isArabic ? 'الإجمالي' : 'TOTAL'}</span>
-                        <span>${total.toFixed(2)} ${currency}</span>
+                    <div class="summary">
+                        <div class="summary-line">
+                            <span>${this.isArabic ? 'المجموع الفرعي' : 'Subtotal'}</span>
+                            <span>${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="summary-line">
+                            <span>${this.isArabic ? 'الضريبة (15%)' : 'Tax (15%)'}</span>
+                            <span>${vat.toFixed(2)}</span>
+                        </div>
+                        <div class="total-line">
+                            <span>${this.isArabic ? 'الإجمالي' : 'TOTAL'}</span>
+                            <span>${total.toFixed(2)} <small style="font-size: 14px;">${currency}</small></span>
+                        </div>
                     </div>
 
                     <div class="barcodes">
-                        <img src="${barcodeUrl}" style="height: 40px; width: auto; margin-bottom: 10px;">
+                        <img src="${barcodeUrl}" style="height: 45px; width: auto; margin-bottom: 15px; filter: grayscale(1);">
                         <br>
-                        <img src="${qrUrl}" style="width: 100px; height: 100px; border: 1px solid #eee; padding: 5px;">
-                        <div style="font-size: 9px; margin-top: 5px;">SCAN TO VERIFY INVOICE</div>
+                        <img src="${qrUrl}" style="width: 120px; height: 120px; border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px;">
+                        <div style="font-size: 10px; margin-top: 8px; font-weight: 800; letter-spacing: 0.1em; color: #94a3b8;">SCAN TO VERIFY</div>
                     </div>
 
                     <div class="footer">
-                        <p>${this.isArabic ? 'شكراً لزيارتكم!' : 'THANK YOU FOR YOUR VISIT!'}</p>
-                        <p style="font-size: 8px; margin-top: 5px; opacity: 0.6;">Tax Invoice - Powered by REDIVIO</p>
+                        <p>${this.isArabic ? 'شكراً لزيارتكم ونتمنى رؤيتكم قريباً' : 'THANK YOU FOR YOUR VISIT! SEE YOU AGAIN.'}</p>
+                        <p style="font-size: 9px; margin-top: 8px;">${this.activeOpco?.tax_id ? 'Tax ID: ' + this.activeOpco.tax_id : ''}</p>
+                        <p style="font-size: 8px; margin-top: 15px; opacity: 0.5;">Tax Invoice Generated by REDIVIO CLOUD POS</p>
                     </div>
                 </body>
                 </html>
