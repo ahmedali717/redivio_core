@@ -1,4 +1,4 @@
-import { utils } from './modules/utils.js';
+﻿import { utils } from './modules/utils.js';
 import { inventoryModule } from './modules/inventory.js';
 import { orgModule } from './modules/org_builder.js';
 import { itemMasterModule } from './modules/itemMaster.js';
@@ -612,7 +612,7 @@ createApp({
         // Initial KPI calculation
         this.refreshKpis();
         this.checkActivePOSSession();
-
+        
         // 🚀 KDS Timer & Polling
         setInterval(() => { this.kdsCurrentTime = new Date(); }, 1000);
         this.kdsInterval = setInterval(() => {
@@ -620,6 +620,13 @@ createApp({
                 this.fetchKDSOrders();
             }
         }, 10000); // كل 10 ثواني
+
+        // Core Init
+        this.checkAuth();
+        this.startClock();
+        this.fetchAll();
+        this.fetchMaterialsList();
+        this.fetchWMSStats();
     },
 
     methods: {
@@ -3260,90 +3267,93 @@ createApp({
             this.modalType = 'delivery';
             this.showModal = true;
 
-            // تجهيز بيانات الصرف بناءً على أصناف أمر البيع
-            this.forms.delivery = {
-                so: so.id,
-                items: so.lines.map(line => ({
-                    material: line.material,
-                    quantity: line.quantity - line.shipped_quantity,
-                    storage_bin: ''
-                }))
-            };
-        },
-
-        printInvoice(id) {
-            window.open(`/api/print/invoice/${id}/`, '_blank');
-        },
-
-        printGRN(id) {
-            window.open(`/api/print/grn/${id}/`, '_blank');
-        },
-
-        printPO(id) {
-            window.open(`/api/print/po/${id}/`, '_blank');
-        },
-
-        printDelivery(id) {
-            window.open(`/api/print/delivery/${id}/`, '_blank');
-        },
-
-        async fetchSODetailsForDelivery() {
-            const soId = this.forms.stock_entry.so_id;
-            if (!soId) return;
-
-            try {
-                this.loading = true;
-                const res = await fetch(`/api/sales-orders/${soId}/`);
-                if (res.ok) {
-                    const so = await res.json();
-                    // تصفير القائمة القديمة وملئها بالأصناف المطلوبة للصرف
-                    this.forms.stock_entry.items = so.lines
-                        .filter(l => l.remaining_quantity > 0)
-                        .map(line => ({
-                            material_id: line.material,
-                            material_name: line.material_name,
-                            sku: line.material_sku,
-                            ordered_qty: line.quantity,
-                            received_before: line.shipped_quantity,
-                            received_qty: line.remaining_quantity, // الكمية الافتراضية هي المتبقي
-                            bin_id: line.suggested_bin || ''
-                        }));
-                }
-            } catch (e) {
-                console.error("Error fetching SO details:", e);
-            } finally {
-                this.loading = false;
+            // تجهيز �                } catch (e) { this.showToast("Error", 'error'); }
             }
         },
 
-        openPaymentModal(invoice) {
-            this.modalType = 'payment';
-            this.forms.payment = {
-                invoice: invoice.id,
-                invoice_number: invoice.invoice_number,
-                customer: invoice.customer,
-                customer_name: invoice.customer_name,
-                amount: invoice.total_amount - invoice.paid_amount,
-                method: 'CASH',
-                reference: ''
-            };
-            this.showModal = true;
+        // --- Kitchen Display System (KDS) Methods ---
+        async fetchKDSOrders() {
+            try {
+                const res = await fetch(`/api/pos/orders/kds_orders/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    // التنبيه الصوتي عند وجود طلبات جديدة
+                    if (data.length > this.kdsOrders.length) {
+                        const sound = this.$refs.notificationSound;
+                        if (sound) sound.play().catch(e => console.log("Sound blocked"));
+                    }
+                    
+                    this.kdsOrders = data;
+                }
+            } catch (e) { console.error("KDS Fetch Error", e); }
         },
 
-        async submitPayment() {
-            try {
-                this.loading = true;
-                const payload = {
-                    opco: this.activeOpcoId,
-                    invoice: this.forms.payment.invoice,
-                    customer: this.forms.payment.customer,
-                    amount: this.forms.payment.amount,
-                    method: this.forms.payment.method,
-                    reference: this.forms.payment.reference,
-                    payment_number: `PAY-${Date.now()}`
-                };
+        onKDSDragStart(event, order) {
+            this.draggedOrder = order;
+            event.dataTransfer.effectAllowed = 'move';
+            // إضافة تأثير بصري للعنصر المسحوب
+            event.target.classList.add('opacity-50');
+        },
 
-                const res = await fetch('/api/customer-payments/', {
+        async onKDSDrop(event, targetStatus) {
+            if (!this.draggedOrder) return;
+            
+            const order = this.draggedOrder;
+            if (order.status === targetStatus) return;
+
+            try {
+                const res = await fetch(`/api/pos/orders/${order.id}/update_kitchen_status/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ status: targetStatus })
+                });
+
+                if (res.ok) {
+                    // تحديث محلي سريع للواجهة (Optimistic UI)
+                    order.status = targetStatus;
+                    if (targetStatus === 'inprogress') order.started_at = new Date().toISOString();
+                    this.showToast(this.isArabic ? "تم تحديث حالة الطلب" : "Order status updated", "success");
+                    await this.fetchKDSOrders();
+                }
+            } catch (e) {
+                this.showToast("KDS Update Error", "error");
+            } finally {
+                this.draggedOrder = null;
+            }
+        },
+
+        getWaitTime(timestamp) {
+            if (!timestamp) return '0m';
+            const start = new Date(timestamp);
+            const now = this.kdsCurrentTime;
+            const diff = Math.floor((now - start) / 1000); // بالثواني
+            
+            if (diff < 60) return `${diff}s`;
+            const mins = Math.floor(diff / 60);
+            const secs = diff % 60;
+            return `${mins}m ${secs}s`;
+        },
+
+        formatTime(isoString) {
+            if (!isoString) return '--:--';
+            const date = new Date(isoString);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    },
+
+    mounted() {
+        this.checkAuth();
+        this.startClock();
+        this.fetchAll();
+        this.fetchMaterialsList();
+        this.fetchWMSStats();
+    }
+}).mount('#app');
+-payments/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -3446,7 +3456,8 @@ createApp({
                         this.fetchSaleGroups();
                     }
                 } catch (e) { this.showToast("Error", 'error'); }
-            },
+            }
+        },
 
         // --- Kitchen Display System (KDS) Methods ---
         async fetchKDSOrders() {
@@ -3515,20 +3526,10 @@ createApp({
             return `${mins}m ${secs}s`;
         },
 
-        formatTime(isoString) {
+                formatTime(isoString) {
             if (!isoString) return '--:--';
             const date = new Date(isoString);
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
-        },
-
-    },
-
-    mounted() {
-        this.checkAuth();
-        this.startClock();
-        this.fetchAll();
-        this.fetchMaterialsList();
-        this.fetchWMSStats();
     }
 }).mount('#app');
