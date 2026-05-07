@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from apps.core.models import TenantBaseModel
 
 # 1. فئات الأصناف (Category)
 class Category(models.Model):
@@ -28,10 +29,7 @@ class SaleGroup(TenantBaseModel):
         return self.name
 
 # 2. الموديل الأساسي للصنف (Material / Product)
-class Material(models.Model):
-    # ✅ تفضل core.OpCo لأن تطبيق core هو اللي فيه الشركة
-    opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE, related_name='materials')
-    
+class Material(TenantBaseModel):
     # البيانات الأساسية
     sku = models.CharField(max_length=50)
     name = models.CharField(max_length=200)
@@ -68,13 +66,20 @@ class Material(models.Model):
     
     # التزامن مع القابضة
     is_template = models.BooleanField(default=False) # هل هذا صنف مرجعي للقابضة؟
-    created_at = models.DateTimeField(auto_now_add=True, null=True)
     
     class Meta:
         unique_together = ('opco', 'sku') # SKU فريد لكل شركة
 
     def __str__(self):
         return f"[{self.sku}] {self.name}"
+
+    @property
+    def total_on_hand(self):
+        """حساب إجمالي الأرصدة في كل الرفوف الخاصة بهذا الصنف في هذه الشركة"""
+        from django.db.models import Sum
+        from apps.wms.models import StockQuant
+        total = StockQuant.objects.filter(material=self, opco=self.opco).aggregate(Sum('quantity'))['quantity__sum']
+        return total or 0
 
 # 2.5. مكونات الـ Combo (Combo Items)
 class ComboItem(models.Model):
@@ -85,14 +90,6 @@ class ComboItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.item.name} in {self.parent_material.name}"
-
-    @property
-    def total_on_hand(self):
-        """حساب إجمالي الأرصدة في كل الرفوف الخاصة بهذا الصنف في هذه الشركة"""
-        from django.db.models import Sum
-        from apps.wms.models import StockQuant
-        total = StockQuant.objects.filter(material=self, opco=self.opco).aggregate(Sum('quantity'))['quantity__sum']
-        return total or 0
 
 # 3. 🛡️ محرك قواعد التوجيه (Putaway Rules / MaterialLocation)
 class MaterialLocation(models.Model):
