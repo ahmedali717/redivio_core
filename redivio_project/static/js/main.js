@@ -728,6 +728,23 @@ createApp({
             }
         },
 
+        async editItemNotes(idx) {
+            const line = this.posCart[idx];
+            const { value: notes } = await Swal.fire({
+                title: this.isArabic ? 'ملاحظات الطلب' : 'Item Notes',
+                input: 'textarea',
+                inputValue: line.kitchen_notes || '',
+                inputPlaceholder: this.isArabic ? 'مثلاً: بدون بصل، فلفل زيادة...' : 'e.g. No onions, extra spicy...',
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'حفظ' : 'Save',
+                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel'
+            });
+            if (notes !== undefined) {
+                line.kitchen_notes = notes;
+                this.showToast(this.isArabic ? "تم حفظ الملاحظات" : "Notes saved", "success");
+            }
+        },
+
         selectCartItem(index) {
             this.posSelectedCartIndex = index;
             this.posNumpadBuffer = '';
