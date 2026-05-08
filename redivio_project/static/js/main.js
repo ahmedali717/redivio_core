@@ -809,7 +809,8 @@ createApp({
                             material: i.id,
                             qty: i.qty,
                             unit_price: parseFloat(i.price.toFixed(2)),
-                            subtotal: parseFloat((i.price * i.qty).toFixed(2))
+                            subtotal: parseFloat((i.price * i.qty).toFixed(2)),
+                            kitchen_notes: i.kitchen_notes || ''
                         }))
                     })
                 });
@@ -850,12 +851,13 @@ createApp({
         printReceipt(order, cart) {
             const date = new Date().toLocaleString();
             const itemsHtml = cart.map(i => `
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom: 1px dotted #eee; padding-bottom: 4px;">
-                    <div style="flex:1">
-                        <div style="font-weight:bold">${i.name || i.material_name}</div>
-                        <div style="font-size:10px; color:#666">Qty: ${i.qty} x ${Number(i.price || i.unit_price).toFixed(2)}</div>
+                <div class="item-row">
+                    <div class="item-info">
+                        <div class="item-name">${i.name || i.material_name}</div>
+                        ${i.kitchen_notes ? `<div style="font-size:9px; color: #3b82f6; font-style:italic; font-weight:bold; margin: 2px 0;">* ${i.kitchen_notes}</div>` : ''}
+                        <div class="item-details">${i.qty} x ${Number(i.price || i.unit_price).toFixed(2)}</div>
                     </div>
-                    <div style="font-weight:bold">${((i.price || i.unit_price) * i.qty).toFixed(2)}</div>
+                    <div class="item-price">${((i.price || i.unit_price) * i.qty).toFixed(2)}</div>
                 </div>
             `).join('');
 
@@ -865,6 +867,7 @@ createApp({
             const brandColor = this.activeOpco && this.activeOpco.brand_color ? this.activeOpco.brand_color : '#1e293b';
             const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
             const orderRef = order.order_ref || 'DRAFT-POS';
+            const cashierName = this.companyUsers.find(u => u.id === this.posActiveCashierId)?.user_details.email || this.user.email || 'Admin';
             
             // Corporate Logo (with SVG Fallback)
             let logoUrl = '';
@@ -915,6 +918,7 @@ createApp({
                         }
                         .order-ref { font-weight: 900; font-size: 16px; color: ${brandColor}; margin-bottom: 5px; }
                         .order-meta { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+                        .cashier-meta { font-size: 10px; font-weight: 900; color: #1e293b; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0; text-transform: uppercase; }
                         
                         .items { margin: 20px 0; }
                         .item-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
