@@ -3430,9 +3430,9 @@ createApp({
                 'procurement_module': ['warehouse', 'manager', 'admin'],
                 'sales_module': ['manager', 'admin'],
                 'accounting_module': ['manager', 'admin'],
-                'users': ['admin'],
-                'global_config': ['admin'],
-                'org_builder': ['admin'],
+                'users': ['manager', 'admin'],
+                'global_config': ['manager', 'admin'],
+                'org_builder': ['manager', 'admin'],
                 
                 // Restaurant POS Internal Tabs
                 'pos_cashier': ['cashier', 'manager', 'admin'],
