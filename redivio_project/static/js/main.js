@@ -97,10 +97,10 @@ createApp({
             sidebarGroups: {
                 settings: [
                     { id: 'global_config', name: { ar: 'الإعدادات العامة', en: 'Global Config' }, icon: 'fas fa-cogs' },
+                    { id: 'org_builder', name: { ar: 'بناء الهيكل', en: 'Org Builder' }, icon: 'fas fa-sitemap' },
                     { id: 'users', name: { ar: 'المستخدمين', en: 'Users' }, icon: 'fas fa-users' }
                 ],
                 operations: [
-                    { id: 'org_builder', name: { ar: 'بناء الهيكل', en: 'Org Builder' }, icon: 'fas fa-sitemap' },
                     // موديول واحد شامل للمخزون
                     { id: 'inventory_module', name: { ar: 'RIMS (المخزون)', en: 'RIMS (Inventory)' }, icon: 'fas fa-archive' },
                     { id: 'procurement_module', name: { ar: 'RPMS (المشتريات)', en: 'RPMS (Procurement)' }, icon: 'fas fa-shopping-cart' },

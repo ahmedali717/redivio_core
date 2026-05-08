@@ -424,14 +424,47 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
         if not active_id:
             return CompanyUser.objects.none()
         
-        # Allow managing users for the active company and its subsidiaries if holding
         active_opco = OpCo.all_objects.filter(id=active_id).first()
-        if active_opco and active_opco.is_holding:
-            return CompanyUser.objects.filter(
+        if not active_opco:
+            return CompanyUser.objects.none()
+
+        # base queryset
+        if active_opco.is_holding:
+            qs = CompanyUser.objects.filter(
                 Q(company_id=active_id) | Q(company__parent_id=active_id)
             )
+        else:
+            qs = CompanyUser.objects.filter(company_id=active_id)
         
-        return CompanyUser.objects.filter(company_id=active_id)
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+
+        # Add owner if not present
+        active_id = request.query_params.get('opco')
+        if active_id:
+            active_opco = OpCo.all_objects.filter(id=active_id).first()
+            if active_opco and active_opco.owner:
+                owner_email = active_opco.owner.email or active_opco.owner.username
+                is_owner_in_list = any(u['user_details']['email'] == owner_email or u['user_details']['username'] == owner_email for u in data)
+                
+                if not is_owner_in_list:
+                    data.insert(0, {
+                        'id': 'OWNER',
+                        'role': 'ADMINISTRATOR',
+                        'company_name': active_opco.name,
+                        'company': active_opco.id,
+                        'user_details': {
+                            'id': active_opco.owner.id,
+                            'username': active_opco.owner.username,
+                            'email': active_opco.owner.email or active_opco.owner.username,
+                        }
+                    })
+        
+        return Response(data)
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):
