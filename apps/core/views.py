@@ -16,7 +16,11 @@ from apps.core.models import OpCo
 from apps.wms.models import Plant, StorageLocation, StockQuant, StorageBin
 from apps.item_master.models import Material
 from apps.procurement.models import Vendor, PurchaseOrder
-from apps.core.serializers import OpCoSerializer, PlantSerializer, StorageLocationSerializer, StorageBinSerializer
+from apps.core.serializers import (
+    OpCoSerializer, PlantSerializer, StorageLocationSerializer, 
+    StorageBinSerializer, CompanyUserSerializer
+)
+from apps.core.models import CompanyUser
 
 User = get_user_model()
 
@@ -411,3 +415,50 @@ class StorageBinViewSet(viewsets.ModelViewSet):
             ).distinct()
             
         return StorageBin.objects.all()
+class CompanyUserViewSet(viewsets.ModelViewSet):
+    serializer_class = CompanyUserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        active_id = self.request.session.get('active_opco_id')
+        if not active_id:
+            return CompanyUser.objects.none()
+        
+        # Allow managing users for the active company and its subsidiaries if holding
+        active_opco = OpCo.all_objects.filter(id=active_id).first()
+        if active_opco and active_opco.is_holding:
+            return CompanyUser.objects.filter(
+                Q(company_id=active_id) | Q(company__parent_id=active_id)
+            )
+        
+        return CompanyUser.objects.filter(company_id=active_id)
+
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        role = request.data.get('role', 'cashier')
+        company_id = request.data.get('company') or request.session.get('active_opco_id')
+        
+        if not email or not company_id:
+            return Response({"error": "Email and Company are required"}, status=400)
+            
+        user, created = User.objects.get_or_create(
+            username=email,
+            defaults={'email': email, 'is_staff': True}
+        )
+        if created:
+            user.set_password('Admin@123')
+            user.save()
+            
+        company_user, cu_created = CompanyUser.objects.get_or_create(
+            user=user,
+            company_id=company_id,
+            defaults={'role': role}
+        )
+        
+        if not cu_created:
+            company_user.role = role
+            company_user.save()
+            
+        serializer = self.get_serializer(company_user)
+        return Response(serializer.data, status=201)

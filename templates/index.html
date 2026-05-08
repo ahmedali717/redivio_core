@@ -289,16 +289,16 @@
         </div>
 
             <div v-if="view === 'users'" class="animate-in slide-in-from-bottom-4 duration-500">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-800">[[ isArabic ? 'إدارة المستخدمين' : 'User Management' ]]</h2>
-                    <p class="text-slate-500 text-sm">[[ isArabic ? 'التحكم في صلاحيات الوصول وحسابات الموظفين' : 'Control access levels and employee accounts' ]]</p>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">[[ isArabic ? 'إدارة المستخدمين' : 'User Management' ]]</h2>
+                        <p class="text-slate-500 text-sm">[[ isArabic ? 'التحكم في مستويات الوصول وحسابات الموظفين' : 'Control access levels and employee accounts' ]]</p>
+                    </div>
+                    <button @click="openModal('user')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-user-plus text-sm"></i>
+                        [[ isArabic ? 'إضافة مستخدم جديد' : 'Add New User' ]]
+                    </button>
                 </div>
-                <button @click="openModal('user')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2">
-                    <i class="fas fa-user-plus text-sm"></i>
-                    [[ isArabic ? 'إضافة مستخدم جديد' : 'Add New User' ]]
-                </button>
-            </div>
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-right">
@@ -312,38 +312,38 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50 text-sm">
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-4">
+                    <tr v-for="u in companyUsers" :key="u.id" class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-6 py-4 text-right">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
-                                    [[ user.name.charAt(0) ]]
+                                    [[ (u.user_details.email || u.user_details.username)[0].toUpperCase() ]]
                                 </div>
                                 <div>
-                                    <div class="font-bold text-slate-700">[[ user.name ]]</div>
-                                    <div class="text-xs text-slate-400 font-mono">ID: #001</div>
+                                    <div class="font-bold text-slate-800">[[ u.user_details.email || u.user_details.username ]]</div>
+                                    <div class="text-[10px] text-slate-400 font-mono">ID: #[[ u.id ]]</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold border border-blue-100">
-                                [[ user.role ]]
+                            <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                [[ u.role ]]
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-slate-600">
-                            [[ config.company_name ]]
+                        <td class="px-6 py-4 text-right">
+                            <span class="text-sm font-medium text-slate-600">[[ u.company_name ]]</span>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <span class="inline-flex items-center gap-1.5 text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md text-[10px]">
-                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                                [[ isArabic ? 'نشط' : 'Active' ]]
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                Active
                             </span>
                         </td>
                         <td class="px-6 py-4 text-left">
                             <div class="flex items-center justify-end gap-2">
-                                <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                                    <i class="fas fa-user-edit"></i>
+                                <button @click="forms.user = {...u, email: u.user_details.email || u.user_details.username}; showModal = true; modalType = 'user'" class="p-2 text-slate-400 hover:text-blue-600 transition-colors">
+                                    <i class="fas fa-edit"></i>
                                 </button>
-                                <button v-if="user.is_superuser" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                                <button @click="deleteCompanyUser(u.id)" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>

@@ -11,7 +11,8 @@ from apps.core.views import (
     LocationViewSet,
     StorageBinViewSet,
     DashboardDataViewSet,
-    logout_view
+    logout_view,
+    CompanyUserViewSet
 )
 # 👈 مسحنا FieldDefinitionViewSet من السطر ده
 from apps.item_master.views import MaterialViewSet, CategoryViewSet, SaleGroupViewSet
@@ -29,6 +30,7 @@ router.register(r'opcos', OpCoViewSet, basename='opco')
 router.register(r'plants', PlantViewSet, basename='plant')
 router.register(r'locations', LocationViewSet, basename='location')
 router.register(r'bins', StorageBinViewSet, basename='bin')
+router.register(r'company-users', CompanyUserViewSet, basename='companyuser')
 
 router.register(r'materials', MaterialViewSet, basename='material')
 router.register(r'categories', CategoryViewSet, basename='category')

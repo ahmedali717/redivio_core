@@ -144,6 +144,8 @@ createApp({
                 vendors: 0,
                 customers_count: 0
             },
+            companyUsers: [],
+            userSearch: '',
             allOpcos: [],
             opcos: [],
 
@@ -189,7 +191,8 @@ createApp({
                 view_po: { ar: 'تفاصيل أمر التوريد', en: 'Purchase Order Details' },
                 payment: { ar: 'تحصيل دفعة مالية', en: 'Record Payment' },
                 delivery: { ar: 'صرف بضاعة', en: 'Order Delivery' },
-                so_delivery: { ar: 'صرف بضاعة من أمر بيع', en: 'WMS Sales Delivery' }
+                so_delivery: { ar: 'صرف بضاعة من أمر بيع', en: 'WMS Sales Delivery' },
+                user: { ar: 'إدارة حساب مستخدم', en: 'User Account Management' }
             },
 
             forms: {
@@ -253,7 +256,8 @@ createApp({
                     amount: 0,
                     method: 'CASH',
                     reference: ''
-                }
+                },
+                user: { id: null, email: '', role: 'cashier', company: null }
             }
         };
     },
@@ -619,7 +623,10 @@ createApp({
             if (this.view === 'restaurant_pos_module' && this.posTab === 'kitchen') {
                 this.fetchKDSOrders();
             }
-        }, 3000); // كل 10 ثواني
+            if (this.view === 'users') {
+                this.fetchCompanyUsers();
+            }
+        }, 3000);
 
         // Core Init
         this.checkAuth();
@@ -3439,6 +3446,56 @@ createApp({
                 return permissions[module].includes(role);
             }
             return true; // Default Allow
+        },
+
+        async fetchCompanyUsers() {
+            try {
+                const res = await fetch(`/api/company-users/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.companyUsers = await res.json();
+                }
+            } catch (e) { console.error("Fetch Users Error", e); }
+        },
+
+        async saveCompanyUser() {
+            try {
+                const isNew = !this.forms.user.id;
+                const url = isNew ? '/api/company-users/' : `/api/company-users/${this.forms.user.id}/`;
+                const method = isNew ? 'POST' : 'PUT';
+                
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        email: this.forms.user.email,
+                        role: this.forms.user.role,
+                        company: this.forms.user.company || this.activeOpcoId
+                    })
+                });
+
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم حفظ المستخدم" : "User saved successfully", "success");
+                    this.showModal = false;
+                    await this.fetchCompanyUsers();
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Error saving user", "error");
+                }
+            } catch (e) { console.error("Save User Error", e); }
+        },
+
+        async deleteCompanyUser(id) {
+            if (!confirm(this.isArabic ? "هل أنت متأكد من حذف هذا المستخدم؟" : "Are you sure you want to delete this user?")) return;
+            try {
+                const res = await fetch(`/api/company-users/${id}/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم الحذف" : "Deleted successfully", "success");
+                    await this.fetchCompanyUsers();
+                }
+            } catch (e) { console.error("Delete User Error", e); }
         },
 
         formatTime(isoString) {

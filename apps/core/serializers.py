@@ -1,10 +1,11 @@
 from rest_framework import serializers
-from apps.core.models import OpCo
+from apps.core.models import OpCo, CompanyUser
 from apps.wms.models import Plant, StorageLocation, StorageBin
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class OpCoSerializer(serializers.ModelSerializer):
-    # ✅ ضمان وصول التاريخ بصيغة ISO لسهولة معالجته في JavaScript (License calculation)
-    # هذا التنسيق يمنع أخطاء الـ Invalid Date في المتصفحات
     created_at = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S", read_only=True)
     
     class Meta:
@@ -14,20 +15,12 @@ class OpCoSerializer(serializers.ModelSerializer):
             'plan', 'tax_id', 'cr_number', 'logo', 'brand_color', 'parent', 'currency'
         ]
 
-    # ✅ تعديل لضمان سلاسة التعامل مع الهيكل الهرمي في Vue.js
     def to_representation(self, instance):
-        """
-        تحويل البيانات لتبسيط المعالجة في الواجهة الأمامية.
-        """
         representation = super().to_representation(instance)
-        
-        # تحويل الـ parent لـ ID صريح بدلاً من كائن كامل 
-        # لسهولة المقارنة في الـ computed properties مثل (currentSubsidiaries)
         if instance.parent:
             representation['parent'] = instance.parent.id
         else:
             representation['parent'] = None
-            
         return representation
 
 class PlantSerializer(serializers.ModelSerializer):
@@ -44,3 +37,16 @@ class StorageBinSerializer(serializers.ModelSerializer):
     class Meta:
         model = StorageBin
         fields = '__all__'
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+
+class CompanyUserSerializer(serializers.ModelSerializer):
+    user_details = UserSerializer(source='user', read_only=True)
+    company_name = serializers.ReadOnlyField(source='company.name')
+    
+    class Meta:
+        model = CompanyUser
+        fields = ['id', 'user', 'user_details', 'company', 'company_name', 'role', 'is_active_session']
