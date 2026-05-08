@@ -689,7 +689,8 @@ createApp({
                     tax_rate: item.tax_rate || 15,
                     qty: 1,
                     on_hand: onHand,
-                    has_no_bom: hasNoBOM
+                    has_no_bom: hasNoBOM,
+                    kitchen_notes: ''
                 });
             }
             this.posSelectedCartIndex = this.posCart.findIndex(i => i.id === item.id);
@@ -969,16 +970,19 @@ createApp({
                     </div>
 
                     <div class="items">
-                        ${cart.map(i => `
-                            <div class="item-row">
-                                <div class="item-info">
-                                    <div class="item-name">${i.name || i.material_name}</div>
-                                    ${i.kitchen_notes ? `<div style="font-size:9px; color: #3b82f6; font-style:italic; font-weight:bold; margin: 2px 0;">* ${i.kitchen_notes}</div>` : ''}
-                                    <div class="item-details">${i.qty} x ${Number(i.price || i.unit_price).toFixed(2)}</div>
+                        ${cart.map(i => {
+                            const note = (i.kitchen_notes || i.notes || "").trim();
+                            return `
+                                <div class="item-row">
+                                    <div class="item-info">
+                                        <div class="item-name">${i.name || i.material_name}</div>
+                                        ${note ? `<div style="font-size:10px; color: #2563eb; font-weight: 800; margin: 3px 0; border-left: 2px solid #2563eb; padding-left: 5px; font-style: italic;">* ${note}</div>` : ''}
+                                        <div class="item-details">${i.qty} x ${Number(i.price || i.unit_price).toFixed(2)}</div>
+                                    </div>
+                                    <div class="item-price">${((i.price || i.unit_price) * i.qty).toFixed(2)}</div>
                                 </div>
-                                <div class="item-price">${((i.price || i.unit_price) * i.qty).toFixed(2)}</div>
-                            </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
 
                     <div class="summary">
