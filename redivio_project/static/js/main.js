@@ -963,6 +963,9 @@ createApp({
                             ${this.isArabic ? 'النوع' : 'Type'}: ${order.order_type} | 
                             ${this.isArabic ? 'الدفع' : 'Pay'}: ${order.payment_method}
                         </div>
+                        <div class="cashier-meta">
+                            ${this.isArabic ? 'الكاشير' : 'Cashier'}: ${cashierName}
+                        </div>
                     </div>
 
                     <div class="items">
@@ -970,6 +973,7 @@ createApp({
                             <div class="item-row">
                                 <div class="item-info">
                                     <div class="item-name">${i.name || i.material_name}</div>
+                                    ${i.kitchen_notes ? `<div style="font-size:9px; color: #3b82f6; font-style:italic; font-weight:bold; margin: 2px 0;">* ${i.kitchen_notes}</div>` : ''}
                                     <div class="item-details">${i.qty} x ${Number(i.price || i.unit_price).toFixed(2)}</div>
                                 </div>
                                 <div class="item-price">${((i.price || i.unit_price) * i.qty).toFixed(2)}</div>
