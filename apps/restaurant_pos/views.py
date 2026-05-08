@@ -10,7 +10,6 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     serializer_class = POSOrderSerializer
 
     def get_queryset(self):
-        active_session = self.request.query_params.get('active_session')
         opco_id = self.request.query_params.get('opco')
         
         # Safe opco_id conversion
@@ -21,11 +20,6 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             except (ValueError, TypeError):
                 pass
 
-        if active_session == 'true':
-            if clean_opco_id:
-                return POSSession.objects.filter(opco_id=clean_opco_id, is_closed=False)
-            return POSSession.objects.none()
-            
         queryset = self.queryset
         if clean_opco_id:
             queryset = queryset.filter(opco_id=clean_opco_id)
@@ -35,6 +29,15 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(session_id=session_id)
             
         return queryset
+
+    @action(detail=False, methods=['get'])
+    def active_session(self, request):
+        opco_id = request.query_params.get('opco')
+        session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
+        if session:
+            from .serializers import POSSessionSerializer
+            return Response(POSSessionSerializer(session).data)
+        return Response(None, status=200)
 
     @action(detail=False, methods=['get'])
     def session_history(self, request):

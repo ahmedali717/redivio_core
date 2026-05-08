@@ -7,7 +7,7 @@ from django.conf import settings
 
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -498,8 +498,31 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
             company_user.role = role
             company_user.save()
             
-        serializer = self.get_serializer(company_user)
-        return Response(serializer.data, status=201)
+        return Response(CompanyUserSerializer(company_user).data)
+
+    @action(detail=False, methods=['post'])
+    def verify_password(self, request):
+        user_id = request.data.get('user_id')
+        password = request.data.get('password')
+        
+        if not user_id or not password:
+            return Response({"error": "User ID and password are required"}, status=400)
+            
+        try:
+            if user_id == 'OWNER':
+                active_id = request.session.get('active_opco_id')
+                opco = OpCo.all_objects.get(id=active_id)
+                user = opco.owner
+            else:
+                cu = CompanyUser.objects.get(id=user_id)
+                user = cu.user
+                
+            if user.check_password(password):
+                return Response({"success": True})
+            else:
+                return Response({"success": False, "error": "Invalid password"}, status=401)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
 
     @transaction.atomic
     def update(self, request, *args, **kwargs):

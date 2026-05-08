@@ -102,20 +102,39 @@
                         <span v-if="notifications.length > 0" class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full font-bold uppercase">[[ notifications.length ]] New</span>
                     </div>
                         <div v-for="(n, idx) in notifications" :key="idx" 
-                             class="p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors flex gap-3 text-right" :dir="isArabic ? 'rtl' : 'ltr'">
-                            <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                                 :class="n.type === 'low_stock' ? 'bg-indigo-50 text-indigo-500' : 'bg-rose-50 text-rose-500'">
-                                <i :class="n.type === 'low_stock' ? 'fas fa-box' : 'fas fa-bell'"></i>
+                             class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors flex flex-col gap-2 group/notif" :dir="isArabic ? 'rtl' : 'ltr'">
+                            <div class="flex gap-3">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                                     :class="n.type === 'low_stock' ? 'bg-indigo-50 text-indigo-500' : 'bg-rose-50 text-rose-500'">
+                                    <i :class="n.type === 'low_stock' ? 'fas fa-box' : (n.type === 'pos_ready' ? 'fas fa-utensils' : 'fas fa-bell')"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <p class="text-sm text-slate-700 font-bold" v-text="n.title"></p>
+                                        <span class="text-[9px] text-slate-400 font-medium" v-text="n.time"></span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-0.5 leading-relaxed" v-text="n.message"></p>
+                                </div>
                             </div>
-                            <div class="flex-1">
-                                <p class="text-sm text-slate-700 font-bold" v-text="n.title"></p>
-                                <p class="text-xs text-slate-500 mt-1 leading-relaxed" v-text="n.message"></p>
-                                <p class="text-[10px] text-slate-400 mt-1" v-text="n.time"></p>
+                            <!-- 🚀 Action Buttons -->
+                            <div class="flex gap-2 mt-1 opacity-0 group-hover/notif:opacity-100 transition-opacity">
+                                <button @click.stop="handleNotificationAction('done', idx)" class="flex-1 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-black hover:bg-emerald-600 hover:text-white transition-all">
+                                    <i class="fas fa-check mr-1"></i> [[ isArabic ? 'تم' : 'Done' ]]
+                                </button>
+                                <button @click.stop="handleNotificationAction('postpone', idx)" class="flex-1 py-1.5 rounded-lg bg-amber-50 text-amber-600 text-[10px] font-black hover:bg-amber-600 hover:text-white transition-all">
+                                    <i class="fas fa-clock mr-1"></i> [[ isArabic ? 'تأجيل' : 'Later' ]]
+                                </button>
+                                <button @click.stop="handleNotificationAction('delete', idx)" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-500 text-[10px] font-black hover:bg-red-500 hover:text-white transition-all">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </div>
                         <div v-if="notifications.length === 0" class="p-8 text-center text-slate-400 text-xs">
-                             <i class="fas fa-check-circle text-emerald-400 text-lg mb-2"></i>
-                             <p v-text="isArabic ? 'لا توجد إشعارات جديدة' : 'No new notifications'"></p>
+                             <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-check-circle text-emerald-400 text-xl"></i>
+                             </div>
+                             <p class="font-bold">[[ isArabic ? 'لا توجد إشعارات جديدة' : 'All clear!' ]]</p>
+                             <p class="text-[10px] mt-1 uppercase tracking-widest opacity-60">You're up to date</p>
                         </div>
                     <div class="p-3 text-center border-t border-slate-100 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors text-xs font-bold text-blue-600">
                         <span v-text="isArabic ? 'عرض كل الإشعارات' : 'View All Notifications'"></span>

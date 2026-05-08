@@ -1,4 +1,4 @@
-﻿import { utils } from './modules/utils.js';
+import { utils } from './modules/utils.js';
 import { inventoryModule } from './modules/inventory.js';
 import { orgModule } from './modules/org_builder.js';
 import { itemMasterModule } from './modules/itemMaster.js';
@@ -86,6 +86,7 @@ createApp({
             isEditing: false,
             isAdvancedMode: false,
             notifications: [],
+            posOrdersState: {}, // { orderId: status },
 
             confirmModal: {
                 show: false,
@@ -610,12 +611,16 @@ createApp({
 
     watch: {
         activeOpcoId(newId) {
-            if (newId) this.syncGlobalConfig(newId);
+            if (newId) {
+                this.syncGlobalConfig(newId);
+                if (this.view === 'restaurant_pos_module') this.checkActivePOSSession();
+            }
         },
         view(newView) {
             if (newView === 'users') this.fetchCompanyUsers();
             if (newView === 'org_builder') this.fetchAll();
             if (newView === 'global_config' && this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
+            if (newView === 'restaurant_pos_module') this.checkActivePOSSession();
         }
     },
 
@@ -645,6 +650,9 @@ createApp({
             }
             if (this.view === 'users') {
                 this.fetchCompanyUsers();
+            }
+            if (this.view === 'restaurant_pos_module') {
+                this.checkPOSStatusUpdates();
             }
         }, 3000);
 
@@ -1337,18 +1345,64 @@ createApp({
 
         async checkActivePOSSession() {
             try {
-                const res = await fetch('/api/pos/orders/?active_session=true&opco=' + this.activeOpcoId);
-                // I'll need to update the ViewSet to handle this query param
+                const res = await fetch('/api/pos/orders/active_session/?opco=' + this.activeOpcoId);
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.length > 0) {
-                        this.activePOSSession = data[0];
+                    if (data && data.id) {
+                        this.activePOSSession = data;
+                    } else {
+                        this.activePOSSession = null;
                     }
                 }
             } catch (e) { console.error("Session Check Error", e); }
         },
 
         async startPOSSession() {
+            if (!this.posActiveCashierId) {
+                this.showToast(this.isArabic ? "برجاء اختيار الكاشير" : "Please select a cashier", "warning");
+                return;
+            }
+
+            // --- Password Verification Logic ---
+            const selectedUser = this.companyUsers.find(u => u.id === this.posActiveCashierId) || (this.posActiveCashierId === 'OWNER' ? { user_details: { email: this.user.email } } : null);
+            
+            const { value: password } = await Swal.fire({
+                title: this.isArabic ? 'التحقق من الهوية' : 'Security Check',
+                input: 'password',
+                inputLabel: (this.isArabic ? 'كلمة المرور لـ ' : 'Password for ') + (selectedUser?.user_details.email || selectedUser?.user_details.username || 'Admin'),
+                inputPlaceholder: '********',
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'تأكيد' : 'Verify'
+            });
+
+            if (!password) return;
+
+            try {
+                this.loading = true;
+                const verifyRes = await fetch('/api/company-users/verify_password/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        user_id: this.posActiveCashierId,
+                        password: password
+                    })
+                });
+
+                if (!verifyRes.ok) {
+                    this.showToast(this.isArabic ? "كلمة المرور غير صحيحة" : "Invalid Password", "error");
+                    return;
+                }
+            } catch (e) {
+                this.showToast("Connection Error", "error");
+                return;
+            } finally {
+                this.loading = false;
+            }
+            // --- End Password Verification ---
+
             let lastBalance = 0;
             try {
                 const res = await fetch(`/api/pos/orders/last_session_balance/?opco=${this.activeOpcoId}`);
@@ -1361,7 +1415,6 @@ createApp({
             const { value: openingBalance } = await Swal.fire({
                 title: this.isArabic ? 'فتح وردية جديدة' : 'Open New Shift',
                 input: 'number',
-                inputAttributes: { step: '0.01' },
                 inputLabel: this.isArabic ? 'رصيد بداية الدرج (Cash Start)' : 'Opening Cash Balance',
                 inputValue: lastBalance,
                 showCancelButton: true,
@@ -1381,7 +1434,7 @@ createApp({
                     },
                     body: JSON.stringify({
                         opco: this.activeOpcoId,
-                        cashier_name: this.companyUsers.find(u => u.id === this.posActiveCashierId)?.user_details.email || this.user.name || 'Admin',
+                        cashier_name: this.companyUsers.find(u => u.id === this.posActiveCashierId)?.user_details.email || this.user.email || 'Admin',
                         opening_balance: openingBalance
                     })
                 });
@@ -3525,6 +3578,50 @@ createApp({
             if (!isoString) return '--:--';
             const date = new Date(isoString);
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        },
+
+        handleNotificationAction(action, idx) {
+            if (action === 'delete' || action === 'done') {
+                this.notifications.splice(idx, 1);
+            } else if (action === 'postpone') {
+                const notif = this.notifications[idx];
+                this.notifications.splice(idx, 1);
+                // Re-add after 1 minute (simplified postpone)
+                setTimeout(() => {
+                    this.notifications.push(notif);
+                    this.showToast(this.isArabic ? "تذكير: " + notif.title : "Reminder: " + notif.title, "info");
+                }, 60000);
+            }
+        },
+
+        async checkPOSStatusUpdates() {
+            try {
+                const res = await fetch(`/api/pos/orders/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    data.forEach(order => {
+                        const oldStatus = this.posOrdersState[order.id];
+                        if (oldStatus && oldStatus !== order.status) {
+                            // Status changed! Notify cashier
+                            let msg = this.isArabic ? 
+                                `تغيرت حالة الطلب ${order.order_ref} إلى ${order.status}` : 
+                                `Order ${order.order_ref} status changed to ${order.status}`;
+                            
+                            this.notifications.unshift({
+                                type: 'pos_ready',
+                                title: this.isArabic ? 'تحديث طلب' : 'Order Update',
+                                message: msg,
+                                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                            });
+
+                            if (order.status === 'done' || order.status === 'paid') {
+                                this.showToast(msg, "success");
+                            }
+                        }
+                        this.posOrdersState[order.id] = order.status;
+                    });
+                }
+            } catch (e) { console.error("POS Update Check Error", e); }
         }
     }
 }).mount('#app');
