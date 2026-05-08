@@ -394,10 +394,17 @@
 
             <div v-if="modalType === 'user'" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1" v-text="isArabic ? 'البريد الإلكتروني' : 'Email / Username'"></label>
-                    <input v-model="forms.user.email" type="email" class="w-full border p-3 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="user@example.com" required>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1" v-text="isArabic ? 'البريد الإلكتروني / اسم المستخدم' : 'Email / Username'"></label>
+                    <input v-model="forms.user.email" type="text" class="w-full border p-3 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="user@example.com" required>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1" v-text="isArabic ? 'كلمة المرور' : 'Password'"></label>
+                        <div class="relative">
+                            <input v-model="forms.user.password" type="password" class="w-full border p-3 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" :placeholder="forms.user.id ? '••••••••' : 'Password'">
+                            <p v-if="forms.user.id" class="text-[9px] text-slate-400 mt-1 italic">[[ isArabic ? 'اتركها فارغة إذا كنت لا ترغب في تغييرها' : 'Leave blank to keep current password' ]]</p>
+                        </div>
+                    </div>
                     <div>
                         <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1" v-text="isArabic ? 'الدور / الصلاحية' : 'Role / Permissions'"></label>
                         <select v-model="forms.user.role" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" required>
@@ -408,17 +415,13 @@
                             <option value="warehouse">Warehouse</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1" v-text="isArabic ? 'الشركة' : 'OpCo'"></label>
-                        <select v-model="forms.user.company" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                            <option v-for="o in allOpcos" :key="o.id" :value="o.id" v-text="o.name"></option>
-                        </select>
-                    </div>
                 </div>
-                <p class="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg font-bold" v-if="!forms.user.id">
-                    <i class="fas fa-info-circle"></i>
-                    [[ isArabic ? 'سيتم إنشاء مستخدم جديد بكلمة مرور افتراضية: Admin@123' : 'A new user will be created with default password: Admin@123' ]]
-                </p>
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1" v-text="isArabic ? 'الشركة المرتبطة' : 'Assigned OpCo'"></label>
+                    <select v-model="forms.user.company" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <option v-for="o in allOpcos" :key="o.id" :value="o.id" v-text="o.name"></option>
+                    </select>
+                </div>
             </div>
 
             <button type="submit" @click.prevent="modalType === 'user' ? saveCompanyUser() : submitForm()" class="w-full bg-slate-900 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl mt-6 transition-all shadow-lg flex items-center justify-center gap-2">

@@ -236,13 +236,17 @@
             <h2 class="text-3xl font-black text-slate-800 mb-2">[[ isArabic ? 'نقطة البيع مغلقة' : 'POS is Locked' ]]</h2>
             <p class="text-slate-500 font-bold mb-8">[[ isArabic ? 'برجاء فتح وردية جديدة لبدء استقبال الطلبات' : 'Please start a new session to begin taking orders' ]]</p>
             
-            <div class="bg-slate-50 rounded-2xl p-4 mb-8 border border-slate-100 flex items-center gap-4 text-left">
-                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                    <i class="fas fa-user-shield"></i>
-                </div>
-                <div>
-                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Active Cashier</p>
-                    <p class="font-bold text-slate-700">[[ user.name || 'Administrator' ]]</p>
+            <div class="bg-slate-50 rounded-2xl p-4 mb-8 border border-slate-100 text-left">
+                <label class="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2 px-1">[[ isArabic ? 'اختر الكاشير' : 'Select Active Cashier' ]]</label>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-lg">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="flex-1">
+                        <select v-model="posActiveCashierId" class="w-full bg-transparent border-none font-bold text-slate-700 focus:ring-0 outline-none text-lg">
+                            <option v-for="c in companyUsers.filter(u => u.role === 'cashier')" :key="c.id" :value="c.id">[[ c.user_details.email || c.user_details.username ]]</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 

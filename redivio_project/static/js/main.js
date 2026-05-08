@@ -59,6 +59,7 @@ createApp({
             posOrderType: 'DINE_IN',
             posTableNumber: '',
             posGuestCount: 1,
+            posActiveCashierId: null,
             posSessionsHistory: [],
             selectedSession: null,
             posOrdersHistory: [],
@@ -257,7 +258,7 @@ createApp({
                     method: 'CASH',
                     reference: ''
                 },
-                user: { id: null, email: '', role: 'cashier', company: null }
+                user: { id: null, email: '', role: 'cashier', company: null, password: '' }
             }
         };
     },
@@ -1375,7 +1376,7 @@ createApp({
                     },
                     body: JSON.stringify({
                         opco: this.activeOpcoId,
-                        cashier_name: this.user.name || 'Admin',
+                        cashier_name: this.companyUsers.find(u => u.id === this.posActiveCashierId)?.user_details.email || this.user.name || 'Admin',
                         opening_balance: openingBalance
                     })
                 });
@@ -3483,13 +3484,15 @@ createApp({
                     body: JSON.stringify({
                         email: this.forms.user.email,
                         role: this.forms.user.role,
-                        company: this.forms.user.company || this.activeOpcoId
+                        company: this.forms.user.company || this.activeOpcoId,
+                        password: this.forms.user.password
                     })
                 });
 
                 if (res.ok) {
                     this.showToast(this.isArabic ? "تم حفظ المستخدم" : "User saved successfully", "success");
                     this.showModal = false;
+                    this.forms.user.password = '';
                     await this.fetchCompanyUsers();
                 } else {
                     const err = await res.json();
