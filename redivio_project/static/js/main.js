@@ -461,19 +461,33 @@ createApp({
 
         localizedViewName() {
             const views = {
-                'dashboard': { ar: 'لوحة التحكم', en: 'Dashboard' },
-                'org_builder': { ar: 'هيكلة المنظمة', en: 'Org Builder' },
-                'inventory_module': { ar: 'RIMS (المخزون)', en: 'RIMS (Inventory)' },
-                'procurement_module': { ar: 'RPMS (المشتريات)', en: 'RPMS (Procurement)' },
-                'sales_module': { ar: 'إدارة المبيعات', en: 'Sales & CRM' },
+                'dashboard': { ar: 'لوحة التحكم المركزية', en: 'Command Center' },
+                'org_builder': { ar: 'بناء الهيكل التنظيمي', en: 'Organization Builder' },
+                'inventory_module': { ar: 'RIMS (المخزون والعمليات)', en: 'RIMS (Inventory)' },
+                'procurement_module': { ar: 'RPMS (المشتريات والموردين)', en: 'RPMS (Procurement)' },
+                'sales_module': { ar: 'إدارة المبيعات والعملاء', en: 'Sales & CRM' },
                 'accounting_module': { ar: 'المحاسبة والمالية', en: 'Accounting' },
-                'global_config': { ar: 'إعدادات النظام', en: 'Global Settings' },
-                'users': { ar: 'إدارة المستخدمين', en: 'User Management' },
-                'item_master': { ar: 'سجل الأصناف', en: 'Item Master' },
+                'restaurant_pos_module': { ar: 'نقطة بيع المطاعم', en: 'Restaurant POS' },
+                'global_config': { ar: 'إعدادات النظام الرئيسية', en: 'Enterprise Settings' },
+                'users': { ar: 'إدارة طاقم العمل', en: 'Staff Management' },
+                'item_master': { ar: 'سجل الأصناف الرئيسي', en: 'Global Item Master' },
                 'vendors_list': { ar: 'سجل الموردين', en: 'Vendors' },
                 'vendor_ledger': { ar: 'كشف حساب مورد', en: 'Vendor Ledger' }
             };
             const current = views[this.view] || { ar: this.view, en: this.view };
+            return this.isArabic ? current.ar : current.en;
+        },
+
+        localizedViewDescription() {
+            const descs = {
+                'dashboard': { ar: 'نظرة عامة على أداء كافة الشركات والفروع', en: 'High-level overview of multi-company performance' },
+                'org_builder': { ar: 'تصميم الهيكل الهرمي للشركات والمصانع والمستودعات', en: 'Design corporate hierarchy: Holdings, OpCos, Plants, and Bins' },
+                'global_config': { ar: 'تكوين الهوية القانونية والضريبية للمنشأة', en: 'Configure legal identity, tax information, and corporate logo' },
+                'users': { ar: 'التحكم في حسابات الموظفين وصلاحيات الوصول للنظام', en: 'Control employee accounts, roles, and system access levels' },
+                'inventory_module': { ar: 'إدارة المخزون، التحويلات، وتتبع الأرصدة', en: 'Manage stock levels, transfers, and warehouse movements' },
+                'restaurant_pos_module': { ar: 'إدارة الطلبات، المطبخ، والتقارير المالية للمطعم', en: 'Manage orders, kitchen display (KDS), and POS analytics' }
+            };
+            const current = descs[this.view] || { ar: '', en: '' };
             return this.isArabic ? current.ar : current.en;
         },
 
