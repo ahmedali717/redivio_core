@@ -216,7 +216,9 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         from django.utils import timezone
         
         today = timezone.now().date()
-        orders = POSOrder.objects.filter(opco_id=opco_id, status='paid')
+        # Inclusion of all successful statuses to prevent sales disappearing from analytics
+        valid_statuses = ['paid', 'inprogress', 'done']
+        orders = POSOrder.objects.filter(opco_id=opco_id, status__in=valid_statuses)
         
         if date_from:
             orders = orders.filter(created_at__date__gte=date_from)
@@ -360,7 +362,8 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         
         from .models import POSOrder
         from django.db.models import Sum
-        orders = POSOrder.objects.filter(session=session, status='paid')
+        valid_statuses = ['paid', 'inprogress', 'done']
+        orders = POSOrder.objects.filter(session=session, status__in=valid_statuses)
         total_sales = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         cash_sales = orders.filter(payment_method='cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         instapay_sales = orders.filter(payment_method='instapay').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
@@ -388,7 +391,8 @@ class POSOrderViewSet(viewsets.ModelViewSet):
 
         from .models import POSOrder
         from django.db.models import Sum
-        orders = POSOrder.objects.filter(session=session, status='paid')
+        valid_statuses = ['paid', 'inprogress', 'done']
+        orders = POSOrder.objects.filter(session=session, status__in=valid_statuses)
         cash_sales = orders.filter(payment_method='cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         total_sales = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         
