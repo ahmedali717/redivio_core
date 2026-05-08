@@ -611,6 +611,11 @@ createApp({
     watch: {
         activeOpcoId(newId) {
             if (newId) this.syncGlobalConfig(newId);
+        },
+        view(newView) {
+            if (newView === 'users') this.fetchCompanyUsers();
+            if (newView === 'org_builder') this.fetchAll();
+            if (newView === 'global_config' && this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
         }
     },
 
@@ -2958,7 +2963,8 @@ createApp({
                     this.fetchPurchaseOrders(),
                     this.fetchInventoryMoves(),
                     this.fetchCustomers(),
-                    this.fetchVendors()
+                    this.fetchVendors(),
+                    this.fetchCompanyUsers()
                 ]);
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {
