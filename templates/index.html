@@ -210,7 +210,7 @@
                                 <i class="fas fa-image text-blue-600"></i>
                                 [[ isArabic ? 'شعار النظام' : 'Corporate Logo' ]]
                             </h3>
-                            <div @click=\"$refs.logoInput.click()\" class="w-32 h-32 bg-slate-50 rounded-2xl mx-auto flex items-center justify-center text-slate-300 border-2 border-dashed border-slate-200 hover:border-blue-300 transition-all cursor-pointer overflow-hidden group relative">
+                            <div @click="$refs.logoInput.click()" class="w-32 h-32 bg-slate-50 rounded-2xl mx-auto flex items-center justify-center text-slate-300 border-2 border-dashed border-slate-200 hover:border-blue-300 transition-all cursor-pointer overflow-hidden group relative">
                                 <img v-if="config.logo" :src="fixImagePath(config.logo)" class="w-full h-full object-cover">
                                 <i v-else class="fas fa-building text-3xl group-hover:scale-110 transition-transform"></i>
                                 <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
@@ -236,7 +236,7 @@
                                         </span>
                                     </div>
                                     <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden border border-white/5">
-                                        <div class="h-full transition-all duration-1000" :class="(materials || []).length >= 50 ? 'bg-red-500' : 'bg-blue-500'\" :style=\"{ width: Math.min(((materials || []).length / 50 * 100), 100) + '%' }\"></div>
+                                        <div class="h-full transition-all duration-1000" :class="(materials || []).length >= 50 ? 'bg-red-500' : 'bg-blue-500'" :style="{ width: Math.min(((materials || []).length / 50 * 100), 100) + '%' }"></div>
                                     </div>
                                 </div>
                                 <div>
@@ -247,7 +247,7 @@
                                         </span>
                                     </div>
                                     <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden border border-white/5">
-                                        <div class="h-full transition-all duration-1000" :class="licenseStatus.daysRemaining <= 3 ? 'bg-red-500' : 'bg-emerald-500'\" :style=\"{ width: Math.max((licenseStatus.daysRemaining / 15 * 100), 0) + '%' }\"></div>
+                                        <div class="h-full transition-all duration-1000" :class="licenseStatus.daysRemaining <= 3 ? 'bg-red-500' : 'bg-emerald-500'" :style="{ width: Math.max((licenseStatus.daysRemaining / 15 * 100), 0) + '%' }"></div>
                                     </div>
                                 </div>
                                 <div class="bg-white/5 rounded-2xl p-3 border border-white/10">
@@ -314,10 +314,10 @@
                                     </td>
                                     <td class="px-6 py-4 text-left">
                                         <div class="flex items-center justify-end gap-2">
-                                            <button @click="forms.user = {...u, email: u.user_details.email || u.user_details.username}; showModal = true; modalType = 'user'\" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                                            <button @click="forms.user = {...u, email: u.user_details.email || u.user_details.username}; showModal = true; modalType = 'user'" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
                                                 <i class="fas fa-user-edit"></i>
                                             </button>
-                                            <button @click="deleteCompanyUser(u.id)\" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                                            <button @click="deleteCompanyUser(u.id)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>
@@ -368,7 +368,7 @@
             </div>
         </transition>
 
-        <div v-if=\"confirmModal.show\" class="fixed inset-0 z-[11000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+        <div v-if="confirmModal.show" class="fixed inset-0 z-[11000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
             <div class="bg-white rounded-[2.5rem] p-8 w-full max-w-sm mx-4 shadow-2xl border border-slate-100 transform animate-in zoom-in-95 duration-300">
                 <div class="flex flex-col items-center text-center">
                     <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-6 border-4 border-white shadow-sm">
@@ -377,8 +377,8 @@
                     <h3 class="text-xl font-bold text-slate-800 mb-2" v-text="isArabic ? 'تأكيد الحذف' : 'Confirm Delete'"></h3>
                     <p class="text-slate-500 text-sm leading-relaxed mb-8 px-4" v-text="isArabic ? 'هل أنت متأكد من حذف هذا العنصر؟ لن تتمكن من استعادة البيانات مرة أخرى.' : 'Are you sure you want to delete this item? Data cannot be recovered.'"></p>
                     <div class="flex gap-3 w-full">
-                        <button @click=\"confirmModal.onCancel()\" class="flex-1 px-6 py-3 rounded-2xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all" v-text="isArabic ? 'تراجع' : 'Cancel'"></button>
-                        <button @click=\"confirmModal.onConfirm()\" class="flex-1 px-6 py-3 rounded-2xl font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200 transition-all" v-text="isArabic ? 'حذف' : 'Delete'"></button>
+                        <button @click="confirmModal.onCancel()" class="flex-1 px-6 py-3 rounded-2xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all" v-text="isArabic ? 'تراجع' : 'Cancel'"></button>
+                        <button @click="confirmModal.onConfirm()" class="flex-1 px-6 py-3 rounded-2xl font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200 transition-all" v-text="isArabic ? 'حذف' : 'Delete'"></button>
                     </div>
                 </div>
             </div>
