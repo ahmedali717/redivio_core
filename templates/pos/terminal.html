@@ -132,19 +132,23 @@
 
         <!-- Cart Items Scroller -->
         <div class="flex-1 flex flex-col min-h-0 relative">
-            <!-- 🚀 Keypad Overlay (Toggleable) -->
-            <div v-if="posShowNumpad" class="absolute bottom-0 left-0 right-0 bg-white border-t-2 border-red-100 p-4 shadow-[0_-20px_50px_rgba(0,0,0,0.15)] rounded-t-[2.5rem] animate-in slide-in-from-bottom duration-300 z-[60]">
-                <div class="flex justify-between items-center mb-4 px-2">
-                    <span class="text-[10px] font-black text-red-600 uppercase tracking-[0.2em]">[[ isArabic ? 'تعديل الكمية السريع' : 'Quick Qty Keypad' ]]</span>
+            <!-- 🚀 Keypad Docked (Toggleable & Compact) -->
+            <div v-if="posShowNumpad" class="bg-white border-t border-slate-100 p-3 shadow-inner animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">[[ isArabic ? 'لوحة الأرقام السريعة' : 'Quick Keypad' ]]</span>
                     <button @click="posShowNumpad = false" class="text-slate-300 hover:text-red-500 transition-colors">
-                        <i class="fas fa-times-circle text-lg"></i>
+                        <i class="fas fa-chevron-down text-xs"></i>
                     </button>
                 </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <button v-for="n in [1,2,3,4,5,6,7,8,9]" :key="n" @click="handleNumpadInput(n)" class="py-4 bg-slate-50 hover:bg-slate-100 rounded-2xl font-black text-xl text-slate-700 transition-all active:scale-95 shadow-sm border border-slate-100">[[ n ]]</button>
-                    <button @click="handleNumpadInput('.')" class="py-4 bg-slate-50 hover:bg-slate-100 rounded-2xl font-black text-xl text-slate-700 transition-all active:scale-95 shadow-sm border border-slate-100">.</button>
-                    <button @click="handleNumpadInput(0)" class="py-4 bg-slate-50 hover:bg-slate-100 rounded-2xl font-black text-xl text-slate-700 transition-all active:scale-95 shadow-sm border border-slate-100">0</button>
-                    <button @click="handleNumpadInput('BS')" class="py-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl font-black text-xl transition-all active:scale-95 shadow-sm border border-red-100"><i class="fas fa-backspace"></i></button>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <button v-for="n in [1,2,3,4,5,6,7,8,9]" :key="n" @click="handleNumpadInput(n)" class="py-2 bg-slate-50 hover:bg-slate-100 rounded-lg font-black text-lg text-slate-700 transition-all active:scale-95 shadow-sm border border-slate-100">[[ n ]]</button>
+                    <button @click="handleNumpadInput('.')" class="py-2 bg-slate-50 hover:bg-slate-100 rounded-lg font-black text-lg text-slate-700 transition-all active:scale-95 shadow-sm border border-slate-100">.</button>
+                    <button @click="handleNumpadInput(0)" class="py-2 bg-slate-50 hover:bg-slate-100 rounded-lg font-black text-lg text-slate-700 transition-all active:scale-95 shadow-sm border border-slate-100">0</button>
+                    <button @click="handleNumpadInput('BS')" class="py-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg font-black text-lg transition-all active:scale-95 shadow-sm border border-amber-100"><i class="fas fa-backspace"></i></button>
+                    <button @click="posShowNumpad = false" class="col-span-2 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-black text-xs uppercase tracking-widest shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                         <i class="fas fa-check-circle"></i>
+                         <span>[[ isArabic ? 'تأكيد' : 'Confirm' ]]</span>
+                    </button>
                 </div>
             </div>
 
