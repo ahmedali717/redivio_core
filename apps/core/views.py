@@ -437,6 +437,7 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         email = request.data.get('email')
         role = request.data.get('role', 'cashier')
+        password = request.data.get('password')
         company_id = request.data.get('company') or request.session.get('active_opco_id')
         
         if not email or not company_id:
@@ -446,9 +447,13 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
             username=email,
             defaults={'email': email, 'is_staff': True}
         )
-        if created:
+        # تعيين كلمة المرور سواء كان مستخدم جديد أو تحديث لكلمة المرور
+        if password:
+            user.set_password(password)
+        elif created:
             user.set_password('Admin@123')
-            user.save()
+        
+        user.save()
             
         company_user, cu_created = CompanyUser.objects.get_or_create(
             user=user,
@@ -462,3 +467,30 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
             
         serializer = self.get_serializer(company_user)
         return Response(serializer.data, status=201)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        email = request.data.get('email')
+        role = request.data.get('role')
+        password = request.data.get('password')
+        company_id = request.data.get('company')
+
+        if email:
+            user = instance.user
+            user.username = email
+            user.email = email
+            if password:
+                user.set_password(password)
+            user.save()
+
+        if role:
+            instance.role = role
+        if company_id:
+            instance.company_id = company_id
+        
+        instance.save()
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
