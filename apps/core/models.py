@@ -137,6 +137,14 @@ class TenantBaseModel(models.Model):
 class CompanyUser(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="company_assignments")
     company = models.ForeignKey(OpCo, on_delete=models.CASCADE)
+    ROLE_CHOICES = [
+        ('admin', 'Admin (كل الصلاحيات)'),
+        ('cashier', 'Cashier (الكاشير)'),
+        ('kitchen', 'Kitchen (المطبخ)'),
+        ('warehouse', 'Warehouse (المخازن والتكاليف)'),
+        ('manager', 'Manager (الإدارة والتقارير)'),
+    ]
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='admin')
     is_active_session = models.BooleanField(default=False)
 
     class Meta:

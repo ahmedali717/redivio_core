@@ -152,6 +152,13 @@ class CheckAuthAPI(APIView):
             } for op in user_all_opcos.order_by('-is_holding', 'name')
         ]
 
+        # Get role for current active company
+        current_role = 'admin' if request.user.is_superuser else 'manager'
+        from apps.core.models import CompanyUser
+        company_user = CompanyUser.objects.filter(user=request.user, company=user_opco).first()
+        if company_user:
+            current_role = company_user.role
+
         return Response({
             "authenticated": True,
             "user": request.user.username,
@@ -162,7 +169,7 @@ class CheckAuthAPI(APIView):
             "days_remaining": days_remaining,
             "header_opcos": header_opcos,
             "is_superuser": request.user.is_superuser,
-            "role": 'Admin' if request.user.is_superuser else 'Manager',
+            "role": current_role,
             "system_mode": holding_opco.system_mode if holding_opco else 'modular',
             "purchased_modules": holding_opco.purchased_modules if holding_opco else []
         })

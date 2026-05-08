@@ -25,7 +25,7 @@
 
             <div class="p-2 space-y-1">
                 <!-- Dashboard / Command Center (Only in Modular Mode) -->
-                <button v-if="systemMode !== 'standalone'" @click="view = 'dashboard'; showBrandDropdown = false"
+                <button v-if="systemMode !== 'standalone' && canAccess('dashboard')" @click="view = 'dashboard'; showBrandDropdown = false"
                     class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-blue-600 text-slate-400 hover:text-white text-left transition-all group/item">
                     <i
                         class="fas fa-chart-pie w-5 text-center text-blue-500 group-hover/item:text-white transition-colors"></i>
@@ -35,7 +35,7 @@
 
                 <!-- Dynamic Purchased Modules -->
                 <template v-for="mod in sidebarGroups.operations.filter(m => m.id !== 'org_builder')" :key="mod.id">
-                    <button
+                    <button v-if="canAccess(mod.id)"
                         @click="view = mod.id; showBrandDropdown = false; if(mod.id === 'inventory_module') inventoryTab = 'levels';"
                         class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white text-left transition-all group/item">
 
@@ -78,7 +78,7 @@
                 <hr v-show="sidebarCollapsed" class="border-amber-800">
             </div>
 
-            <a href="#" @click.prevent="inventoryTab = 'levels'"
+            <a href="#" v-if="canAccess('inventory_module')" @click.prevent="inventoryTab = 'levels'"
                 :class="inventoryTab === 'levels' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <div class="w-6 h-6 flex items-center justify-center shrink-0">
@@ -89,7 +89,7 @@
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'الأرصدة' : 'Stock Levels'"></span>
             </a>
-            <a href="#" @click.prevent="inventoryTab = 'items'"
+            <a href="#" v-if="canAccess('inventory_module')" @click.prevent="inventoryTab = 'items'"
                 :class="inventoryTab === 'items' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-barcode w-6 text-center text-lg"></i>
@@ -139,14 +139,14 @@
                 <hr v-show="sidebarCollapsed" class="border-rose-800">
             </div>
 
-            <a href="#" @click.prevent="salesTab = 'dashboard'"
+            <a href="#" v-if="canAccess('sales_module')" @click.prevent="salesTab = 'dashboard'"
                 :class="salesTab === 'dashboard' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-chart-line w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'نظرة عامة' : 'Overview'"></span>
             </a>
-            <a href="#" @click.prevent="salesTab = 'orders'"
+            <a href="#" v-if="canAccess('sales_module')" @click.prevent="salesTab = 'orders'"
                 :class="salesTab === 'orders' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-file-invoice-dollar w-6 text-center text-lg"></i>
@@ -163,7 +163,7 @@
                 <hr v-show="sidebarCollapsed" class="border-amber-800">
             </div>
 
-            <a href="#" @click.prevent="accountingTab = 'dashboard'"
+            <a href="#" v-if="canAccess('accounting_module')" @click.prevent="accountingTab = 'dashboard'"
                 :class="accountingTab === 'dashboard' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-chart-line w-6 text-center text-lg"></i>
@@ -202,7 +202,7 @@
                 <hr v-show="sidebarCollapsed" class="border-emerald-800">
             </div>
 
-            <a href="#" @click.prevent="view = 'procurement_module'"
+            <a href="#" v-if="canAccess('procurement_module')" @click.prevent="view = 'procurement_module'"
                 :class="view === 'procurement_module' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <div class="w-6 h-6 flex items-center justify-center shrink-0">
@@ -235,7 +235,7 @@
                 <hr v-show="sidebarCollapsed" class="border-slate-800">
             </div>
 
-            <a href="#" @click.prevent="view = 'org_builder'"
+            <a href="#" v-if="canAccess('org_builder')" @click.prevent="view = 'org_builder'"
                 :class="view === 'org_builder' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-sitemap w-6 text-center text-lg"></i>
@@ -243,7 +243,7 @@
                     v-text="isArabic ? 'هيكلة المنظمة' : 'Org Builder'"></span>
             </a>
 
-            <a href="#" @click.prevent="view = 'global_config'"
+            <a href="#" v-if="canAccess('global_config')" @click.prevent="view = 'global_config'"
                 :class="view === 'global_config' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-cogs w-6 text-center text-lg"></i>
@@ -251,7 +251,7 @@
                     v-text="isArabic ? 'إعدادات النظام' : 'Global Settings'"></span>
             </a>
 
-            <a href="#" @click.prevent="view = 'users'"
+            <a href="#" v-if="canAccess('users')" @click.prevent="view = 'users'"
                 :class="view === 'users' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-users w-6 text-center text-lg"></i>
@@ -267,7 +267,7 @@
                 <hr v-show="sidebarCollapsed" class="border-red-800">
             </div>
 
-            <a href="#" @click.prevent="posTab = 'dashboard'; fetchPOSDashboard()"
+            <a href="#" v-if="canAccess('pos_dashboard')" @click.prevent="posTab = 'dashboard'; fetchPOSDashboard()"
                 :class="posTab === 'dashboard' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-chart-line w-6 text-center text-lg"></i>
@@ -275,7 +275,7 @@
                     v-text="isArabic ? 'لوحة تحكم المطعم' : 'Restaurant Dashboard'"></span>
             </a>
 
-            <a href="#" @click.prevent="posTab = 'cashier'"
+            <a href="#" v-if="canAccess('pos_cashier')" @click.prevent="posTab = 'cashier'"
                 :class="posTab === 'cashier' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-cash-register w-6 text-center text-lg"></i>
@@ -283,7 +283,7 @@
                     v-text="isArabic ? 'كاشير المطعم' : 'POS Terminal'"></span>
             </a>
 
-            <a href="#" @click.prevent="posTab = 'direct_move'"
+            <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="posTab = 'direct_move'"
                 :class="posTab === 'direct_move' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-exchange-alt w-6 text-center text-lg"></i>
@@ -291,7 +291,7 @@
                     v-text="isArabic ? 'حركات مخزنية مباشرة' : 'Direct Stock Move'"></span>
             </a>
 
-            <a href="#" @click.prevent="posTab = 'recipes'"
+            <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="posTab = 'recipes'"
                 :class="posTab === 'recipes' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-layer-group w-6 text-center text-lg"></i>
@@ -299,7 +299,7 @@
                     v-text="isArabic ? 'هندسة المكونات (BOM)' : 'Recipes & BOM'"></span>
             </a>
             
-            <a href="#" @click.prevent="posTab = 'kitchen'"
+            <a href="#" v-if="canAccess('pos_kitchen')" @click.prevent="posTab = 'kitchen'"
                 :class="posTab === 'kitchen' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-fire-burner w-6 text-center text-lg"></i>
@@ -307,7 +307,7 @@
                     v-text="isArabic ? 'شاشة المطبخ KDS' : 'Kitchen Display'"></span>
             </a>
             
-            <a href="#" @click.prevent="posTab = 'orders'; selectedSession = null; fetchSessionsHistory()"
+            <a href="#" v-if="canAccess('pos_history')" @click.prevent="posTab = 'orders'; selectedSession = null; fetchSessionsHistory()"
                 :class="posTab === 'orders' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-slate-400 hover:bg-slate-800'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group overflow-hidden">
                 <i class="fas fa-receipt w-6 text-center text-lg"></i>

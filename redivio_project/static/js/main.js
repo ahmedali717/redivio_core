@@ -619,7 +619,7 @@ createApp({
             if (this.view === 'restaurant_pos_module' && this.posTab === 'kitchen') {
                 this.fetchKDSOrders();
             }
-        }, 10000); // كل 10 ثواني
+        }, 3000); // كل 10 ثواني
 
         // Core Init
         this.checkAuth();
@@ -2322,7 +2322,7 @@ createApp({
             if (!vendorName) return;
 
             // إنشاء كود مبدئي للمورد
-            const vendorCode = "V-" + Math.floor(Math.random() * 10000);
+            const vendorCode = "V-" + Math.floor(Math.random() * 3000);
 
             try {
                 this.loading = true;
@@ -3354,8 +3354,15 @@ createApp({
                 if (res.ok) {
                     const data = await res.json();
                     if (data.length > this.kdsOrders.length) {
+                        // Notify kitchen of new orders
+                        const newOrdersCount = data.length - this.kdsOrders.length;
+                        this.showToast(this.isArabic ? `وصل ${newOrdersCount} طلب جديد للمطبخ!` : `${newOrdersCount} New Orders Received!`, "success");
+                        
                         const sound = this.$refs.notificationSound;
-                        if (sound) sound.play().catch(e => console.log("Sound blocked"));
+                        if (sound) {
+                            sound.currentTime = 0;
+                            sound.play().catch(e => console.log("Sound blocked"));
+                        }
                     }
                     this.kdsOrders = data;
                 }
@@ -3403,6 +3410,35 @@ createApp({
             const mins = Math.floor(diff / 60);
             const secs = diff % 60;
             return `${mins}m ${secs}s`;
+        },
+
+        canAccess(module) {
+            const role = (this.user.role || '').toLowerCase();
+            if (role === 'admin' || this.user.is_superuser) return true;
+            
+            // Mapping roles to permissions
+            const permissions = {
+                'dashboard': ['manager', 'admin'],
+                'inventory_module': ['warehouse', 'manager', 'admin'],
+                'procurement_module': ['warehouse', 'manager', 'admin'],
+                'sales_module': ['manager', 'admin'],
+                'accounting_module': ['manager', 'admin'],
+                'users': ['admin'],
+                'global_config': ['admin'],
+                'org_builder': ['admin'],
+                
+                // Restaurant POS Internal Tabs
+                'pos_cashier': ['cashier', 'manager', 'admin'],
+                'pos_kitchen': ['kitchen', 'manager', 'admin'],
+                'pos_dashboard': ['manager', 'admin'],
+                'pos_recipes': ['warehouse', 'manager', 'admin'],
+                'pos_history': ['manager', 'admin']
+            };
+
+            if (permissions[module]) {
+                return permissions[module].includes(role);
+            }
+            return true; // Default Allow
         },
 
         formatTime(isoString) {
