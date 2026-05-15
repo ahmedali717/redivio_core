@@ -55,6 +55,13 @@ def chat_api(request):
             response = active_model.generate_content(prompt)
             return JsonResponse({'reply': response.text})
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            try:
+                # If we get an error, let's list the available models to debug!
+                available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+                error_msg = f"{str(e)}\n\nAvailable Models for your Key:\n" + "\n".join(available)
+            except Exception as inner_e:
+                error_msg = f"{str(e)} (Could not fetch models: {str(inner_e)})"
+            
+            return JsonResponse({'error': error_msg}, status=500)
             
     return JsonResponse({'error': 'Invalid request method'}, status=400)
