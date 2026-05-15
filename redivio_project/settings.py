@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "apps.procurement",
     "apps.sales",
     "apps.restaurant_pos",
+    "apps.ai_assistant",
 ]
 
 # =========================================================
