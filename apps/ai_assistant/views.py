@@ -1,17 +1,18 @@
 import json
 import os
-import google.generativeai as genai
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-# Get API key from environment variable or settings
-# For now we will allow it to be configured via .env
-GEMINI_API_KEY = "AIzaSyBV38tN7w4YxJPQq6ZWqjOSZ1jKxhNuvjY"
-
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash') # Using the fast model
-else:
+try:
+    import google.generativeai as genai
+    GEMINI_API_KEY = "AIzaSyBV38tN7w4YxJPQq6ZWqjOSZ1jKxhNuvjY"
+    if GEMINI_API_KEY:
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+    else:
+        model = None
+except ImportError:
+    genai = None
     model = None
 
 @csrf_exempt
