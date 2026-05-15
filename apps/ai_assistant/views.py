@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 try:
     import google.generativeai as genai
-    GEMINI_API_KEY = "AIzaSyBV38tN7w4YxJPQq6ZWqjOSZ1jKxhNuvjY"
+    GEMINI_API_KEY = "AIzaSyDnoSEOXEWbd58hFsQ2lJYhm5bmMFr5c6I"
     if GEMINI_API_KEY:
         genai.configure(api_key=GEMINI_API_KEY)
         # It's better to instantiate the model dynamically inside the view to avoid API calls on server startup, 
