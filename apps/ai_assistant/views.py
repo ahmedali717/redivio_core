@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 # Get API key from environment variable or settings
 # For now we will allow it to be configured via .env
-GEMINI_API_KEY = os.environ.get("AIzaSyBV38tN7w4YxJPQq6ZWqjOSZ1jKxhNuvjY", "")
+GEMINI_API_KEY = "AIzaSyBV38tN7w4YxJPQq6ZWqjOSZ1jKxhNuvjY"
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
