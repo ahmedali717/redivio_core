@@ -8,21 +8,17 @@ try:
     GEMINI_API_KEY = "AIzaSyBV38tN7w4YxJPQq6ZWqjOSZ1jKxhNuvjY"
     if GEMINI_API_KEY:
         genai.configure(api_key=GEMINI_API_KEY)
-        
-        # Dynamically pick the first available model that supports generation
-        available_model = 'gemini-1.5-flash'
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                if 'flash' in m.name or 'pro' in m.name:
-                    available_model = m.name
-                    break
-        
-        model = genai.GenerativeModel(available_model)
+        # It's better to instantiate the model dynamically inside the view to avoid API calls on server startup, 
+        # but generative model initialization is safe. We use gemini-1.5-flash as the default since it's the standard.
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        genai_installed = True
     else:
         model = None
+        genai_installed = False
 except ImportError:
     genai = None
     model = None
+    genai_installed = False
 
 @csrf_exempt
 def chat_api(request):
