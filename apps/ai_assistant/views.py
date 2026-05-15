@@ -30,6 +30,19 @@ def chat_api(request):
             data = json.loads(request.body)
             user_message = data.get('message', '')
             
+            # Dynamically select model to avoid 404 errors with different API keys
+            model_name = 'gemini-1.5-flash'
+            try:
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        if 'flash' in m.name or 'pro' in m.name:
+                            model_name = m.name
+                            break
+            except Exception as e:
+                pass # fallback to default if listing fails
+                
+            active_model = genai.GenerativeModel(model_name)
+            
             # Here we can add system context or tools later
             prompt = f"""
             أنت مساعد ذكي مدمج في نظام ERP (Redivio). 
@@ -39,7 +52,7 @@ def chat_api(request):
             {user_message}
             """
             
-            response = model.generate_content(prompt)
+            response = active_model.generate_content(prompt)
             return JsonResponse({'reply': response.text})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
