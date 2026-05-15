@@ -19,7 +19,7 @@ except ImportError:
 def chat_api(request):
     if request.method == 'POST':
         if not model:
-            return JsonResponse({'error': 'Gemini API Key is not configured. Please add GEMINI_API_KEY to your environment variables.'}, status=500)
+            return JsonResponse({'error': 'مكتبة google-generativeai غير مسطبة على السيرفر، أو الـ API Key مفقود.'}, status=500)
             
         try:
             data = json.loads(request.body)
