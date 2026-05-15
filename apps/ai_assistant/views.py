@@ -8,8 +8,16 @@ try:
     GEMINI_API_KEY = "AIzaSyBV38tN7w4YxJPQq6ZWqjOSZ1jKxhNuvjY"
     if GEMINI_API_KEY:
         genai.configure(api_key=GEMINI_API_KEY)
-        # Using gemini-pro as it's universally supported on all API keys
-        model = genai.GenerativeModel('gemini-pro')
+        
+        # Dynamically pick the first available model that supports generation
+        available_model = 'gemini-1.5-flash'
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                if 'flash' in m.name or 'pro' in m.name:
+                    available_model = m.name
+                    break
+        
+        model = genai.GenerativeModel(available_model)
     else:
         model = None
 except ImportError:
