@@ -8,7 +8,8 @@ try:
     GEMINI_API_KEY = "AIzaSyBV38tN7w4YxJPQq6ZWqjOSZ1jKxhNuvjY"
     if GEMINI_API_KEY:
         genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Using gemini-pro as it's universally supported on all API keys
+        model = genai.GenerativeModel('gemini-pro')
     else:
         model = None
 except ImportError:
