@@ -27,6 +27,7 @@ class PlantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Plant
         fields = '__all__'
+        validators = []
 
     def validate(self, attrs):
         code = attrs.get('code', getattr(self.instance, 'code', None))
@@ -41,20 +42,20 @@ class PlantSerializer(serializers.ModelSerializer):
             qs = Plant.objects.filter(opco=opco, code=code)
             if self.instance:
                 qs = qs.exclude(pk=self.instance.pk)
-            if qs.exists():
-                raise serializers.ValidationError({
-                    "code": "الكود مكرر على مستوى هذه الشركة." if is_arabic else "Plant code must be unique per company."
-                })
+            existing = qs.first()
+            if existing:
+                msg = f"الكود مكرر ومستخدم بالفعل مع المنشأة: ({existing.name})" if is_arabic else f"Code is already used by plant: {existing.name}"
+                raise serializers.ValidationError({"code": msg})
 
         # Check unique constraint for name per opco
         if name and opco:
             qs = Plant.objects.filter(opco=opco, name=name)
             if self.instance:
                 qs = qs.exclude(pk=self.instance.pk)
-            if qs.exists():
-                raise serializers.ValidationError({
-                    "name": "الاسم مكرر على مستوى هذه الشركة." if is_arabic else "Plant name must be unique per company."
-                })
+            existing = qs.first()
+            if existing:
+                msg = f"الاسم مكرر، توجد منشأة بنفس الاسم تم إنشاؤها مسبقاً بكود: ({existing.code})" if is_arabic else f"Name is already used by plant with code: {existing.code}"
+                raise serializers.ValidationError({"name": msg})
 
         return attrs
 

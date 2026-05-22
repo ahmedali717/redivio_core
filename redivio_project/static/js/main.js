@@ -2960,8 +2960,19 @@ createApp({
                     await this.refreshAllData();
                     this.showToast(this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully", 'success');
                 } else {
-                    const errorResponse = await response.text();
-                    this.showToast(this.isArabic ? "فشل الحفظ: " + errorResponse : "Save failed: " + errorResponse, 'error');
+                    const errorText = await response.text();
+                    let errorMessage = errorText;
+                    try {
+                        const errJson = JSON.parse(errorText);
+                        const firstKey = Object.keys(errJson)[0];
+                        if (firstKey) {
+                            const val = errJson[firstKey];
+                            errorMessage = Array.isArray(val) ? val[0] : (typeof val === 'object' ? JSON.stringify(val) : val);
+                        }
+                    } catch (e) {
+                        // Keep text as is
+                    }
+                    this.showToast(this.isArabic ? "فشل الحفظ: " + errorMessage : "Save failed: " + errorMessage, 'error');
                 }
             } catch (error) {
                 console.error("Network Error:", error);
