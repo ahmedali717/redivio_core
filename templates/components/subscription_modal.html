@@ -234,6 +234,33 @@
                 </button>
             </div>
 
+            <!-- Billing Tips Alert Box -->
+            <div class="xl:col-span-4 bg-slate-900/60 border border-blue-500/20 rounded-3xl p-6 flex flex-col md:flex-row gap-6 items-start text-sm leading-relaxed backdrop-blur-md mt-4">
+                <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 shrink-0">
+                    <i class="fas fa-info-circle text-xl"></i>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full text-start" :class="isArabic ? 'text-right' : 'text-left'">
+                    <div>
+                        <h4 class="font-bold text-slate-200 mb-1.5 flex items-center gap-2">
+                            <i class="fas fa-bolt text-amber-400"></i>
+                            [[ isArabic ? 'ترقية الاشتراك الفورية' : 'Instant Plan Upgrades' ]]
+                        </h4>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            [[ isArabic ? 'تتم الترقية فوراً وتفتح لك كافة ميزات وحدود الخطة الجديدة مباشرة بمجرد تأكيد الدفع.' : 'Upgrades apply immediately, unlocking all new plan features and item capacity limits instantly.' ]]
+                        </p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-200 mb-1.5 flex items-center gap-2">
+                            <i class="fas fa-arrows-spin text-blue-400"></i>
+                            [[ isArabic ? 'تغيير أو تخفيض الخطة' : 'Downgrading & Changes' ]]
+                        </h4>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            [[ isArabic ? 'تخفيض الخطة يحافظ على بياناتك الحالية بالكامل، ولكن سيتم تقييد إمكانية إضافة أصناف جديدة إذا تجاوز عدد الأصناف الحالي حد الخطة الجديد.' : 'Downgrading preserves all existing items and setup, but blocks creating new items if the current count exceeds the new limits.' ]]
+                        </p>
+                    </div>
+                </div>
+            </div>
+
         </div>
         
         <!-- Footer -->

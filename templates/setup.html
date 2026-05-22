@@ -1,9 +1,9 @@
 {% extends "auth_base.html" %}
 
 {% block content %}
-<div class="w-full max-w-2xl relative z-10" x-data="setupWizard()">
+<div class="w-full max-w-2xl relative z-10" x-data="setupWizard()" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
     <div class="bg-slate-900/80 backdrop-blur-xl border border-slate-700 p-10 rounded-2xl shadow-2xl">
-        <h2 class="text-2xl font-bold text-white mb-6 tech-font">Finalize Configuration</h2>
+        <h2 class="text-2xl font-bold text-white mb-6 tech-font" x-text="lang === 'ar' ? 'التهيئة النهائية للإعدادات' : 'Finalize Configuration'"></h2>
         
         <div x-show="finalizing" class="text-center py-10">
             <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -12,33 +12,48 @@
 
         <div x-show="!finalizing">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
-                <p class="text-slate-400">Setting up environment for: <strong class="text-white" x-text="companyName"></strong></p>
+                <p class="text-slate-400">
+                    <span x-text="lang === 'ar' ? 'جاري إعداد البيئة للمنشأة: ' : 'Setting up environment for: '"></span>
+                    <strong class="text-white" x-text="companyName"></strong>
+                </p>
                 <div class="flex items-center gap-2">
-                    <span class="text-xs text-slate-400">Selected Plan:</span>
+                    <span class="text-xs text-slate-400" x-text="lang === 'ar' ? 'الخطة المختارة:' : 'Selected Plan:'"></span>
                     <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border bg-blue-500/10 text-blue-400 border-blue-500/20"
-                          x-text="plan"></span>
+                          x-text="lang === 'ar' ? getPlanNameAr(plan) : plan.toUpperCase()"></span>
                 </div>
             </div>
             
             <div class="space-y-4 mb-8">
                 <div>
-                    <label class="text-xs text-slate-400 block mb-1">Base Currency</label>
+                    <label class="text-xs text-slate-400 block mb-1" x-text="lang === 'ar' ? 'العملة الأساسية' : 'Base Currency'"></label>
                     <select x-model="currency" class="input-field">
-                        <option value="SAR">SAR - Saudi Riyal</option>
-                        <option value="USD">USD - US Dollar</option>
-                        <option value="EGP">EGP - Egyptian Pound</option>
+                        <option value="SAR" x-text="lang === 'ar' ? 'SAR - الريال السعودي' : 'SAR - Saudi Riyal'"></option>
+                        <option value="USD" x-text="lang === 'ar' ? 'USD - الدولار الأمريكي' : 'USD - US Dollar'"></option>
+                        <option value="EGP" x-text="lang === 'ar' ? 'EGP - الجنيه المصري' : 'EGP - Egyptian Pound'"></option>
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs text-slate-400 block mb-1">Fiscal Year Start</label>
+                    <label class="text-xs text-slate-400 block mb-1" x-text="lang === 'ar' ? 'بداية السنة المالية' : 'Fiscal Year Start'"></label>
                     <input type="date" x-model="fiscalYear" class="input-field" value="2025-01-01">
                 </div>
             </div>
 
-            <button @click="finish()" :disabled="loading" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg">
-                <span x-show="!loading">LAUNCH DASHBOARD <i class="fas fa-rocket ml-2"></i></span>
-                <span x-show="loading">INITIALIZING...</span>
+            <button @click="finish()" :disabled="loading" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg flex items-center justify-center gap-2">
+                <span x-show="!loading" class="flex items-center justify-center gap-2">
+                    <span x-text="lang === 'ar' ? 'تشغيل لوحة التحكم' : 'LAUNCH DASHBOARD'"></span>
+                    <i class="fas fa-rocket"></i>
+                </span>
+                <span x-show="loading" x-text="lang === 'ar' ? 'جاري التهيئة والتفعيل...' : 'INITIALIZING...'"></span>
             </button>
+
+            <!-- Plan Change Tip Box -->
+            <div class="mt-6 p-3.5 rounded-xl bg-blue-950/20 border border-blue-500/20 flex gap-3 items-start text-xs leading-relaxed" :class="lang === 'ar' ? 'text-right' : 'text-left'">
+                <i class="fas fa-circle-info text-blue-400 mt-0.5 text-sm"></i>
+                <div>
+                    <span class="font-bold text-slate-200 block mb-0.5" x-text="lang === 'ar' ? 'تلميحة تغيير الخطة لاحقاً:' : 'Tip: Changing plan later?'"></span>
+                    <span class="text-slate-400 font-normal" x-text="lang === 'ar' ? 'يمكنك دائماً ترقية خطتك أو تخفيضها بمرونة كاملة وبدون فقدان لبياناتك في أي وقت لاحقاً من صفحة إعدادات المنشأة -> حالة الترخيص.' : 'You can always upgrade or downgrade your plan flexibly at any time without data loss from the Enterprise Settings -> License Status page.'"></span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -53,12 +68,18 @@
             plan: 'starter',
             currency: 'SAR',
             fiscalYear: '2025-01-01',
+            lang: localStorage.getItem('signupLang') || 'ar',
 
             init() {
                 // استرجاع اسم الشركة للعرض فقط
                 const savedData = JSON.parse(localStorage.getItem('signupData') || '{}');
                 this.companyName = savedData.company || 'My Company';
                 this.plan = savedData.plan || 'starter';
+            },
+
+            getPlanNameAr(plan) {
+                const names = { starter: 'المبتدئ', business: 'الأعمال', professional: 'المحترف', enterprise: 'المؤسسات' };
+                return names[plan] || plan;
             },
 
             async finish() {
@@ -75,12 +96,15 @@
                     modules: selectedModules, // ['wms', 'sales', ...]
                     system_mode: systemMode,
                     currency: this.currency,
-                    fiscal_year: this.fiscalYear
+                    fiscal_year: this.fiscalYear,
+                    lang: this.lang
                 };
 
 
                 // 2. محاكاة خطوات التسطيب (للعرض فقط)
-                const steps = ["Creating database schema...", "Configuring modules...", "Setting currency rates...", "Finalizing..."];
+                const stepsAr = ["جاري إنشاء جداول قاعدة البيانات...", "جاري تهيئة وتثبيت الموديولات...", "جاري ضبط أسعار الصرف والعملات...", "جاري إنهاء التهيئة..."];
+                const stepsEn = ["Creating database schema...", "Configuring modules...", "Setting currency rates...", "Finalizing..."];
+                const steps = this.lang === 'ar' ? stepsAr : stepsEn;
                 for (let step of steps) {
                     this.statusText = step;
                     await new Promise(r => setTimeout(r, 600));
@@ -98,7 +122,7 @@
                     });
 
                     if (response.ok) {
-                        this.statusText = "Done! Redirecting...";
+                        this.statusText = this.lang === 'ar' ? "تم بنجاح! جاري تحويلك..." : "Done! Redirecting...";
                         // تنظيف البيانات
                         localStorage.clear();
                         window.location.href = "{% url 'dashboard_home' %}";

@@ -61,23 +61,23 @@
     .p-icon { font-size: 2.5rem; margin-bottom: 8px; }
 </style>
 
-<div x-data="moduleBuilder()" class="h-screen w-screen relative overflow-hidden bg-[#0b1120]">
+<div x-data="moduleBuilder()" class="h-screen w-screen relative overflow-hidden bg-[#0b1120]" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
     
     <div x-show="phase === 'selection'" 
          x-transition:leave="transition ease-in duration-500" 
          x-transition:leave-end="opacity-0 scale-90" 
          class="absolute inset-0 flex flex-col items-center justify-center z-20 text-center px-4">
         
-        <h2 class="text-4xl font-bold text-white mb-2 tech-font">System Architecture</h2>
-        <p class="text-slate-400 mb-6">Choose your deployment model and components.</p>
+        <h2 class="text-4xl font-bold text-white mb-2 tech-font" x-text="lang === 'ar' ? 'معمارية وهيكل النظام' : 'System Architecture'"></h2>
+        <p class="text-slate-400 mb-6" x-text="lang === 'ar' ? 'اختر نموذج النشر والتطبيق ومكونات النظام الخاصة بك.' : 'Choose your deployment model and components.'"></p>
 
         <!-- System Mode Toggle -->
         <div class="flex items-center gap-2 mb-10 bg-slate-900/60 p-2 rounded-xl border border-slate-700 w-fit mx-auto backdrop-blur-md">
             <button @click="setMode('standalone')" :class="systemMode === 'standalone' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:text-white'" class="px-6 py-2 rounded-lg font-bold transition-all text-sm flex items-center gap-2">
-                <i class="fas fa-cube"></i> Stand Alone Module
+                <i class="fas fa-cube"></i> <span x-text="lang === 'ar' ? 'موديول مستقل' : 'Stand Alone Module'"></span>
             </button>
             <button @click="setMode('modular')" :class="systemMode === 'modular' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:text-white'" class="px-6 py-2 rounded-lg font-bold transition-all text-sm flex items-center gap-2">
-                <i class="fas fa-cubes"></i> Full ERP Package
+                <i class="fas fa-cubes"></i> <span x-text="lang === 'ar' ? 'حزمة ERP متكاملة' : 'Full ERP Package'"></span>
             </button>
         </div>
 
@@ -94,21 +94,21 @@
                     <i :class="mod.icon" class="text-5xl mb-6 transition-colors duration-300" 
                        :style="isSelected(mod.id) ? {color: mod.color} : {color: '#64748b'}"></i>
                     
-                    <h3 class="font-bold text-xl text-white mb-2" x-text="mod.name"></h3>
-                    <p class="text-xs text-slate-400" x-text="mod.desc"></p>
+                    <h3 class="font-bold text-xl text-white mb-2" x-text="lang === 'ar' ? getModNameAr(mod.id) : mod.name"></h3>
+                    <p class="text-xs text-slate-400" x-text="lang === 'ar' ? getModDescAr(mod.id) : mod.desc"></p>
                 </div>
             </template>
         </div>
 
         <button @click="startAssembly()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-12 rounded-full shadow-lg transition-all hover:scale-105 tracking-widest tech-font text-lg">
-            INTEGRATE & BUILD <i class="fas fa-cogs ml-2"></i>
+            <span x-text="lang === 'ar' ? 'دمج وبناء النظام' : 'INTEGRATE & BUILD'"></span> <i class="fas fa-cogs ml-2"></i>
         </button>
     </div>
 
     <div x-show="phase === 'assembly'" class="fixed inset-0 z-50 flex flex-col items-center justify-center pointer-events-none">
         
         <div class="absolute top-24 text-center pointer-events-auto">
-            <div id="status-text" class="text-xl tech-font text-slate-500 tracking-[0.3em]">ASSEMBLING CORE...</div>
+            <div id="status-text" class="text-xl tech-font text-slate-500 tracking-[0.3em]" x-text="lang === 'ar' ? 'جاري بناء النواة...' : 'ASSEMBLING CORE...'"></div>
         </div>
 
         <div id="assembly-center">
@@ -116,7 +116,7 @@
             <div id="core-piece" class="puzzle-piece piece-core opacity-0">
                 <div class="knob top"></div><div class="knob right"></div><div class="knob bottom"></div><div class="knob left"></div>
                 <i class="fas fa-cube text-4xl text-blue-500 mb-2"></i>
-                <span class="text-[10px] font-bold text-slate-400 tracking-widest">CORE</span>
+                <span class="text-[10px] font-bold text-slate-400 tracking-widest" x-text="lang === 'ar' ? 'النواة' : 'CORE'"></span>
             </div>
 
             <div id="pieces-container"></div>
@@ -132,7 +132,31 @@
             phase: 'selection',
             systemMode: 'modular',
             selectedModules: [], 
+            lang: localStorage.getItem('signupLang') || 'ar',
             availableModules: JSON.parse('{{ available_modules_json|escapejs }}' || '[]'),
+
+            getModNameAr(id) {
+                const names = {
+                    wms: 'إدارة المستودعات (WMS)',
+                    sales: 'إدارة المبيعات والعملاء',
+                    procurement: 'المشتريات وسلاسل الإمداد',
+                    teams: 'الموارد البشرية والفرق',
+                    restaurant_pos: 'نظام الكاشير ونقاط البيع',
+                    item_master: 'سجل المواد والأصناف'
+                };
+                return names[id] || id.toUpperCase();
+            },
+            getModDescAr(id) {
+                const descs = {
+                    wms: 'مراقبة حركة المخازن والأرصدة لحظياً',
+                    sales: 'إدارة علاقات العملاء وفواتير المبيعات',
+                    procurement: 'إدارة الموردين وطلبات الشراء والاتفاقيات',
+                    teams: 'إدارة شؤون الموظفين والمهام الإدارية',
+                    restaurant_pos: 'كاشير مطور مع إدارة الصالات والمطبخ',
+                    item_master: 'كتالوج مركزي لجميع منتجات ومواد الشركة'
+                };
+                return descs[id] || '';
+            },
 
             isSelected(id) { return this.selectedModules.includes(id); },
             
@@ -174,7 +198,13 @@
                 const corePiece = document.getElementById('core-piece');
                 
                 // 1. Show Core
-                timeline.to(corePiece, { opacity: 1, scale: 1, duration: 1, ease: "back.out(1.5)" });
+                timeline.to(corePiece, { 
+                    opacity: 1, 
+                    scale: 1, 
+                    duration: 1, 
+                    ease: "back.out(1.5)",
+                    onStart: () => statusText.innerText = this.lang === 'ar' ? "جاري بناء النواة..." : "ASSEMBLING CORE..."
+                });
 
                 // 2. Create Pieces
                 this.selectedModules.forEach((modId, index) => {
@@ -182,9 +212,10 @@
                     const piece = document.createElement('div');
                     
                     piece.className = `puzzle-piece p-${modId}`;
+                    const displayName = this.lang === 'ar' ? this.getModNameAr(modId) : modInfo.name;
                     piece.innerHTML = `
                         <i class="${modInfo.icon} p-icon" style="color: ${modInfo.color}"></i>
-                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">${modInfo.name}</span>
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">${displayName}</span>
                     `;
                     container.appendChild(piece);
 
@@ -202,7 +233,7 @@
                     const pieceTL = gsap.timeline();
                     pieceTL.to(piece, {
                         x: endX, y: endY, opacity: 1, duration: 0.7, ease: "power3.inOut",
-                        onStart: () => statusText.innerText = `INTEGRATING ${modInfo.name}...`
+                        onStart: () => statusText.innerText = this.lang === 'ar' ? `جاري دمج موديول ${displayName}...` : `INTEGRATING ${displayName}...`
                     });
                     
                     // هزة بسيطة عند التلاحم
@@ -212,7 +243,10 @@
                 });
 
                 // 3. The Glow (لحظة الاندماج)
-                timeline.call(() => { statusText.innerText = "SYNCHRONIZING..."; statusText.style.color = "#fff"; });
+                timeline.call(() => { 
+                    statusText.innerText = this.lang === 'ar' ? "جاري المزامنة والربط..." : "SYNCHRONIZING..."; 
+                    statusText.style.color = "#fff"; 
+                });
                 timeline.to({}, {duration: 0.2}); 
 
                 // وميض الـ Core
@@ -238,7 +272,7 @@
                 timeline.to(".puzzle-piece", { scale: 1, duration: 0.5 });
                 
                 timeline.call(() => { 
-                    statusText.innerHTML = "SYSTEM <span class='text-blue-500'>ONLINE</span>";
+                    statusText.innerHTML = this.lang === 'ar' ? "النظام متصل وبانتظار التفعيل" : "SYSTEM <span class='text-blue-500'>ONLINE</span>";
                     statusText.style.textShadow = "0 0 20px rgba(59, 130, 246, 0.8)";
                 });
 

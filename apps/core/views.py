@@ -320,6 +320,10 @@ class TenantSignupAPI(APIView):
         database_name = data.get('database_name', '')
         system_mode = data.get('system_mode', 'modular')
         purchased_modules = data.get('modules', [])
+        
+        lang = data.get('lang', 'ar')
+        from django.utils import translation
+        translation.activate(lang)
 
         if not (company_name and email):
             return Response({"error": "Missing required fields"}, status=400)
@@ -335,6 +339,8 @@ class TenantSignupAPI(APIView):
                     user.save()
                 
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                request.session['_language'] = lang
+                request.session.modified = True
 
                 import random, string
                 random_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
@@ -395,11 +401,14 @@ class TenantSignupAPI(APIView):
                         # Log email error but don't stop the signup process
                         print(f"Failed to send email: {str(e)}")
 
-                return Response({
+                response = Response({
                     "success": True,
                     "message": "Workspace ready!",
                     "redirect_url": "/dashboard/"
                 }, status=status.HTTP_201_CREATED)
+                cookie_name = getattr(settings, 'LANGUAGE_COOKIE_NAME', 'django_language')
+                response.set_cookie(cookie_name, lang)
+                return response
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
