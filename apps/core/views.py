@@ -495,6 +495,64 @@ class PlantViewSet(viewsets.ModelViewSet):
         
         return Plant.objects.all()
 
+    @action(detail=False, methods=['post'], url_path='import')
+    def import_plants(self, request):
+        import pandas as pd
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        active_id = request.session.get('active_opco_id')
+        if not active_id:
+            return Response({"error": "No active company selected"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            if file.name.endswith('.csv'):
+                df = pd.read_csv(file)
+            else:
+                df = pd.read_excel(file)
+                
+            success_count = 0
+            skipped_count = 0
+            
+            # Map Arabic and English headers
+            code_col = 'الكود' if 'الكود' in df.columns else ('كود المنشأة' if 'كود المنشأة' in df.columns else ('Plant Code' if 'Plant Code' in df.columns else 'Code'))
+            name_col = 'الاسم' if 'الاسم' in df.columns else ('اسم المنشأة' if 'اسم المنشأة' in df.columns else ('Plant Name' if 'Plant Name' in df.columns else 'Name'))
+            
+            if code_col not in df.columns or name_col not in df.columns:
+                return Response({"error": f"Missing required columns. Ensure '{code_col}' and '{name_col}' exist."}, status=status.HTTP_400_BAD_REQUEST)
+
+            active_opco = OpCo.all_objects.filter(id=active_id).first()
+            
+            with transaction.atomic():
+                for index, row in df.iterrows():
+                    code = str(row[code_col]).strip()
+                    name = str(row[name_col]).strip()
+                    
+                    if not code or not name or str(code).lower() == 'nan' or str(name).lower() == 'nan':
+                        continue
+                        
+                    # Check uniqueness
+                    if Plant.objects.filter(opco=active_opco, code=code).exists() or Plant.objects.filter(opco=active_opco, name=name).exists():
+                        skipped_count += 1
+                        continue
+                        
+                    Plant.objects.create(
+                        opco=active_opco,
+                        code=code[:5],
+                        name=name[:100]
+                    )
+                    success_count += 1
+                    
+            return Response({
+                "message": "Import successful",
+                "success_count": success_count,
+                "skipped_count": skipped_count
+            })
+            
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 class LocationViewSet(viewsets.ModelViewSet):
     serializer_class = StorageLocationSerializer
     def get_queryset(self):

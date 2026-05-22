@@ -3059,6 +3059,65 @@ createApp({
             this.showToast(this.isArabic ? 'تم حفظ البيانات بنجاح' : 'Data saved successfully', 'success');
         },
 
+        downloadPlantTemplate() {
+            const isAr = this.isArabic;
+            const headers = isAr ? 'الكود,الاسم' : 'Plant Code,Plant Name';
+            const sample1 = isAr ? 'PL01,المنشأة الأولى' : 'PL01,First Plant';
+            const sample2 = isAr ? 'PL02,المنشأة الثانية' : 'PL02,Second Plant';
+            
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers + "\n" + sample1 + "\n" + sample2;
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", isAr ? "نموذج_المنشآت.csv" : "plant_template.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        },
+
+        triggerPlantImport() {
+            if (this.$refs.plantExcelFile) {
+                this.$refs.plantExcelFile.click();
+            } else {
+                const el = document.querySelector('input[type="file"][ref="plantExcelFile"]');
+                if (el) el.click();
+            }
+        },
+
+        async uploadPlantExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            this.loading = true;
+            try {
+                const response = await fetch('/api/plants/import/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    this.showToast(this.isArabic 
+                        ? `تم استيراد ${result.success_count} بنجاح، وتم تخطي ${result.skipped_count} مكررين.` 
+                        : `Successfully imported ${result.success_count}, skipped ${result.skipped_count} duplicates.`, 
+                        'success');
+                    await this.refreshAllData();
+                } else {
+                    this.showToast(this.isArabic ? "فشل الاستيراد: " + (result.error || '') : "Import Failed: " + (result.error || ''), 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "حدث خطأ في الاتصال بالسيرفر" : "Server connection error", 'error');
+            } finally {
+                this.loading = false;
+                event.target.value = ''; // Reset input
+            }
+        },
+
         async refreshAllData() {
             this.loading = true;
             try {

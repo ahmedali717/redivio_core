@@ -12,6 +12,9 @@ class Plant(models.Model):
     
     def __str__(self): return self.name
 
+    class Meta:
+        unique_together = (('opco', 'code'), ('opco', 'name'))
+
 class StorageLocation(models.Model):
     plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name='locations') 
     code = models.CharField(max_length=10)

@@ -8,6 +8,36 @@ class PlantSerializer(serializers.ModelSerializer):
         model = Plant
         fields = '__all__'
 
+    def validate(self, attrs):
+        code = attrs.get('code', getattr(self.instance, 'code', None))
+        name = attrs.get('name', getattr(self.instance, 'name', None))
+        opco = attrs.get('opco', getattr(self.instance, 'opco', None))
+
+        request = self.context.get('request')
+        is_arabic = request and request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+        
+        # Check unique constraint for code per opco
+        if code and opco:
+            qs = Plant.objects.filter(opco=opco, code=code)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError({
+                    "code": "الكود مكرر على مستوى هذه الشركة." if is_arabic else "Plant code must be unique per company."
+                })
+
+        # Check unique constraint for name per opco
+        if name and opco:
+            qs = Plant.objects.filter(opco=opco, name=name)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError({
+                    "name": "الاسم مكرر على مستوى هذه الشركة." if is_arabic else "Plant name must be unique per company."
+                })
+
+        return attrs
+
 class StorageLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = StorageLocation

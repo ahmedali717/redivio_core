@@ -5,7 +5,7 @@
         
         <div v-if="opcos.length === 0" class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60">
             <i class="fas fa-sitemap text-6xl mb-4 text-slate-200"></i>
-            <p>Drag elements here to build your hierarchy</p>
+            <p>[[ isArabic ? 'اسحب العناصر هنا لبناء الهيكل التنظيمي الخاص بك' : 'Drag elements here to build your hierarchy' ]]</p>
         </div>
 
         <div class="flex flex-col items-center gap-16 pb-20">
@@ -17,7 +17,7 @@
                     
                     <div class="bg-slate-800 p-3 flex justify-between items-center border-b border-slate-700">
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">[[ opco.is_holding ? 'Holding' : 'Subsidiary' ]]</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">[[ opco.is_holding ? (isArabic ? 'شركة قابضة' : 'Holding') : (isArabic ? 'شركة تابعة' : 'Subsidiary') ]]</span>
                             <div v-if="opco.is_holding" class="bg-blue-600 text-white px-2 py-0.5 rounded-md text-[8px] font-black flex items-center gap-1 border border-blue-400/30">
                                 <i class="fas fa-crown text-yellow-300"></i>
                             </div>
@@ -35,7 +35,7 @@
                         </div>
                         <div>
                             <h3 class="font-black text-lg leading-tight uppercase tracking-tight">[[ opco.name ]]</h3>
-                            <p class="text-slate-500 text-[10px] font-bold uppercase">CODE: [[ opco.code ]]</p>
+                            <p class="text-slate-500 text-[10px] font-bold uppercase">[[ isArabic ? 'الكود:' : 'CODE:' ]] [[ opco.code ]]</p>
                         </div>
                     </div>
                 </div>
@@ -94,28 +94,44 @@
 
     <div class="w-80 bg-white border-l border-slate-200 shadow-2xl p-6 flex flex-col gap-8 z-20">
         <div>
-            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Structure Elements</h3>
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">[[ isArabic ? 'عناصر الهيكل' : 'Structure Elements' ]]</h3>
             <div class="space-y-3">
                 <div v-if="config.is_holding || opcos.length === 0" draggable="true" @dragstart="startDrag('opco')" 
                      class="p-4 bg-slate-900 text-white rounded-xl cursor-grab active:cursor-grabbing flex items-center gap-4 transition-all hover:scale-[1.02] shadow-lg">
                     <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg"><i class="fas fa-building"></i></div>
-                    <span class="text-sm font-black uppercase tracking-wider">Add Company</span>
+                    <span class="text-sm font-black uppercase tracking-wider">[[ isArabic ? 'إضافة شركة' : 'Add Company' ]]</span>
                 </div>
 
                 <div draggable="true" @dragstart="startDrag('plant')" class="p-4 bg-white border-2 border-slate-100 rounded-xl cursor-grab flex items-center gap-4 transition-all hover:border-amber-400 hover:shadow-lg">
                     <div class="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-500"><i class="fas fa-warehouse"></i></div>
-                    <span class="text-sm font-bold text-slate-700 uppercase">Plant</span>
+                    <span class="text-sm font-bold text-slate-700 uppercase">[[ isArabic ? 'المنشأة (المخزن)' : 'Plant' ]]</span>
                 </div>
                 
                 <div draggable="true" @dragstart="startDrag('location')" class="p-4 bg-white border-2 border-slate-100 rounded-xl cursor-grab flex items-center gap-4 transition-all hover:border-red-400 hover:shadow-lg">
                     <div class="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center text-red-500"><i class="fas fa-map-marker-alt"></i></div>
-                    <span class="text-sm font-bold text-slate-700 uppercase">Stoage Location (View)</span>
+                    <span class="text-sm font-bold text-slate-700 uppercase">[[ isArabic ? 'موقع تخزين (عرض)' : 'Storage Location (View)' ]]</span>
                 </div>
 
                 <div draggable="true" @dragstart="startDrag('bin')" class="p-4 bg-white border-2 border-slate-100 rounded-xl cursor-grab flex items-center gap-4 transition-all hover:border-purple-400 hover:shadow-lg group">
                     <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors"><i class="fas fa-box"></i></div>
-                    <span class="text-sm font-bold text-slate-700 uppercase">Storage Bin</span>
+                    <span class="text-sm font-bold text-slate-700 uppercase">[[ isArabic ? 'رف التخزين (Bin)' : 'Storage Bin' ]]</span>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Excel Import Block -->
+        <div class="mt-6 pt-6 border-t border-slate-100">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">[[ isArabic ? 'استيراد البيانات' : 'Import Data' ]]</h3>
+            <div class="space-y-3">
+                <input type="file" ref="plantExcelFile" @change="uploadPlantExcel" accept=".xlsx,.xls,.csv" class="hidden">
+                <button @click="triggerPlantImport" class="w-full p-4 bg-emerald-50 border-2 border-emerald-100 rounded-xl flex items-center justify-center gap-3 transition-all hover:bg-emerald-500 hover:text-white text-emerald-600 group shadow-sm">
+                    <i class="fas fa-file-excel text-lg"></i>
+                    <span class="text-sm font-bold uppercase">[[ isArabic ? 'استيراد المنشآت (Excel)' : 'Import Plants (Excel)' ]]</span>
+                </button>
+                <button @click="downloadPlantTemplate" class="w-full text-center text-xs font-bold text-slate-400 hover:text-slate-700 transition-colors mt-2 underline decoration-slate-300 underline-offset-4">
+                    <i class="fas fa-download mr-1"></i>
+                    [[ isArabic ? 'تحميل نموذج فارغ' : 'Download Template' ]]
+                </button>
             </div>
         </div>
         
