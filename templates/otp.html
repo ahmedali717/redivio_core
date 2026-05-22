@@ -2,8 +2,8 @@
 
 {% block content %}
 <div class="relative z-10 w-full max-w-lg p-8" x-data="otpSystem()" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
-    <div class="bg-[#0f172a]/80 backdrop-blur-xl border border-slate-700 p-10 rounded-3xl shadow-2xl text-center">
-        <div class="w-20 h-20 mx-auto bg-slate-900 rounded-full flex items-center justify-center border border-slate-700 mb-6">
+    <div class="bg-brand/90 backdrop-blur-xl border border-brand-light/30 p-10 rounded-3xl shadow-2xl text-center">
+        <div class="w-20 h-20 mx-auto bg-brand-dark rounded-full flex items-center justify-center border border-brand-light/50 mb-6">
             <i class="fas fa-shield-alt text-3xl text-blue-500"></i>
         </div>
         <h2 class="text-3xl font-bold text-white mb-2 tech-font" x-text="lang === 'ar' ? 'التحقق من الهوية' : 'Verify Access'"></h2>

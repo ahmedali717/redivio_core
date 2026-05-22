@@ -32,9 +32,9 @@
 
 <div class="w-full max-w-7xl h-auto lg:h-[92vh] relative z-10 flex flex-col overflow-hidden rounded-3xl shadow-2xl border border-slate-800 bg-[#0f172a]" :class="lang === 'ar' ? 'lg:flex-row-reverse' : 'lg:flex-row'" x-data="signupForm()" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
     
-    <div class="lg:w-5/12 relative p-8 lg:p-12 flex flex-col justify-between bg-slate-900" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
-        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-900/20 to-transparent pointer-events-none"></div>
-        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
+    <div class="lg:w-5/12 relative p-8 lg:p-12 flex flex-col justify-between bg-brand" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
+        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-dark/40 to-transparent pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-brand-light/30 rounded-full blur-3xl"></div>
         
         <div class="relative z-10 flex items-center gap-3 mb-8 lg:mb-0">
             <img src="{% static 'brand/logo_r.png' %}" class="w-10 h-10 object-contain">

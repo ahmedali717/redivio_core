@@ -1,5 +1,5 @@
 <aside :class="sidebarCollapsed ? 'w-20' : 'w-64'"
-    class="bg-slate-900 text-white flex flex-col h-full hidden md:flex shadow-xl z-20 transition-all duration-300 relative"
+    class="bg-brand text-white flex flex-col h-full hidden md:flex shadow-xl z-20 transition-all duration-300 relative"
     v-cloak>
 
     <button @click="sidebarCollapsed = !sidebarCollapsed" :class="isArabic ? '-left-3' : '-right-3'"
@@ -9,7 +9,7 @@
     </button>
 
     <div
-        class="h-16 flex items-center gap-3 px-4 border-b border-slate-800 bg-slate-950 overflow-visible text-white relative brand-area-container">
+        class="h-16 flex items-center gap-3 px-4 border-b border-brand-dark/50 bg-brand-dark overflow-visible text-white relative brand-area-container">
         <div class="flex items-center gap-3 cursor-pointer group" @click="showBrandDropdown = !showBrandDropdown">
             <img src="/static/brand/logo_r.png" class="w-8 h-8 object-contain shrink-0" alt="Redivio Logo">
             <span v-show="!sidebarCollapsed"
