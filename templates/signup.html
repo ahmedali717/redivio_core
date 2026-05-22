@@ -30,46 +30,41 @@
     }
 </style>
 
-<div class="w-full max-w-7xl h-auto lg:h-[92vh] relative z-10 flex flex-col overflow-hidden rounded-[2rem] shadow-[0_30px_100px_rgba(0,0,0,0.6)] border border-white/5 bg-[#0F172A]/80 backdrop-blur-3xl" :class="lang === 'ar' ? 'lg:flex-row-reverse' : 'lg:flex-row'" x-data="signupForm()" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
+<div class="w-full max-w-7xl h-auto lg:h-[92vh] relative z-10 flex flex-col gap-8 lg:gap-0" :class="lang === 'ar' ? 'lg:flex-row-reverse' : 'lg:flex-row'" x-data="signupForm()" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
     
-    <div class="lg:w-5/12 relative p-8 lg:p-12 flex flex-col justify-between overflow-hidden" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
-        <!-- Premium Abstract Backgrounds -->
-        <div class="absolute inset-0 bg-gradient-to-br from-[#0B132B] via-[#0F1C3F] to-brand-dark/40 z-0"></div>
-        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-brand/20 rounded-full mix-blend-screen filter blur-[80px] -translate-y-1/2 translate-x-1/3"></div>
-        <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-brand-light/20 rounded-full mix-blend-screen filter blur-[80px]"></div>
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDIiLz4KPC9zdmc+')] opacity-50 z-0"></div>
+    <div class="lg:w-5/12 relative p-4 lg:p-8 flex flex-col justify-between overflow-hidden text-white" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
+        <!-- Premium Abstract Backgrounds removed because body is sky blue -->
         
         <div class="relative z-10 flex items-center gap-3 mb-8 lg:mb-0">
-            <img src="{% static 'brand/logo_r.png' %}" class="w-10 h-10 object-contain">
-            <span class="text-xl font-bold text-white tracking-wider tech-font">REDIVIO <span class="text-blue-500">ERP</span></span>
+            <img src="{% static 'brand/logo_white.png' %}" onerror="this.src='/static/brand/logo_r.png'" class="w-10 h-10 object-contain brightness-0 invert">
+            <span class="text-xl font-bold text-white tracking-wider tech-font">REDIVIO <span class="text-blue-200">ERP</span></span>
         </div>
 
-        <div class="relative z-10 my-auto animate-intro">
-            <h1 class="text-5xl lg:text-6xl font-black text-white mb-6 leading-[1.1] tracking-tight drop-shadow-lg">
-                <span x-text="lang === 'ar' ? 'تحكم بجميع' : 'Master Your'"></span> <br/> 
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-light to-brand-hover drop-shadow-[0_0_15px_rgba(44,130,240,0.5)]" x-text="lang === 'ar' ? 'عملياتك الذكية' : 'Operations'"></span>
+        <div class="relative z-10 my-auto animate-intro mt-10 lg:mt-auto">
+            <h1 class="text-5xl lg:text-6xl font-black text-white mb-6 leading-[1.1] tracking-tight drop-shadow-sm">
+                <span x-text="lang === 'ar' ? 'تحكم بجميع' : 'Run Your'"></span> <br/> 
+                <span x-text="lang === 'ar' ? 'عملياتك الذكية' : 'Entire Business'"></span>
             </h1>
             
-            <div class="space-y-4 text-slate-300 text-sm lg:text-base mb-4 max-w-md leading-relaxed font-light">
-                <p x-text="lang === 'ar' ? 'حل متكامل ومصمم خصيصاً للشركات الناشئة والصغيرة والمتوسطة لمراقبة واتخاذ القرار وتعزيز الأداء في الوقت الفعلي.' : 'A state-of-the-art solution designed for startups and SMEs to monitor, decide, and enhance performance in real-time.'"></p>
-                <div class="border-l-4 border-brand pl-5 py-2 bg-white/5 rounded-r-xl backdrop-blur-sm shadow-inner" :class="lang === 'ar' ? 'border-r-4 border-l-0 pr-5 pl-0 rounded-l-xl rounded-r-none' : 'border-l-4 border-r-0 pl-5 pr-0 rounded-r-xl rounded-l-none'">
-                    <p class="text-white/80 italic text-xs tracking-wide" x-text="lang === 'ar' ? '«تبسيط عملية بدء الاستخدام بالتخصيص الذاتي، مما يلغي الاستثمارات الضخمة في التأسيس.»' : '\"Simplifying the onboarding process with self-service customization, eliminating huge rollout investments.\"'"></p>
+            <div class="space-y-4 text-white/90 text-base lg:text-lg mb-4 max-w-md leading-relaxed font-medium">
+                <p x-text="lang === 'ar' ? 'حل متكامل ومصمم خصيصاً للشركات الناشئة والصغيرة والمتوسطة لمراقبة واتخاذ القرار وتعزيز الأداء في الوقت الفعلي.' : 'Inventory, sales, finance, procurement, and operations — all connected in real time so you always know what’s happening and what to do next.'"></p>
+                <div class="border-l-4 border-white/40 pl-5 py-2 bg-white/10 rounded-r-xl backdrop-blur-sm shadow-sm" :class="lang === 'ar' ? 'border-r-4 border-l-0 pr-5 pl-0 rounded-l-xl rounded-r-none' : 'border-l-4 border-r-0 pl-5 pr-0 rounded-r-xl rounded-l-none'">
+                    <p class="text-white italic text-sm tracking-wide" x-text="lang === 'ar' ? '«تبسيط عملية بدء الاستخدام بالتخصيص الذاتي، مما يلغي الاستثمارات الضخمة في التأسيس.»' : '\"Simplifying the onboarding process with self-service customization, eliminating huge rollout investments.\"'"></p>
                 </div>
             </div>
             
-            <div class="relative inline-block mt-16">
-                <div class="absolute -top-8 z-20 pointer-events-none" :class="lang === 'ar' ? '-left-10' : '-right-10'">
+            <div class="relative inline-block mt-12">
+                <div class="absolute -top-12 z-20 pointer-events-none" :class="lang === 'ar' ? '-left-6' : '-right-6'">
                     <div class="robot-float relative">
-                        <i class="fas fa-robot text-6xl text-blue-400"></i> <div class="absolute top-4 left-3 w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                        <div class="absolute top-4 right-3 w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                        <div class="msg-pop absolute top-0 bg-white text-slate-900 text-[10px] font-bold py-1 px-2 rounded-full shadow-lg whitespace-nowrap" :class="lang === 'ar' ? '-right-20' : '-left-20'">
+                        <i class="fas fa-rocket text-6xl text-white drop-shadow-md"></i>
+                        <div class="msg-pop absolute top-0 bg-white text-brand text-[11px] font-bold py-1.5 px-3 rounded-full shadow-lg whitespace-nowrap" :class="lang === 'ar' ? '-right-24' : '-left-24'">
                             <span x-text="lang === 'ar' ? 'ابدأ مجاناً! 👇' : 'Start Free! 👇'"></span>
-                            <div class="absolute -bottom-1 w-2 h-2 bg-white transform rotate-45" :class="lang === 'ar' ? 'left-2' : 'right-2'"></div>
+                            <div class="absolute -bottom-1 w-2 h-2 bg-white transform rotate-45" :class="lang === 'ar' ? 'left-4' : 'right-4'"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="relative z-10 rounded-2xl p-6 backdrop-blur-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-300 bg-black/20 group-hover:bg-black/30">
+                <div class="relative z-10 rounded-2xl p-6 backdrop-blur-md border border-white/20 shadow-xl transition-all duration-300 bg-white/10 group-hover:bg-white/20">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <span class="relative flex h-2 w-2">
@@ -91,38 +86,38 @@
                     <p class="text-xs text-slate-400 mb-4 italic leading-relaxed" 
                        x-text="form.plan === 'starter' ? (lang === 'ar' ? 'مثالية للشركات الناشئة التي تستكشف المنصة.' : 'Perfect for startups exploring the platform.') : (form.plan === 'business' ? (lang === 'ar' ? 'مصممة للشركات التي تدير عملياتها اليومية.' : 'Built for businesses running daily operations.') : (form.plan === 'professional' ? (lang === 'ar' ? 'تحكم متقدم للشركات النامية والمتوسعة.' : 'Advanced control for scaling businesses.') : (lang === 'ar' ? 'حلول متكاملة ومخصصة للمؤسسات الكبرى.' : 'Tailored ERP for large enterprises.')))"></p>
 
-                    <div class="border-t border-slate-800/80 pt-3">
-                        <ul class="space-y-2 text-xs text-slate-355">
+                    <div class="border-t border-white/20 pt-3">
+                        <ul class="space-y-2 text-xs text-white/90 font-medium">
                             <template x-if="form.plan === 'starter'">
                                 <div class="space-y-2">
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'الوصول لكافة موديولات النظام' : 'Access to All ERP Modules'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'سعة قصوى 50 صنف (SKU)' : 'Max 50 SKUs Capacity'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'ما يصل إلى 2 من أعضاء الفريق' : 'Up to 2 Team Members'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'تقارير ولوحات معلومات أساسية' : 'Basic Reports & Dashboards'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'الوصول لكافة موديولات النظام' : 'Access to All ERP Modules'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'سعة قصوى 50 صنف (SKU)' : 'Max 50 SKUs Capacity'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'ما يصل إلى 2 من أعضاء الفريق' : 'Up to 2 Team Members'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'تقارير ولوحات معلومات أساسية' : 'Basic Reports & Dashboards'"></span></li>
                                 </div>
                             </template>
                             <template x-if="form.plan === 'business'">
                                 <div class="space-y-2">
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'كافة الموديولات + نقاط البيع POS' : 'All ERP Modules + POS'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'سعة تصل إلى 5,000 صنف (SKU)' : 'Up to 5,000 SKUs Capacity'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'ما يصل إلى 15 من أعضاء الفريق' : 'Up to 15 Team Members'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'تقارير وتحليلات متقدمة' : 'Advanced Reports & Analytics'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'كافة الموديولات + نقاط البيع POS' : 'All ERP Modules + POS'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'سعة تصل إلى 5,000 صنف (SKU)' : 'Up to 5,000 SKUs Capacity'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'ما يصل إلى 15 من أعضاء الفريق' : 'Up to 15 Team Members'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'تقارير وتحليلات متقدمة' : 'Advanced Reports & Analytics'"></span></li>
                                 </div>
                             </template>
                             <template x-if="form.plan === 'professional'">
                                 <div class="space-y-2">
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'سجلات ومعاملات غير محدودة' : 'Unlimited Records & Transactions'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'أدوات تشغيلية ذكية' : 'Smart Operational Tools'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'لوحات معلومات وأداء KPI متقدمة' : 'Advanced KPI Dashboards & Logs'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'دعم فني ذو أولوية' : 'Priority Support'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'سجلات ومعاملات غير محدودة' : 'Unlimited Records & Transactions'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'أدوات تشغيلية ذكية' : 'Smart Operational Tools'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'لوحات معلومات وأداء KPI متقدمة' : 'Advanced KPI Dashboards & Logs'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'دعم فني ذو أولوية' : 'Priority Support'"></span></li>
                                 </div>
                             </template>
                             <template x-if="form.plan === 'enterprise'">
                                 <div class="space-y-2">
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'فروع وكيانات غير محدودة' : 'Unlimited Branches & Entities'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'ربط وتكامل مخصص مدمج APIs' : 'Custom Integrations & APIs'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'بنية تحتية مخصصة ومستقلة' : 'Dedicated Infrastructure'"></span></li>
-                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> <span x-text="lang === 'ar' ? 'مدير حساب مخصص واتفاقية خدمة SLA' : 'Dedicated Account Manager & SLA'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'فروع وكيانات غير محدودة' : 'Unlimited Branches & Entities'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'ربط وتكامل مخصص مدمج APIs' : 'Custom Integrations & APIs'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'بنية تحتية مخصصة ومستقلة' : 'Dedicated Infrastructure'"></span></li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-white"></i> <span x-text="lang === 'ar' ? 'مدير حساب مخصص واتفاقية خدمة SLA' : 'Dedicated Account Manager & SLA'"></span></li>
                                 </div>
                             </template>
                         </ul>
@@ -132,33 +127,32 @@
         </div>
     </div>
 
-    <div class="lg:w-7/12 bg-[#0B132B]/50 backdrop-blur-md p-8 lg:p-12 overflow-y-auto no-scrollbar relative" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
-        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[#0F1C3F]/30 pointer-events-none z-0"></div>
+    <div class="lg:w-7/12 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-8 lg:p-12 overflow-y-auto no-scrollbar relative" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
         <div class="max-w-xl mx-auto animate-form relative z-10">
             
             <div class="flex items-center justify-between mb-8">
-                <a href="{% url 'landing_page' %}" class="inline-flex items-center gap-2 text-slate-400 hover:text-brand-light transition-colors group cursor-pointer">
+                <a href="{% url 'landing_page' %}" class="inline-flex items-center gap-2 text-slate-500 hover:text-brand transition-colors group cursor-pointer">
                     <i class="fas group-hover:-translate-x-1 transition-transform" :class="lang === 'ar' ? 'fa-arrow-right' : 'fa-arrow-left'"></i>
                     <span class="text-sm font-bold" x-text="lang === 'ar' ? 'العودة للرئيسية' : 'Back to Home'"></span>
                 </a>
                 
                 <!-- Language Toggle Button -->
-                <button @click="toggleLang()" class="flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-slate-300 hover:text-white hover:border-brand/50 hover:bg-white/10 transition-all shadow-sm">
-                    <i class="fas fa-globe text-brand-light"></i>
+                <button @click="toggleLang()" class="flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-200 bg-slate-50 text-xs font-bold text-slate-600 hover:text-brand hover:border-brand/30 hover:bg-brand/5 transition-all shadow-sm">
+                    <i class="fas fa-globe text-brand"></i>
                     <span x-text="lang === 'ar' ? 'English' : 'العربية'" class="tracking-wide"></span>
                 </button>
             </div>
 
-            <h2 class="text-3xl font-black text-white mb-8 tracking-tight drop-shadow-md" x-text="lang === 'ar' ? 'إنشاء حساب جديد' : 'Create Account'"></h2>
+            <h2 class="text-3xl font-black text-slate-800 mb-8 tracking-tight drop-shadow-sm" x-text="lang === 'ar' ? 'إنشاء حساب جديد' : 'Create Account'"></h2>
             <form @submit.prevent="submitForm" class="space-y-5">
                 <!-- Group 1: Name and Company -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="text-xs text-slate-400 mb-1 block" x-text="lang === 'ar' ? 'الاسم الكامل' : 'Full Name'"></label>
+                        <label class="text-xs text-slate-500 font-medium mb-1 block" x-text="lang === 'ar' ? 'الاسم الكامل' : 'Full Name'"></label>
                         <input type="text" x-model="form.name" class="input-field" :placeholder="lang === 'ar' ? 'الاسم الثنائي أو الثلاثي' : 'John Doe'">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-400 mb-1 block" x-text="lang === 'ar' ? 'اسم الشركة' : 'Company Name'"></label>
+                        <label class="text-xs text-slate-500 font-medium mb-1 block" x-text="lang === 'ar' ? 'اسم الشركة' : 'Company Name'"></label>
                         <input type="text" x-model="form.company" class="input-field" :placeholder="lang === 'ar' ? 'اسم شركتك أو مؤسستك' : 'Company Name'">
                     </div>
                 </div>
@@ -166,11 +160,11 @@
                 <!-- Group 2: Email and Phone -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="text-xs text-slate-400 mb-1 block" x-text="lang === 'ar' ? 'بريد العمل الإلكتروني' : 'Work Email'"></label>
+                        <label class="text-xs text-slate-500 font-medium mb-1 block" x-text="lang === 'ar' ? 'بريد العمل الإلكتروني' : 'Work Email'"></label>
                         <input type="email" x-model="form.email" class="input-field" placeholder="name@work.com">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-400 mb-1 block" x-text="lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'"></label>
+                        <label class="text-xs text-slate-500 font-medium mb-1 block" x-text="lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'"></label>
                         <input type="tel" x-model="form.phone" class="input-field" :placeholder="lang === 'ar' ? '05XXXXXXXX' : '+966 5X XXX XXXX'">
                     </div>
                 </div>
@@ -178,14 +172,12 @@
                 <!-- Group 3: Industry and Database -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="text-xs text-slate-400 mb-1 block" x-text="lang === 'ar' ? 'مجال العمل' : 'Industry'"></label>
-                        <select x-model="form.industry" class="input-field">
-                            <option value="" x-text="lang === 'ar' ? 'اختر مجال العمل' : 'Select'"></option>
-                            <option value="Retail" x-text="lang === 'ar' ? 'التجزئة والبيع المباشر' : 'Retail'"></option>
-                            <option value="Tech" x-text="lang === 'ar' ? 'التكنولوجيا والبرمجيات' : 'Technology'"></option>
-                            <option value="Logistics" x-text="lang === 'ar' ? 'النقل واللوجستيات' : 'Logistics'"></option>
-                            <option value="Manufacturing" x-text="lang === 'ar' ? 'التصنيع والإنتاج' : 'Manufacturing'"></option>
-                            <option value="Construction" x-text="lang === 'ar' ? 'المقاولات والإنشاءات' : 'Construction'"></option>
+                        <label class="text-xs text-slate-500 font-medium mb-1 block" x-text="lang === 'ar' ? 'مجال العمل' : 'Industry'"></label>
+                        <select x-model="form.industry" class="input-field appearance-none cursor-pointer">
+                            <option value="" disabled selected x-text="lang === 'ar' ? 'اختر...' : 'Select'"></option>
+                            <option value="retail" x-text="lang === 'ar' ? 'التجزئة والجملة' : 'Retail & Wholesale'"></option>
+                            <option value="manufacturing" x-text="lang === 'ar' ? 'التصنيع' : 'Manufacturing'"></option>
+                            <option value="services" x-text="lang === 'ar' ? 'الخدمات' : 'Services'"></option>
                         </select>
                     </div>
                     <div>
@@ -196,83 +188,82 @@
                 
                 <!-- Plan Selection Grid - 4 Columns -->
                 <div class="mb-4">
-                    <label class="text-xs text-slate-400 mb-2 block font-medium" x-text="lang === 'ar' ? 'اختر خطة الاشتراك المناسبة' : 'Select Subscription Plan / اختر خطة الاشتراك'"></label>
+                    <label class="text-xs text-slate-500 mb-2 block font-medium" x-text="lang === 'ar' ? 'اختر خطة الاشتراك المناسبة' : 'Select Subscription Plan / اختر خطة الاشتراك'"></label>
                     <div class="grid grid-cols-4 gap-2">
                         <!-- Starter Card -->
                         <div @click="form.plan = 'starter'" 
-                             class="cursor-pointer p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 flex flex-col justify-between select-none relative overflow-hidden group"
-                             :class="form.plan === 'starter' ? 'bg-brand/10 border-brand shadow-[0_0_15px_rgba(44,130,240,0.2)] scale-[1.02]' : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'">
-                            <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <div class="flex flex-col mb-1">
-                                <span class="text-xs font-bold text-white" x-text="lang === 'ar' ? 'المبتدئ' : 'Starter'"></span>
-                                <span class="text-[10px] text-blue-400 font-semibold mt-0.5" x-text="lang === 'ar' ? 'مجاني' : 'Free'"></span>
+                             class="cursor-pointer p-3 rounded-xl border transition-all duration-300 flex flex-col justify-between select-none relative overflow-hidden group"
+                             :class="form.plan === 'starter' ? 'bg-brand/5 border-brand shadow-[0_0_15px_rgba(44,130,240,0.15)] scale-[1.02]' : 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100'">
+                            <div class="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div class="flex flex-col mb-1 relative z-10">
+                                <span class="text-xs font-bold text-slate-800" x-text="lang === 'ar' ? 'المبتدئ' : 'Starter'"></span>
+                                <span class="text-[10px] text-brand font-bold mt-0.5" x-text="lang === 'ar' ? 'مجاني' : 'Free'"></span>
                             </div>
-                            <div class="text-[9px] text-slate-400 leading-tight" x-text="lang === 'ar' ? 'حد 50 صنف' : '50 SKUs max'"></div>
+                            <div class="text-[9px] text-slate-500 leading-tight relative z-10 font-medium" x-text="lang === 'ar' ? 'حد 50 صنف' : '50 SKUs max'"></div>
                         </div>
 
                         <!-- Business Card -->
                         <div @click="form.plan = 'business'" 
-                             class="cursor-pointer p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 flex flex-col justify-between select-none relative overflow-hidden group"
-                             :class="form.plan === 'business' ? 'bg-brand/10 border-brand shadow-[0_0_15px_rgba(44,130,240,0.2)] scale-[1.02]' : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'">
-                            <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <div class="flex flex-col mb-1">
-                                <span class="text-xs font-bold text-white" x-text="lang === 'ar' ? 'الأعمال' : 'Business'"></span>
-                                <span class="text-[10px] text-blue-400 font-semibold mt-0.5" x-text="lang === 'ar' ? '3,499 ج.م' : 'EGP 3,499'"></span>
+                             class="cursor-pointer p-3 rounded-xl border transition-all duration-300 flex flex-col justify-between select-none relative overflow-hidden group"
+                             :class="form.plan === 'business' ? 'bg-brand/5 border-brand shadow-[0_0_15px_rgba(44,130,240,0.15)] scale-[1.02]' : 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100'">
+                            <div class="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div class="flex flex-col mb-1 relative z-10">
+                                <span class="text-xs font-bold text-slate-800" x-text="lang === 'ar' ? 'الأعمال' : 'Business'"></span>
+                                <span class="text-[10px] text-brand font-bold mt-0.5" x-text="lang === 'ar' ? '3,499 ج.م' : 'EGP 3,499'"></span>
                             </div>
-                            <div class="text-[9px] text-slate-400 leading-tight" x-text="lang === 'ar' ? 'حد 5,000 صنف' : '5,000 SKUs max'"></div>
+                            <div class="text-[9px] text-slate-500 leading-tight relative z-10 font-medium" x-text="lang === 'ar' ? 'حد 5,000 صنف' : '5,000 SKUs max'"></div>
                         </div>
 
                         <!-- Professional Card -->
                         <div @click="form.plan = 'professional'" 
-                             class="cursor-pointer p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 flex flex-col justify-between select-none relative overflow-hidden group"
-                             :class="form.plan === 'professional' ? 'bg-brand/10 border-brand shadow-[0_0_15px_rgba(44,130,240,0.2)] scale-[1.02]' : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'">
-                            <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <div class="flex flex-col mb-1">
-                                <span class="text-xs font-bold text-white" x-text="lang === 'ar' ? 'المحترف' : 'Professional'"></span>
-                                <span class="text-[10px] text-blue-400 font-semibold mt-0.5" x-text="lang === 'ar' ? '6,999 ج.م' : 'EGP 6,999'"></span>
+                             class="cursor-pointer p-3 rounded-xl border transition-all duration-300 flex flex-col justify-between select-none relative overflow-hidden group"
+                             :class="form.plan === 'professional' ? 'bg-brand/5 border-brand shadow-[0_0_15px_rgba(44,130,240,0.15)] scale-[1.02]' : 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100'">
+                            <div class="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div class="flex flex-col mb-1 relative z-10">
+                                <span class="text-xs font-bold text-slate-800" x-text="lang === 'ar' ? 'المحترف' : 'Professional'"></span>
+                                <span class="text-[10px] text-brand font-bold mt-0.5" x-text="lang === 'ar' ? '6,999 ج.م' : 'EGP 6,999'"></span>
                             </div>
-                            <div class="text-[9px] text-slate-400 leading-tight" x-text="lang === 'ar' ? 'حد 99,999 صنف' : '99,999 SKUs max'"></div>
+                            <div class="text-[9px] text-slate-500 leading-tight relative z-10 font-medium" x-text="lang === 'ar' ? 'حد 99,999 صنف' : '99,999 SKUs max'"></div>
                         </div>
 
                         <!-- Enterprise Card -->
                         <div @click="form.plan = 'enterprise'" 
-                             class="cursor-pointer p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 flex flex-col justify-between select-none relative overflow-hidden group"
-                             :class="form.plan === 'enterprise' ? 'bg-brand/10 border-brand shadow-[0_0_15px_rgba(44,130,240,0.2)] scale-[1.02]' : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'">
-                            <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <div class="flex flex-col mb-1">
-                                <span class="text-xs font-bold text-white" x-text="lang === 'ar' ? 'المؤسسات' : 'Enterprise'"></span>
-                                <span class="text-[10px] text-blue-400 font-semibold mt-0.5" x-text="lang === 'ar' ? 'مخصص' : 'Custom'"></span>
+                             class="cursor-pointer p-3 rounded-xl border transition-all duration-300 flex flex-col justify-between select-none relative overflow-hidden group"
+                             :class="form.plan === 'enterprise' ? 'bg-brand/5 border-brand shadow-[0_0_15px_rgba(44,130,240,0.15)] scale-[1.02]' : 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100'">
+                            <div class="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div class="flex flex-col mb-1 relative z-10">
+                                <span class="text-xs font-bold text-slate-800" x-text="lang === 'ar' ? 'المؤسسات' : 'Enterprise'"></span>
+                                <span class="text-[10px] text-brand font-bold mt-0.5" x-text="lang === 'ar' ? 'مخصص' : 'Custom'"></span>
                             </div>
-                            <div class="text-[9px] text-slate-400 leading-tight" x-text="lang === 'ar' ? 'تجهيز خاص' : 'Custom setup'"></div>
+                            <div class="text-[9px] text-slate-500 leading-tight relative z-10 font-medium" x-text="lang === 'ar' ? 'تجهيز خاص' : 'Custom setup'"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Plan Change Tips Box -->
-                <div class="mb-4 p-4 rounded-xl bg-brand/5 border border-brand/20 flex gap-4 items-start text-xs leading-relaxed backdrop-blur-sm">
-                    <i class="fas fa-circle-info text-brand-light mt-0.5 text-sm drop-shadow-[0_0_8px_rgba(93,158,245,0.6)]"></i>
+                <div class="mb-4 p-4 rounded-xl bg-blue-50 border border-blue-100 flex gap-4 items-start text-xs leading-relaxed">
+                    <i class="fas fa-circle-info text-brand mt-0.5 text-sm drop-shadow-sm"></i>
                     <div>
-                        <span class="font-bold text-slate-200 block mb-0.5" x-text="lang === 'ar' ? 'تلميحة تغيير الخطة:' : 'Tip: How to change plan?'"></span>
-                        <span class="text-slate-400 font-normal" x-text="lang === 'ar' ? 'يمكنك ترقية أو خفض مستوى اشتراكك بسهولة في أي وقت لاحقاً من لوحة تحكم المنشأة بعد تسجيل الدخول وتجهيز حسابك.' : 'You can easily upgrade or downgrade your subscription plan later at any time from your Enterprise settings page after logging in.'"></span>
+                        <span class="font-bold text-slate-800 block mb-0.5" x-text="lang === 'ar' ? 'تلميحة تغيير الخطة:' : 'Tip: How to change plan?'"></span>
+                        <span class="text-slate-600 font-medium" x-text="lang === 'ar' ? 'يمكنك ترقية أو خفض مستوى اشتراكك بسهولة في أي وقت لاحقاً من لوحة تحكم المنشأة بعد تسجيل الدخول وتجهيز حسابك.' : 'You can easily upgrade or downgrade your subscription plan later at any time from your Enterprise settings page after logging in.'"></span>
                     </div>
                 </div>
 
                 <div class="mb-6">
-                    <label class="text-xs text-slate-400 mb-1 block" x-text="lang === 'ar' ? 'كلمة المرور' : 'Password'"></label>
+                    <label class="text-xs text-slate-500 font-medium mb-1 block" x-text="lang === 'ar' ? 'كلمة المرور' : 'Password'"></label>
                     <input type="password" x-model="form.password" class="input-field" placeholder="••••••••">
                 </div>
 
-                
                 <div class="mb-8">
                     <div class="flex items-center gap-3 cursor-pointer group select-none" @click="form.agree = !form.agree">
-                        <div class="w-5 h-5 rounded border flex items-center justify-center transition-all duration-200" :class="form.agree ? 'bg-brand border-brand shadow-[0_0_10px_rgba(44,130,240,0.5)]' : 'bg-white/5 border-white/20 group-hover:border-brand/50'">
+                        <div class="w-5 h-5 rounded border flex items-center justify-center transition-all duration-200" :class="form.agree ? 'bg-brand border-brand shadow-[0_0_10px_rgba(44,130,240,0.3)]' : 'bg-slate-50 border-slate-300 group-hover:border-brand/50'">
                             <svg x-show="form.agree" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                         </div>
-                        <span class="text-sm text-slate-400 group-hover:text-slate-300 transition-colors" x-text="lang === 'ar' ? 'أوافق على الشروط والأحكام.' : 'I agree to Terms & Conditions.'"></span>
+                        <span class="text-sm text-slate-600 font-medium group-hover:text-slate-800 transition-colors" x-text="lang === 'ar' ? 'أوافق على الشروط والأحكام.' : 'I agree to Terms & Conditions.'"></span>
                     </div>
                 </div>
 
-                <button type="submit" :disabled="!form.agree || loading" class="w-full bg-gradient-to-r from-brand to-brand-dark hover:from-brand-hover hover:to-brand text-white font-bold py-4 rounded-xl shadow-[0_10px_25px_rgba(44,130,240,0.4)] transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(44,130,240,0.6)] disabled:opacity-50 disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2 overflow-hidden relative group/btn">
+                <button type="submit" :disabled="!form.agree || loading" class="w-full bg-brand hover:bg-brand-hover text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_rgba(44,130,240,0.3)] transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(44,130,240,0.4)] disabled:opacity-50 disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2 overflow-hidden relative group/btn">
                     <div class="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300 pointer-events-none"></div>
                     <span x-show="!loading" class="relative z-10 tracking-widest uppercase" x-text="lang === 'ar' ? 'تهيئة وتفعيل الحساب' : 'INITIALIZE ACCOUNT'"></span>
                     <span x-show="loading" class="relative z-10"><i class="fas fa-circle-notch fa-spin text-lg"></i> <span class="tracking-widest ml-2 uppercase" x-text="lang === 'ar' ? 'جاري التفعيل...' : 'PROCESSING'"></span></span>

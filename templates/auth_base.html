@@ -32,10 +32,10 @@
                 extend: {
                     colors: {
                         brand: {
-                            DEFAULT: '#2c82f0',
-                            hover: '#1e73e1',
-                            dark: '#1660c1',
-                            light: '#5d9ef5'
+                            DEFAULT: '#2c82f0', // The Sky Blue Egypt color
+                            hover: '#2563eb',
+                            dark: '#1d4ed8',
+                            light: '#60a5fa'
                         }
                     }
                 }
@@ -46,15 +46,14 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;600&display=swap');
         .tech-font { font-family: 'Rajdhani', sans-serif; }
-        body { font-family: 'Inter', sans-serif; background-color: #0B132B; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #2c82f0 0%, #1e73e1 100%); min-height: 100vh; }
         
-        /* Global Styles for Inputs */
+        /* Global Styles for Inputs (Light Theme for Cards) */
         .input-field { 
             width: 100%; 
-            background-color: rgba(255,255,255,0.03); 
-            border: 1px solid rgba(255,255,255,0.1); 
-            backdrop-filter: blur(12px);
-            color: white; 
+            background-color: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            color: #0f172a; 
             padding: 0.85rem 1rem; 
             border-radius: 0.75rem; 
             outline: none; 
@@ -63,22 +62,21 @@
         }
         .input-field:focus { 
             border-color: #2c82f0; 
-            background-color: rgba(255,255,255,0.06);
-            box-shadow: 0 0 0 4px rgba(44, 130, 240, 0.15), inset 0 0 0 1px rgba(255,255,255,0.1); 
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(44, 130, 240, 0.15); 
         }
         .input-field::placeholder {
-            color: #64748b;
+            color: #94a3b8;
         }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4 overflow-x-hidden relative">
     
-    <!-- Premium Grid & Glow Background -->
-    <div class="fixed inset-0 z-0 opacity-20 pointer-events-none" 
-         style="background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 50px;">
+    <!-- Sky Blue Premium Pattern -->
+    <div class="fixed inset-0 z-0 opacity-10 pointer-events-none" 
+         style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 32px 32px;">
     </div>
-    <div class="fixed top-0 left-1/4 w-96 h-96 bg-brand rounded-full mix-blend-screen filter blur-[120px] opacity-20 pointer-events-none"></div>
-    <div class="fixed bottom-0 right-1/4 w-96 h-96 bg-blue-400 rounded-full mix-blend-screen filter blur-[120px] opacity-10 pointer-events-none"></div>
+    <div class="fixed top-0 left-0 w-full h-96 bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
 
     {% block content %}{% endblock %}
 

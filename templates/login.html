@@ -2,35 +2,35 @@
 
 {% block content %}
 <div class="w-full max-w-md relative z-10" x-data="loginAuth()">
-    <div class="bg-brand/90 backdrop-blur-xl border border-brand-light/30 p-8 rounded-2xl shadow-2xl">
+    <div class="bg-white p-8 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
         
         <div class="text-center mb-8">
-            <h2 class="text-3xl font-bold text-white mb-2 tech-font">Welcome Back</h2>
-            <p class="text-slate-400 text-sm">Access your REDIVIO workspace</p>
+            <h2 class="text-3xl font-black text-slate-800 mb-2 tech-font tracking-tight drop-shadow-sm">Welcome Back</h2>
+            <p class="text-slate-500 font-medium text-sm">Access your REDIVIO workspace</p>
         </div>
 
         <form @submit.prevent="login">
             <div class="space-y-4 mb-6">
                 <div>
-                    <label class="text-xs text-slate-400 block mb-1">Email Address</label>
+                    <label class="text-xs text-slate-500 font-medium block mb-1">Email Address</label>
                     <input type="email" x-model="email" class="input-field" placeholder="admin@company.com" required>
                 </div>
                 <div>
-                    <label class="text-xs text-slate-400 block mb-1">Password</label>
+                    <label class="text-xs text-slate-500 font-medium block mb-1">Password</label>
                     <input type="password" x-model="password" class="input-field" placeholder="••••••••" required>
                 </div>
             </div>
 
-            <div x-show="error" class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs text-center" x-text="error" style="display: none;"></div>
+            <div x-show="error" class="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 font-medium text-xs text-center" x-text="error" style="display: none;"></div>
 
-            <button type="submit" :disabled="loading" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center gap-2">
-                <span x-show="!loading">LOG IN</span>
-                <span x-show="loading"><i class="fas fa-circle-notch fa-spin"></i> AUTHENTICATING...</span>
+            <button type="submit" :disabled="loading" class="w-full bg-brand hover:bg-brand-hover text-white font-bold py-3.5 rounded-xl shadow-[0_8px_20px_rgba(44,130,240,0.3)] transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 hover:shadow-[0_12px_25px_rgba(44,130,240,0.4)] disabled:opacity-50 disabled:transform-none">
+                <span x-show="!loading" class="tracking-widest uppercase">LOG IN</span>
+                <span x-show="loading" class="tracking-widest uppercase"><i class="fas fa-circle-notch fa-spin text-lg"></i> AUTHENTICATING...</span>
             </button>
         </form>
 
-        <div class="mt-6 text-center pt-6 border-t border-slate-800">
-            <a href="{% url 'landing_page' %}" class="text-xs text-slate-400 hover:text-white transition-colors">Don't have an account? <span class="text-blue-400">Initialize Workspace</span></a>
+        <div class="mt-6 text-center pt-6 border-t border-slate-100">
+            <a href="{% url 'landing_page' %}" class="text-xs font-medium text-slate-500 hover:text-brand transition-colors">Don't have an account? <span class="text-brand font-bold">Initialize Workspace</span></a>
         </div>
     </div>
 </div>
