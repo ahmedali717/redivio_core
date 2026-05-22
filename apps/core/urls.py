@@ -39,4 +39,5 @@ urlpatterns = [
     path('api/check-auth/', views.CheckAuthAPI.as_view(), name='api_check_auth'),
     path('api/check-email/', views.check_email_status, name='api_check_email'),
     path('api/switch-company/', views.switch_active_company, name='api_switch_company'),
+    path('api/change-plan/', views.ChangePlanAPI.as_view(), name='api_change_plan'),
 ]

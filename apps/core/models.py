@@ -56,11 +56,14 @@ class OpCo(models.Model):
     plan = models.CharField(
         max_length=20,
         choices=[
+            ("starter", "Starter"),
+            ("business", "Business"),
+            ("professional", "Professional"),
+            ("enterprise", "Enterprise"),
             ("free", "Free"),
             ("pro", "Pro"),
-            ("enterprise", "Enterprise"),
         ],
-        default="free"
+        default="starter"
     )
 
     region = models.CharField(max_length=50, default="global")

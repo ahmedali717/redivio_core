@@ -11,7 +11,14 @@
         </div>
 
         <div x-show="!finalizing">
-            <p class="text-slate-400 mb-6">Setting up environment for: <strong class="text-white" x-text="companyName"></strong></p>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+                <p class="text-slate-400">Setting up environment for: <strong class="text-white" x-text="companyName"></strong></p>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400">Selected Plan:</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border bg-blue-500/10 text-blue-400 border-blue-500/20"
+                          x-text="plan"></span>
+                </div>
+            </div>
             
             <div class="space-y-4 mb-8">
                 <div>
@@ -43,6 +50,7 @@
             finalizing: false,
             statusText: 'Connecting...',
             companyName: '',
+            plan: 'starter',
             currency: 'SAR',
             fiscalYear: '2025-01-01',
 
@@ -50,6 +58,7 @@
                 // استرجاع اسم الشركة للعرض فقط
                 const savedData = JSON.parse(localStorage.getItem('signupData') || '{}');
                 this.companyName = savedData.company || 'My Company';
+                this.plan = savedData.plan || 'starter';
             },
 
             async finish() {

@@ -98,8 +98,31 @@ def dashboard_view(request):
 def check_email_status(request):
     email = request.data.get('email')
     if not email: return Response({'exists': False})
-    exists = User.objects.filter(email__iexact=email).exists()
-    return Response({'exists': exists})
+    user = User.objects.filter(email__iexact=email).first()
+    if user:
+        # Check owned company first
+        company = OpCo.all_objects.filter(owner=user).first()
+        if not company:
+            # Check company assignments if not owned directly
+            company_user = CompanyUser.objects.filter(user=user).first()
+            if company_user:
+                company = company_user.company
+        
+        company_data = None
+        if company:
+            company_data = {
+                'name': company.name,
+                'code': company.code,
+                'plan': company.get_plan_display(),
+                'created_at': company.created_at.strftime('%Y-%m-%d') if company.created_at else None,
+                'is_active': company.is_active,
+                'owner_name': company.owner.username if company.owner else None,
+            }
+        return Response({
+            'exists': True,
+            'company': company_data
+        })
+    return Response({'exists': False})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -141,11 +164,28 @@ class CheckAuthAPI(APIView):
             while holding_opco.parent:
                 holding_opco = holding_opco.parent
 
-        days_remaining = 15
+        plan = holding_opco.plan if holding_opco else 'starter'
+        if plan == 'business':
+            days_limit = 9999
+            sku_limit = 5000
+        elif plan in ['professional', 'pro']:
+            days_limit = 9999
+            sku_limit = 99999
+        elif plan == 'enterprise':
+            days_limit = 9999
+            sku_limit = 999999
+        else: # starter / free
+            days_limit = 9999
+            sku_limit = 50
+
+        days_remaining = days_limit
         if holding_opco and holding_opco.created_at:
             from django.utils import timezone
             diff = timezone.now() - holding_opco.created_at
-            days_remaining = max(15 - diff.days, 0)
+            days_remaining = max(days_limit - diff.days, 0)
+
+        target_opcos = OpCo.all_objects.filter(Q(id=user_opco.id) | Q(parent_id=user_opco.id)) if user_opco else OpCo.all_objects.none()
+        sku_count = Material.objects.filter(opco__in=target_opcos).count() if user_opco else 0
 
         header_opcos = [
             {
@@ -175,7 +215,50 @@ class CheckAuthAPI(APIView):
             "is_superuser": request.user.is_superuser,
             "role": current_role,
             "system_mode": holding_opco.system_mode if holding_opco else 'modular',
-            "purchased_modules": holding_opco.purchased_modules if holding_opco else []
+            "purchased_modules": holding_opco.purchased_modules if holding_opco else [],
+            "plan": plan,
+            "sku_limit": sku_limit,
+            "days_limit": days_limit,
+            "sku_count": sku_count,
+        })
+
+
+class ChangePlanAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        active_id = request.session.get('active_opco_id')
+        if not active_id:
+            return Response({"error": "No active company found in session"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            opco = OpCo.all_objects.get(id=active_id)
+        except OpCo.DoesNotExist:
+            return Response({"error": "Company not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check permissions: only owner of the company or superuser can change plan
+        if opco.owner != request.user and not request.user.is_superuser:
+            return Response({"error": "Only the company owner can change the plan"}, status=status.HTTP_403_FORBIDDEN)
+            
+        plan = request.data.get('plan')
+        # Normalize legacy plans for backwards compatibility
+        if plan == 'free':
+            plan = 'starter'
+        elif plan == 'pro':
+            plan = 'professional'
+
+        if plan not in ['starter', 'business', 'professional', 'enterprise']:
+            return Response({"error": f"Invalid plan choice: {plan}"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from django.utils import timezone
+        opco.plan = plan
+        opco.created_at = timezone.now()
+        opco.save()
+        
+        return Response({
+            "success": True,
+            "message": f"Plan updated successfully to {plan}",
+            "plan": plan
         })
 
 class LoginAPI(APIView):
@@ -215,7 +298,20 @@ class TenantSignupAPI(APIView):
         company_name = data.get('company') or data.get('company_name')
         email = data.get('email')
         password = data.get('password')
+        
+        # Check if email exists
+        if User.objects.filter(email__iexact=email).exists():
+            return Response({"error": "Email already registered"}, status=status.HTTP_400_BAD_REQUEST)
+
         currency = data.get('currency', 'USD')
+        plan = data.get('plan', 'starter')
+        if plan == 'free':
+            plan = 'starter'
+        elif plan == 'pro':
+            plan = 'professional'
+            
+        if plan not in ['starter', 'business', 'professional', 'enterprise']:
+            plan = 'starter'
         
         # New SaaS Fields
         contact_name = data.get('name', '')
@@ -255,7 +351,8 @@ class TenantSignupAPI(APIView):
                         'industry': industry,
                         'database_name': database_name,
                         'system_mode': system_mode,
-                        'purchased_modules': purchased_modules
+                        'purchased_modules': purchased_modules,
+                        'plan': plan
                     }
                 )
                 

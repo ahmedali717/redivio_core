@@ -20,7 +20,7 @@
     }
 </style>
 
-<div class="w-full max-w-7xl h-auto lg:h-[85vh] relative z-10 flex flex-col lg:flex-row overflow-hidden rounded-3xl shadow-2xl border border-slate-800 bg-[#0f172a]">
+<div class="w-full max-w-7xl h-auto lg:h-[85vh] relative z-10 flex flex-col lg:flex-row overflow-hidden rounded-3xl shadow-2xl border border-slate-800 bg-[#0f172a]" x-data="signupForm()">
     
     <div class="lg:w-5/12 relative p-8 lg:p-12 flex flex-col justify-between bg-slate-900 overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-900/20 to-transparent pointer-events-none"></div>
@@ -62,31 +62,70 @@
                     </div>
                 </div>
 
-                <div class="relative z-10 rounded-2xl p-6 backdrop-blur-md border border-blue-500/30 bg-slate-900/60 shadow-2xl">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="relative flex h-2 w-2">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                        </span>
-                        <span class="text-xs text-blue-200 font-bold uppercase tracking-widest">Free Starter Plan</span>
+                <div class="relative z-10 rounded-2xl p-6 backdrop-blur-md border shadow-2xl transition-all duration-300 border-blue-500/30 bg-blue-950/20">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="relative flex h-2 w-2">
+                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-blue-400"></span>
+                              <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                            </span>
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-200"
+                                  x-text="form.plan.toUpperCase() + ' PLAN'"></span>
+                        </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                              x-text="form.plan === 'starter' ? 'Free' : (form.plan === 'enterprise' ? 'Custom' : 'Active')"></span>
                     </div>
-                    <div class="flex items-center gap-6 text-white">
-                        <div>
-                            <span class="block text-3xl font-bold tech-font">14</span>
-                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wide">Days Trial</span>
-                        </div>
-                        <div class="w-px h-8 bg-slate-600"></div>
-                        <div>
-                            <span class="block text-3xl font-bold tech-font">&lt; 50</span>
-                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wide">SKUs Limit</span>
-                        </div>
+                    
+                    <div class="mb-4">
+                        <span class="text-3xl font-black text-white" x-text="form.plan === 'starter' ? '$0' : (form.plan === 'business' ? 'EGP 3,499' : (form.plan === 'professional' ? 'EGP 6,999' : 'Custom Pricing'))"></span>
+                        <span class="text-xs text-slate-400 font-medium" x-show="form.plan !== 'enterprise'"> / month</span>
+                    </div>
+
+                    <p class="text-xs text-slate-400 mb-4 italic leading-relaxed" 
+                       x-text="form.plan === 'starter' ? 'Perfect for startups exploring the platform.' : (form.plan === 'business' ? 'Built for businesses running daily operations.' : (form.plan === 'professional' ? 'Advanced control for scaling businesses.' : 'Tailored ERP for large enterprises.'))"></p>
+
+                    <div class="border-t border-slate-800/80 pt-3">
+                        <ul class="space-y-2 text-xs text-slate-355">
+                            <template x-if="form.plan === 'starter'">
+                                <div class="space-y-2">
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Access to All ERP Modules</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Max 50 SKUs Capacity</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Up to 2 Team Members</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Basic Reports & Dashboards</li>
+                                </div>
+                            </template>
+                            <template x-if="form.plan === 'business'">
+                                <div class="space-y-2">
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> All ERP Modules + POS</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Up to 5,000 SKUs Capacity</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Up to 15 Team Members</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Advanced Reports & Analytics</li>
+                                </div>
+                            </template>
+                            <template x-if="form.plan === 'professional'">
+                                <div class="space-y-2">
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Unlimited Records & Transactions</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Smart Operational Tools</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Advanced KPI Dashboards & Logs</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Priority Support</li>
+                                </div>
+                            </template>
+                            <template x-if="form.plan === 'enterprise'">
+                                <div class="space-y-2">
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Unlimited Branches & Entities</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Custom Integrations & APIs</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Dedicated Infrastructure</li>
+                                    <li class="flex items-center gap-2"><i class="fas fa-check text-blue-400"></i> Dedicated Account Manager & SLA</li>
+                                </div>
+                            </template>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="lg:w-7/12 bg-[#0b1120] p-8 lg:p-12 overflow-y-auto" x-data="signupForm()">
+    <div class="lg:w-7/12 bg-[#0b1120] p-8 lg:p-12 overflow-y-auto">
         <div class="max-w-md mx-auto animate-form">
             
             <a href="{% url 'landing_page' %}" class="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 group cursor-pointer">
@@ -111,6 +150,57 @@
                     </div>
                     <div><label class="text-xs text-slate-400 mb-1 block">Workspace ID (Database)</label><input type="text" x-model="form.database_name" class="input-field" placeholder="mycompany_db"></div>
                 </div>
+                
+                <!-- Plan Selection Grid -->
+                <div class="mb-4">
+                    <label class="text-xs text-slate-400 mb-2 block font-medium">Select Subscription Plan / اختر خطة الاشتراك</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- Starter Card -->
+                        <div @click="form.plan = 'starter'" 
+                             class="cursor-pointer p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
+                             :class="form.plan === 'starter' ? 'bg-blue-950/20 border-blue-500 ring-1 ring-blue-500' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-bold text-white">Starter</span>
+                                <span class="text-[10px] text-blue-400 font-semibold">Free</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400 leading-tight">50 SKUs max</div>
+                        </div>
+
+                        <!-- Business Card -->
+                        <div @click="form.plan = 'business'" 
+                             class="cursor-pointer p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
+                             :class="form.plan === 'business' ? 'bg-blue-950/20 border-blue-500 ring-1 ring-blue-500' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-bold text-white">Business</span>
+                                <span class="text-[10px] text-blue-400 font-semibold">EGP 3,499</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400 leading-tight">5,000 SKUs max</div>
+                        </div>
+
+                        <!-- Professional Card -->
+                        <div @click="form.plan = 'professional'" 
+                             class="cursor-pointer p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
+                             :class="form.plan === 'professional' ? 'bg-blue-950/20 border-blue-500 ring-1 ring-blue-500' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-bold text-white">Professional</span>
+                                <span class="text-[10px] text-blue-400 font-semibold">EGP 6,999</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400 leading-tight">99,999 SKUs max</div>
+                        </div>
+
+                        <!-- Enterprise Card -->
+                        <div @click="form.plan = 'enterprise'" 
+                             class="cursor-pointer p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
+                             :class="form.plan === 'enterprise' ? 'bg-blue-950/20 border-blue-500 ring-1 ring-blue-500' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-bold text-white">Enterprise</span>
+                                <span class="text-[10px] text-blue-400 font-semibold">Custom</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400 leading-tight">Custom setup</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mb-6"><label class="text-xs text-slate-400 mb-1 block">Password</label><input type="password" x-model="form.password" class="input-field" placeholder="••••••••"></div>
 
                 
@@ -136,14 +226,90 @@
     function signupForm() {
         return {
             loading: false,
-            form: { name: '', email: '', phone: '', company: localStorage.getItem('companyName') || '', industry: '', database_name: '', password: '', agree: false },
+            form: { name: '', email: '', phone: '', company: localStorage.getItem('companyName') || '', industry: '', database_name: '', password: '', agree: false, plan: 'starter' },
             submitForm() {
                 this.loading = true;
-                localStorage.setItem('signupData', JSON.stringify(this.form));
-                setTimeout(() => {
+                
+                // Check if email exists
+                fetch('/api/check-email/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ email: this.form.email })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        this.loading = false;
+                        const co = data.company;
+                        let infoHtml = '';
+                        if (co) {
+                            infoHtml = `
+                                <div class="text-left bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2 text-sm text-slate-300 font-sans">
+                                    <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
+                                        <span class="font-semibold text-blue-400">الشركة / Company:</span>
+                                        <span class="text-white font-medium">${co.name}</span>
+                                    </div>
+                                    <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
+                                        <span class="font-semibold text-blue-400">الكود / Code:</span>
+                                        <span class="font-mono text-amber-400 font-bold">${co.code}</span>
+                                    </div>
+                                    <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
+                                        <span class="font-semibold text-blue-400">الخطة / Plan:</span>
+                                        <span class="text-white font-medium">${co.plan}</span>
+                                    </div>
+                                    <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
+                                        <span class="font-semibold text-blue-400">تاريخ التسجيل / Created At:</span>
+                                        <span class="text-white font-medium">${co.created_at || 'N/A'}</span>
+                                    </div>
+                                    <div class="flex justify-between pb-0.5">
+                                        <span class="font-semibold text-blue-400">حالة الحساب / Status:</span>
+                                        <span class="font-medium ${co.is_active ? 'text-green-400' : 'text-red-400'}">${co.is_active ? 'نشط / Active' : 'غير نشط / Inactive'}</span>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            infoHtml = `<p class="text-slate-300 text-sm">هذا البريد الإلكتروني مسجل بالفعل في نظامنا. / This email is already registered in our system.</p>`;
+                        }
+                        
+                        Swal.fire({
+                            title: '<span class="text-white text-lg font-bold">البريد الإلكتروني مستخدم بالفعل / Email Already Registered</span>',
+                            html: `
+                                <div class="space-y-4">
+                                    <p class="text-slate-400 text-sm">
+                                        البريد الإلكتروني <strong>${this.form.email}</strong> مستخدم بالفعل في تسجيل شركة في النظام:
+                                        <br/>
+                                        The email <strong>${this.form.email}</strong> is already used to register a company in the system:
+                                    </p>
+                                    ${infoHtml}
+                                </div>
+                            `,
+                            background: '#0f172a',
+                            color: '#fff',
+                            icon: 'warning',
+                            confirmButtonText: 'حسناً / OK',
+                            confirmButtonColor: '#3b82f6',
+                            customClass: {
+                                popup: 'border border-slate-800 rounded-3xl',
+                            }
+                        });
+                    } else {
+                        // Save signup data and proceed
+                        localStorage.setItem('signupData', JSON.stringify(this.form));
+                        setTimeout(() => {
+                            this.loading = false;
+                            window.location.href = "{% url 'otp_page' %}"; 
+                        }, 500);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error checking email status:", error);
                     this.loading = false;
-                    window.location.href = "{% url 'otp_page' %}"; 
-                }, 1000);
+                    localStorage.setItem('signupData', JSON.stringify(this.form));
+                    window.location.href = "{% url 'otp_page' %}";
+                });
             }
         }
     }

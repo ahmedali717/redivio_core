@@ -57,6 +57,42 @@ class MaterialViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             return Material.objects.filter(opco_id=opco_id).order_by('-id')
         return Material.objects.all().order_by('-id')
 
+    def perform_create(self, serializer):
+        opco_id = self.request.data.get('opco') or self.request.session.get('active_opco_id')
+        if not opco_id:
+            raise exceptions.ValidationError({"detail": "Active company not found. / لم يتم العثور على شركة نشطة."})
+            
+        from apps.core.models import OpCo
+        from django.db.models import Q
+        try:
+            opco = OpCo.all_objects.get(id=opco_id)
+        except OpCo.DoesNotExist:
+            raise exceptions.ValidationError({"detail": "Active company not found. / لم يتم العثور على شركة نشطة."})
+            
+        holding_opco = opco
+        while holding_opco.parent:
+            holding_opco = holding_opco.parent
+            
+        plan = holding_opco.plan
+        if plan == 'business':
+            sku_limit = 5000
+        elif plan in ['professional', 'pro']:
+            sku_limit = 99999
+        elif plan == 'enterprise':
+            sku_limit = 999999
+        else:  # starter / free
+            sku_limit = 50
+            
+        target_opcos = OpCo.all_objects.filter(Q(id=opco.id) | Q(parent_id=opco.id))
+        current_count = Material.objects.filter(opco__in=target_opcos).count()
+        
+        if current_count >= sku_limit:
+            raise exceptions.ValidationError({
+                "detail": f"لقد وصلت للحد الأقصى المسموح به للأصناف في خطتك الحالية ({sku_limit} أصناف). يرجى ترقية الخطة. / You have reached the maximum allowed items for your current plan ({sku_limit} items). Please upgrade your plan."
+            })
+            
+        serializer.save(opco_id=opco_id)
+
     # =========================================================
     # 🚀 3. دالة الاستيراد الجديدة (تعمل على مسار /api/materials/import/)
     # =========================================================

@@ -231,31 +231,37 @@
                                 <div>
                                     <div class="flex justify-between text-[10px] mb-1 font-bold">
                                         <span class="text-slate-400 uppercase tracking-tighter">SKU Limit Capacity</span>
-                                        <span :class="(materials || []).length >= 50 ? 'text-red-400' : 'text-blue-400'">
-                                            [[ (materials || []).length ]] / 50
+                                        <span :class="licenseStatus.skuCount >= licenseStatus.skuLimit ? 'text-red-400' : 'text-blue-400'">
+                                            [[ licenseStatus.skuCount ]] / [[ licenseStatus.skuLimit ]]
                                         </span>
                                     </div>
                                     <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden border border-white/5">
-                                        <div class="h-full transition-all duration-1000" :class="(materials || []).length >= 50 ? 'bg-red-500' : 'bg-blue-500'" :style="{ width: Math.min(((materials || []).length / 50 * 100), 100) + '%' }"></div>
+                                        <div class="h-full transition-all duration-1000" :class="licenseStatus.skuCount >= licenseStatus.skuLimit ? 'bg-red-500' : 'bg-blue-500'" :style="{ width: Math.min(((licenseStatus.skuCount / licenseStatus.skuLimit) * 100), 100) + '%' }"></div>
                                     </div>
                                 </div>
                                 <div>
                                     <div class="flex justify-between text-[10px] mb-1 font-bold">
                                         <span class="text-slate-400 uppercase tracking-tighter">Validity Period</span>
                                         <span :class="licenseStatus.daysRemaining <= 3 ? 'text-red-400' : 'text-emerald-400'">
-                                            [[ licenseStatus.daysRemaining ]] Days Left
+                                            [[ licenseStatus.daysRemaining ]] / [[ licenseStatus.daysLimit ]] Days Left
                                         </span>
                                     </div>
                                     <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden border border-white/5">
-                                        <div class="h-full transition-all duration-1000" :class="licenseStatus.daysRemaining <= 3 ? 'bg-red-500' : 'bg-emerald-500'" :style="{ width: Math.max((licenseStatus.daysRemaining / 15 * 100), 0) + '%' }"></div>
+                                        <div class="h-full transition-all duration-1000" :class="licenseStatus.daysRemaining <= 3 ? 'bg-red-500' : 'bg-emerald-500'" :style="{ width: Math.max(((licenseStatus.daysRemaining / licenseStatus.daysLimit) * 100), 0) + '%' }"></div>
                                     </div>
                                 </div>
                                 <div class="bg-white/5 rounded-2xl p-3 border border-white/10">
                                     <p class="text-[10px] text-slate-300 leading-relaxed italic">
                                         <i class="fas fa-info-circle mr-1 text-blue-400"></i>
-                                        [[ isArabic ? 'هذا الترخيص محدود بـ 15 يوم أو 50 صنف (SKU) أيهما أقرب.' : 'This license is limited to 15 days or 50 SKUs, whichever comes first.' ]]
+                                        [[ isArabic ? 'الخطة الحالية: ' : 'Current Plan: ' ]] <strong class="text-blue-400 uppercase">[[ licenseStatus.plan ]]</strong>.
+                                        <br/>
+                                        [[ isArabic ? `الحدود: ${licenseStatus.daysLimit} يوم أو ${licenseStatus.skuLimit} صنف.` : `Limits: ${licenseStatus.daysLimit} Days or ${licenseStatus.skuLimit} SKUs.` ]]
                                     </p>
                                 </div>
+                                <button @click="showSubscriptionModal = true" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-900/30">
+                                    <i class="fas fa-gem"></i>
+                                    [[ isArabic ? 'ترقية / تغيير الخطة' : 'Upgrade / Change Plan' ]]
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -385,6 +391,7 @@
         </div>
     </main>
 
+    {% include "components/subscription_modal.html" %}
     {% include "components/modal.html" %}
     <style>
         .ready-fade-enter-active, .ready-fade-leave-active { transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }

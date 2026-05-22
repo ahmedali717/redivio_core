@@ -126,10 +126,16 @@ createApp({
                 logo: null
             },
 
+            showSubscriptionModal: false,
+
             license: {
                 daysRemaining: 15,
                 companyName: '...',
-                isExpired: false
+                isExpired: false,
+                plan: 'free',
+                skuLimit: 50,
+                daysLimit: 15,
+                skuCount: 0
             },
             topMaterials: [],
 
@@ -662,6 +668,26 @@ createApp({
         this.fetchAll();
         this.fetchMaterialsList();
         this.fetchWMSStats();
+
+        // 🚀 Watch activeOpco to cache logo for preloader white-labeling
+        this.$watch('activeOpco', (newOpco) => {
+            if (newOpco && newOpco.logo) {
+                try {
+                    localStorage.setItem('global_config', JSON.stringify({ logo: newOpco.logo }));
+                } catch (e) {}
+            }
+        }, { deep: true });
+
+        // 🚀 Hide preloader gracefully after mounting has settled
+        setTimeout(() => {
+            const preloader = document.getElementById('global-preloader');
+            if (preloader) {
+                preloader.classList.add('fade-out');
+                setTimeout(() => {
+                    preloader.remove();
+                }, 500);
+            }
+        }, 400);
     },
 
     methods: {
@@ -3070,7 +3096,11 @@ createApp({
                     this.license = {
                         daysRemaining: data.days_remaining,
                         companyName: data.holding_name,
-                        isExpired: data.days_remaining <= 0
+                        isExpired: data.days_remaining <= 0,
+                        plan: data.plan || 'free',
+                        skuLimit: data.sku_limit || 50,
+                        daysLimit: data.days_limit || 15,
+                        skuCount: data.sku_count || 0
                     };
                     
                     this.systemMode = data.system_mode || 'modular';
@@ -3106,6 +3136,57 @@ createApp({
                     await this.refreshAllData();
                 }
             } catch (e) { console.error("Auth Error", e); }
+        },
+
+        async changePlan(planType) {
+            try {
+                this.loading = true;
+                const response = await fetch('/api/change-plan/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ plan: planType })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    this.showSubscriptionModal = false;
+                    Swal.fire({
+                        title: this.isArabic ? 'تم تحديث الخطة بنجاح!' : 'Plan Updated Successfully!',
+                        text: this.isArabic 
+                            ? `تم تغيير خطتك الحالية إلى ${planType.toUpperCase()}`
+                            : `Your plan has been updated to ${planType.toUpperCase()}`,
+                        icon: 'success',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    await this.checkAuth();
+                } else {
+                    Swal.fire({
+                        title: this.isArabic ? 'حدث خطأ' : 'Error',
+                        text: data.error || (this.isArabic ? 'فشل تحديث الخطة.' : 'Failed to update plan.'),
+                        icon: 'error',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                }
+            } catch (e) {
+                console.error("Error changing plan:", e);
+                Swal.fire({
+                    title: this.isArabic ? 'خطأ في الاتصال' : 'Connection Error',
+                    text: this.isArabic ? 'يرجى التحقق من اتصالك بالشبكة.' : 'Please check your network connection.',
+                    icon: 'error',
+                    background: '#0f172a',
+                    color: '#fff',
+                    confirmButtonColor: '#3b82f6'
+                });
+            } finally {
+                this.loading = false;
+            }
         },
 
         async fetchAll() {
