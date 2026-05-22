@@ -46,30 +46,39 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;600&display=swap');
         .tech-font { font-family: 'Rajdhani', sans-serif; }
-        body { font-family: 'Inter', sans-serif; background-color: hsl(223, 49%, 8%); }
+        body { font-family: 'Inter', sans-serif; background-color: #0B132B; }
         
         /* Global Styles for Inputs */
         .input-field { 
             width: 100%; 
-            background-color: #1e293b67; 
-            border: 1px solid #1e293b67; 
+            background-color: rgba(255,255,255,0.03); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            backdrop-filter: blur(12px);
             color: white; 
-            padding: 0.75rem; 
-            border-radius: 0.5rem; 
+            padding: 0.85rem 1rem; 
+            border-radius: 0.75rem; 
             outline: none; 
-            transition: all 0.2s; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            font-size: 0.875rem;
         }
         .input-field:focus { 
-            border-color: #3b82f6; 
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); 
+            border-color: #2c82f0; 
+            background-color: rgba(255,255,255,0.06);
+            box-shadow: 0 0 0 4px rgba(44, 130, 240, 0.15), inset 0 0 0 1px rgba(255,255,255,0.1); 
+        }
+        .input-field::placeholder {
+            color: #64748b;
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4 overflow-hidden relative">
+<body class="flex items-center justify-center min-h-screen p-4 overflow-x-hidden relative">
     
-    <div class="absolute inset-0 z-0 opacity-20 pointer-events-none" 
-         style="background-image: linear-gradient(#334155c0 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px); background-size: 40px 40px;">
+    <!-- Premium Grid & Glow Background -->
+    <div class="fixed inset-0 z-0 opacity-20 pointer-events-none" 
+         style="background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 50px;">
     </div>
+    <div class="fixed top-0 left-1/4 w-96 h-96 bg-brand rounded-full mix-blend-screen filter blur-[120px] opacity-20 pointer-events-none"></div>
+    <div class="fixed bottom-0 right-1/4 w-96 h-96 bg-blue-400 rounded-full mix-blend-screen filter blur-[120px] opacity-10 pointer-events-none"></div>
 
     {% block content %}{% endblock %}
 
