@@ -1,4 +1,5 @@
 {% extends "auth_base.html" %}
+{% load static %}
 
 {% block content %}
 <style>
@@ -18,16 +19,25 @@
         animation: pop-in 0.5s ease-out 1s forwards;
         opacity: 0;
     }
+    
+    /* Scrollbar hiding utilities */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 </style>
 
-<div class="w-full max-w-7xl h-auto lg:h-[85vh] relative z-10 flex flex-col lg:flex-row overflow-hidden rounded-3xl shadow-2xl border border-slate-800 bg-[#0f172a]" x-data="signupForm()">
+<div class="w-full max-w-7xl h-auto lg:h-[92vh] relative z-10 flex flex-col lg:flex-row overflow-hidden rounded-3xl shadow-2xl border border-slate-800 bg-[#0f172a]" x-data="signupForm()">
     
     <div class="lg:w-5/12 relative p-8 lg:p-12 flex flex-col justify-between bg-slate-900 overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-900/20 to-transparent pointer-events-none"></div>
         <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
         
         <div class="relative z-10 flex items-center gap-3 mb-8 lg:mb-0">
-            <div class="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white text-xl font-bold shadow-lg">R</div>
+            <img src="{% static 'brand/logo_r.png' %}" class="w-10 h-10 object-contain">
             <span class="text-xl font-bold text-white tracking-wider tech-font">REDIVIO <span class="text-blue-500">ERP</span></span>
         </div>
 
@@ -125,8 +135,8 @@
         </div>
     </div>
 
-    <div class="lg:w-7/12 bg-[#0b1120] p-8 lg:p-12 overflow-y-auto">
-        <div class="max-w-md mx-auto animate-form">
+    <div class="lg:w-7/12 bg-[#0b1120] p-8 lg:p-12 overflow-y-auto no-scrollbar">
+        <div class="max-w-xl mx-auto animate-form">
             
             <a href="{% url 'landing_page' %}" class="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 group cursor-pointer">
                 <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
@@ -135,12 +145,19 @@
 
             <h2 class="text-2xl font-bold text-white mb-6">Create Account</h2>
             <form @submit.prevent="submitForm">
-                <div class="mb-4"><label class="text-xs text-slate-400 mb-1 block">Full Name</label><input type="text" x-model="form.name" class="input-field" placeholder="John Doe"></div>
+                <!-- Group 1: Name and Company -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><label class="text-xs text-slate-400 mb-1 block">Full Name</label><input type="text" x-model="form.name" class="input-field" placeholder="John Doe"></div>
+                    <div><label class="text-xs text-slate-400 mb-1 block">Company Name</label><input type="text" x-model="form.company" class="input-field" placeholder="Company Name"></div>
+                </div>
+                
+                <!-- Group 2: Email and Phone -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div><label class="text-xs text-slate-400 mb-1 block">Work Email</label><input type="email" x-model="form.email" class="input-field" placeholder="name@work.com"></div>
                     <div><label class="text-xs text-slate-400 mb-1 block">Phone Number</label><input type="tel" x-model="form.phone" class="input-field" placeholder="+966 5X XXX XXXX"></div>
                 </div>
-                <div class="mb-4"><label class="text-xs text-slate-400 mb-1 block">Company Name</label><input type="text" x-model="form.company" class="input-field" placeholder="Company Name"></div>
+                
+                <!-- Group 3: Industry and Database -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="text-xs text-slate-400 mb-1 block">Industry</label>
@@ -151,52 +168,52 @@
                     <div><label class="text-xs text-slate-400 mb-1 block">Workspace ID (Database)</label><input type="text" x-model="form.database_name" class="input-field" placeholder="mycompany_db"></div>
                 </div>
                 
-                <!-- Plan Selection Grid -->
+                <!-- Plan Selection Grid - 4 Columns -->
                 <div class="mb-4">
                     <label class="text-xs text-slate-400 mb-2 block font-medium">Select Subscription Plan / اختر خطة الاشتراك</label>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-4 gap-2">
                         <!-- Starter Card -->
                         <div @click="form.plan = 'starter'" 
-                             class="cursor-pointer p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
+                             class="cursor-pointer p-2.5 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
                              :class="form.plan === 'starter' ? 'bg-blue-950/20 border-blue-500 ring-1 ring-blue-500' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'">
-                            <div class="flex items-center justify-between mb-1">
+                            <div class="flex flex-col mb-1">
                                 <span class="text-xs font-bold text-white">Starter</span>
-                                <span class="text-[10px] text-blue-400 font-semibold">Free</span>
+                                <span class="text-[10px] text-blue-400 font-semibold mt-0.5">Free</span>
                             </div>
-                            <div class="text-[10px] text-slate-400 leading-tight">50 SKUs max</div>
+                            <div class="text-[9px] text-slate-400 leading-tight">50 SKUs max</div>
                         </div>
 
                         <!-- Business Card -->
                         <div @click="form.plan = 'business'" 
-                             class="cursor-pointer p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
+                             class="cursor-pointer p-2.5 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
                              :class="form.plan === 'business' ? 'bg-blue-950/20 border-blue-500 ring-1 ring-blue-500' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'">
-                            <div class="flex items-center justify-between mb-1">
+                            <div class="flex flex-col mb-1">
                                 <span class="text-xs font-bold text-white">Business</span>
-                                <span class="text-[10px] text-blue-400 font-semibold">EGP 3,499</span>
+                                <span class="text-[10px] text-blue-400 font-semibold mt-0.5">EGP 3,499</span>
                             </div>
-                            <div class="text-[10px] text-slate-400 leading-tight">5,000 SKUs max</div>
+                            <div class="text-[9px] text-slate-400 leading-tight">5,000 SKUs max</div>
                         </div>
 
                         <!-- Professional Card -->
                         <div @click="form.plan = 'professional'" 
-                             class="cursor-pointer p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
+                             class="cursor-pointer p-2.5 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
                              :class="form.plan === 'professional' ? 'bg-blue-950/20 border-blue-500 ring-1 ring-blue-500' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'">
-                            <div class="flex items-center justify-between mb-1">
+                            <div class="flex flex-col mb-1">
                                 <span class="text-xs font-bold text-white">Professional</span>
-                                <span class="text-[10px] text-blue-400 font-semibold">EGP 6,999</span>
+                                <span class="text-[10px] text-blue-400 font-semibold mt-0.5">EGP 6,999</span>
                             </div>
-                            <div class="text-[10px] text-slate-400 leading-tight">99,999 SKUs max</div>
+                            <div class="text-[9px] text-slate-400 leading-tight">99,999 SKUs max</div>
                         </div>
 
                         <!-- Enterprise Card -->
                         <div @click="form.plan = 'enterprise'" 
-                             class="cursor-pointer p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
+                             class="cursor-pointer p-2.5 rounded-xl border transition-all duration-200 flex flex-col justify-between select-none"
                              :class="form.plan === 'enterprise' ? 'bg-blue-950/20 border-blue-500 ring-1 ring-blue-500' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'">
-                            <div class="flex items-center justify-between mb-1">
+                            <div class="flex flex-col mb-1">
                                 <span class="text-xs font-bold text-white">Enterprise</span>
-                                <span class="text-[10px] text-blue-400 font-semibold">Custom</span>
+                                <span class="text-[10px] text-blue-400 font-semibold mt-0.5">Custom</span>
                             </div>
-                            <div class="text-[10px] text-slate-400 leading-tight">Custom setup</div>
+                            <div class="text-[9px] text-slate-400 leading-tight">Custom setup</div>
                         </div>
                     </div>
                 </div>
