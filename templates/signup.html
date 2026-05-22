@@ -127,8 +127,8 @@
         </div>
     </div>
 
-    <div class="lg:w-7/12 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-8 lg:p-12 overflow-y-auto no-scrollbar relative" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
-        <div class="max-w-xl mx-auto animate-form relative z-10">
+    <div class="lg:w-7/12 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-8 lg:p-12 pb-20 lg:pb-24 overflow-y-auto no-scrollbar relative" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
+        <div class="max-w-xl mx-auto animate-form relative z-10 pb-10">
             
             <div class="flex items-center justify-between mb-8">
                 <a href="{% url 'landing_page' %}" class="inline-flex items-center gap-2 text-slate-500 hover:text-brand transition-colors group cursor-pointer">
@@ -263,10 +263,10 @@
                     </div>
                 </div>
 
-                <button type="submit" :disabled="!form.agree || loading" class="w-full bg-brand hover:bg-brand-hover text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_rgba(44,130,240,0.3)] transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(44,130,240,0.4)] disabled:opacity-50 disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2 overflow-hidden relative group/btn">
+                <button type="submit" :disabled="!form.agree || loading" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-black py-4.5 lg:py-5 rounded-2xl shadow-[0_10px_25px_rgba(37,99,235,0.4)] transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(37,99,235,0.5)] disabled:opacity-50 disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2 overflow-hidden relative group/btn border border-blue-400/30">
                     <div class="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300 pointer-events-none"></div>
-                    <span x-show="!loading" class="relative z-10 tracking-widest uppercase" x-text="lang === 'ar' ? 'تهيئة وتفعيل الحساب' : 'INITIALIZE ACCOUNT'"></span>
-                    <span x-show="loading" class="relative z-10"><i class="fas fa-circle-notch fa-spin text-lg"></i> <span class="tracking-widest ml-2 uppercase" x-text="lang === 'ar' ? 'جاري التفعيل...' : 'PROCESSING'"></span></span>
+                    <span x-show="!loading" class="relative z-10 tracking-widest uppercase text-sm" x-text="lang === 'ar' ? 'تهيئة وتفعيل الحساب الآن' : 'INITIALIZE ACCOUNT NOW'"></span>
+                    <span x-show="loading" class="relative z-10 text-sm"><i class="fas fa-circle-notch fa-spin text-lg"></i> <span class="tracking-widest ml-2 uppercase" x-text="lang === 'ar' ? 'جاري التفعيل...' : 'PROCESSING'"></span></span>
                 </button>
             </form>
         </div>
