@@ -1,18 +1,22 @@
 {% load static %}
-<div id="ai-chat-widget" class="fixed bottom-6 right-6 z-[9999] font-sans" dir="rtl">
+{% if LANGUAGE_CODE|slice:':2' == 'ar' %}
+<div id="ai-chat-widget" class="fixed bottom-6 left-6 z-[9999] font-sans" dir="rtl">
+{% else %}
+<div id="ai-chat-widget" class="fixed bottom-6 right-6 z-[9999] font-sans" dir="ltr">
+{% endif %}
     <!-- Chat Button -->
     <button id="ai-chat-btn" class="w-14 h-14 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-2xl shadow-blue-500/50 text-white flex items-center justify-center hover:scale-110 transition-transform cursor-pointer relative group p-2">
         <img src="{% static 'brand/logo_r.png' %}" class="w-full h-full object-contain" alt="Redivio AI">
         <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse"></div>
         
         <!-- Tooltip -->
-        <div class="absolute -top-12 right-0 bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            المساعد الذكي (Redivio AI)
+        <div class="absolute -top-12 {% if LANGUAGE_CODE|slice:':2' == 'ar' %}right-0{% else %}left-0{% endif %} bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            {% if LANGUAGE_CODE|slice:':2' == 'ar' %}المساعد الذكي (Redivio AI){% else %}AI Assistant (Redivio AI){% endif %}
         </div>
     </button>
 
     <!-- Chat Window -->
-    <div id="ai-chat-window" class="hidden absolute bottom-20 right-0 w-[380px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col origin-bottom-right transition-all duration-300" style="height: 550px; max-height: 80vh;">
+    <div id="ai-chat-window" class="hidden absolute bottom-20 {% if LANGUAGE_CODE|slice:':2' == 'ar' %}left-0 origin-bottom-left{% else %}right-0 origin-bottom-right{% endif %} w-[380px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col transition-all duration-300" style="height: 550px; max-height: 80vh;">
         <!-- Header -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 flex items-center justify-between text-white">
             <div class="flex items-center gap-3">
@@ -20,8 +24,8 @@
                     <img src="{% static 'brand/logo_r.png' %}" class="w-full h-full object-contain" alt="Redivio AI">
                 </div>
                 <div>
-                    <h3 class="font-bold text-sm">المساعد الذكي</h3>
-                    <p class="text-xs text-blue-100">مدعوم بـ Redivio AI</p>
+                    <h3 class="font-bold text-sm">{% if LANGUAGE_CODE|slice:':2' == 'ar' %}المساعد الذكي{% else %}AI Assistant{% endif %}</h3>
+                    <p class="text-xs text-blue-100">{% if LANGUAGE_CODE|slice:':2' == 'ar' %}مدعوم بـ Redivio AI{% else %}Powered by Redivio AI{% endif %}</p>
                 </div>
             </div>
             <button id="ai-chat-close" class="w-8 h-8 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors">
@@ -36,7 +40,8 @@
                 <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-robot text-blue-600 text-xs"></i>
                 </div>
-                <div class="bg-white p-3 rounded-2xl rounded-tr-sm shadow-sm border border-slate-100 text-sm text-slate-700">
+                <div class="bg-white p-3 rounded-2xl {% if LANGUAGE_CODE|slice:':2' == 'ar' %}rounded-tr-sm{% else %}rounded-tl-sm{% endif %} shadow-sm border border-slate-100 text-sm text-slate-700">
+                    {% if LANGUAGE_CODE|slice:':2' == 'ar' %}
                     أهلاً بك في نظام Redivio! 👋<br>
                     أنا المساعد الذكي الخاص بك، أقدر أساعدك في:
                     <ul class="list-disc list-inside mt-2 text-slate-500 space-y-1">
@@ -45,6 +50,16 @@
                         <li>تحليل البيانات السريعة</li>
                     </ul>
                     كيف يمكنني مساعدتك اليوم؟
+                    {% else %}
+                    Welcome to Redivio System! 👋<br>
+                    I am your AI Assistant. I can help you with:
+                    <ul class="list-disc list-inside mt-2 text-slate-500 space-y-1">
+                        <li>Explaining how to use the system</li>
+                        <li>Querying inventory and items</li>
+                        <li>Quick data analytics</li>
+                    </ul>
+                    How can I help you today?
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -52,7 +67,7 @@
         <!-- Input Area -->
         <div class="p-3 bg-white border-t border-slate-100">
             <form id="ai-chat-form" class="flex gap-2">
-                <input type="text" id="ai-chat-input" placeholder="اسأل عن أي شيء في النظام..." 
+                <input type="text" id="ai-chat-input" placeholder="{% if LANGUAGE_CODE|slice:':2' == 'ar' %}اسأل عن أي شيء في النظام...{% else %}Ask about anything in the system...{% endif %}" 
                        class="flex-1 bg-slate-100 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all border border-transparent focus:border-blue-500">
                 <button type="submit" class="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center shadow-md transition-colors disabled:opacity-50">
                     <i class="fas fa-paper-plane rtl:-scale-x-100"></i>
@@ -64,6 +79,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        const isArabic = {% if LANGUAGE_CODE|slice:':2' == 'ar' %}true{% else %}false{% endif %};
         const chatBtn = document.getElementById('ai-chat-btn');
         const chatWindow = document.getElementById('ai-chat-window');
         const closeBtn = document.getElementById('ai-chat-close');
@@ -95,9 +111,16 @@
                 `<div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-user text-slate-500 text-xs"></i></div>` :
                 `<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden p-1.5"><img src="{% static 'brand/logo_r.png' %}" class="w-full h-full object-contain" alt="R"></div>`;
             
+            let tailClass;
+            if (isArabic) {
+                tailClass = isUser ? 'rounded-tl-sm' : 'rounded-tr-sm';
+            } else {
+                tailClass = isUser ? 'rounded-tr-sm' : 'rounded-tl-sm';
+            }
+
             const bubbleClasses = isUser ? 
-                'bg-blue-600 text-white rounded-2xl rounded-tl-sm shadow-sm p-3 text-sm' : 
-                'bg-white text-slate-700 rounded-2xl rounded-tr-sm shadow-sm border border-slate-100 p-3 text-sm';
+                `bg-blue-600 text-white rounded-2xl ${tailClass} shadow-sm p-3 text-sm` : 
+                `bg-white text-slate-700 rounded-2xl ${tailClass} shadow-sm border border-slate-100 p-3 text-sm`;
             
             // Basic markdown-like parsing (bolding, line breaks)
             const formattedText = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -116,9 +139,12 @@
             const div = document.createElement('div');
             div.id = id;
             div.className = 'flex gap-3';
+            
+            let tailClass = isArabic ? 'rounded-tr-sm' : 'rounded-tl-sm';
+
             div.innerHTML = `
                 <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden p-1.5"><img src="{% static 'brand/logo_r.png' %}" class="w-full h-full object-contain" alt="R"></div>
-                <div class="bg-white p-4 rounded-2xl rounded-tr-sm shadow-sm border border-slate-100 flex items-center gap-1 w-16">
+                <div class="bg-white p-4 rounded-2xl ${tailClass} shadow-sm border border-slate-100 flex items-center gap-1 w-16">
                     <div class="w-2 h-2 bg-slate-300 rounded-full animate-bounce"></div>
                     <div class="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
                     <div class="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
@@ -163,14 +189,20 @@
                 removeTypingIndicator(typingId);
                 
                 if(!response.ok) {
-                    appendMessage(`⚠️ عذراً، حدث خطأ: ${data.error || 'يرجى التأكد من إعدادات API Key.'}`);
+                    const errMsg = isArabic ? 
+                        `⚠️ عذراً، حدث خطأ: ${data.error || 'يرجى التأكد من إعدادات API Key.'}` :
+                        `⚠️ Sorry, an error occurred: ${data.error || 'Please check your API Key settings.'}`;
+                    appendMessage(errMsg);
                 } else {
                     appendMessage(data.reply);
                 }
 
             } catch (error) {
                 removeTypingIndicator(typingId);
-                appendMessage('⚠️ خطأ في الاتصال بالخادم. تأكد من تشغيل السيرفر بشكل صحيح.');
+                const connError = isArabic ?
+                    '⚠️ خطأ في الاتصال بالخادم. تأكد من تشغيل السيرفر بشكل صحيح.' :
+                    '⚠️ Connection error. Make sure the server is running properly.';
+                appendMessage(connError);
             } finally {
                 submitBtn.disabled = false;
                 chatInput.focus();

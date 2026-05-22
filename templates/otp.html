@@ -12,7 +12,7 @@
             <span class="text-white" x-text="email"></span>
         </p>
         
-        <div class="flex justify-center gap-4 mb-8" :class="lang === 'ar' ? 'flex-row-reverse' : 'flex-row'">
+        <div class="flex justify-center gap-4 mb-8 flex-row" dir="ltr">
             <template x-for="(digit, index) in code" :key="index">
                 <input type="text" maxlength="1" x-model="code[index]" @input="handleInput($event, index)" 
                        :id="'otp-' + index" 

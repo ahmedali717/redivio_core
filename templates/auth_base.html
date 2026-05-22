@@ -2,6 +2,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function() {
+            const path = window.location.pathname;
+            const isOnboarding = path.includes('/signup/') || path.includes('/building-core/') || path.includes('/verify-otp/') || path.includes('/setup-account/');
+            if (isOnboarding) {
+                const lang = localStorage.getItem('signupLang') || 'ar';
+                document.documentElement.lang = lang;
+                document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+            } else {
+                document.documentElement.lang = 'en';
+                document.documentElement.dir = 'ltr';
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>REDIVIO ERP</title>

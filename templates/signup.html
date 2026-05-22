@@ -30,9 +30,9 @@
     }
 </style>
 
-<div class="w-full max-w-7xl h-auto lg:h-[92vh] relative z-10 flex flex-col lg:flex-row overflow-hidden rounded-3xl shadow-2xl border border-slate-800 bg-[#0f172a]" x-data="signupForm()">
+<div class="w-full max-w-7xl h-auto lg:h-[92vh] relative z-10 flex flex-col overflow-hidden rounded-3xl shadow-2xl border border-slate-800 bg-[#0f172a]" :class="lang === 'ar' ? 'lg:flex-row-reverse' : 'lg:flex-row'" x-data="signupForm()" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
     
-    <div class="lg:w-5/12 relative p-8 lg:p-12 flex flex-col justify-between bg-slate-900 overflow-hidden" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
+    <div class="lg:w-5/12 relative p-8 lg:p-12 flex flex-col justify-between bg-slate-900" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
         <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-900/20 to-transparent pointer-events-none"></div>
         <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
         
@@ -55,13 +55,13 @@
             </div>
             
             <div class="relative inline-block mt-16">
-                <div class="absolute -right-24 -top-8 z-20 pointer-events-none" :class="lang === 'ar' ? '-left-24 -right-auto' : '-right-24 -left-auto'">
+                <div class="absolute -top-8 z-20 pointer-events-none" :class="lang === 'ar' ? '-left-10' : '-right-10'">
                     <div class="robot-float relative">
                         <i class="fas fa-robot text-6xl text-blue-400"></i> <div class="absolute top-4 left-3 w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                         <div class="absolute top-4 right-3 w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                        <div class="msg-pop absolute -left-20 top-0 bg-white text-slate-900 text-[10px] font-bold py-1 px-2 rounded-full shadow-lg whitespace-nowrap" :class="lang === 'ar' ? '-right-20 -left-auto' : '-left-20 -right-auto'">
+                        <div class="msg-pop absolute top-0 bg-white text-slate-900 text-[10px] font-bold py-1 px-2 rounded-full shadow-lg whitespace-nowrap" :class="lang === 'ar' ? '-right-20' : '-left-20'">
                             <span x-text="lang === 'ar' ? 'ابدأ مجاناً! 👇' : 'Start Free! 👇'"></span>
-                            <div class="absolute right-2 -bottom-1 w-2 h-2 bg-white transform rotate-45"></div>
+                            <div class="absolute -bottom-1 w-2 h-2 bg-white transform rotate-45" :class="lang === 'ar' ? 'left-2' : 'right-2'"></div>
                         </div>
                     </div>
                 </div>
@@ -282,6 +282,8 @@
             toggleLang() {
                 this.lang = this.lang === 'en' ? 'ar' : 'en';
                 localStorage.setItem('signupLang', this.lang);
+                document.documentElement.lang = this.lang;
+                document.documentElement.dir = this.lang === 'ar' ? 'rtl' : 'ltr';
             },
             getPlanNameAr(plan) {
                 const names = { starter: 'المبتدئ', business: 'الأعمال', professional: 'المحترف', enterprise: 'المؤسسات' };
@@ -380,10 +382,17 @@
                             background: '#0f172a',
                             color: '#fff',
                             icon: 'warning',
-                            confirmButtonText: this.lang === 'ar' ? 'حسناً' : 'OK',
+                            confirmButtonText: this.lang === 'ar' ? 'تسجيل الدخول' : 'Sign IN',
                             confirmButtonColor: '#3b82f6',
+                            showCancelButton: true,
+                            cancelButtonText: this.lang === 'ar' ? 'إلغاء' : 'Cancel',
+                            cancelButtonColor: '#475569',
                             customClass: {
                                 popup: 'border border-slate-800 rounded-3xl',
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = "{% url 'login_page' %}";
                             }
                         });
                     } else {
