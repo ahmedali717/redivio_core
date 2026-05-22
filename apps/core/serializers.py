@@ -63,11 +63,58 @@ class StorageLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = StorageLocation
         fields = '__all__'
+        validators = []
+
+    def validate(self, attrs):
+        code = attrs.get('code', getattr(self.instance, 'code', None))
+        name = attrs.get('name', getattr(self.instance, 'name', None))
+        plant = attrs.get('plant', getattr(self.instance, 'plant', None))
+
+        request = self.context.get('request')
+        is_arabic = request and request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+        
+        if code and plant:
+            qs = StorageLocation.objects.filter(plant=plant, code=code)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            existing = qs.first()
+            if existing:
+                msg = f"الكود مكرر ومستخدم بالفعل مع موقع: ({existing.name})" if is_arabic else f"Code is already used by location: {existing.name}"
+                raise serializers.ValidationError({"code": msg})
+
+        if name and plant:
+            qs = StorageLocation.objects.filter(plant=plant, name=name)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            existing = qs.first()
+            if existing:
+                msg = f"الاسم مكرر، يوجد موقع بنفس الاسم مسبقاً بكود: ({existing.code})" if is_arabic else f"Name is already used by location with code: {existing.code}"
+                raise serializers.ValidationError({"name": msg})
+
+        return attrs
 
 class StorageBinSerializer(serializers.ModelSerializer):
     class Meta:
         model = StorageBin
         fields = '__all__'
+        validators = []
+
+    def validate(self, attrs):
+        code = attrs.get('code', getattr(self.instance, 'code', None))
+        storage_location = attrs.get('storage_location', getattr(self.instance, 'storage_location', None))
+
+        request = self.context.get('request')
+        is_arabic = request and request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+        
+        if code and storage_location:
+            qs = StorageBin.objects.filter(storage_location=storage_location, code=code)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                msg = f"الكود مكرر داخل هذا الموقع." if is_arabic else "Code is already used in this location."
+                raise serializers.ValidationError({"code": msg})
+
+        return attrs
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

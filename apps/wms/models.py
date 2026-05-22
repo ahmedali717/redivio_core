@@ -23,6 +23,9 @@ class StorageLocation(models.Model):
     
     def __str__(self): return f"{self.plant.code} - {self.code}"
 
+    class Meta:
+        unique_together = (('plant', 'code'), ('plant', 'name'))
+
 class StorageBin(models.Model):
     # ✅ تعديل 1: تغيير الاسم إلى storage_location ليتطابق مع الـ Serializer والـ Frontend
     storage_location = models.ForeignKey(StorageLocation, on_delete=models.CASCADE, related_name='bins')

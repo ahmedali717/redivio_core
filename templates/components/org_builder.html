@@ -120,17 +120,42 @@
         </div>
         
         <!-- Excel Import Block -->
-        <div class="mt-6 pt-6 border-t border-slate-100">
+        <div class="mt-6 pt-6 border-t border-slate-100 overflow-y-auto max-h-[40vh] pr-2 custom-scrollbar">
             <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">[[ isArabic ? 'استيراد البيانات' : 'Import Data' ]]</h3>
-            <div class="space-y-3">
+            
+            <!-- Plants -->
+            <div class="space-y-2 mb-5">
                 <input type="file" ref="plantExcelFile" @change="uploadPlantExcel" accept=".xlsx,.xls,.csv" class="hidden">
-                <button @click="triggerPlantImport" class="w-full p-4 bg-emerald-50 border-2 border-emerald-100 rounded-xl flex items-center justify-center gap-3 transition-all hover:bg-emerald-500 hover:text-white text-emerald-600 group shadow-sm">
-                    <i class="fas fa-file-excel text-lg"></i>
-                    <span class="text-sm font-bold uppercase">[[ isArabic ? 'استيراد المنشآت (Excel)' : 'Import Plants (Excel)' ]]</span>
+                <button @click="triggerPlantImport" class="w-full p-3 bg-emerald-50 border-2 border-emerald-100 rounded-xl flex items-center justify-center gap-3 transition-all hover:bg-emerald-500 hover:text-white text-emerald-600 group shadow-sm">
+                    <i class="fas fa-file-excel"></i>
+                    <span class="text-xs font-bold uppercase">[[ isArabic ? 'استيراد المنشآت (Excel)' : 'Import Plants' ]]</span>
                 </button>
-                <button @click="downloadPlantTemplate" class="w-full text-center text-xs font-bold text-slate-400 hover:text-slate-700 transition-colors mt-2 underline decoration-slate-300 underline-offset-4">
-                    <i class="fas fa-download mr-1"></i>
-                    [[ isArabic ? 'تحميل نموذج فارغ' : 'Download Template' ]]
+                <button @click="downloadPlantTemplate" class="w-full text-center text-[10px] font-bold text-slate-400 hover:text-slate-700 transition-colors mt-1 underline decoration-slate-300 underline-offset-4">
+                    <i class="fas fa-download mr-1"></i> [[ isArabic ? 'تحميل نموذج المنشآت' : 'Download Plants Template' ]]
+                </button>
+            </div>
+
+            <!-- Locations -->
+            <div class="space-y-2 mb-5">
+                <input type="file" ref="locationExcelFile" @change="uploadLocationExcel" accept=".xlsx,.xls,.csv" class="hidden">
+                <button @click="triggerLocationImport" class="w-full p-3 bg-emerald-50 border-2 border-emerald-100 rounded-xl flex items-center justify-center gap-3 transition-all hover:bg-emerald-500 hover:text-white text-emerald-600 group shadow-sm">
+                    <i class="fas fa-file-excel"></i>
+                    <span class="text-xs font-bold uppercase">[[ isArabic ? 'استيراد مواقع التخزين' : 'Import Locations' ]]</span>
+                </button>
+                <button @click="downloadLocationTemplate" class="w-full text-center text-[10px] font-bold text-slate-400 hover:text-slate-700 transition-colors mt-1 underline decoration-slate-300 underline-offset-4">
+                    <i class="fas fa-download mr-1"></i> [[ isArabic ? 'تحميل نموذج المواقع' : 'Download Locations Template' ]]
+                </button>
+            </div>
+
+            <!-- Bins -->
+            <div class="space-y-2">
+                <input type="file" ref="binExcelFile" @change="uploadBinExcel" accept=".xlsx,.xls,.csv" class="hidden">
+                <button @click="triggerBinImport" class="w-full p-3 bg-emerald-50 border-2 border-emerald-100 rounded-xl flex items-center justify-center gap-3 transition-all hover:bg-emerald-500 hover:text-white text-emerald-600 group shadow-sm">
+                    <i class="fas fa-file-excel"></i>
+                    <span class="text-xs font-bold uppercase">[[ isArabic ? 'استيراد أرفف التخزين' : 'Import Bins' ]]</span>
+                </button>
+                <button @click="downloadBinTemplate" class="w-full text-center text-[10px] font-bold text-slate-400 hover:text-slate-700 transition-colors mt-1 underline decoration-slate-300 underline-offset-4">
+                    <i class="fas fa-download mr-1"></i> [[ isArabic ? 'تحميل نموذج الأرفف' : 'Download Bins Template' ]]
                 </button>
             </div>
         </div>

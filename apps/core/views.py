@@ -566,6 +566,52 @@ class LocationViewSet(viewsets.ModelViewSet):
         
         return StorageLocation.objects.all()
 
+    @action(detail=False, methods=['post'], url_path='import')
+    def import_locations(self, request):
+        import pandas as pd
+        file = request.FILES.get('file')
+        if not file: return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        active_id = request.session.get('active_opco_id')
+        if not active_id: return Response({"error": "No active company selected"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            df = pd.read_csv(file) if file.name.endswith('.csv') else pd.read_excel(file)
+            success_count, skipped_count = 0, 0
+            
+            pcode_col = 'كود المنشأة' if 'كود المنشأة' in df.columns else 'Plant Code'
+            code_col = 'كود الموقع' if 'كود الموقع' in df.columns else 'Location Code'
+            name_col = 'اسم الموقع' if 'اسم الموقع' in df.columns else 'Location Name'
+            
+            if not all(col in df.columns for col in [pcode_col, code_col, name_col]):
+                return Response({"error": "Missing columns. Ensure Plant Code, Location Code, and Location Name exist."}, status=status.HTTP_400_BAD_REQUEST)
+
+            active_opco = OpCo.all_objects.filter(id=active_id).first()
+            
+            with transaction.atomic():
+                for index, row in df.iterrows():
+                    pcode = str(row[pcode_col]).strip()
+                    code = str(row[code_col]).strip()
+                    name = str(row[name_col]).strip()
+                    
+                    if not pcode or not code or not name or str(code).lower() == 'nan': continue
+                        
+                    plant = Plant.objects.filter(opco=active_opco, code=pcode).first()
+                    if not plant:
+                        skipped_count += 1
+                        continue
+                        
+                    if StorageLocation.objects.filter(plant=plant, code=code).exists() or StorageLocation.objects.filter(plant=plant, name=name).exists():
+                        skipped_count += 1
+                        continue
+                        
+                    StorageLocation.objects.create(plant=plant, code=code[:10], name=name[:100])
+                    success_count += 1
+                    
+            return Response({"message": "Import successful", "success_count": success_count, "skipped_count": skipped_count})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 class StorageBinViewSet(viewsets.ModelViewSet):
     serializer_class = StorageBinSerializer
     def get_queryset(self):
@@ -579,6 +625,50 @@ class StorageBinViewSet(viewsets.ModelViewSet):
             ).distinct()
             
         return StorageBin.objects.all()
+
+    @action(detail=False, methods=['post'], url_path='import')
+    def import_bins(self, request):
+        import pandas as pd
+        file = request.FILES.get('file')
+        if not file: return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        active_id = request.session.get('active_opco_id')
+        if not active_id: return Response({"error": "No active company selected"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            df = pd.read_csv(file) if file.name.endswith('.csv') else pd.read_excel(file)
+            success_count, skipped_count = 0, 0
+            
+            lcode_col = 'كود الموقع' if 'كود الموقع' in df.columns else 'Location Code'
+            code_col = 'كود الرف' if 'كود الرف' in df.columns else 'Bin Code'
+            
+            if not all(col in df.columns for col in [lcode_col, code_col]):
+                return Response({"error": "Missing columns. Ensure Location Code and Bin Code exist."}, status=status.HTTP_400_BAD_REQUEST)
+
+            active_opco = OpCo.all_objects.filter(id=active_id).first()
+            
+            with transaction.atomic():
+                for index, row in df.iterrows():
+                    lcode = str(row[lcode_col]).strip()
+                    code = str(row[code_col]).strip()
+                    
+                    if not lcode or not code or str(code).lower() == 'nan': continue
+                        
+                    loc = StorageLocation.objects.filter(plant__opco=active_opco, code=lcode).first()
+                    if not loc:
+                        skipped_count += 1
+                        continue
+                        
+                    if StorageBin.objects.filter(storage_location=loc, code=code).exists():
+                        skipped_count += 1
+                        continue
+                        
+                    StorageBin.objects.create(storage_location=loc, code=code[:20])
+                    success_count += 1
+                    
+            return Response({"message": "Import successful", "success_count": success_count, "skipped_count": skipped_count})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 class CompanyUserViewSet(viewsets.ModelViewSet):
     serializer_class = CompanyUserSerializer
     permission_classes = [IsAuthenticated]

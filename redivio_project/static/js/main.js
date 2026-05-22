@@ -3129,6 +3129,110 @@ createApp({
             }
         },
 
+        downloadLocationTemplate() {
+            const isAr = this.isArabic;
+            const headers = isAr ? 'كود المنشأة,كود الموقع,اسم الموقع' : 'Plant Code,Location Code,Location Name';
+            const sample1 = isAr ? 'PL01,LOC01,الموقع الأول' : 'PL01,LOC01,First Location';
+            
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers + "\n" + sample1;
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", isAr ? "نموذج_المواقع.csv" : "location_template.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        },
+
+        triggerLocationImport() {
+            if (this.$refs.locationExcelFile) this.$refs.locationExcelFile.click();
+            else {
+                const el = document.querySelector('input[type="file"][ref="locationExcelFile"]');
+                if (el) el.click();
+            }
+        },
+
+        async uploadLocationExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            this.loading = true;
+            try {
+                const response = await fetch('/api/locations/import/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: formData
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    this.showToast(this.isArabic 
+                        ? `تم استيراد ${result.success_count} بنجاح، وتم تخطي ${result.skipped_count} مكررين.` 
+                        : `Successfully imported ${result.success_count}, skipped ${result.skipped_count} duplicates.`, 'success');
+                    await this.refreshAllData();
+                } else {
+                    this.showToast(this.isArabic ? "فشل الاستيراد: " + (result.error || '') : "Import Failed: " + (result.error || ''), 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "حدث خطأ في الاتصال بالسيرفر" : "Server connection error", 'error');
+            } finally {
+                this.loading = false;
+                event.target.value = '';
+            }
+        },
+
+        downloadBinTemplate() {
+            const isAr = this.isArabic;
+            const headers = isAr ? 'كود الموقع,كود الرف' : 'Location Code,Bin Code';
+            const sample1 = isAr ? 'LOC01,BIN01' : 'LOC01,BIN01';
+            
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers + "\n" + sample1;
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", isAr ? "نموذج_الأرفف.csv" : "bin_template.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        },
+
+        triggerBinImport() {
+            if (this.$refs.binExcelFile) this.$refs.binExcelFile.click();
+            else {
+                const el = document.querySelector('input[type="file"][ref="binExcelFile"]');
+                if (el) el.click();
+            }
+        },
+
+        async uploadBinExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            this.loading = true;
+            try {
+                const response = await fetch('/api/bins/import/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: formData
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    this.showToast(this.isArabic 
+                        ? `تم استيراد ${result.success_count} بنجاح، وتم تخطي ${result.skipped_count} مكررين.` 
+                        : `Successfully imported ${result.success_count}, skipped ${result.skipped_count} duplicates.`, 'success');
+                    await this.refreshAllData();
+                } else {
+                    this.showToast(this.isArabic ? "فشل الاستيراد: " + (result.error || '') : "Import Failed: " + (result.error || ''), 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "حدث خطأ في الاتصال بالسيرفر" : "Server connection error", 'error');
+            } finally {
+                this.loading = false;
+                event.target.value = '';
+            }
+        },
+
         async refreshAllData() {
             this.loading = true;
             try {
