@@ -11,7 +11,9 @@
     <div
         class="h-20 flex items-center gap-3 px-5 border-b border-white/20 bg-white/10 overflow-visible text-white relative brand-area-container">
         <div class="flex items-center gap-3 cursor-pointer group" @click="showBrandDropdown = !showBrandDropdown">
-            <img src="/static/brand/logo_r.png" class="w-9 h-9 object-contain shrink-0 brightness-0 invert" alt="Redivio Logo">
+            <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-md">
+                <img src="/static/brand/logo_r.png" class="w-7 h-7 object-contain" alt="Redivio Logo">
+            </div>
             <span v-show="!sidebarCollapsed"
                 class="text-lg font-bold tracking-wider tech-font animate-in fade-in duration-300">REDIVIO</span>
             <i v-show="!sidebarCollapsed"
