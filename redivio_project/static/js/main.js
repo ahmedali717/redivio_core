@@ -4290,7 +4290,8 @@ createApp({
                     this.fetchCustomers(),
                     this.fetchVendors(),
                     this.fetchCompanyUsers(),
-                    this.fetchFloorsAndTables()
+                    this.fetchFloorsAndTables(),
+                    this.fetchPOSDashboard()
                 ]);
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {
