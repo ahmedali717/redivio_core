@@ -180,7 +180,7 @@
                     <div>
                         <label class="text-[9px] text-slate-400 font-bold block mb-1">[[ isArabic ? 'عدد الأفراد' : 'Guests Count' ]]</label>
                         <div class="flex items-center bg-white border border-slate-200 rounded-xl p-1 justify-between h-[34px]">
-                            <button @click="if(posGuestCount > 1) posGuestCount--" class="w-6 h-6 rounded-lg bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">-</button>
+                            <button @click="posGuestCount = Math.max(1, posGuestCount - 1)" class="w-6 h-6 rounded-lg bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">-</button>
                             <span class="text-xs font-bold text-slate-700">[[ posGuestCount ]]</span>
                             <button @click="posGuestCount++" class="w-6 h-6 rounded-lg bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">+</button>
                         </div>

@@ -197,7 +197,7 @@
             <div v-if="selectedLayoutTable.status === 'available' || selectedLayoutTable.status === 'reserved'" class="mb-6">
                 <label class="text-xs font-black text-slate-500 uppercase tracking-wide block mb-3">[[ isArabic ? 'عدد أفراد الطاولة الحاليين' : 'Current Guest Count' ]]</label>
                 <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                    <button @click="if(tableForm.current_guests > 1) tableForm.current_guests--" class="w-10 h-10 rounded-xl bg-white text-slate-600 shadow-sm border hover:bg-slate-100 flex items-center justify-center font-bold text-lg active:scale-95 transition-all">-</button>
+                    <button @click="tableForm.current_guests = Math.max(1, tableForm.current_guests - 1)" class="w-10 h-10 rounded-xl bg-white text-slate-600 shadow-sm border hover:bg-slate-100 flex items-center justify-center font-bold text-lg active:scale-95 transition-all">-</button>
                     
                     <div class="text-center flex-1">
                         <span class="text-2xl font-black text-slate-800">[[ tableForm.current_guests ]]</span>
@@ -205,7 +205,7 @@
                         <span class="text-slate-500 text-sm font-bold">[[ selectedLayoutTable.seats_limit ]] [[ isArabic ? 'كراسي' : 'Seats' ]]</span>
                     </div>
 
-                    <button @click="if(tableForm.current_guests < selectedLayoutTable.seats_limit) tableForm.current_guests++" class="w-10 h-10 rounded-xl bg-white text-slate-600 shadow-sm border hover:bg-slate-100 flex items-center justify-center font-bold text-lg active:scale-95 transition-all">+</button>
+                    <button @click="tableForm.current_guests = Math.min(selectedLayoutTable.seats_limit, tableForm.current_guests + 1)" class="w-10 h-10 rounded-xl bg-white text-slate-600 shadow-sm border hover:bg-slate-100 flex items-center justify-center font-bold text-lg active:scale-95 transition-all">+</button>
                 </div>
                 <!-- Warning indicator if fully booked -->
                 <p v-if="tableForm.current_guests === selectedLayoutTable.seats_limit" class="text-[10px] text-amber-600 font-bold mt-2 text-center">
