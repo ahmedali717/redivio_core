@@ -1098,7 +1098,41 @@ createApp({
             }
         },
 
+        isItemOutofStock(item) {
+            if (!item.recipe_lines || item.recipe_lines.length === 0) {
+                return parseFloat(item.on_hand || 0) <= 0;
+            }
+            const unavailable = item.recipe_lines.filter(ing => parseFloat(ing.on_hand || 0) <= 0);
+            return unavailable.length === item.recipe_lines.length;
+        },
+
+        hasMissingIngredients(item) {
+            if (!item.recipe_lines || item.recipe_lines.length === 0) return false;
+            const unavailable = item.recipe_lines.filter(ing => parseFloat(ing.on_hand || 0) <= 0);
+            return unavailable.length > 0 && unavailable.length < item.recipe_lines.length;
+        },
+
+        getMissingIngredientsList(item) {
+            if (!item.recipe_lines || item.recipe_lines.length === 0) return [];
+            return item.recipe_lines.filter(ing => parseFloat(ing.on_hand || 0) <= 0).map(ing => ing.ingredient_name);
+        },
+
         addToCart(item) {
+            // Check BOM ingredients stock availability
+            let autoNotes = '';
+            if (item.recipe_lines && item.recipe_lines.length > 0) {
+                const unavailable = item.recipe_lines.filter(ing => parseFloat(ing.on_hand || 0) <= 0);
+                if (unavailable.length === item.recipe_lines.length) {
+                    this.showToast(this.isArabic ? "عفواً، هذا الصنف غير متاح مؤقتاً لنفاد جميع المكونات" : "Sorry, this item is temporarily unavailable (all ingredients out of stock)", "error");
+                    return;
+                }
+                if (unavailable.length > 0) {
+                    autoNotes = this.isArabic 
+                        ? `بدون: ${unavailable.map(ing => ing.ingredient_name).join('، ')}` 
+                        : `Without: ${unavailable.map(ing => ing.ingredient_name).join(', ')}`;
+                }
+            }
+
             const price = parseFloat(item.sales_price || item.standard_price || 0);
             const onHand = parseFloat(item.on_hand || 0);
             const hasNoBOM = !item.recipe_lines || item.recipe_lines.length === 0;
@@ -1110,6 +1144,9 @@ createApp({
                     return;
                 }
                 existing.qty++;
+                if (autoNotes && !existing.kitchen_notes) {
+                    existing.kitchen_notes = autoNotes;
+                }
             } else {
                 if (hasNoBOM && onHand <= 0) {
                     this.showToast(this.isArabic ? "عفواً، الصنف غير متوفر في المخزن" : "Sorry, item is out of stock", "error");
@@ -1123,7 +1160,7 @@ createApp({
                     qty: 1,
                     on_hand: onHand,
                     has_no_bom: hasNoBOM,
-                    kitchen_notes: ''
+                    kitchen_notes: autoNotes
                 });
             }
             this.posSelectedCartIndex = this.posCart.findIndex(i => i.id === item.id);

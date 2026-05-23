@@ -35,8 +35,10 @@ class MaterialSerializer(serializers.ModelSerializer):
             recipe = obj.recipe # OneToOneField related_name='recipe'
             return [{
                 'ingredient_id': item.ingredient_id,
+                'ingredient_name': item.ingredient.name,
                 'quantity': item.quantity,
-                'uom': item.uom
+                'uom': item.uom,
+                'on_hand': item.ingredient.total_on_hand
             } for item in recipe.ingredients.all()]
         except:
             return []

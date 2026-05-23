@@ -51,13 +51,31 @@
         <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-20">
                 
-                <div v-for="item in filteredPosItems" :key="item.id" @click="addToCart(item)" class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-red-300 cursor-pointer transition-all duration-200 overflow-hidden group flex flex-col">
+                <div v-for="item in filteredPosItems" :key="item.id" 
+                     @click="isItemOutofStock(item) ? showToast(isArabic ? 'عفواً، الصنف غير متوفر مؤقتاً لنفاد المكونات' : 'Sorry, item temporarily unavailable', 'error') : addToCart(item)" 
+                     :class="isItemOutofStock(item) ? 'opacity-65 cursor-not-allowed border-slate-200 bg-slate-50' : 'bg-white border-slate-200 hover:shadow-xl hover:-translate-y-1 hover:border-red-300 cursor-pointer'"
+                     class="rounded-2xl border shadow-sm transition-all duration-200 overflow-hidden group flex flex-col relative">
                     <div class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center p-4">
                         <img v-if="item.image" :src="fixImagePath(item.image)" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300">
                         <i v-else class="fas fa-hamburger text-4xl text-slate-300 group-hover:scale-110 group-hover:text-red-300 transition-all duration-300"></i>
                         
+                        <!-- 🚀 Temporarily Unavailable Overlay -->
+                        <div v-if="isItemOutofStock(item)" 
+                             class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center z-10">
+                            <span class="bg-red-600 text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-lg border border-red-500 uppercase tracking-wider animate-pulse">
+                                <i class="fas fa-ban ml-1"></i> [[ isArabic ? 'غير متاح مؤقتاً' : 'Out of Stock' ]]
+                            </span>
+                        </div>
+
+                        <!-- 🚀 Missing Ingredients Warning Badge -->
+                        <div v-if="hasMissingIngredients(item)" 
+                             class="absolute top-2 left-2 bg-amber-500/90 text-white text-[9px] font-black px-2 py-1 rounded-lg border border-amber-400 shadow-lg"
+                             :title="isArabic ? 'مكونات ناقصة: ' + getMissingIngredientsList(item).join('، ') : 'Missing: ' + getMissingIngredientsList(item).join(', ')">
+                            <i class="fas fa-triangle-exclamation"></i> [[ isArabic ? 'مكون ناقص' : 'Mod' ]]
+                        </div>
+
                         <!-- 🚀 Stock Level Display (Direct Sales Items) -->
-                        <div v-if="!item.recipe_lines || item.recipe_lines.length === 0" 
+                        <div v-if="(!item.recipe_lines || item.recipe_lines.length === 0) && !isItemOutofStock(item)" 
                              class="absolute top-2 right-2 bg-slate-900/60 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-lg border border-white/20 shadow-lg">
                             <i class="fas fa-box ml-1"></i> [[ isArabic ? 'متاح: ' : 'Stock: ' ]] [[ parseFloat(item.on_hand || 0).toLocaleString() ]]
                         </div>
