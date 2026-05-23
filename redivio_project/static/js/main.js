@@ -3853,9 +3853,19 @@ createApp({
                         this.showToast(this.isArabic ? "تم الحذف بنجاح" : "Deleted successfully", 'success');
                     } else {
                         // معالجة فشل الحذف (مثلاً لوجود بيانات مرتبطة)
-                        const errorData = await res.text();
-                        console.error("Delete Error:", errorData);
-                        this.showToast(this.isArabic ? "فشل الحذف: قد يكون العنصر مرتبطاً ببيانات أخرى" : "Delete failed: Item may be linked to other data", 'error');
+                        const errorText = await res.text();
+                        console.error("Delete Error:", errorText);
+                        let errorMessage = "";
+                        try {
+                            const errJson = JSON.parse(errorText);
+                            errorMessage = errJson.error || errJson.detail || "";
+                        } catch (e) {}
+                        
+                        if (errorMessage) {
+                            this.showToast(this.isArabic ? `فشل الحذف: ${errorMessage}` : `Delete failed: ${errorMessage}`, 'error');
+                        } else {
+                            this.showToast(this.isArabic ? "فشل الحذف: قد يكون العنصر مرتبطاً ببيانات أخرى" : "Delete failed: Item may be linked to other data", 'error');
+                        }
                     }
                 } catch (e) {
                     console.error("Network Error:", e);

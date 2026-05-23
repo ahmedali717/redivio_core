@@ -70,7 +70,8 @@
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <span class="text-[9px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-500 font-bold">[[ getBinsCount(loc.id) ]]</span>
-                                        <button @click="editItem('location', loc)" class="text-slate-300 hover:text-slate-600 transition-colors"><i class="fas fa-cog text-xs"></i></button>
+                                        <button @click="editItem('location', loc)" class="text-slate-300 hover:text-slate-600 transition-colors" :title="isArabic ? 'تعديل' : 'Edit'"><i class="fas fa-pencil-alt text-xs"></i></button>
+                                        <button @click="deleteItem('location', loc.id)" class="text-slate-300 hover:text-red-500 transition-colors" :title="isArabic ? 'حذف' : 'Delete'"><i class="fas fa-trash text-xs"></i></button>
                                     </div>
                                 </div>
 

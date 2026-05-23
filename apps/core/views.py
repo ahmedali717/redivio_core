@@ -495,6 +495,16 @@ class PlantViewSet(viewsets.ModelViewSet):
         
         return Plant.objects.all()
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+        if StockQuant.objects.filter(plant=instance, quantity__gt=0).exists():
+            return Response(
+                {"error": "لا يمكن حذف المنشأة لوجود رصيد بضاعة بها." if is_arabic else "Cannot delete plant because it has stock balance."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=False, methods=['post'], url_path='import')
     def import_plants(self, request):
         import pandas as pd
@@ -566,6 +576,16 @@ class LocationViewSet(viewsets.ModelViewSet):
         
         return StorageLocation.objects.all()
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+        if StockQuant.objects.filter(storage_bin__storage_location=instance, quantity__gt=0).exists():
+            return Response(
+                {"error": "لا يمكن حذف موقع التخزين لوجود رصيد بضاعة به." if is_arabic else "Cannot delete storage location because it has stock balance."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=False, methods=['post'], url_path='import')
     def import_locations(self, request):
         import pandas as pd
@@ -625,6 +645,16 @@ class StorageBinViewSet(viewsets.ModelViewSet):
             ).distinct()
             
         return StorageBin.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+        if StockQuant.objects.filter(storage_bin=instance, quantity__gt=0).exists():
+            return Response(
+                {"error": "لا يمكن حذف الرف لوجود رصيد بضاعة به." if is_arabic else "Cannot delete bin because it has stock balance."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=False, methods=['post'], url_path='import')
     def import_bins(self, request):
