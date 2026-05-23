@@ -58,6 +58,9 @@
             <!-- Restaurant POS App -->
             <div v-if="view === 'restaurant_pos_module'" class="flex flex-col h-full w-full">
                 <div class="flex-1 relative min-h-[700px] -mx-6 -mt-6"> <!-- Negative margins to break out of p-6 -->
+                    <div v-if="posTab === 'floor_layout'" class="absolute inset-0 bg-slate-100 overflow-hidden flex flex-col">
+                        {% include "pos/floor_layout.html" %}
+                    </div>
                     <div v-if="posTab === 'cashier'" class="absolute inset-0 bg-slate-100 overflow-hidden flex flex-col">
                         {% include "pos/terminal.html" %}
                     </div>

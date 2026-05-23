@@ -59,6 +59,18 @@ createApp({
             posOrderType: 'DINE_IN',
             posTableNumber: '',
             posGuestCount: 1,
+            posFloors: [],
+            posTables: [],
+            activeFloorId: null,
+            isLayoutEditMode: false,
+            draggedTable: null,
+            dragOffset: { x: 0, y: 0 },
+            selectedLayoutTable: null,
+            showTableActionModal: false,
+            showTableModal: false,
+            showFloorModal: false,
+            tableForm: { id: null, number: '', seats_limit: 4, shape: 'square', current_guests: 1, position_x: 50, position_y: 50 },
+            floorForm: { id: null, name: '', number: 1 },
             posActiveCashierId: null,
             posSessionsHistory: [],
             selectedSession: null,
@@ -271,6 +283,9 @@ createApp({
     },
 
     computed: {
+        activeFloorTables() {
+            return (this.posTables || []).filter(t => t.floor === this.activeFloorId);
+        },
         posCategories() {
             // سنستخدم المجموعات البيعية بدلاً من الفئات العامة في الـ POS
             return this.sale_groups || [];
@@ -691,6 +706,398 @@ createApp({
     },
 
     methods: {
+        async fetchFloorsAndTables() {
+            try {
+                this.loading = true;
+                const [floorsRes, tablesRes] = await Promise.all([
+                    fetch('/api/pos/floors/?opco=' + this.activeOpcoId),
+                    fetch('/api/pos/tables/?opco=' + this.activeOpcoId)
+                ]);
+                if (floorsRes.ok) this.posFloors = await floorsRes.json();
+                if (tablesRes.ok) this.posTables = await tablesRes.json();
+                
+                if (this.posFloors.length > 0 && !this.activeFloorId) {
+                    this.activeFloorId = this.posFloors[0].id;
+                }
+            } catch (e) {
+                console.error("Error fetching floors/tables:", e);
+                this.showToast(this.isArabic ? "خطأ في تحميل الطوابق والترابيزات" : "Error loading floors/tables", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        selectFloor(floorId) {
+            this.activeFloorId = floorId;
+        },
+
+        toggleLayoutEditMode() {
+            this.isLayoutEditMode = !this.isLayoutEditMode;
+            if (!this.isLayoutEditMode) {
+                this.showToast(this.isArabic ? "تم حفظ تخطيط الصالة" : "Floor layout saved", "success");
+            }
+        },
+
+        getChairStyle(index, total, shape) {
+            // Distribute seats around the table shape
+            const angle = (2 * Math.PI * index) / total - Math.PI / 2;
+            const radius = shape === 'round' ? 52 : 55; // distance from center of table in px
+            const x = Math.round(Math.cos(angle) * radius);
+            const y = Math.round(Math.sin(angle) * radius);
+            return {
+                position: 'absolute',
+                left: `calc(50% + ${x}px)`,
+                top: `calc(50% + ${y}px)`,
+                transform: 'translate(-50%, -50%)',
+                width: '12px',
+                height: '12px'
+            };
+        },
+
+        startTableDrag(table, event) {
+            if (!this.isLayoutEditMode) return;
+            this.draggedTable = table;
+            
+            const rect = event.currentTarget.getBoundingClientRect();
+            const parentRect = document.getElementById('layout-canvas').getBoundingClientRect();
+            
+            // Calculate mouse offset inside the table card
+            this.dragOffset = {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+            event.preventDefault();
+        },
+
+        dragTable(event) {
+            if (!this.draggedTable) return;
+            const canvas = document.getElementById('layout-canvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            // Calculate absolute position relative to canvas
+            const x = event.clientX - rect.left - this.dragOffset.x;
+            const y = event.clientY - rect.top - this.dragOffset.y;
+            
+            // Translate to percentage (0 to 100)
+            let pctX = Math.round((x / rect.width) * 100);
+            let pctY = Math.round((y / rect.height) * 100);
+            
+            // Clamp coordinates inside canvas boundaries
+            pctX = Math.max(0, Math.min(90, pctX));
+            pctY = Math.max(0, Math.min(88, pctY));
+            
+            this.draggedTable.position_x = pctX;
+            this.draggedTable.position_y = pctY;
+        },
+
+        async endTableDrag() {
+            if (!this.draggedTable) return;
+            const table = this.draggedTable;
+            this.draggedTable = null;
+            
+            // Save coordinates via API
+            try {
+                await fetch(`/api/pos/tables/${table.id}/`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        position_x: table.position_x,
+                        position_y: table.position_y
+                    })
+                });
+            } catch (e) {
+                console.error("Error saving drag coordinates:", e);
+            }
+        },
+
+        handleTableClick(table) {
+            if (this.isLayoutEditMode) {
+                this.openTableModal(table);
+            } else {
+                this.openTableActions(table);
+            }
+        },
+
+        openTableActions(table) {
+            this.selectedLayoutTable = table;
+            this.tableForm.current_guests = table.current_guests || 1;
+            this.showTableActionModal = true;
+        },
+
+        async changeTableStatusAPI(tableId, status) {
+            try {
+                this.loading = true;
+                const endpoint = status === 'available' ? 'release_table' : (status === 'cleaning' ? 'release_table' : 'assign_order');
+                
+                let res;
+                if (status === 'available' || status === 'cleaning') {
+                    res = await fetch(`/api/pos/tables/${tableId}/release_table/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                    });
+                } else {
+                    res = await fetch(`/api/pos/tables/${tableId}/`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                        body: JSON.stringify({ status })
+                    });
+                }
+
+                if (res.ok) {
+                    if (status === 'cleaning') {
+                        // explicitly keep table status as cleaning
+                        await fetch(`/api/pos/tables/${tableId}/`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                            body: JSON.stringify({ status: 'cleaning' })
+                        });
+                    }
+                    this.showToast(this.isArabic ? "تم تحديث حالة الترابيزة" : "Table status updated", "success");
+                    this.showTableActionModal = false;
+                    await this.fetchFloorsAndTables();
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async startOrderFromLayout(table, guests) {
+            try {
+                this.loading = true;
+                // Mark table as occupied in the DB
+                const res = await fetch(`/api/pos/tables/${table.id}/`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        status: 'occupied',
+                        current_guests: guests
+                    })
+                });
+                
+                if (res.ok) {
+                    this.posTableNumber = table.number;
+                    this.posGuestCount = guests;
+                    this.posOrderType = 'DINE_IN';
+                    this.posCart = [];
+                    this.posTab = 'cashier';
+                    this.showTableActionModal = false;
+                    this.showToast(this.isArabic ? "بدء طلب محلي جديد" : "Dine-in order started", "success");
+                    await this.fetchFloorsAndTables();
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        viewActiveTableOrder(table) {
+            this.posTableNumber = table.number;
+            this.posGuestCount = table.current_guests || 1;
+            this.posOrderType = 'DINE_IN';
+            this.posTab = 'cashier';
+            this.showTableActionModal = false;
+            this.showToast(this.isArabic ? "متابعة طلب الترابيزة" : "Viewing table order", "info");
+        },
+
+        onTerminalTableChange() {
+            if (!this.posTableNumber) return;
+            const table = this.posTables.find(t => t.number === this.posTableNumber);
+            if (table) {
+                // Adjust guest count if it exceeds seats capacity
+                if (this.posGuestCount > table.seats_limit) {
+                    this.posGuestCount = table.seats_limit;
+                }
+            }
+        },
+
+        getSelectedTableOccupancyWarning() {
+            if (this.posOrderType !== 'DINE_IN' || !this.posTableNumber) return '';
+            const table = this.posTables.find(t => t.number === this.posTableNumber);
+            if (table && this.posGuestCount > table.seats_limit) {
+                return this.isArabic 
+                    ? `تنبيه: عدد الأفراد يتجاوز سعة الترابيزة (${table.seats_limit} كراسي)!` 
+                    : `Warning: Guests count exceeds table capacity (${table.seats_limit} seats)!`;
+            }
+            return '';
+        },
+
+        openFloorModal(floorId = null) {
+            if (floorId) {
+                const floor = this.posFloors.find(f => f.id === floorId);
+                this.floorForm = {
+                    id: floor.id,
+                    name: floor.name,
+                    number: floor.number
+                };
+            } else {
+                this.floorForm = {
+                    id: null,
+                    name: '',
+                    number: this.posFloors.length + 1
+                };
+            }
+            this.showFloorModal = true;
+        },
+
+        async saveFloor() {
+            if (!this.floorForm.name) {
+                this.showToast(this.isArabic ? "اسم الدور مطلوب" : "Floor name is required", "error");
+                return;
+            }
+            
+            try {
+                this.loading = true;
+                const method = this.floorForm.id ? 'PUT' : 'POST';
+                const url = this.floorForm.id ? `/api/pos/floors/${this.floorForm.id}/` : '/api/pos/floors/';
+                
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        name: this.floorForm.name,
+                        number: this.floorForm.number
+                    })
+                });
+
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم حفظ بيانات الدور" : "Floor details saved", "success");
+                    this.showFloorModal = false;
+                    await this.fetchFloorsAndTables();
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async deleteFloor(floorId) {
+            const { isConfirmed } = await Swal.fire({
+                title: this.isArabic ? 'هل أنت متأكد؟' : 'Are you sure?',
+                text: this.isArabic ? 'سيتم حذف الدور وجميع الترابيزات الملحقة به!' : 'This will delete the floor and all its tables!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'نعم، احذف' : 'Yes, delete',
+                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel'
+            });
+
+            if (!isConfirmed) return;
+
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/pos/floors/${floorId}/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم حذف الدور بنجاح" : "Floor deleted successfully", "success");
+                    this.activeFloorId = null;
+                    await this.fetchFloorsAndTables();
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        openTableModal(table = null) {
+            if (table) {
+                this.tableForm = {
+                    id: table.id,
+                    number: table.number,
+                    seats_limit: table.seats_limit,
+                    shape: table.shape,
+                    position_x: table.position_x,
+                    position_y: table.position_y
+                };
+            } else {
+                this.tableForm = {
+                    id: null,
+                    number: '',
+                    seats_limit: 4,
+                    shape: 'square',
+                    position_x: 50,
+                    position_y: 50
+                };
+            }
+            this.showTableModal = true;
+        },
+
+        async saveTable() {
+            if (!this.tableForm.number) {
+                this.showToast(this.isArabic ? "رقم الترابيزة مطلوب" : "Table number is required", "error");
+                return;
+            }
+            
+            try {
+                this.loading = true;
+                const method = this.tableForm.id ? 'PUT' : 'POST';
+                const url = this.tableForm.id ? `/api/pos/tables/${this.tableForm.id}/` : '/api/pos/tables/';
+                
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        floor: this.activeFloorId,
+                        number: this.tableForm.number,
+                        seats_limit: this.tableForm.seats_limit,
+                        shape: this.tableForm.shape,
+                        position_x: this.tableForm.position_x,
+                        position_y: this.tableForm.position_y
+                    })
+                });
+
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم حفظ الترابيزة بنجاح" : "Table saved successfully", "success");
+                    this.showTableModal = false;
+                    await this.fetchFloorsAndTables();
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async deleteTable(tableId) {
+            const { isConfirmed } = await Swal.fire({
+                title: this.isArabic ? 'هل أنت متأكد؟' : 'Are you sure?',
+                text: this.isArabic ? 'هل تريد حذف هذه الترابيزة؟' : 'Do you want to delete this table?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'نعم، احذف' : 'Yes, delete',
+                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel'
+            });
+
+            if (!isConfirmed) return;
+
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/pos/tables/${tableId}/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم حذف الترابيزة" : "Table deleted", "success");
+                    this.showTableModal = false;
+                    this.showTableActionModal = false;
+                    await this.fetchFloorsAndTables();
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
         addToCart(item) {
             const price = parseFloat(item.sales_price || item.standard_price || 0);
             const onHand = parseFloat(item.on_hand || 0);
@@ -845,6 +1252,22 @@ createApp({
                 if (res.ok) {
                     const order = await res.json();
                     
+                    // Link Dine-In order to table
+                    if (this.posOrderType === 'DINE_IN' && this.posTableNumber) {
+                        const tableObj = this.posTables.find(t => t.number === this.posTableNumber);
+                        if (tableObj) {
+                            try {
+                                await fetch(`/api/pos/tables/${tableObj.id}/assign_order/`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                                    body: JSON.stringify({ order_id: order.id, current_guests: this.posGuestCount })
+                                });
+                            } catch (e) {
+                                console.error("Error assigning table during checkout:", e);
+                            }
+                        }
+                    }
+                    
                     // 2. Process Payment & Deduct Inventory (BOM Deduction)
                     const payRes = await fetch(`/api/pos/orders/${order.id}/process_payment/`, {
                         method: 'POST',
@@ -859,6 +1282,8 @@ createApp({
                         this.printReceipt(order, this.posCart);
                         
                         this.posCart = [];
+                        this.posTableNumber = '';
+                        this.posGuestCount = 1;
                         this.refreshAllData(); // 🚀 تحديث شامل لكل البيانات والتقارير وحركات المخزن فوراً
                     } else {
                         const err = await payRes.json();
@@ -3246,7 +3671,8 @@ createApp({
                     this.fetchInventoryMoves(),
                     this.fetchCustomers(),
                     this.fetchVendors(),
-                    this.fetchCompanyUsers()
+                    this.fetchCompanyUsers(),
+                    this.fetchFloorsAndTables()
                 ]);
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {

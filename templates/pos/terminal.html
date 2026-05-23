@@ -153,6 +153,45 @@
                 </button>
             </div>
 
+            <!-- Dine-In Details: Table & Guest Selector -->
+            <div v-if="posOrderType === 'DINE_IN'" class="p-4 bg-red-50/20 border-b border-slate-50 animate-in slide-in-from-top-2 duration-200">
+                <div class="grid grid-cols-2 gap-2 text-right" dir="rtl">
+                    <!-- Table Picker Button -->
+                    <div>
+                        <label class="text-[9px] text-slate-400 font-bold block mb-1">[[ isArabic ? 'رقم الترابيزة' : 'Table Number' ]]</label>
+                        <div class="relative">
+                            <select v-model="posTableNumber" 
+                                    @change="onTerminalTableChange"
+                                    class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 focus:ring-1 focus:ring-red-500 appearance-none">
+                                <option value="">[[ isArabic ? 'اختر ترابيزة...' : 'Select Table...' ]]</option>
+                                <optgroup v-for="floor in posFloors" :label="floor.name">
+                                    <option v-for="t in posTables.filter(tb => tb.floor === floor.id)" 
+                                            :value="t.number"
+                                            :disabled="t.status === 'occupied' && t.active_order_ref && t.number !== posTableNumber">
+                                        [[ t.number ]] ([[ isArabic ? 'سعة ' + t.seats_limit + ' كراسي' : 'Cap ' + t.seats_limit ]]) [[ t.status === 'occupied' ? (isArabic ? ' - مشغولة' : ' - Occupied') : '' ]]
+                                    </option>
+                                </optgroup>
+                            </select>
+                            <i class="fas fa-chevron-down absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[9px]"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Guest Stepper -->
+                    <div>
+                        <label class="text-[9px] text-slate-400 font-bold block mb-1">[[ isArabic ? 'عدد الأفراد' : 'Guests Count' ]]</label>
+                        <div class="flex items-center bg-white border border-slate-200 rounded-xl p-1 justify-between h-[34px]">
+                            <button @click="if(posGuestCount > 1) posGuestCount--" class="w-6 h-6 rounded-lg bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">-</button>
+                            <span class="text-xs font-bold text-slate-700">[[ posGuestCount ]]</span>
+                            <button @click="posGuestCount++" class="w-6 h-6 rounded-lg bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">+</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Occupancy warnings or messages -->
+                <p v-if="getSelectedTableOccupancyWarning()" class="text-[9px] text-amber-600 font-bold mt-1 text-center">
+                    <i class="fas fa-triangle-exclamation mr-1"></i> [[ getSelectedTableOccupancyWarning() ]]
+                </p>
+            </div>
+
             <!-- Cart Items Scroller -->
             <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/20">
                 <div v-if="!posCart.length" class="h-full flex flex-col items-center justify-center text-slate-300 opacity-60">

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import POSOrder, POSOrderLine, POSSession, Recipe, RecipeItem, POSCashTransaction
+from .models import POSOrder, POSOrderLine, POSSession, Recipe, RecipeItem, POSCashTransaction, RestaurantFloor, RestaurantTable
 
 class POSOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.CharField(source='material.name', read_only=True)
@@ -34,3 +34,24 @@ class POSCashTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = POSCashTransaction
         fields = '__all__'
+
+
+class RestaurantFloorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RestaurantFloor
+        fields = ['id', 'opco', 'name', 'number', 'is_active']
+
+
+class RestaurantTableSerializer(serializers.ModelSerializer):
+    floor_name = serializers.CharField(source='floor.name', read_only=True)
+    active_order_ref = serializers.CharField(source='active_order.order_ref', read_only=True)
+    active_order_total = serializers.DecimalField(source='active_order.total_amount', max_digits=12, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = RestaurantTable
+        fields = [
+            'id', 'opco', 'floor', 'floor_name', 'number', 'seats_limit',
+            'current_guests', 'status', 'shape', 'position_x', 'position_y',
+            'active_order', 'active_order_ref', 'active_order_total'
+        ]
+

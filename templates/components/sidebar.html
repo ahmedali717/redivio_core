@@ -246,6 +246,14 @@
                     v-text="isArabic ? 'لوحة تحكم المطعم' : 'Restaurant Dashboard'"></span>
             </a>
 
+            <a href="#" v-if="canAccess('pos_cashier')" @click.prevent="posTab = 'floor_layout'; fetchFloorsAndTables()"
+                :class="posTab === 'floor_layout' ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                <i class="fas fa-cubes w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
+                    v-text="isArabic ? 'تخطيط الصالة والترابيزات' : 'Floor & Table Layout'"></span>
+            </a>
+
             <a href="#" v-if="canAccess('pos_cashier')" @click.prevent="posTab = 'cashier'"
                 :class="posTab === 'cashier' ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">

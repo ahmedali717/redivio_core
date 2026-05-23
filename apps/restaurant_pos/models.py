@@ -273,3 +273,53 @@ class POSOrderLine(models.Model):
     def __str__(self):
         return f"{self.qty}x {self.material.name} ({self.order.order_ref})"
 
+
+class RestaurantFloor(models.Model):
+    opco = models.ForeignKey(OpCo, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100, help_text="اسم الدور (مثال: الدور الأول)")
+    number = models.IntegerField(default=1, help_text="رقم ترتيب الدور")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['number']
+        unique_together = ('opco', 'number')
+
+    def __str__(self):
+        return f"{self.name} ({self.opco.name})"
+
+
+class RestaurantTable(models.Model):
+    opco = models.ForeignKey(OpCo, on_delete=models.CASCADE)
+    floor = models.ForeignKey(RestaurantFloor, on_delete=models.CASCADE, related_name='tables')
+    number = models.CharField(max_length=50, help_text="رقم أو اسم الترابيزة")
+    seats_limit = models.IntegerField(default=4, help_text="عدد الكراسي المخصصة للترابيزة")
+    current_guests = models.IntegerField(default=0, help_text="عدد الأفراد المتواجدين حالياً")
+    
+    STATUS_CHOICES = [
+        ('available', 'متاح (Available)'),
+        ('occupied', 'مشغول (Occupied)'),
+        ('reserved', 'محجوز (Reserved)'),
+        ('cleaning', 'تنظيف (Cleaning)')
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
+    
+    SHAPE_CHOICES = [
+        ('square', 'مربع (Square)'),
+        ('round', 'دائري (Round)')
+    ]
+    shape = models.CharField(max_length=20, choices=SHAPE_CHOICES, default='square')
+    
+    # الإحداثيات بالنسبة المئوية لوضع الترابيزة على الخريطة
+    position_x = models.IntegerField(default=50, help_text="الموقع الأفقي X (%)")
+    position_y = models.IntegerField(default=50, help_text="الموقع الرأسي Y (%)")
+    
+    active_order = models.ForeignKey('POSOrder', null=True, blank=True, on_delete=models.SET_NULL, related_name='active_table')
+
+    class Meta:
+        unique_together = ('opco', 'floor', 'number')
+        ordering = ['number']
+
+    def __str__(self):
+        return f"Table {self.number} - Floor {self.floor.name}"
+
+

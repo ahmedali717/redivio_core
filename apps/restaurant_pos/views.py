@@ -1,8 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import POSOrder, POSSession, Recipe
-from .serializers import POSOrderSerializer
+from .models import POSOrder, POSSession, Recipe, RestaurantFloor, RestaurantTable
+from .serializers import POSOrderSerializer, RestaurantFloorSerializer, RestaurantTableSerializer
 from django.utils import timezone
 
 class POSOrderViewSet(viewsets.ModelViewSet):
@@ -90,6 +90,18 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         session = order.session
         session.total_sales += order.total_amount
         session.save()
+        
+        # Free the table if this was a Dine-In order
+        if order.order_type == 'DINE_IN' and order.table_number:
+            try:
+                table = RestaurantTable.objects.filter(opco=order.opco, number=order.table_number).first()
+                if table:
+                    table.status = 'cleaning'
+                    table.active_order = None
+                    table.current_guests = 0
+                    table.save()
+            except Exception as e:
+                print("Error freeing table during checkout:", e)
         
         try:
             order.deduct_inventory()
@@ -419,3 +431,56 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             'difference': float(session.actual_closing_balance) - float(session.expected_closing_balance),
             'cashier': session.cashier_name
         })
+
+
+class RestaurantFloorViewSet(viewsets.ModelViewSet):
+    queryset = RestaurantFloor.objects.all()
+    serializer_class = RestaurantFloorSerializer
+
+    def get_queryset(self):
+        opco_id = self.request.query_params.get('opco')
+        queryset = self.queryset
+        if opco_id and opco_id != 'null':
+            try:
+                queryset = queryset.filter(opco_id=int(opco_id))
+            except ValueError:
+                pass
+        return queryset.order_by('number')
+
+
+class RestaurantTableViewSet(viewsets.ModelViewSet):
+    queryset = RestaurantTable.objects.all()
+    serializer_class = RestaurantTableSerializer
+
+    def get_queryset(self):
+        opco_id = self.request.query_params.get('opco')
+        queryset = self.queryset
+        if opco_id and opco_id != 'null':
+            try:
+                queryset = queryset.filter(opco_id=int(opco_id))
+            except ValueError:
+                pass
+        return queryset.order_by('number')
+
+    @action(detail=True, methods=['post'])
+    def assign_order(self, request, pk=None):
+        table = self.get_object()
+        order_id = request.data.get('order_id')
+        current_guests = request.data.get('current_guests', 0)
+        table.status = 'occupied'
+        if order_id:
+            table.active_order_id = int(order_id)
+        if current_guests:
+            table.current_guests = int(current_guests)
+        table.save()
+        return Response({'success': True})
+
+    @action(detail=True, methods=['post'])
+    def release_table(self, request, pk=None):
+        table = self.get_object()
+        table.status = 'available'
+        table.active_order = None
+        table.current_guests = 0
+        table.save()
+        return Response({'success': True})
+

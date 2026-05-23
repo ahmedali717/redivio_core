@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Recipe, RecipeItem, ModifierGroup, Modifier, POSSession, POSOrder, POSOrderLine
+from .models import Recipe, RecipeItem, ModifierGroup, Modifier, POSSession, POSOrder, POSOrderLine, RestaurantFloor, RestaurantTable
 
 class RecipeItemInline(admin.TabularInline):
     model = RecipeItem
@@ -48,3 +48,20 @@ class POSSessionAdmin(admin.ModelAdmin):
     search_fields = ('cashier_name', 'session_id')
     autocomplete_fields = ['opco']
     readonly_fields = ['session_id', 'start_time']
+
+
+@admin.register(RestaurantFloor)
+class RestaurantFloorAdmin(admin.ModelAdmin):
+    list_display = ('name', 'number', 'opco', 'is_active')
+    list_filter = ('opco', 'is_active')
+    search_fields = ('name',)
+    raw_id_fields = ['opco']
+
+
+@admin.register(RestaurantTable)
+class RestaurantTableAdmin(admin.ModelAdmin):
+    list_display = ('number', 'floor', 'opco', 'seats_limit', 'current_guests', 'status', 'shape')
+    list_filter = ('status', 'shape', 'opco', 'floor')
+    search_fields = ('number',)
+    raw_id_fields = ['opco', 'floor', 'active_order']
+
