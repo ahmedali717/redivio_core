@@ -3701,7 +3701,13 @@ createApp({
         },
 
         isModulePurchased(modId) {
-            if (!this.purchasedModules || this.purchasedModules.length === 0) return true;
+            if (this.systemMode === 'standalone') {
+                if (!this.purchasedModules || this.purchasedModules.length === 0) {
+                    return modId === 'restaurant_pos_module';
+                }
+            } else {
+                if (!this.purchasedModules || this.purchasedModules.length === 0) return true;
+            }
             
             const idMap = {
                 'inventory_module': 'wms',
