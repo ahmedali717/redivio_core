@@ -33,6 +33,13 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def active_session(self, request):
         opco_id = request.query_params.get('opco')
+        if not opco_id or opco_id in ['null', 'undefined']:
+            return Response(None, status=200)
+        try:
+            opco_id = int(opco_id)
+        except (ValueError, TypeError):
+            return Response(None, status=200)
+            
         session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
         if session:
             from .serializers import POSSessionSerializer
@@ -42,6 +49,12 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def session_history(self, request):
         opco_id = request.query_params.get('opco')
+        if not opco_id or opco_id in ['null', 'undefined']:
+            return Response([])
+        try:
+            opco_id = int(opco_id)
+        except (ValueError, TypeError):
+            return Response([])
         sessions = POSSession.objects.filter(opco_id=opco_id).order_by('-start_time')
         data = []
         for s in sessions:
@@ -203,6 +216,12 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     def kds_orders(self, request):
         """جلب طلبات المطبخ الخاصة بمجموعة الطعام (Food)"""
         opco_id = request.query_params.get('opco')
+        if not opco_id or opco_id in ['null', 'undefined']:
+            return Response([])
+        try:
+            opco_id = int(opco_id)
+        except (ValueError, TypeError):
+            return Response([])
         
         # فلترة الطلبات التي لم تنتهِ بعد (تشمل الطلبات غير المدفوعة للمحلي المسودة والطلبات الجاهزة خلال آخر ساعتين)
         from django.db.models import Q
@@ -328,7 +347,32 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         date_from = request.query_params.get('from')
         date_to = request.query_params.get('to')
         
-        from django.db.models import Sum, Count, Q
+        default_stats = {
+            'total_revenue': 0.0,
+            'cash_sales': 0.0,
+            'credit_sales': 0.0,
+            'instapay_sales': 0.0,
+            'total_expenses': 0.0,
+            'total_inflows': 0.0,
+            'total_purchases': 0.0,
+            'total_cogs': 0.0,
+            'opening_balance': 0.0,
+            'gross_profit': 0.0,
+            'net_income': 0.0,
+            'net_profit': 0.0,
+            'top_items': [],
+            'ingredients': [],
+            'cash_transactions': []
+        }
+        
+        if not opco_id or opco_id in ['null', 'undefined']:
+            return Response(default_stats)
+        try:
+            opco_id = int(opco_id)
+        except (ValueError, TypeError):
+            return Response(default_stats)
+            
+        from django.db.models import Sum, Count, Q, F
         from django.utils import timezone
         
         today = timezone.now().date()
@@ -443,9 +487,16 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         
         opening_balance = first_session.order_by('start_time').first().opening_balance if first_session.exists() else 0
         
-        from django.db.models import F
         from apps.wms.models import StockMove
-        total_purchases = StockMove.objects.filter(opco_id=opco_id, move_type='IN', created_at__date=today).aggregate(
+        purchases_qs = StockMove.objects.filter(opco_id=opco_id, move_type='IN')
+        if date_from:
+            purchases_qs = purchases_qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            purchases_qs = purchases_qs.filter(created_at__date__lte=date_to)
+        if not date_from and not date_to:
+            purchases_qs = purchases_qs.filter(created_at__date=today)
+            
+        total_purchases = purchases_qs.aggregate(
             total=Sum(F('quantity') * F('unit_cost'))
         )['total'] or 0
 
@@ -477,6 +528,13 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         opco_id = request.query_params.get('opco')
         session_id = request.query_params.get('session')
         
+        if not opco_id or opco_id in ['null', 'undefined']:
+            return Response([])
+        try:
+            opco_id = int(opco_id)
+        except (ValueError, TypeError):
+            return Response([])
+            
         from .models import POSCashTransaction
         queryset = POSCashTransaction.objects.filter(session__opco_id=opco_id)
         if session_id:
@@ -500,6 +558,13 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def last_session_balance(self, request):
         opco_id = request.query_params.get('opco')
+        if not opco_id or opco_id in ['null', 'undefined']:
+            return Response({'last_balance': 0.0})
+        try:
+            opco_id = int(opco_id)
+        except (ValueError, TypeError):
+            return Response({'last_balance': 0.0})
+            
         from .models import POSSession
         last_session = POSSession.objects.filter(opco_id=opco_id, is_closed=True).order_by('-end_time').first()
         balance = last_session.actual_closing_balance if last_session else 0
@@ -508,6 +573,13 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def session_preview(self, request):
         opco_id = request.query_params.get('opco')
+        if not opco_id or opco_id in ['null', 'undefined']:
+            return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            opco_id = int(opco_id)
+        except (ValueError, TypeError):
+            return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
+            
         session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
         if not session:
             return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
@@ -535,6 +607,13 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def close_session(self, request):
         opco_id = request.data.get('opco')
+        if not opco_id or opco_id in ['null', 'undefined']:
+            return Response({'error': 'No active session found'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            opco_id = int(opco_id)
+        except (ValueError, TypeError):
+            return Response({'error': 'No active session found'}, status=status.HTTP_400_BAD_REQUEST)
+            
         actual_balance = float(request.data.get('actual_balance', 0))
         session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
         
@@ -620,4 +699,3 @@ class RestaurantTableViewSet(viewsets.ModelViewSet):
         table.current_guests = 0
         table.save()
         return Response({'success': True})
-
