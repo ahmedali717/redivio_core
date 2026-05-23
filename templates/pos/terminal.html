@@ -106,8 +106,17 @@
         <div class="w-[320px] bg-slate-900 flex flex-col h-full border-r border-slate-800">
             <!-- Totals Header -->
             <div class="p-6 bg-slate-800/50 border-b border-slate-700/50">
-                 <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">[[ isArabic ? 'ملخص الحساب' : 'Checkout Summary' ]]</h3>
-                 <div class="space-y-2">
+                <!-- Order Type Indicator -->
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-6 h-6 rounded-lg flex items-center justify-center text-[10px]"
+                         :class="posOrderType === 'DINE_IN' ? 'bg-rose-500/20 text-rose-400' : posOrderType === 'TAKEAWAY' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'">
+                        <i :class="posOrderType === 'DINE_IN' ? 'fas fa-chair' : posOrderType === 'TAKEAWAY' ? 'fas fa-bag-shopping' : 'fas fa-motorcycle'"></i>
+                    </div>
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                        [[ posOrderType === 'DINE_IN' ? (isArabic ? 'طلب محلي' : 'Dine-In Order') : posOrderType === 'TAKEAWAY' ? (isArabic ? 'تيك اواي' : 'Takeaway') : (isArabic ? 'توصيل' : 'Delivery') ]]
+                    </h3>
+                </div>
+                <div class="space-y-2">
                     <div class="flex justify-between text-xs text-slate-400">
                         <span>[[ isArabic ? 'المجموع' : 'Subtotal' ]]</span>
                         <span class="font-mono">[[ formatCurrency(cartSubtotal) ]]</span>
@@ -120,7 +129,7 @@
                         <span class="text-xs font-black text-white uppercase">[[ isArabic ? 'الإجمالي' : 'Total' ]]</span>
                         <span class="text-2xl font-black text-emerald-400 tech-font leading-none">[[ formatCurrency(cartTotal) ]]</span>
                     </div>
-                 </div>
+                </div>
             </div>
 
             <!-- Keypad Area -->
@@ -133,11 +142,29 @@
                 </div>
             </div>
 
-            <!-- Pay Button -->
-            <div class="p-4 bg-slate-800/30 border-t border-slate-700/50">
-                <button @click="checkoutOrder" :disabled="!posCart.length" class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-lg py-5 rounded-2xl shadow-2xl shadow-emerald-900/40 transition-all flex items-center justify-center gap-3 group">
+            <!-- Action Buttons: Smart based on order type -->
+            <div class="p-4 bg-slate-800/30 border-t border-slate-700/50 space-y-2">
+
+                <!-- 🍽️ DINE-IN: Send to Kitchen (save draft) -->
+                <button v-if="posOrderType === 'DINE_IN'"
+                        @click="sendDineInToKitchen"
+                        :disabled="!posCart.length || !posTableNumber"
+                        class="w-full bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-base py-4 rounded-2xl shadow-lg shadow-rose-900/40 transition-all flex items-center justify-center gap-3 group">
+                    <i class="fas fa-fire-burner group-hover:scale-110 transition-transform"></i>
+                    <span>[[ isArabic ? 'إرسال للمطبخ' : 'Send to Kitchen' ]]</span>
+                </button>
+                <!-- Warning if no table selected for Dine-In -->
+                <p v-if="posOrderType === 'DINE_IN' && !posTableNumber" class="text-[10px] text-amber-400 font-bold text-center">
+                    <i class="fas fa-triangle-exclamation"></i> [[ isArabic ? 'اختر ترابيزة أولاً' : 'Select a table first' ]]
+                </p>
+
+                <!-- 💳 TAKEAWAY / DELIVERY: Pay immediately -->
+                <button v-if="posOrderType !== 'DINE_IN'"
+                        @click="checkoutOrder"
+                        :disabled="!posCart.length"
+                        class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-lg py-5 rounded-2xl shadow-2xl shadow-emerald-900/40 transition-all flex items-center justify-center gap-3 group">
                     <i class="fas fa-credit-card group-hover:scale-110 transition-transform"></i>
-                    <span>[[ isArabic ? 'تأكيد الدفع' : 'Pay Order' ]]</span>
+                    <span>[[ isArabic ? 'تأكيد ودفع' : 'Confirm & Pay' ]]</span>
                 </button>
             </div>
         </div>

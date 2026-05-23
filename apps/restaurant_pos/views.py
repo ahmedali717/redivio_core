@@ -82,6 +82,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         if order.status != 'draft':
             return Response({'error': 'Order already processed'}, status=status.HTTP_400_BAD_REQUEST)
         
+        # Allow updating payment method from request
+        payment_method = request.data.get('payment_method')
+        if payment_method:
+            order.payment_method = payment_method
+        
         order.status = 'paid'
         order.kitchen_received_at = timezone.now()
         order.save()
@@ -108,6 +113,87 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             return Response({'success': True, 'order_ref': order.order_ref})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'])
+    def save_dine_in(self, request):
+        """
+        Save a Dine-In order as DRAFT (send to kitchen) without processing payment.
+        Links the order to the table. The order stays open until the customer requests the bill.
+        """
+        from .models import POSOrderLine
+        data = request.data
+        opco_id = data.get('opco')
+        session_id = data.get('session')
+        table_number = data.get('table_number')
+        guest_count = data.get('guest_count', 1)
+        lines_data = data.get('lines', [])
+        existing_order_id = data.get('existing_order_id')  # If updating an existing draft
+
+        if not opco_id or not session_id:
+            return Response({'error': 'opco and session are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # If an existing draft order, update it
+        if existing_order_id:
+            try:
+                order = POSOrder.objects.get(id=existing_order_id, status='draft')
+                # Delete old lines and replace
+                order.lines.all().delete()
+                total = 0
+                for line_data in lines_data:
+                    subtotal = float(line_data.get('subtotal', 0))
+                    total += subtotal
+                    POSOrderLine.objects.create(
+                        order=order,
+                        material_id=line_data['material'],
+                        qty=line_data['qty'],
+                        unit_price=line_data['unit_price'],
+                        subtotal=subtotal,
+                        kitchen_notes=line_data.get('kitchen_notes', '')
+                    )
+                order.total_amount = total
+                order.guest_count = guest_count
+                order.save()
+                serializer = POSOrderSerializer(order)
+                return Response(serializer.data)
+            except POSOrder.DoesNotExist:
+                pass  # Fall through to create new
+
+        # Create a new draft order
+        total = sum(float(l.get('subtotal', 0)) for l in lines_data)
+        order = POSOrder.objects.create(
+            opco_id=opco_id,
+            session_id=session_id,
+            order_type='DINE_IN',
+            table_number=table_number,
+            guest_count=guest_count,
+            total_amount=total,
+            payment_method='cash',  # Default, will be set on checkout
+            status='draft'
+        )
+        for line_data in lines_data:
+            POSOrderLine.objects.create(
+                order=order,
+                material_id=line_data['material'],
+                qty=line_data['qty'],
+                unit_price=line_data['unit_price'],
+                subtotal=float(line_data.get('subtotal', 0)),
+                kitchen_notes=line_data.get('kitchen_notes', '')
+            )
+
+        # Link order to table
+        if table_number:
+            try:
+                table = RestaurantTable.objects.filter(opco_id=opco_id, number=table_number).first()
+                if table:
+                    table.active_order = order
+                    table.status = 'occupied'
+                    table.current_guests = guest_count
+                    table.save()
+            except Exception as e:
+                print("Error linking order to table:", e)
+
+        serializer = POSOrderSerializer(order)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def kds_orders(self, request):

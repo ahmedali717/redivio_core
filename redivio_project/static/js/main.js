@@ -1258,6 +1258,136 @@ createApp({
                 if (this.posSelectedCartIndex === idx) this.posSelectedCartIndex = null;
             }
         },
+        // 🍽️ DINE-IN: Save order as draft & send to kitchen (no payment yet)
+        async sendDineInToKitchen() {
+            if (!this.activePOSSession) {
+                this.showToast(this.isArabic ? "برجاء فتح وردية أولاً!" : "Please start a session first!", "error");
+                return;
+            }
+            if (this.posCart.length === 0) {
+                this.showToast(this.isArabic ? "الطلب فارغ!" : "Cart is empty!", "error");
+                return;
+            }
+            if (!this.posTableNumber) {
+                this.showToast(this.isArabic ? "اختر ترابيزة أولاً!" : "Please select a table first!", "error");
+                return;
+            }
+
+            try {
+                this.loading = true;
+                const res = await fetch('/api/pos/orders/save_dine_in/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        session: this.activePOSSession.id,
+                        table_number: this.posTableNumber,
+                        guest_count: this.posGuestCount,
+                        existing_order_id: this.posExistingOrderId || null,
+                        lines: this.posCart.map(i => ({
+                            material: i.id,
+                            qty: i.qty,
+                            unit_price: parseFloat(i.price.toFixed(2)),
+                            subtotal: parseFloat((i.price * i.qty).toFixed(2)),
+                            kitchen_notes: i.kitchen_notes || ''
+                        }))
+                    })
+                });
+
+                if (res.ok) {
+                    const order = await res.json();
+                    this.posExistingOrderId = order.id;  // Track for future updates
+                    this.showToast(
+                        this.isArabic ? `✅ تم إرسال الطلب للمطبخ! الطاولة ${this.posTableNumber}` : `✅ Order sent to kitchen! Table ${this.posTableNumber}`,
+                        "success"
+                    );
+                    // Clear cart and go back to floor view
+                    this.posCart = [];
+                    this.posExistingOrderId = null;
+                    this.posTableNumber = '';
+                    this.posGuestCount = 1;
+                    this.posTab = 'floor_layout';
+                    await this.fetchFloorsAndTables();
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Error saving order", "error");
+                }
+            } catch (e) {
+                console.error("Send to Kitchen Error:", e);
+                this.showToast("Network Error", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // 💳 REQUEST BILL: Pay existing Dine-In draft order from Floor Layout
+        async requestTableBill(table) {
+            if (!table.active_order_detail) {
+                this.showToast(this.isArabic ? "لا يوجد طلب مرتبط بهذه الترابيزة" : "No order linked to this table", "error");
+                return;
+            }
+
+            const orderId = table.active_order_detail.id;
+            const orderTotal = parseFloat(table.active_order_total || 0);
+
+            // Show payment method selection
+            const { value: method } = await Swal.fire({
+                title: this.isArabic ? `طلب شيك - ترابيزة ${table.number}` : `Bill Request - Table ${table.number}`,
+                html: `
+                    <div style="text-align:right; direction:rtl; margin-bottom: 16px; padding: 12px; background:#f8fafc; border-radius:12px;">
+                        <div style="font-size:12px; color:#64748b; font-weight:bold; margin-bottom:4px;">${this.isArabic ? 'الإجمالي المستحق' : 'Total Amount Due'}</div>
+                        <div style="font-size:28px; font-weight:900; color:#10b981; font-family:monospace;">${this.formatCurrency(orderTotal)}</div>
+                    </div>
+                    <div style="font-size:11px; color:#64748b; font-weight:bold; margin-bottom:8px; text-align:right;">${this.isArabic ? 'اختر طريقة الدفع:' : 'Select payment method:'}</div>
+                `,
+                input: 'radio',
+                inputOptions: {
+                    'cash':     this.isArabic ? '💵 نقداً (Cash)'         : '💵 Cash',
+                    'instapay': this.isArabic ? '📱 إلكتروني (InstaPay)'  : '📱 InstaPay',
+                    'credit':   this.isArabic ? '📋 آجل (Credit)'         : '📋 Credit'
+                },
+                inputValue: 'cash',
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? '✅ تأكيد الدفع' : '✅ Confirm Payment',
+                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
+                confirmButtonColor: '#10b981',
+            });
+
+            if (!method) return;
+
+            try {
+                this.loading = true;
+                // Process payment for existing draft order
+                const payRes = await fetch(`/api/pos/orders/${orderId}/process_payment/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({ payment_method: method })
+                });
+
+                if (payRes.ok) {
+                    const payData = await payRes.json();
+                    this.showToast(
+                        this.isArabic ? `✅ تم الدفع بنجاح! الترابيزة ${table.number} - ${this.formatCurrency(orderTotal)}` : `✅ Payment done! Table ${table.number} - ${this.formatCurrency(orderTotal)}`,
+                        "success"
+                    );
+                    // Print receipt using existing order detail
+                    if (table.active_order_detail) {
+                        this.printReceipt(table.active_order_detail, table.active_order_detail.lines);
+                    }
+                    this.showTableActionModal = false;
+                    this.refreshAllData();
+                } else {
+                    const err = await payRes.json();
+                    this.showToast(err.error || "Payment Failed", "error");
+                }
+            } catch (e) {
+                console.error("Request Bill Error:", e);
+                this.showToast("Network Error", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async checkoutOrder() {
             if (!this.activePOSSession) {
                 this.showToast(this.isArabic ? "برجاء فتح وردية أولاً!" : "Please start a session first!", "error");
