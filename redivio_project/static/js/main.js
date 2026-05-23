@@ -288,6 +288,9 @@ createApp({
         activeFloorTables() {
             return (this.posTables || []).filter(t => t.floor === this.activeFloorId);
         },
+        activeDineInTables() {
+            return (this.posTables || []).filter(t => t.status === 'occupied' && t.active_order_detail);
+        },
         posCategories() {
             // سنستخدم المجموعات البيعية بدلاً من الفئات العامة في الـ POS
             return this.sale_groups || [];
@@ -922,6 +925,122 @@ createApp({
             this.posTab = 'cashier';
             this.showTableActionModal = false;
             this.showToast(this.isArabic ? "متابعة طلب الترابيزة" : "Viewing table order", "info");
+        },
+
+        recallTableOrder(table) {
+            this.viewActiveTableOrder(table);
+        },
+
+        discardOrderEdits() {
+            this.posCart = [];
+            this.posTableNumber = '';
+            this.posTableId = null;
+            this.posExistingOrderId = null;
+            this.posGuestCount = 1;
+            this.posTab = 'floor_layout';
+            this.showToast(this.isArabic ? "تم إلغاء تعديل الطلب" : "Order edit discarded", "info");
+        },
+
+        async payExistingOrder() {
+            if (!this.posExistingOrderId) return;
+            if (this.posCart.length === 0) {
+                this.showToast(this.isArabic ? "الطلب فارغ!" : "Cart is empty!", "error");
+                return;
+            }
+
+            try {
+                this.loading = true;
+                // 1. Save any pending changes to the dine-in order draft
+                const saveRes = await fetch('/api/pos/orders/save_dine_in/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        session: this.activePOSSession.id,
+                        table_number: this.posTableNumber,
+                        guest_count: this.posGuestCount,
+                        existing_order_id: this.posExistingOrderId,
+                        lines: this.posCart.map(i => ({
+                            material: i.id,
+                            qty: i.qty,
+                            unit_price: parseFloat(i.price.toFixed(2)),
+                            subtotal: parseFloat((i.price * i.qty).toFixed(2)),
+                            kitchen_notes: i.kitchen_notes || ''
+                        }))
+                    })
+                });
+
+                if (!saveRes.ok) {
+                    const err = await saveRes.json();
+                    this.showToast(err.error || "Error saving order", "error");
+                    return;
+                }
+
+                const order = await saveRes.json();
+                const orderId = order.id;
+                const orderTotal = parseFloat(order.total_amount || 0);
+
+                // Stop loading state so Swal can show
+                this.loading = false;
+
+                // 2. Prompt for payment method
+                const { value: method } = await Swal.fire({
+                    title: this.isArabic ? `طلب شيك - ترابيزة ${this.posTableNumber}` : `Bill Request - Table ${this.posTableNumber}`,
+                    html: `
+                        <div style="text-align:right; direction:rtl; margin-bottom: 16px; padding: 12px; background:#f8fafc; border-radius:12px;">
+                            <div style="font-size:12px; color:#64748b; font-weight:bold; margin-bottom:4px;">${this.isArabic ? 'الإجمالي المستحق' : 'Total Amount Due'}</div>
+                            <div style="font-size:28px; font-weight:900; color:#10b981; font-family:monospace;">${this.formatCurrency(orderTotal)}</div>
+                        </div>
+                        <div style="font-size:11px; color:#64748b; font-weight:bold; margin-bottom:8px; text-align:right;">${this.isArabic ? 'اختر طريقة الدفع:' : 'Select payment method:'}</div>
+                    `,
+                    input: 'radio',
+                    inputOptions: {
+                        'cash':     this.isArabic ? '💵 نقداً (Cash)'         : '💵 Cash',
+                        'instapay': this.isArabic ? '📱 إلكتروني (InstaPay)'  : '📱 InstaPay',
+                        'credit':   this.isArabic ? '📋 آجل (Credit)'         : '📋 Credit'
+                    },
+                    inputValue: 'cash',
+                    showCancelButton: true,
+                    confirmButtonText: this.isArabic ? '✅ تأكيد الدفع' : '✅ Confirm Payment',
+                    cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
+                    confirmButtonColor: '#10b981',
+                });
+
+                if (!method) return;
+
+                this.loading = true;
+                // 3. Process payment
+                const payRes = await fetch(`/api/pos/orders/${orderId}/process_payment/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({ payment_method: method })
+                });
+
+                if (payRes.ok) {
+                    this.showToast(
+                        this.isArabic ? `✅ تم الدفع بنجاح! الترابيزة ${this.posTableNumber} - ${this.formatCurrency(orderTotal)}` : `✅ Payment done! Table ${this.posTableNumber} - ${this.formatCurrency(orderTotal)}`,
+                        "success"
+                    );
+                    // Print receipt using the updated order details
+                    this.printReceipt(order, this.posCart);
+                    
+                    // Clear the cashier cart and reset terminal table fields
+                    this.posCart = [];
+                    this.posExistingOrderId = null;
+                    this.posTableNumber = '';
+                    this.posGuestCount = 1;
+                    this.posTab = 'floor_layout';
+                    this.refreshAllData();
+                } else {
+                    const err = await payRes.json();
+                    this.showToast(err.error || "Payment Failed", "error");
+                }
+            } catch (e) {
+                console.error("Pay Existing Order Error:", e);
+                this.showToast("Network Error", "error");
+            } finally {
+                this.loading = false;
+            }
         },
 
         onTerminalTableChange() {
