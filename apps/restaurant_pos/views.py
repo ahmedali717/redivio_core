@@ -139,7 +139,7 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         # If an existing draft order, update it
         if existing_order_id:
             try:
-                order = POSOrder.objects.get(id=existing_order_id, status='draft')
+                order = POSOrder.objects.get(id=existing_order_id, status__in=['draft', 'inprogress', 'done'])
                 # Delete old lines and replace
                 order.lines.all().delete()
                 total = 0
@@ -204,10 +204,16 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         """جلب طلبات المطبخ الخاصة بمجموعة الطعام (Food)"""
         opco_id = request.query_params.get('opco')
         
-        # فلترة الطلبات التي لم تنتهِ بعد (تشمل الطلبات غير المدفوعة للمحلي المسودة)
+        # فلترة الطلبات التي لم تنتهِ بعد (تشمل الطلبات غير المدفوعة للمحلي المسودة والطلبات الجاهزة خلال آخر ساعتين)
         from django.db.models import Q
+        from django.utils import timezone
+        import datetime
+        two_hours_ago = timezone.now() - datetime.timedelta(hours=2)
+        
         queryset = POSOrder.objects.filter(
-            Q(status__in=['paid', 'inprogress']) | Q(status='draft', order_type='DINE_IN'),
+            Q(status__in=['paid', 'inprogress']) | 
+            Q(status='draft', order_type='DINE_IN') |
+            Q(status='done', kitchen_done_at__gte=two_hours_ago),
             opco_id=opco_id
         ).prefetch_related('lines', 'lines__material', 'lines__material__sale_group').order_by('created_at')
         

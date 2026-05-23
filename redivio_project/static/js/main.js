@@ -4864,6 +4864,28 @@ createApp({
             }
         },
 
+        async updateOrderStatus(orderId, targetStatus) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/pos/orders/${orderId}/update_kitchen_status/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ status: targetStatus })
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تحديث حالة الطلب" : "Order status updated", "success");
+                    await this.fetchKDSOrders();
+                }
+            } catch (e) {
+                this.showToast("KDS Update Error", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
         getWaitTime(timestamp) {
             if (!timestamp) return '0m';
             const start = new Date(timestamp);
