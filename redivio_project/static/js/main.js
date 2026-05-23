@@ -1723,6 +1723,12 @@ createApp({
                             ${this.isArabic ? 'النوع' : 'Type'}: ${order.order_type} | 
                             ${this.isArabic ? 'الدفع' : 'Pay'}: ${order.payment_method}
                         </div>
+                        ${(order.order_type === 'DINE_IN' || order.table_number) ? `
+                        <div class="order-meta" style="margin-top: 5px; font-weight: 800; color: #1e293b;">
+                            ${this.isArabic ? 'الترابيزة' : 'Table'}: ${order.table_number || '---'} | 
+                            ${this.isArabic ? 'عدد الأفراد' : 'Guests'}: ${order.guest_count || 1}
+                        </div>
+                        ` : ''}
                         <div class="cashier-meta">
                             ${this.isArabic ? 'الكاشير' : 'Cashier'}: ${cashierName}
                         </div>
