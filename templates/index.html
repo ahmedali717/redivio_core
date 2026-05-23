@@ -152,6 +152,38 @@
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <!-- System Architecture & Modules Configuration -->
+                                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 pt-4 border-t border-slate-100">
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-bold text-slate-500 uppercase px-1">[[ isArabic ? 'معمارية وهيكل النظام' : 'System Architecture' ]]</label>
+                                        <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 w-full">
+                                            <button type="button" @click="setConfigMode('standalone')" :class="config.system_mode === 'standalone' ? 'bg-blue-600 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100'" class="flex-1 py-2 px-3 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                                <i class="fas fa-cube"></i> [[ isArabic ? 'موديول مستقل' : 'Stand Alone' ]]
+                                            </button>
+                                            <button type="button" @click="setConfigMode('modular')" :class="config.system_mode === 'modular' ? 'bg-blue-600 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100'" class="flex-1 py-2 px-3 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                                <i class="fas fa-cubes"></i> [[ isArabic ? 'حزمة متكاملة' : 'Full Package' ]]
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2 space-y-3 mt-4 pt-4 border-t border-slate-100">
+                                    <label class="text-xs font-bold text-slate-500 uppercase px-1 block">[[ isArabic ? 'الموديولات المشغلة في النظام' : 'Active System Modules' ]]</label>
+                                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                        <div v-for="mod in sidebarGroups.operations.filter(m => m.id !== 'org_builder')" :key="mod.id"
+                                             @click="toggleConfigModule(mod.id)"
+                                             :class="isConfigModuleSelected(mod.id) ? 'border-blue-500 bg-blue-50/20 text-blue-700 shadow-sm font-bold' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'"
+                                             class="cursor-pointer border-2 p-4 rounded-2xl flex flex-col items-center justify-center text-center transition-all select-none group relative h-28">
+                                            
+                                            <i :class="mod.icon" class="text-2xl mb-2 transition-transform group-hover:scale-110"></i>
+                                            <span class="text-[10px] font-black leading-tight" v-text="isArabic ? mod.name.ar : mod.name.en"></span>
+                                            
+                                            <div v-if="isConfigModuleSelected(mod.id)" class="absolute top-2 right-2 text-blue-600 text-xs">
+                                                <i class="fas fa-check-circle"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

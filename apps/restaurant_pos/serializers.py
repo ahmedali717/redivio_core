@@ -46,12 +46,13 @@ class RestaurantTableSerializer(serializers.ModelSerializer):
     floor_name = serializers.CharField(source='floor.name', read_only=True)
     active_order_ref = serializers.CharField(source='active_order.order_ref', read_only=True)
     active_order_total = serializers.DecimalField(source='active_order.total_amount', max_digits=12, decimal_places=2, read_only=True)
+    active_order_detail = POSOrderSerializer(source='active_order', read_only=True)
 
     class Meta:
         model = RestaurantTable
         fields = [
             'id', 'opco', 'floor', 'floor_name', 'number', 'seats_limit',
             'current_guests', 'status', 'shape', 'position_x', 'position_y',
-            'active_order', 'active_order_ref', 'active_order_total'
+            'active_order', 'active_order_ref', 'active_order_total', 'active_order_detail'
         ]
 

@@ -3084,7 +3084,9 @@ createApp({
                     is_holding: !!active.is_holding,
                     tax_id: active.tax_id || '',
                     cr_number: active.cr_number || '',
-                    logo: finalLogo
+                    logo: finalLogo,
+                    system_mode: active.system_mode || 'modular',
+                    purchased_modules: active.purchased_modules || []
                 };
                 this.imagePreview = finalLogo;
             }
@@ -3437,6 +3439,8 @@ createApp({
                 formData.append('is_holding', this.config.is_holding ? 'true' : 'false');
                 formData.append('tax_id', this.config.tax_id || '');
                 formData.append('cr_number', this.config.cr_number || '');
+                formData.append('system_mode', this.config.system_mode || 'modular');
+                formData.append('purchased_modules', JSON.stringify(this.config.purchased_modules || []));
 
                 const activeOpco = this.allOpcos.find(o => o.id === parseInt(targetId));
                 if (activeOpco) {
@@ -3486,8 +3490,22 @@ createApp({
                     is_holding: updatedData.is_holding,
                     tax_id: updatedData.tax_id,
                     cr_number: updatedData.cr_number,
-                    logo: logoUrl
+                    logo: logoUrl,
+                    system_mode: updatedData.system_mode || 'modular',
+                    purchased_modules: updatedData.purchased_modules || []
                 };
+                
+                // Update active state in Vue memory
+                this.systemMode = updatedData.system_mode || 'modular';
+                this.purchasedModules = updatedData.purchased_modules || [];
+                
+                // If Stand Alone, jump directly to the single module and skip ECC
+                if (this.systemMode === 'standalone') {
+                    const defaultModule = this.sidebarGroups.operations.find(m => m.id !== 'org_builder' && this.isModulePurchased(m.id));
+                    if (defaultModule) {
+                        this.view = defaultModule.id;
+                    }
+                }
             }
 
             this.newLogoFile = null;
@@ -3682,6 +3700,69 @@ createApp({
             }
         },
 
+        isModulePurchased(modId) {
+            if (!this.purchasedModules || this.purchasedModules.length === 0) return true;
+            
+            const idMap = {
+                'inventory_module': 'wms',
+                'procurement_module': 'procurement',
+                'sales_module': 'sales',
+                'accounting_module': 'sales',
+                'restaurant_pos_module': 'restaurant_pos'
+            };
+            
+            const mappedId = idMap[modId] || modId;
+            return this.purchasedModules.includes(mappedId);
+        },
+
+        isConfigModuleSelected(modId) {
+            if (!this.config || !this.config.purchased_modules) return false;
+            
+            const idMap = {
+                'inventory_module': 'wms',
+                'procurement_module': 'procurement',
+                'sales_module': 'sales',
+                'accounting_module': 'sales',
+                'restaurant_pos_module': 'restaurant_pos'
+            };
+            const mappedId = idMap[modId] || modId;
+            return this.config.purchased_modules.includes(mappedId);
+        },
+
+        setConfigMode(mode) {
+            this.config.system_mode = mode;
+            if (mode === 'standalone' && this.config.purchased_modules && this.config.purchased_modules.length > 1) {
+                this.config.purchased_modules = [this.config.purchased_modules[0]];
+            }
+        },
+
+        toggleConfigModule(modId) {
+            if (!this.config.purchased_modules) {
+                this.config.purchased_modules = [];
+            }
+            
+            const idMap = {
+                'inventory_module': 'wms',
+                'procurement_module': 'procurement',
+                'sales_module': 'sales',
+                'accounting_module': 'sales',
+                'restaurant_pos_module': 'restaurant_pos'
+            };
+            const mappedId = idMap[modId] || modId;
+
+            if (this.config.purchased_modules.includes(mappedId)) {
+                if (this.config.purchased_modules.length > 1) {
+                    this.config.purchased_modules = this.config.purchased_modules.filter(m => m !== mappedId);
+                }
+            } else {
+                if (this.config.system_mode === 'standalone') {
+                    this.config.purchased_modules = [mappedId];
+                } else {
+                    this.config.purchased_modules.push(mappedId);
+                }
+            }
+        },
+
         async checkAuth() {
             try {
                 const res = await fetch('/api/check-auth/');
@@ -3706,25 +3787,9 @@ createApp({
                     this.systemMode = data.system_mode || 'modular';
                     this.purchasedModules = data.purchased_modules || [];
                     
-                    // Filter Sidebar based on purchased modules
-                    if (this.purchasedModules.length > 0) {
-                        this.sidebarGroups.operations = this.sidebarGroups.operations.filter(mod => {
-                            if (mod.id === 'org_builder') return true; // Always allow Org Builder
-                            // Map sidebar ID to setup module ID
-                            const idMap = {
-                                'inventory_module': 'wms',
-                                'procurement_module': 'procurement',
-                                'sales_module': 'sales',
-                                'accounting_module': 'sales', // Assuming accounting belongs to sales suite
-                                'restaurant_pos_module': 'restaurant_pos'
-                            };
-                            return this.purchasedModules.includes(idMap[mod.id] || mod.id);
-                        });
-                    }
-                    
                     // If Stand Alone, jump directly to the single module and skip Executive Command Center
                     if (this.systemMode === 'standalone') {
-                        const defaultModule = this.sidebarGroups.operations.find(m => m.id !== 'org_builder');
+                        const defaultModule = this.sidebarGroups.operations.find(m => m.id !== 'org_builder' && this.isModulePurchased(m.id));
                         if (defaultModule) {
                             this.view = defaultModule.id;
                         }

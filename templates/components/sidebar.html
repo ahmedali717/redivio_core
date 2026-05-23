@@ -37,7 +37,7 @@
 
                 <!-- Dynamic Purchased Modules -->
                 <template v-for="mod in sidebarGroups.operations.filter(m => m.id !== 'org_builder')" :key="mod.id">
-                    <button v-if="canAccess(mod.id)"
+                    <button v-if="canAccess(mod.id) && isModulePurchased(mod.id)"
                         @click="view = mod.id; showBrandDropdown = false; if(mod.id === 'inventory_module') inventoryTab = 'levels';"
                         class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 text-slate-600 hover:text-brand text-left transition-all group/item">
 

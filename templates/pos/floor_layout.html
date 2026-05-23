@@ -182,10 +182,48 @@
                         <span class="text-slate-500">[[ isArabic ? 'رقم الطلب:' : 'Order Ref:' ]]</span>
                         <strong class="text-slate-800 tech-font">[[ selectedLayoutTable.active_order_ref ]]</strong>
                     </div>
+                    
+                    <!-- Order Status Badge -->
+                    <div v-if="selectedLayoutTable.active_order_detail" class="flex justify-between text-sm items-center">
+                        <span class="text-slate-500">[[ isArabic ? 'حالة الطلب:' : 'Order Status:' ]]</span>
+                        <span :class="[
+                            selectedLayoutTable.active_order_detail.status === 'draft' ? 'bg-slate-200 text-slate-700' : '',
+                            selectedLayoutTable.active_order_detail.status === 'paid' ? 'bg-blue-50 text-blue-700 border border-blue-100' : '',
+                            selectedLayoutTable.active_order_detail.status === 'inprogress' ? 'bg-amber-50 text-amber-700 border border-amber-100' : '',
+                            selectedLayoutTable.active_order_detail.status === 'done' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : '',
+                            selectedLayoutTable.active_order_detail.status === 'refunded' ? 'bg-purple-50 text-purple-700 border border-purple-100' : '',
+                            selectedLayoutTable.active_order_detail.status === 'cancelled' ? 'bg-rose-50 text-rose-700 border border-rose-100' : ''
+                        ]" class="px-2.5 py-0.5 rounded-full text-xs font-black">
+                            [[ 
+                                selectedLayoutTable.active_order_detail.status === 'draft' ? (isArabic ? 'مسودة' : 'Draft') :
+                                selectedLayoutTable.active_order_detail.status === 'paid' ? (isArabic ? 'تم الدفع - بالمطبخ' : 'Paid (Kitchen)') :
+                                selectedLayoutTable.active_order_detail.status === 'inprogress' ? (isArabic ? 'جاري التحضير' : 'In Progress') :
+                                selectedLayoutTable.active_order_detail.status === 'done' ? (isArabic ? 'جاهز للاستلام' : 'Ready') :
+                                selectedLayoutTable.active_order_detail.status === 'refunded' ? (isArabic ? 'مرتجع' : 'Refunded') :
+                                (isArabic ? 'ملغي' : 'Cancelled')
+                            ]]
+                        </span>
+                    </div>
+
                     <div class="flex justify-between text-sm">
                         <span class="text-slate-500">[[ isArabic ? 'عدد الضيوف:' : 'Guest Count:' ]]</span>
                         <strong class="text-slate-800">[[ selectedLayoutTable.current_guests ]] / [[ selectedLayoutTable.seats_limit ]]</strong>
                     </div>
+                    
+                    <!-- Ordered Items List -->
+                    <div v-if="selectedLayoutTable.active_order_detail && selectedLayoutTable.active_order_detail.lines && selectedLayoutTable.active_order_detail.lines.length" class="mt-3 pt-3 border-t border-slate-200">
+                        <p class="text-[10px] font-bold text-slate-400 mb-2">[[ isArabic ? 'الأصناف المطلوبة:' : 'Ordered Items:' ]]</p>
+                        <div class="max-h-32 overflow-y-auto space-y-1.5 pr-1">
+                            <div v-for="line in selectedLayoutTable.active_order_detail.lines" :key="line.id" class="flex justify-between text-xs items-center bg-white p-2 rounded-xl border border-slate-100">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-5 h-5 bg-slate-100 rounded flex items-center justify-center font-bold text-[10px] text-slate-600">x[[ line.qty ]]</span>
+                                    <span class="text-slate-700 font-bold">[[ line.material_name ]]</span>
+                                </div>
+                                <span class="text-slate-600 tech-font">[[ formatCurrency(parseFloat(line.subtotal)) ]]</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="flex justify-between text-sm pt-2 border-t border-slate-200">
                         <span class="text-slate-800 font-bold">[[ isArabic ? 'الحساب الإجمالي:' : 'Total Amount:' ]]</span>
                         <strong class="text-emerald-600 text-lg tech-font">[[ formatCurrency(parseFloat(selectedLayoutTable.active_order_total)) ]]</strong>
