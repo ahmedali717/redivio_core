@@ -122,12 +122,12 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         
         data = []
         for order in queryset:
-            # فلترة الأصناف التي تنتمي لمجموعة الـ Food فقط
-            food_lines = order.lines.filter(material__sale_group__name__icontains='Food')
+            # عرض جميع أصناف الطلب في المطبخ لضمان عدم تفويت أي صنف بغض النظر عن لغة المجموعات
+            order_lines = order.lines.all()
             
-            if food_lines.exists():
+            if order_lines.exists():
                 lines = []
-                for line in food_lines:
+                for line in order_lines:
                     lines.append({
                         'id': line.id,
                         'name': line.material.name,
