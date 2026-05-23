@@ -122,12 +122,16 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         
         data = []
         for order in queryset:
-            # عرض جميع أصناف الطلب في المطبخ لضمان عدم تفويت أي صنف بغض النظر عن لغة المجموعات
-            order_lines = order.lines.all()
+            # فلترة الأصناف التي تنتمي لمجموعة الطعام باللغة العربية أو الإنجليزية
+            from django.db.models import Q
+            food_lines = order.lines.filter(
+                Q(material__sale_group__name__icontains='Food') |
+                Q(material__sale_group__name__icontains='طعام')
+            )
             
-            if order_lines.exists():
+            if food_lines.exists():
                 lines = []
-                for line in order_lines:
+                for line in food_lines:
                     lines.append({
                         'id': line.id,
                         'name': line.material.name,
