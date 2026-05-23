@@ -79,7 +79,8 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def process_payment(self, request, pk=None):
         order = self.get_object()
-        if order.status != 'draft':
+        # Allow processing payment for unpaid orders (draft, inprogress, done)
+        if order.status in ['paid', 'refunded', 'cancelled']:
             return Response({'error': 'Order already processed'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Allow updating payment method from request
@@ -87,8 +88,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         if payment_method:
             order.payment_method = payment_method
         
-        order.status = 'paid'
-        order.kitchen_received_at = timezone.now()
+        # Update status: only change to 'paid' if it wasn't already in progress or done in the kitchen
+        if order.status not in ['inprogress', 'done']:
+            order.status = 'paid'
+            order.kitchen_received_at = timezone.now()
+        
         order.save()
         
         # Update session total sales
@@ -200,10 +204,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         """جلب طلبات المطبخ الخاصة بمجموعة الطعام (Food)"""
         opco_id = request.query_params.get('opco')
         
-        # فلترة الطلبات التي لم تنتهِ بعد
+        # فلترة الطلبات التي لم تنتهِ بعد (تشمل الطلبات غير المدفوعة للمحلي المسودة)
+        from django.db.models import Q
         queryset = POSOrder.objects.filter(
-            opco_id=opco_id, 
-            status__in=['paid', 'inprogress']
+            Q(status__in=['paid', 'inprogress']) | Q(status='draft', order_type='DINE_IN'),
+            opco_id=opco_id
         ).prefetch_related('lines', 'lines__material', 'lines__material__sale_group').order_by('created_at')
         
         data = []
