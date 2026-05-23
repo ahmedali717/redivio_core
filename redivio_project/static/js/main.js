@@ -58,6 +58,8 @@ createApp({
             posNumpadBuffer: '',
             posOrderType: 'DINE_IN',
             posTableNumber: '',
+            posTableId: null,
+            posExistingOrderId: null,
             posGuestCount: 1,
             posFloors: [],
             posTables: [],
@@ -878,6 +880,7 @@ createApp({
                 
                 if (res.ok) {
                     this.posTableNumber = table.number;
+                    this.posTableId = table.id;  // Track table ID for order linking
                     this.posGuestCount = guests;
                     this.posOrderType = 'DINE_IN';
                     this.posCart = [];
@@ -895,8 +898,27 @@ createApp({
 
         viewActiveTableOrder(table) {
             this.posTableNumber = table.number;
+            this.posTableId = table.id;  // Track table ID for order linking
             this.posGuestCount = table.current_guests || 1;
             this.posOrderType = 'DINE_IN';
+
+            // ✅ Load existing order items into cart so cashier can continue / checkout
+            if (table.active_order_detail && table.active_order_detail.lines && table.active_order_detail.lines.length > 0) {
+                this.posCart = table.active_order_detail.lines.map(line => ({
+                    id: line.material,
+                    name: line.material_name,
+                    qty: line.qty,
+                    price: parseFloat(line.unit_price),
+                    subtotal: parseFloat(line.subtotal),
+                    kitchen_notes: line.kitchen_notes || ''
+                }));
+                // Store the existing order ID so we update instead of creating new
+                this.posExistingOrderId = table.active_order_detail.id;
+            } else {
+                this.posCart = [];
+                this.posExistingOrderId = null;
+            }
+
             this.posTab = 'cashier';
             this.showTableActionModal = false;
             this.showToast(this.isArabic ? "متابعة طلب الترابيزة" : "Viewing table order", "info");
