@@ -42,6 +42,7 @@ createApp({
             // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
             inventoryTab: 'levels',
             posTab: 'cashier',
+            posReportTab: 'detailed_sales',
             activePOSSession: null,
             posCart: [],
             posSearch: '',
@@ -1858,20 +1859,32 @@ createApp({
             }
 
             const { value: formValues } = await Swal.fire({
-                title: this.isArabic ? 'صرف نقدية / مصروفات' : 'Cash Out / Expense',
+                title: this.isArabic ? 'إدارة النقدية بالخزينة' : 'Cash Drawer Management',
                 html: `
-                    <div style="text-align:right" dir="rtl">
-                        <label style="font-weight:bold; font-size:12px; color:#666">المبلغ المطلوب صرفه</label>
-                        <input id="swal-amount" class="swal2-input" type="number" step="0.01" placeholder="0.00">
-                        <label style="font-weight:bold; font-size:12px; color:#666; margin-top:10px; display:block">السبب / البيان</label>
-                        <input id="swal-reason" class="swal2-input" type="text" placeholder="مثلاً: شراء خضروات، عجز عهده...">
+                    <div style="text-align:right" dir="rtl" class="space-y-4">
+                        <div class="mb-3">
+                            <label style="font-weight:bold; font-size:12px; color:#666; display:block; margin-bottom:5px;">نوع العملية</label>
+                            <select id="swal-type" class="swal2-input" style="margin: 0; width: 100%;">
+                                <option value="IN">${this.isArabic ? 'إيداع / إضافة كاش (Cash In)' : 'Cash In'}</option>
+                                <option value="OUT">${this.isArabic ? 'صرف / سحب كاش (Cash Out)' : 'Cash Out'}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label style="font-weight:bold; font-size:12px; color:#666; display:block; margin-bottom:5px;">المبلغ</label>
+                            <input id="swal-amount" class="swal2-input" type="number" step="0.01" placeholder="0.00" style="margin: 0; width: 100%;">
+                        </div>
+                        <div class="mb-3">
+                            <label style="font-weight:bold; font-size:12px; color:#666; display:block; margin-bottom:5px;">السبب / البيان</label>
+                            <input id="swal-reason" class="swal2-input" type="text" placeholder="${this.isArabic ? 'مثلاً: دفعة تمويل، شراء خضروات، عجز عهده...' : 'e.g. Cash supply, buying supplies...'}" style="margin: 0; width: 100%;">
+                        </div>
                     </div>
                 `,
                 focusConfirm: false,
                 showCancelButton: true,
-                confirmButtonText: this.isArabic ? 'تأكيد وصرف' : 'Confirm & Cash Out',
+                confirmButtonText: this.isArabic ? 'تأكيد وحفظ' : 'Confirm & Save',
                 cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
                 preConfirm: () => {
+                    const type = document.getElementById('swal-type').value;
                     const amount = document.getElementById('swal-amount').value;
                     const reason = document.getElementById('swal-reason').value;
                     if (!amount || amount <= 0) {
@@ -1879,10 +1892,10 @@ createApp({
                         return false;
                     }
                     if (!reason) {
-                        Swal.showValidationMessage(this.isArabic ? 'برجاء إدخال سبب الصرف' : 'Please enter a reason');
+                        Swal.showValidationMessage(this.isArabic ? 'برجاء إدخال سبب العملية' : 'Please enter a reason');
                         return false;
                     }
-                    return { amount, reason };
+                    return { type, amount, reason };
                 }
             });
 
@@ -1895,7 +1908,7 @@ createApp({
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
                     body: JSON.stringify({
                         opco: this.activeOpcoId,
-                        type: 'OUT',
+                        type: formValues.type,
                         amount: formValues.amount,
                         reason: formValues.reason
                     })
@@ -1904,8 +1917,9 @@ createApp({
                 if (res.ok) {
                     this.showToast(this.isArabic ? "تم تسجيل العملية وطباعة الإيصال" : "Transaction recorded & Receipt printed", "success");
                     
-                    // 🚀 طباعة إيصال المصروفات
+                    // 🚀 طباعة إيصال النقدية
                     this.printExpenseReceipt({
+                        type: formValues.type,
                         amount: formValues.amount,
                         reason: formValues.reason,
                         cashier: this.user.name || 'Admin',
@@ -1933,7 +1947,7 @@ createApp({
             const html = `
                 <html>
                 <head>
-                    <title>Expense Voucher</title>
+                    <title>${data.type === 'IN' ? 'Receipt Voucher' : 'Expense Voucher'}</title>
                     <style>
                         body { font-family: 'Courier New', Courier, monospace; padding: 20px; text-align: center; line-height: 1.4; }
                         .header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
@@ -1947,7 +1961,7 @@ createApp({
                 </head>
                 <body onload="window.print(); window.close();">
                     <div class="header">
-                        <div class="title">${this.isArabic ? 'إيصال صرف نقدية' : 'CASH OUT VOUCHER'}</div>
+                        <div class="title">${data.type === 'IN' ? (this.isArabic ? 'إيصال إيداع نقدية' : 'CASH IN VOUCHER') : (this.isArabic ? 'إيصال صرف نقدية' : 'CASH OUT VOUCHER')}</div>
                         <div>${companyName}</div>
                     </div>
                     
@@ -1978,12 +1992,274 @@ createApp({
                             <div class="sig-line">Cashier</div>
                         </div>
                         <div>
-                            <div class="sig-line">Recipient</div>
+                            <div class="sig-line">Supervisor</div>
                         </div>
                     </div>
                     
                     <div class="footer">
                         <p>REDIVIO POS System - Printed on ${date}</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            printWindow.document.write(html);
+            printWindow.document.close();
+        },
+
+        exportReportToExcel(reportType) {
+            let filename = '';
+            let headers = [];
+            let rows = [];
+            
+            const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
+
+            if (reportType === 'detailed_sales') {
+                filename = `Detailed_Sales_Report_${Date.now()}.csv`;
+                headers = [
+                    this.isArabic ? 'الاسم' : 'Item Name',
+                    this.isArabic ? 'المجموعة' : 'Category',
+                    this.isArabic ? 'الكمية المباعة' : 'Qty Sold',
+                    this.isArabic ? 'إجمالي المبيعات' : 'Total Revenue',
+                    this.isArabic ? 'إجمالي التكلفة' : 'Total Cost',
+                    this.isArabic ? 'مجمل الربح' : 'Gross Profit'
+                ];
+                (this.posStats.top_items || []).forEach(item => {
+                    const gross = item.total_sales - item.total_cost;
+                    rows.push([
+                        item.name,
+                        item.category,
+                        item.qty,
+                        `${item.total_sales.toFixed(2)} ${currency}`,
+                        `${item.total_cost.toFixed(2)} ${currency}`,
+                        `${gross.toFixed(2)} ${currency}`
+                    ]);
+                });
+            } else if (reportType === 'cash_log') {
+                filename = `Cash_Drawer_Log_${Date.now()}.csv`;
+                headers = [
+                    this.isArabic ? 'التاريخ والوقت' : 'Date & Time',
+                    this.isArabic ? 'نوع العملية' : 'Type',
+                    this.isArabic ? 'المبلغ' : 'Amount',
+                    this.isArabic ? 'السبب والبيان' : 'Reason / Description',
+                    this.isArabic ? 'الكاشير' : 'Cashier'
+                ];
+                (this.posStats.cash_transactions || []).forEach(t => {
+                    rows.push([
+                        t.created_at,
+                        t.type === 'IN' ? (this.isArabic ? 'إيداع' : 'Deposit') : (this.isArabic ? 'سحب / مصروفات' : 'Withdrawal'),
+                        `${t.amount.toFixed(2)} ${currency}`,
+                        t.reason,
+                        t.cashier
+                    ]);
+                });
+            } else if (reportType === 'pl_summary') {
+                filename = `Profit_Loss_Summary_${Date.now()}.csv`;
+                headers = [
+                    this.isArabic ? 'البند' : 'Account Description',
+                    this.isArabic ? 'المبلغ' : 'Amount'
+                ];
+                const stats = this.posStats;
+                rows = [
+                    [this.isArabic ? 'إجمالي الإيرادات مبيعات' : 'Total Sales Revenue', `${stats.total_revenue.toFixed(2)} ${currency}`],
+                    [this.isArabic ? 'تكلفة البضاعة المباعة (COGS)' : 'Cost of Goods Sold (COGS)', `-${stats.total_cogs.toFixed(2)} ${currency}`],
+                    [this.isArabic ? 'مجمل الربح' : 'Gross Profit', `${stats.gross_profit.toFixed(2)} ${currency}`],
+                    [this.isArabic ? 'مشتريات مخزنية (-)' : 'Inventory Purchases (-)', `-${stats.total_purchases.toFixed(2)} ${currency}`],
+                    [this.isArabic ? 'المصروفات التشغيلية والعمومية (-)' : 'Operational Expenses (-)', `-${stats.total_expenses.toFixed(2)} ${currency}`],
+                    [this.isArabic ? 'التدفقات والمقبوضات النقدية (+)' : 'Cash Inflows (+)', `+${(stats.total_inflows || 0).toFixed(2)} ${currency}`],
+                    [this.isArabic ? 'صافي الربح النهائي' : 'Final Net Profit', `${stats.net_profit.toFixed(2)} ${currency}`]
+                ];
+            }
+
+            // Export to CSV with UTF-8 BOM
+            let csvContent = "\uFEFF"; // UTF-8 BOM for Excel Arabic support
+            csvContent += headers.join(",") + "\n";
+            rows.forEach(row => {
+                csvContent += row.map(val => {
+                    const str = String(val === null || val === undefined ? '' : val).replace(/"/g, '""');
+                    return `"${str}"`;
+                }).join(",") + "\n";
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        },
+
+        printReportPDF(reportType) {
+            const dateStr = new Date().toLocaleString();
+            const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
+            const companyName = this.activeOpco ? this.activeOpco.name : 'REDIVIO POS';
+            
+            let reportTitle = '';
+            let contentHtml = '';
+
+            if (reportType === 'detailed_sales') {
+                reportTitle = this.isArabic ? 'تقرير مبيعات الأصناف بالتفصيل' : 'Detailed Item Sales Report';
+                let rowsHtml = '';
+                (this.posStats.top_items || []).forEach(item => {
+                    const gross = item.total_sales - item.total_cost;
+                    rowsHtml += `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${item.category}</td>
+                            <td class="text-center">${item.qty}</td>
+                            <td class="text-right">${item.total_sales.toFixed(2)} ${currency}</td>
+                            <td class="text-right">${item.total_cost.toFixed(2)} ${currency}</td>
+                            <td class="text-right ${gross >= 0 ? 'text-green' : 'text-red'}">${gross.toFixed(2)} ${currency}</td>
+                        </tr>
+                    `;
+                });
+                
+                contentHtml = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>${this.isArabic ? 'اسم الصنف' : 'Item Name'}</th>
+                                <th>${this.isArabic ? 'المجموعة' : 'Category'}</th>
+                                <th class="text-center">${this.isArabic ? 'الكمية' : 'Qty'}</th>
+                                <th class="text-right">${this.isArabic ? 'الإيراد' : 'Revenue'}</th>
+                                <th class="text-right">${this.isArabic ? 'التكلفة' : 'Cost'}</th>
+                                <th class="text-right">${this.isArabic ? 'مجمل الربح' : 'Gross Profit'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml || `<tr><td colspan="6" class="text-center">${this.isArabic ? 'لا توجد بيانات' : 'No data available'}</td></tr>`}
+                        </tbody>
+                    </table>
+                `;
+            } else if (reportType === 'cash_log') {
+                reportTitle = this.isArabic ? 'سجل التدفق النقدي وحركة الخزينة' : 'Cash Drawer Transactions Log';
+                let rowsHtml = '';
+                (this.posStats.cash_transactions || []).forEach(t => {
+                    rowsHtml += `
+                        <tr>
+                            <td>${t.created_at}</td>
+                            <td>${t.type === 'IN' ? `<span class="badge badge-green">${this.isArabic ? 'إيداع نقدية' : 'Cash In'}</span>` : `<span class="badge badge-red">${this.isArabic ? 'صرف مصروفات' : 'Cash Out'}</span>`}</td>
+                            <td class="text-right font-bold">${t.amount.toFixed(2)} ${currency}</td>
+                            <td>${t.reason}</td>
+                            <td>${t.cashier}</td>
+                        </tr>
+                    `;
+                });
+
+                contentHtml = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>${this.isArabic ? 'التاريخ والوقت' : 'Date & Time'}</th>
+                                <th>${this.isArabic ? 'نوع الحركة' : 'Type'}</th>
+                                <th class="text-right">${this.isArabic ? 'المبلغ' : 'Amount'}</th>
+                                <th>${this.isArabic ? 'السبب والبيان' : 'Reason / Description'}</th>
+                                <th>${this.isArabic ? 'الكاشير' : 'Cashier'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml || `<tr><td colspan="5" class="text-center">${this.isArabic ? 'لا توجد بيانات' : 'No data available'}</td></tr>`}
+                        </tbody>
+                    </table>
+                `;
+            } else if (reportType === 'pl_summary') {
+                reportTitle = this.isArabic ? 'قائمة الدخل وتلخيص الأرباح والخسائر' : 'Income Statement Summary';
+                const stats = this.posStats;
+                contentHtml = `
+                    <div style="max-width: 500px; margin: 0 auto;">
+                        <div class="pl-line">
+                            <span>${this.isArabic ? 'إجمالي الإيرادات المبيعات (+)' : 'Total Sales Revenue (+)'}</span>
+                            <span class="font-bold">${stats.total_revenue.toFixed(2)} ${currency}</span>
+                        </div>
+                        <div class="pl-line" style="border-bottom: 1px solid #ddd; padding-bottom: 8px;">
+                            <span>${this.isArabic ? 'تكلفة البضاعة المباعة COGS (-)' : 'Cost of Goods Sold COGS (-)'}</span>
+                            <span class="text-red font-bold">-${stats.total_cogs.toFixed(2)} ${currency}</span>
+                        </div>
+                        <div class="pl-line" style="font-size: 18px; font-weight: bold; margin: 10px 0;">
+                            <span>${this.isArabic ? 'مجمل الربح (Gross Profit)' : 'Gross Profit'}</span>
+                            <span class="text-green">${stats.gross_profit.toFixed(2)} ${currency}</span>
+                        </div>
+                        <div class="pl-line">
+                            <span>${this.isArabic ? 'مشتريات مخزنية (-)' : 'Inventory Purchases (-)'}</span>
+                            <span class="text-red">-${stats.total_purchases.toFixed(2)} ${currency}</span>
+                        </div>
+                        <div class="pl-line">
+                            <span>${this.isArabic ? 'المصروفات التشغيلية والعمومية (-)' : 'Operational Expenses (-)'}</span>
+                            <span class="text-red">-${stats.total_expenses.toFixed(2)} ${currency}</span>
+                        </div>
+                        <div class="pl-line" style="border-bottom: 2px double #333; padding-bottom: 12px; margin-bottom: 10px;">
+                            <span>${this.isArabic ? 'التدفقات والمقبوضات النقدية (+)' : 'Cash Inflows (+)'}</span>
+                            <span class="text-green">+${(stats.total_inflows || 0).toFixed(2)} ${currency}</span>
+                        </div>
+                        <div class="pl-line font-bold" style="font-size: 22px; color: #1e3a8a;">
+                            <span>${this.isArabic ? 'صافي الربح النهائي (Net Profit)' : 'Final Net Profit'}</span>
+                            <span class="${stats.net_profit >= 0 ? 'text-green' : 'text-red'}">${stats.net_profit.toFixed(2)} ${currency}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const printWindow = window.open('', '_blank', 'width=800,height=700');
+            const isRtl = this.isArabic;
+            const html = `
+                <html>
+                <head>
+                    <title>${reportTitle}</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+                        body { 
+                            font-family: 'Cairo', sans-serif; 
+                            padding: 40px; 
+                            color: #334155; 
+                            direction: ${isRtl ? 'rtl' : 'ltr'}; 
+                            text-align: ${isRtl ? 'right' : 'left'};
+                        }
+                        .header { text-align: center; border-bottom: 2px solid #cbd5e1; padding-bottom: 20px; margin-bottom: 30px; }
+                        .company { font-size: 20px; font-weight: bold; color: #1e293b; }
+                        .title { font-size: 24px; font-weight: 900; color: #dc2626; margin: 10px 0; }
+                        .date { font-size: 12px; color: #64748b; }
+                        
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+                        th { background-color: #f8fafc; font-weight: bold; color: #0f172a; text-align: ${isRtl ? 'right' : 'left'}; }
+                        tr:hover { background-color: #f8fafc; }
+                        
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .font-bold { font-weight: bold; }
+                        
+                        .text-green { color: #10b981; }
+                        .text-red { color: #ef4444; }
+                        
+                        .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+                        .badge-green { background-color: #d1fae5; color: #065f46; }
+                        .badge-red { background-color: #fee2e2; color: #991b1b; }
+                        
+                        .pl-line { display: flex; justify-content: space-between; margin: 12px 0; font-size: 14px; }
+                        
+                        .footer { margin-top: 50px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #cbd5e1; padding-top: 20px; }
+                        @media print {
+                            body { padding: 0; }
+                            button { display: none; }
+                        }
+                    </style>
+                </head>
+                <body onload="window.print();">
+                    <div class="header">
+                        <div class="company">${companyName}</div>
+                        <div class="title">${reportTitle}</div>
+                        <div class="date">${this.isArabic ? 'تاريخ استخراج التقرير' : 'Generated on'}: ${dateStr}</div>
+                    </div>
+                    
+                    <div class="content">
+                        ${contentHtml}
+                    </div>
+                    
+                    <div class="footer">
+                        REDIVIO ERP • Restaurant Management & Intelligence System
                     </div>
                 </body>
                 </html>

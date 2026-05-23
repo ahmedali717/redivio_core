@@ -345,14 +345,25 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         
         # 2. Top Items
         from .models import POSOrderLine
-        top_items_raw = POSOrderLine.objects.filter(order__in=orders).values('material__name').annotate(total_qty=Sum('qty')).order_by('-total_qty')[:5]
+        top_items_raw = POSOrderLine.objects.filter(order__in=orders).values(
+            'material__name', 
+            'material__sale_group__name'
+        ).annotate(
+            total_qty=Sum('qty'),
+            total_sales=Sum('subtotal'),
+            total_cost=Sum(F('qty') * F('material__standard_price'))
+        ).order_by('-total_qty')
+        
         top_items = []
         max_qty = top_items_raw[0]['total_qty'] if top_items_raw else 1
         for i, item in enumerate(top_items_raw):
             top_items.append({
                 'rank': i + 1,
                 'name': item['material__name'],
+                'category': item['material__sale_group__name'] or 'عام',
                 'qty': item['total_qty'],
+                'total_sales': float(item['total_sales'] or 0),
+                'total_cost': float(item['total_cost'] or 0),
                 'percentage': (item['total_qty'] / max_qty) * 100
             })
 
@@ -383,14 +394,37 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         # 4. Expenses & Profitability Stats
         from .models import POSCashTransaction
         expenses_qs = POSCashTransaction.objects.filter(session__opco_id=opco_id, type='OUT')
+        inflow_qs = POSCashTransaction.objects.filter(session__opco_id=opco_id, type='IN')
         if date_from:
             expenses_qs = expenses_qs.filter(created_at__date__gte=date_from)
+            inflow_qs = inflow_qs.filter(created_at__date__gte=date_from)
         if date_to:
             expenses_qs = expenses_qs.filter(created_at__date__lte=date_to)
+            inflow_qs = inflow_qs.filter(created_at__date__lte=date_to)
         if not date_from and not date_to:
             expenses_qs = expenses_qs.filter(created_at__date=today)
+            inflow_qs = inflow_qs.filter(created_at__date=today)
 
         total_expenses = expenses_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+        total_inflow = inflow_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        # Detailed Cash transactions list
+        trans_qs = POSCashTransaction.objects.filter(session__opco_id=opco_id)
+        if date_from:
+            trans_qs = trans_qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            trans_qs = trans_qs.filter(created_at__date__lte=date_to)
+        if not date_from and not date_to:
+            trans_qs = trans_qs.filter(created_at__date=today)
+            
+        cash_trans = [{
+            'id': t.id,
+            'type': t.type,
+            'amount': float(t.amount),
+            'reason': t.reason,
+            'created_at': t.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'cashier': t.session.cashier_name
+        } for t in trans_qs.order_by('-created_at')]
         
         # Get opening balance for the first session in the range
         first_session = POSSession.objects.filter(opco_id=opco_id)
@@ -419,14 +453,16 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             'credit_sales': float(credit_total),
             'instapay_sales': float(instapay_total),
             'total_expenses': float(total_expenses),
+            'total_inflows': float(total_inflow),
             'total_purchases': float(total_purchases),
             'total_cogs': float(total_cogs),
             'opening_balance': float(opening_balance),
             'gross_profit': float(total_revenue) - float(total_cogs),
-            'net_income': float(opening_balance) + float(cash_total) - float(total_expenses) - float(total_purchases),
+            'net_income': float(opening_balance) + float(cash_total) + float(total_inflow) - float(total_expenses) - float(total_purchases),
             'net_profit': float(total_revenue) - float(total_cogs) - float(total_expenses),
             'top_items': top_items,
-            'ingredients': list(consumption.values())
+            'ingredients': list(consumption.values()),
+            'cash_transactions': cash_trans
         })
 
     @action(detail=False, methods=['get'])
