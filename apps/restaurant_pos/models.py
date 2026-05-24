@@ -213,6 +213,29 @@ class POSOrder(models.Model):
         from apps.wms.models import StockMove
         from apps.item_master.models import MaterialLocation
         
+        # دالة مساعدة للتحقق من استبعاد المكون
+        def is_ingredient_excluded(notes, ingredient_name):
+            if not notes:
+                return False
+            notes = notes.lower().strip()
+            exclude_keywords = [
+                "بدون", "من غير", "لا", "إلغاء", "حذف", "شيل", "بلا",
+                "without", "no", "exclude", "remove", "w/o", "ex ", "less"
+            ]
+            has_exclude_keyword = any(kw in notes for kw in exclude_keywords)
+            if not has_exclude_keyword:
+                return False
+                
+            clean_name = ingredient_name.lower().strip()
+            if clean_name.startswith("ال"):
+                clean_name = clean_name[2:]
+                
+            if clean_name in notes:
+                return True
+            if ingredient_name.lower() in notes:
+                return True
+            return False
+            
         for line in self.lines.all():
             material = line.material
             
@@ -225,6 +248,10 @@ class POSOrder(models.Model):
                 
             if recipe and recipe.ingredients.exists():
                 for ingredient_line in recipe.ingredients.all():
+                    # تحقق مما إذا طلب العميل أو حالة المنتج تقتضي إزالة هذا المكون
+                    if is_ingredient_excluded(line.kitchen_notes, ingredient_line.ingredient.name):
+                        continue
+                        
                     qty_to_deduct = ingredient_line.quantity * line.qty
                     source_bin = self._find_best_bin(ingredient_line.ingredient)
                     
