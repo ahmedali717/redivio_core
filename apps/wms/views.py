@@ -22,6 +22,29 @@ from .serializers import (
     StorageBinSerializer, StockQuantSerializer, StockMoveSerializer
 )
 
+def parse_csv_file(file):
+    import csv
+    content = file.read()
+    try:
+        decoded_content = content.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        try:
+            decoded_content = content.decode('windows-1256')
+        except UnicodeDecodeError:
+            decoded_content = content.decode('utf-8', errors='ignore')
+            
+    lines = decoded_content.splitlines()
+    reader = csv.DictReader(lines)
+    fieldnames = [f.strip() for f in (reader.fieldnames or [])]
+    rows = []
+    for row in reader:
+        cleaned_row = {}
+        for k, v in row.items():
+            if k is not None:
+                cleaned_row[k.strip()] = v.strip() if v else ''
+        rows.append(cleaned_row)
+    return fieldnames, rows
+
 # =========================================================
 #  1. API Functions
 # =========================================================
@@ -160,8 +183,6 @@ class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='import')
     def import_plants(self, request):
-        import pandas as pd
-        from apps.core.models import OpCo
         file = request.FILES.get('file')
         if not file:
             return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
@@ -170,24 +191,36 @@ class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         
         try:
             if file.name.endswith('.csv'):
-                df = pd.read_csv(file)
+                headers, rows = parse_csv_file(file)
             else:
-                df = pd.read_excel(file)
+                try:
+                    import pandas as pd
+                    df = pd.read_excel(file)
+                    headers = [str(c).strip() for c in df.columns]
+                    rows = []
+                    for _, r in df.iterrows():
+                        row_dict = {}
+                        for col in df.columns:
+                            val = r[col]
+                            row_dict[str(col).strip()] = str(val).strip() if pd.notna(val) else ''
+                        rows.append(row_dict)
+                except ImportError:
+                    return Response({"error": "Excel import is not supported because 'pandas' is not installed. Please save your file as CSV (.csv) and try again."}, status=status.HTTP_400_BAD_REQUEST)
                 
             success_count = 0
             skipped_count = 0
             
             # Map Arabic and English headers
-            code_col = 'الكود' if 'الكود' in df.columns else ('كود المنشأة' if 'كود المنشأة' in df.columns else ('Plant Code' if 'Plant Code' in df.columns else 'Code'))
-            name_col = 'الاسم' if 'الاسم' in df.columns else ('اسم المنشأة' if 'اسم المنشأة' in df.columns else ('Plant Name' if 'Plant Name' in df.columns else 'Name'))
+            code_col = 'الكود' if 'الكود' in headers else ('كود المنشأة' if 'كود المنشأة' in headers else ('Plant Code' if 'Plant Code' in headers else 'Code'))
+            name_col = 'الاسم' if 'الاسم' in headers else ('اسم المنشأة' if 'اسم المنشأة' in headers else ('Plant Name' if 'Plant Name' in headers else 'Name'))
             
-            if code_col not in df.columns or name_col not in df.columns:
+            if code_col not in headers or name_col not in headers:
                 return Response({"error": f"Missing required columns. Ensure '{code_col}' and '{name_col}' exist."}, status=status.HTTP_400_BAD_REQUEST)
 
             with transaction.atomic():
-                for index, row in df.iterrows():
-                    code = str(row[code_col]).strip()
-                    name = str(row[name_col]).strip()
+                for row in rows:
+                    code = str(row.get(code_col, '')).strip()
+                    name = str(row.get(name_col, '')).strip()
                     
                     if not code or not name or str(code).lower() == 'nan' or str(name).lower() == 'nan':
                         continue
@@ -229,7 +262,6 @@ class StorageLocationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='import')
     def import_locations(self, request):
-        import pandas as pd
         file = request.FILES.get('file')
         if not file: return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -237,21 +269,37 @@ class StorageLocationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         if not active_opco: return Response({"error": "No active company"}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            df = pd.read_csv(file) if file.name.endswith('.csv') else pd.read_excel(file)
+            if file.name.endswith('.csv'):
+                headers, rows = parse_csv_file(file)
+            else:
+                try:
+                    import pandas as pd
+                    df = pd.read_excel(file)
+                    headers = [str(c).strip() for c in df.columns]
+                    rows = []
+                    for _, r in df.iterrows():
+                        row_dict = {}
+                        for col in df.columns:
+                            val = r[col]
+                            row_dict[str(col).strip()] = str(val).strip() if pd.notna(val) else ''
+                        rows.append(row_dict)
+                except ImportError:
+                    return Response({"error": "Excel import is not supported because 'pandas' is not installed. Please save your file as CSV (.csv) and try again."}, status=status.HTTP_400_BAD_REQUEST)
+
             success_count, skipped_count = 0, 0
             
-            pcode_col = 'كود المنشأة' if 'كود المنشأة' in df.columns else 'Plant Code'
-            code_col = 'كود الموقع' if 'كود الموقع' in df.columns else 'Location Code'
-            name_col = 'اسم الموقع' if 'اسم الموقع' in df.columns else 'Location Name'
+            pcode_col = 'كود المنشأة' if 'كود المنشأة' in headers else 'Plant Code'
+            code_col = 'كود الموقع' if 'كود الموقع' in headers else 'Location Code'
+            name_col = 'اسم الموقع' if 'اسم الموقع' in headers else 'Location Name'
             
-            if not all(col in df.columns for col in [pcode_col, code_col, name_col]):
+            if not all(col in headers for col in [pcode_col, code_col, name_col]):
                 return Response({"error": "Missing columns. Ensure Plant Code, Location Code, and Location Name exist."}, status=status.HTTP_400_BAD_REQUEST)
 
             with transaction.atomic():
-                for index, row in df.iterrows():
-                    pcode = str(row[pcode_col]).strip()
-                    code = str(row[code_col]).strip()
-                    name = str(row[name_col]).strip()
+                for row in rows:
+                    pcode = str(row.get(pcode_col, '')).strip()
+                    code = str(row.get(code_col, '')).strip()
+                    name = str(row.get(name_col, '')).strip()
                     
                     if not pcode or not code or not name or str(code).lower() == 'nan': continue
                         
@@ -287,7 +335,6 @@ class StorageBinViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='import')
     def import_bins(self, request):
-        import pandas as pd
         file = request.FILES.get('file')
         if not file: return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -295,19 +342,35 @@ class StorageBinViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         if not active_opco: return Response({"error": "No active company"}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            df = pd.read_csv(file) if file.name.endswith('.csv') else pd.read_excel(file)
+            if file.name.endswith('.csv'):
+                headers, rows = parse_csv_file(file)
+            else:
+                try:
+                    import pandas as pd
+                    df = pd.read_excel(file)
+                    headers = [str(c).strip() for c in df.columns]
+                    rows = []
+                    for _, r in df.iterrows():
+                        row_dict = {}
+                        for col in df.columns:
+                            val = r[col]
+                            row_dict[str(col).strip()] = str(val).strip() if pd.notna(val) else ''
+                        rows.append(row_dict)
+                except ImportError:
+                    return Response({"error": "Excel import is not supported because 'pandas' is not installed. Please save your file as CSV (.csv) and try again."}, status=status.HTTP_400_BAD_REQUEST)
+
             success_count, skipped_count = 0, 0
             
-            lcode_col = 'كود الموقع' if 'كود الموقع' in df.columns else 'Location Code'
-            code_col = 'كود الرف' if 'كود الرف' in df.columns else 'Bin Code'
+            lcode_col = 'كود الموقع' if 'كود الموقع' in headers else 'Location Code'
+            code_col = 'كود الرف' if 'كود الرف' in headers else 'Bin Code'
             
-            if not all(col in df.columns for col in [lcode_col, code_col]):
+            if not all(col in headers for col in [lcode_col, code_col]):
                 return Response({"error": "Missing columns. Ensure Location Code and Bin Code exist."}, status=status.HTTP_400_BAD_REQUEST)
             
             with transaction.atomic():
-                for index, row in df.iterrows():
-                    lcode = str(row[lcode_col]).strip()
-                    code = str(row[code_col]).strip()
+                for row in rows:
+                    lcode = str(row.get(lcode_col, '')).strip()
+                    code = str(row.get(code_col, '')).strip()
                     
                     if not lcode or not code or str(code).lower() == 'nan': continue
                         
