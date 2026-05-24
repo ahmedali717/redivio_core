@@ -293,6 +293,25 @@ createApp({
     },
 
     computed: {
+        availableRoles() {
+            const roles = [
+                { value: 'admin', label: this.isArabic ? 'Admin (كل الصلاحيات)' : 'Admin' },
+                { value: 'manager', label: this.isArabic ? 'Manager (الإدارة والتقارير)' : 'Manager' }
+            ];
+
+            const isWmsActive = this.isModulePurchased('inventory_module');
+            const isPosActive = this.isModulePurchased('restaurant_pos_module');
+
+            if (isWmsActive) {
+                roles.push({ value: 'warehouse', label: this.isArabic ? 'Warehouse (المخازن والتكاليف)' : 'Warehouse' });
+            }
+            if (isPosActive) {
+                roles.push({ value: 'cashier', label: this.isArabic ? 'Cashier (الكاشير)' : 'Cashier' });
+                roles.push({ value: 'kitchen', label: this.isArabic ? 'Kitchen (المطبخ)' : 'Kitchen' });
+            }
+
+            return roles;
+        },
         activeFloorTables() {
             return (this.posTables || []).filter(t => t.floor === this.activeFloorId);
         },
@@ -4859,6 +4878,14 @@ createApp({
                 this.forms.opco = {
                     id: null, code: data ? data.code : '', name: '',
                     currency: 'USD', parent: data ? data.parent : (this.activeOpcoId || null), is_holding: false
+                };
+            } else if (type === 'user') {
+                this.forms.user = {
+                    id: null,
+                    email: '',
+                    role: this.availableRoles && this.availableRoles.length > 0 ? this.availableRoles[0].value : 'admin',
+                    company: this.activeOpcoId || null,
+                    password: ''
                 };
             }
         },
