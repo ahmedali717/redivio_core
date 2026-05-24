@@ -835,3 +835,16 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_debug_logs(request):
+    import os
+    log_path = "/var/log/ahmedali717.pythonanywhere.com.error.log"
+    if not os.path.exists(log_path):
+        return Response({"error": f"Log file not found at {log_path}"})
+    try:
+        with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()[-200:]
+            return Response({"logs": "".join(lines)})
+    except Exception as e:
+        return Response({"error": str(e)})
