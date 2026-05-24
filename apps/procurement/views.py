@@ -87,16 +87,32 @@ class VendorViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     'amount': 0, # الاستلام ليس له قيمة مالية مباشرة هنا
                     'doc_type': 'GRN'
                 })
+
+        # إضافة الحركات المخزنية المباشرة (مثل الاستلام المباشر من نقاط البيع)
+        from apps.wms.models import StockMove
+        import datetime
+        moves = StockMove.objects.filter(vendor=vendor).order_by('-created_at')
+        for move in moves:
+            amount = move.quantity * move.unit_cost
+            history.append({
+                'id': move.id,
+                'date': move.created_at.date() if move.created_at else None,
+                'type': 'DIRECT_STOCK_MOVE_IN' if move.move_type == 'IN' else 'DIRECT_STOCK_MOVE_OUT',
+                'number': move.reference or f"MOVE-{move.id}",
+                'status': 'RECEIVED' if move.move_type == 'IN' else 'RETURNED',
+                'amount': float(amount),
+                'doc_type': 'DIRECT_GRN' if move.move_type == 'IN' else 'DIRECT_GDN'
+            })
         
         # ترتيب التاريخ من الأحدث للأقدم
-        history.sort(key=lambda x: x['date'], reverse=True)
+        history.sort(key=lambda x: x['date'] if x['date'] is not None else datetime.date.min, reverse=True)
         
         return Response({
             'vendor_name': vendor.name,
             'vendor_code': vendor.code,
             'summary': {
-                'total_pos': pos.count(),
-                'received_pos': pos.filter(status='RECEIVED').count(),
+                'total_pos': pos.count() + moves.count(),
+                'received_pos': pos.filter(status='RECEIVED').count() + moves.filter(move_type='IN').count(),
             },
             'transactions': history
         })

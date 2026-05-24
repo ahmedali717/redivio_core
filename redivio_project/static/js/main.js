@@ -3071,6 +3071,11 @@ createApp({
             window.open(`/print/grn/${receiptId}/`, '_blank');
         },
 
+        printDirectMove(moveId) {
+            this.showToast(this.isArabic ? "جاري تجهيز إذن الحركة للطباعة..." : "Preparing Stock Move document...", "success");
+            window.open(`/api/wms/moves/${moveId}/print/`, '_blank');
+        },
+
         printDelivery(deliveryId) {
             if (!deliveryId || deliveryId === 'undefined') {
                 this.showToast(this.isArabic ? "خطأ: رقم الإذن غير موجود" : "Error: Delivery ID is missing", 'error');
