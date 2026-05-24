@@ -55,7 +55,7 @@ def modules_puzzle_view(request):
         'sales': {'id': 'sales', 'name': 'SALES', 'icon': 'fas fa-chart-line', 'color': '#10b981', 'desc': 'CRM'},
         'procurement': {'id': 'procurement', 'name': 'SUPPLY', 'icon': 'fas fa-truck-fast', 'color': '#a855f7', 'desc': 'Procurement'},
         'teams': {'id': 'teams', 'name': 'TEAMS', 'icon': 'fas fa-users', 'color': '#3b82f6', 'desc': 'HR'},
-        'restaurant_pos': {'id': 'restaurant_pos', 'name': 'RESTO POS', 'icon': 'fas fa-utensils', 'color': '#ef4444', 'desc': 'Restaurant System'},
+        'restaurant_pos': {'id': 'restaurant_pos', 'name': 'POS', 'icon': 'fas fa-cash-register', 'color': '#ef4444', 'desc': 'Point of Sale System'},
         'item_master': {'id': 'item_master', 'name': 'CATALOG', 'icon': 'fas fa-box-open', 'color': '#14b8a6', 'desc': 'Item Master'},
     }
     

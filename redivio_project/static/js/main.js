@@ -43,6 +43,7 @@ createApp({
             inventoryTab: 'levels',
             posTab: 'cashier',
             posReportTab: 'detailed_sales',
+            posMode: localStorage.getItem('pos_mode') || 'restaurant',
             activePOSSession: null,
             posCart: [],
             posSearch: '',
@@ -122,7 +123,7 @@ createApp({
                     { id: 'procurement_module', name: { ar: 'RPMS (المشتريات)', en: 'RPMS (Procurement)' }, icon: 'fas fa-shopping-cart' },
                     { id: 'sales_module', name: { ar: 'إدارة المبيعات', en: 'Sales & CRM' }, icon: 'fas fa-cart-shopping' },
                     { id: 'accounting_module', name: { ar: 'المحاسبة والمالية', en: 'Accounting' }, icon: 'fas fa-file-invoice-dollar' },
-                    { id: 'restaurant_pos_module', name: { ar: 'نقطة البيع (POS)', en: 'Restaurant POS' }, icon: 'fas fa-utensils' }
+                    { id: 'restaurant_pos_module', name: { ar: 'نقاط البيع (POS)', en: 'POS System' }, icon: 'fas fa-cash-register' }
                 ]
             },
 
@@ -496,7 +497,7 @@ createApp({
                 'procurement_module': { ar: 'RPMS (المشتريات والموردين)', en: 'RPMS (Procurement)' },
                 'sales_module': { ar: 'إدارة المبيعات والعملاء', en: 'Sales & CRM' },
                 'accounting_module': { ar: 'المحاسبة والمالية', en: 'Accounting' },
-                'restaurant_pos_module': { ar: 'نقطة بيع المطاعم', en: 'Restaurant POS' },
+                'restaurant_pos_module': { ar: 'نقاط البيع (POS)', en: 'POS System' },
                 'global_config': { ar: 'إعدادات النظام الرئيسية', en: 'Enterprise Settings' },
                 'users': { ar: 'إدارة طاقم العمل', en: 'Staff Management' },
                 'item_master': { ar: 'سجل الأصناف الرئيسي', en: 'Global Item Master' },
@@ -514,7 +515,7 @@ createApp({
                 'global_config': { ar: 'تكوين الهوية القانونية والضريبية للمنشأة', en: 'Configure legal identity, tax information, and corporate logo' },
                 'users': { ar: 'التحكم في حسابات الموظفين وصلاحيات الوصول للنظام', en: 'Control employee accounts, roles, and system access levels' },
                 'inventory_module': { ar: 'إدارة المخزون، التحويلات، وتتبع الأرصدة', en: 'Manage stock levels, transfers, and warehouse movements' },
-                'restaurant_pos_module': { ar: 'إدارة الطلبات، المطبخ، والتقارير المالية للمطعم', en: 'Manage orders, kitchen display (KDS), and POS analytics' }
+                'restaurant_pos_module': { ar: 'إدارة المبيعات المباشرة، كاشير المطاعم، صالة الطعام، والمطبخ KDS', en: 'Manage direct sales, restaurant orders, floor layouts, and kitchen display (KDS)' }
             };
             const current = descs[this.view] || { ar: '', en: '' };
             return this.isArabic ? current.ar : current.en;
@@ -712,6 +713,18 @@ createApp({
     },
 
     methods: {
+        setPOSMode(mode) {
+            this.posMode = mode;
+            localStorage.setItem('pos_mode', mode);
+            if (mode === 'direct') {
+                if (this.posOrderType === 'DINE_IN') {
+                    this.posOrderType = 'TAKEAWAY';
+                }
+                if (['floor_layout', 'kitchen'].includes(this.posTab)) {
+                    this.posTab = 'cashier';
+                }
+            }
+        },
         async fetchFloorsAndTables() {
             try {
                 this.loading = true;
