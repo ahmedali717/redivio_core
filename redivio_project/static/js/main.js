@@ -4237,11 +4237,6 @@ createApp({
                 formData.append('system_mode', this.config.system_mode || 'modular');
                 formData.append('purchased_modules', JSON.stringify(this.config.purchased_modules || []));
 
-                const activeOpco = this.allOpcos.find(o => o.id === parseInt(targetId));
-                if (activeOpco) {
-                    formData.append('code', activeOpco.code);
-                }
-
                 if (this.newLogoFile instanceof File) {
                     formData.append('logo', this.newLogoFile);
                 }
@@ -4258,10 +4253,23 @@ createApp({
                     const data = await response.json();
                     this.handleSaveSuccess(data);
                 } else {
-                    this.showToast(this.isArabic ? "فشل حفظ الإعدادات" : "Failed to save settings", 'error');
+                    const errorText = await response.text();
+                    let errorMessage = errorText;
+                    try {
+                        const errJson = JSON.parse(errorText);
+                        const firstKey = Object.keys(errJson)[0];
+                        if (firstKey) {
+                            const val = errJson[firstKey];
+                            errorMessage = Array.isArray(val) ? val[0] : (typeof val === 'object' ? JSON.stringify(val) : val);
+                        }
+                    } catch (e) {
+                        // Keep text as is
+                    }
+                    this.showToast(this.isArabic ? "فشل حفظ الإعدادات: " + errorMessage : "Failed to save settings: " + errorMessage, 'error');
                 }
             } catch (error) {
                 console.error("Save Error:", error);
+                this.showToast(this.isArabic ? "حدث خطأ أثناء الاتصال بالسيرفر" : "An error occurred while connecting to the server", 'error');
             } finally {
                 this.loading = false;
             }
