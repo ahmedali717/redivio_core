@@ -2532,6 +2532,9 @@ createApp({
                     this.activePOSSession = session;
                     this.posMode = session.terminal_type === 'DIRECT' ? 'direct' : 'restaurant';
                     this.showToast(this.isArabic ? "تم فتح الوردية بنجاح" : "Session started successfully", "success");
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || (this.isArabic ? "خطأ في بدء الوردية" : "Error starting session"), "error");
                 }
             } catch (e) {
                 this.showToast("Error starting session", "error");
@@ -2543,6 +2546,8 @@ createApp({
         async fetchPOSTerminals() {
             try {
                 this.loading = true;
+                // Fetch company users in parallel to ensure lock screen lists load correctly
+                this.fetchCompanyUsers();
                 const res = await fetch(`/api/pos/terminals/?opco=${this.activeOpcoId}`);
                 if (res.ok) {
                     this.posTerminals = await res.json();
