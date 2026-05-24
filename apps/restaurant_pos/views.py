@@ -34,11 +34,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     def active_session(self, request):
         opco_id = request.query_params.get('opco')
         if not opco_id or opco_id in ['null', 'undefined']:
-            return Response(None, status=200)
+            return Response({}, status=200)
         try:
             opco_id = int(opco_id)
         except (ValueError, TypeError):
-            return Response(None, status=200)
+            return Response({}, status=200)
             
         terminal_id = request.query_params.get('terminal')
         session_qs = POSSession.objects.filter(opco_id=opco_id, is_closed=False)
@@ -48,7 +48,7 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         if session:
             from .serializers import POSSessionSerializer
             return Response(POSSessionSerializer(session).data)
-        return Response(None, status=200)
+        return Response({}, status=200)
 
     @action(detail=False, methods=['get'])
     def session_history(self, request):
@@ -715,6 +715,9 @@ class POSTerminalViewSet(viewsets.ModelViewSet):
     serializer_class = POSTerminalSerializer
 
     def get_queryset(self):
+        if self.action in ['retrieve', 'update', 'partial_update', 'destroy'] or getattr(self, 'detail', False):
+            return POSTerminal.objects.all()
+
         opco_id = self.request.query_params.get('opco')
         if not opco_id or opco_id in ['null', 'undefined']:
             return POSTerminal.objects.none()
