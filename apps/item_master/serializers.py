@@ -20,6 +20,7 @@ class MaterialSerializer(serializers.ModelSerializer):
     recipe_lines = serializers.SerializerMethodField()
     combo_lines = serializers.SerializerMethodField()
     stock_details = serializers.SerializerMethodField()
+    allowed_terminals = serializers.SerializerMethodField()
     
     class Meta:
         model = Material
@@ -27,7 +28,7 @@ class MaterialSerializer(serializers.ModelSerializer):
             'id', 'sku', 'name', 'category', 'category_name', 'sale_group', 'sale_group_name',
             'base_uom', 'barcode', 'company_assignments','standard_price', 'sales_price', 'tax_rate',
             'image', 'tracking', 'reorder_level', 'max_level', 'on_hand', 'stock_details',
-            'is_pos_item', 'is_combo', 'expiry_date', 'recipe_lines', 'combo_lines'
+            'is_pos_item', 'is_combo', 'expiry_date', 'recipe_lines', 'combo_lines', 'allowed_terminals'
         ]
 
     def get_recipe_lines(self, obj):
@@ -60,6 +61,9 @@ class MaterialSerializer(serializers.ModelSerializer):
             'plant': q.storage_bin.storage_location.plant.name,
             'quantity': q.quantity
         } for q in quants]
+
+    def get_allowed_terminals(self, obj):
+        return list(obj.allowed_terminals.values_list('id', flat=True))
 
     def get_company_assignments(self, obj):
         assignments = []
@@ -151,6 +155,19 @@ class MaterialSerializer(serializers.ModelSerializer):
                             extra_price=c_line.get('extra_price', 0)
                         )
 
+            # Save Allowed Terminals if provided
+            allowed_terminals_data = request.data.get('allowed_terminals')
+            if allowed_terminals_data is not None:
+                if isinstance(allowed_terminals_data, str):
+                    try: allowed_terminals = json.loads(allowed_terminals_data)
+                    except: allowed_terminals = []
+                else:
+                    allowed_terminals = allowed_terminals_data
+                
+                from apps.restaurant_pos.models import POSTerminal
+                valid_terminals = POSTerminal.objects.filter(id__in=allowed_terminals, opco_id=mat.opco_id)
+                mat.allowed_terminals.set(valid_terminals)
+
             bins = assign.get('bins', [])
             primary = assign.get('primary_bin')
             mat.material_bins.all().delete()
@@ -161,7 +178,21 @@ class MaterialSerializer(serializers.ModelSerializer):
                     is_primary=(str(bin_id) == str(primary))
                 )
             material_instance = mat
-        return material_instance or super().create(validated_data)
+
+        if material_instance is None:
+            material_instance = super().create(validated_data)
+            allowed_terminals_data = request.data.get('allowed_terminals')
+            if allowed_terminals_data is not None:
+                if isinstance(allowed_terminals_data, str):
+                    try: allowed_terminals = json.loads(allowed_terminals_data)
+                    except: allowed_terminals = []
+                else:
+                    allowed_terminals = allowed_terminals_data
+                from apps.restaurant_pos.models import POSTerminal
+                valid_terminals = POSTerminal.objects.filter(id__in=allowed_terminals, opco_id=material_instance.opco_id)
+                material_instance.allowed_terminals.set(valid_terminals)
+
+        return material_instance
 
     def update(self, instance, validated_data):
         request = self.context.get('request')
@@ -242,6 +273,19 @@ class MaterialSerializer(serializers.ModelSerializer):
                                 extra_price=c_line.get('extra_price', 0)
                             )
                 
+                # Save Allowed Terminals
+                allowed_terminals_data = request.data.get('allowed_terminals')
+                if allowed_terminals_data is not None:
+                    if isinstance(allowed_terminals_data, str):
+                        try: allowed_terminals = json.loads(allowed_terminals_data)
+                        except: allowed_terminals = []
+                    else:
+                        allowed_terminals = allowed_terminals_data
+                    
+                    from apps.restaurant_pos.models import POSTerminal
+                    valid_terminals = POSTerminal.objects.filter(id__in=allowed_terminals, opco_id=mat.opco_id)
+                    mat.allowed_terminals.set(valid_terminals)
+
                 bins = assign.get('bins', [])
                 primary = assign.get('primary_bin')
                 mat.material_bins.all().delete()
@@ -251,4 +295,18 @@ class MaterialSerializer(serializers.ModelSerializer):
                         storage_bin_id=bin_id,
                         is_primary=(str(bin_id) == str(primary))
                     )
+
+        # Update allowed terminals on primary instance as well
+        allowed_terminals_data = request.data.get('allowed_terminals')
+        if allowed_terminals_data is not None:
+            if isinstance(allowed_terminals_data, str):
+                try: allowed_terminals = json.loads(allowed_terminals_data)
+                except: allowed_terminals = []
+            else:
+                allowed_terminals = allowed_terminals_data
+            
+            from apps.restaurant_pos.models import POSTerminal
+            valid_terminals = POSTerminal.objects.filter(id__in=allowed_terminals, opco_id=instance.opco_id)
+            instance.allowed_terminals.set(valid_terminals)
+
         return instance

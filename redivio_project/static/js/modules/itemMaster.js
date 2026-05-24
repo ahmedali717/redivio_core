@@ -35,7 +35,8 @@ export const itemMasterModule = {
                 sale_group: '',
                 expiry_date: null,
                 recipe_lines: [],
-                combo_lines: []
+                combo_lines: [],
+                allowed_terminals: []
             }
         }
     },
@@ -144,6 +145,7 @@ export const itemMasterModule = {
                 expiry_date: material.expiry_date || null,
                 recipe_lines: material.recipe_lines || [],
                 combo_lines: material.combo_lines || [],
+                allowed_terminals: material.allowed_terminals ? [...material.allowed_terminals] : [],
                 
                 // 🚀 البيانات الجديدة لعرض الأرصدة (Odoo 19 Modal)
                 on_hand: material.on_hand || 0,

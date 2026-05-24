@@ -306,6 +306,17 @@ createApp({
             // فلترة الأصناف التي تحمل علامة POS Item فقط
             let items = (this.materials_list || []).filter(i => i.is_pos_item);
             
+            // فلترة الأصناف بناءً على نقطة البيع النشطة المحددة (إذا تم تقييد الصنف)
+            if (this.selectedTerminalId) {
+                const terminalId = parseInt(this.selectedTerminalId);
+                items = items.filter(i => {
+                    if (!i.allowed_terminals || i.allowed_terminals.length === 0) {
+                        return true; // متاح للجميع افتراضياً
+                    }
+                    return i.allowed_terminals.includes(terminalId);
+                });
+            }
+            
             if (this.posCategory !== 'all') {
                 // الفلترة هنا تتم بناءً على ID المجموعة البيعية
                 items = items.filter(i => i.sale_group === this.posCategory);
@@ -4111,7 +4122,10 @@ createApp({
                         else if (type === 'material' && key === 'combo_lines') {
                             payload.append('combo_lines', JSON.stringify(data[key]));
                         }
-                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments', 'recipe_lines', 'combo_lines'].includes(key)) {
+                        else if (type === 'material' && key === 'allowed_terminals') {
+                            payload.append('allowed_terminals', JSON.stringify(data[key]));
+                        }
+                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments', 'recipe_lines', 'combo_lines', 'allowed_terminals'].includes(key)) {
                             let val = data[key];
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             payload.append(key, val);

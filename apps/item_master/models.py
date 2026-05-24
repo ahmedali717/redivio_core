@@ -63,6 +63,12 @@ class Material(TenantBaseModel):
     is_pos_item = models.BooleanField(default=False, help_text="هل هذا الصنف متاح في قائمة البيع للمطعم؟")
     is_combo = models.BooleanField(default=False, help_text="هل هذا الصنف عبارة عن عرض (Combo)؟")
     expiry_date = models.DateField(null=True, blank=True, help_text="تاريخ انتهاء الصلاحية لهذا الصنف (اختياري)")
+    allowed_terminals = models.ManyToManyField(
+        'restaurant_pos.POSTerminal',
+        blank=True,
+        related_name='materials',
+        help_text='نقاط البيع المسموح بظهور هذا الصنف فيها'
+    )
     
     # التزامن مع القابضة
     is_template = models.BooleanField(default=False) # هل هذا صنف مرجعي للقابضة؟
