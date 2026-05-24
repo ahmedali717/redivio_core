@@ -31,11 +31,22 @@ class POSOrderSerializer(serializers.ModelSerializer):
         return order
 
 class POSSessionSerializer(serializers.ModelSerializer):
-    terminal_type = serializers.CharField(source='terminal.terminal_type', read_only=True)
-    terminal_name = serializers.CharField(source='terminal.name', read_only=True)
+    terminal_type = serializers.SerializerMethodField()
+    terminal_name = serializers.SerializerMethodField()
+    
     class Meta:
         model = POSSession
         fields = '__all__'
+
+    def get_terminal_type(self, obj):
+        if obj.terminal:
+            return obj.terminal.terminal_type
+        return 'DIRECT'
+
+    def get_terminal_name(self, obj):
+        if obj.terminal:
+            return obj.terminal.name
+        return ''
 
 class POSCashTransactionSerializer(serializers.ModelSerializer):
     class Meta:

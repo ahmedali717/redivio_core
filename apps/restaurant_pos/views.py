@@ -77,11 +77,36 @@ class POSOrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def start_session(self, request):
-        opco_id = request.data.get('opco')
+        opco_id = request.data.get('opco') or request.session.get('active_opco_id')
+        if opco_id:
+            try:
+                opco_id = int(opco_id)
+            except (ValueError, TypeError):
+                opco_id = None
+
+        if not opco_id:
+            return Response({'error': 'اسم الشركة (OpCo) مطلوب لبدء الوردية.'}, status=status.HTTP_400_BAD_REQUEST)
+
         cashier_name = request.data.get('cashier_name', 'Admin')
         opening_balance = request.data.get('opening_balance', 0)
+        
         terminal_id = request.data.get('terminal')
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            try:
+                terminal_id = int(terminal_id)
+            except (ValueError, TypeError):
+                terminal_id = None
+        else:
+            terminal_id = None
+
         cashier_id = request.data.get('cashier_id')
+        if cashier_id and cashier_id not in ['null', 'undefined', '']:
+            try:
+                cashier_id = int(cashier_id)
+            except (ValueError, TypeError):
+                cashier_id = None
+        else:
+            cashier_id = None
         
         # Resolve cashier_id (CompanyUser ID) to the actual Django User object
         from apps.core.models import CompanyUser
@@ -94,7 +119,9 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         # Enforce terminal access permission
         if terminal_id:
             terminal = POSTerminal.objects.filter(id=terminal_id).first()
-            if terminal and terminal.allowed_users.exists():
+            if not terminal:
+                return Response({'error': 'نقطة البيع المحددة غير موجودة.'}, status=status.HTTP_400_BAD_REQUEST)
+            if terminal.allowed_users.exists():
                 user_to_check = cashier_user or request.user
                 if user_to_check and not user_to_check.is_superuser:
                     if not terminal.allowed_users.filter(id=user_to_check.id).exists():
