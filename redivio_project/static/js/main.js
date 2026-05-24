@@ -5162,6 +5162,9 @@ createApp({
                 const res = await fetch(`/api/company-users/?opco=${this.activeOpcoId}`);
                 if (res.ok) {
                     this.companyUsers = await res.json();
+                } else {
+                    const errorText = await res.text();
+                    console.error("Fetch Users Error Response:", errorText);
                 }
             } catch (e) { console.error("Fetch Users Error", e); }
         },
