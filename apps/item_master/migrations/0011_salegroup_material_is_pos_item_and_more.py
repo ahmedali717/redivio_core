@@ -6,7 +6,7 @@ def make_item_master_db_changes(apps, schema_editor):
     table_names = connection.introspection.table_names()
     
     # 1. Create SaleGroup table if not exists
-    SaleGroup = apps.get_model('item_master', 'SaleGroup')
+    from apps.item_master.models import SaleGroup
     if 'item_master_salegroup' not in table_names:
         schema_editor.create_model(SaleGroup)
         
@@ -27,7 +27,7 @@ def make_item_master_db_changes(apps, schema_editor):
             schema_editor.add_field(Material, Material._meta.get_field('sale_group'))
             
     # 3. Create ComboItem table if not exists
-    ComboItem = apps.get_model('item_master', 'ComboItem')
+    from apps.item_master.models import ComboItem
     if 'item_master_comboitem' not in table_names:
         schema_editor.create_model(ComboItem)
 
