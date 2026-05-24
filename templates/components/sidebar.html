@@ -196,7 +196,7 @@
         </template>
 
         <!-- Procurement Context -->
-        <template v-else-if="['procurement_module', 'vendors_list', 'vendor_ledger'].includes(view)">
+        <template v-else-if="['procurement_module', 'vendors_list', 'vendor_ledger'].includes(view) && vendorsListBackView !== 'restaurant_pos_module' && systemMode !== 'standalone'">
             <div
                 class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
                 <span v-show="!sidebarCollapsed"
@@ -232,7 +232,7 @@
 
 
         <!-- Restaurant POS Context -->
-        <template v-else-if="view === 'restaurant_pos_module'">
+        <template v-else-if="view === 'restaurant_pos_module' || (['vendors_list', 'vendor_ledger'].includes(view) && (vendorsListBackView === 'restaurant_pos_module' || systemMode === 'standalone'))">
             <div class="text-[10px] font-bold text-red-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
                 <span v-show="!sidebarCollapsed" v-text="isArabic ? 'إدارة نقاط البيع (POS)' : 'POS Management'"></span>
                 <hr v-show="sidebarCollapsed" class="border-red-800">
@@ -249,48 +249,48 @@
                 </div>
             </div>
 
-            <a href="#" v-if="canAccess('pos_dashboard')" @click.prevent="posTab = 'dashboard'; fetchPOSDashboard()"
-                :class="posTab === 'dashboard' ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+            <a href="#" v-if="canAccess('pos_dashboard')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'dashboard'; fetchPOSDashboard()"
+                :class="(view === 'restaurant_pos_module' && posTab === 'dashboard') ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
                 <i class="fas fa-chart-line w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? (posMode === 'direct' ? 'لوحة تحكم المبيعات' : 'لوحة تحكم المطعم') : (posMode === 'direct' ? 'POS Dashboard' : 'Restaurant Dashboard')"></span>
             </a>
 
-            <a href="#" v-if="posMode === 'restaurant' && canAccess('pos_cashier')" @click.prevent="posTab = 'floor_layout'; fetchFloorsAndTables()"
-                :class="posTab === 'floor_layout' ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+            <a href="#" v-if="posMode === 'restaurant' && canAccess('pos_cashier')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'floor_layout'; fetchFloorsAndTables()"
+                :class="(view === 'restaurant_pos_module' && posTab === 'floor_layout') ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
                 <i class="fas fa-cubes w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'تخطيط الصالة والترابيزات' : 'Floor & Table Layout'"></span>
             </a>
 
-            <a href="#" v-if="canAccess('pos_cashier')" @click.prevent="posTab = 'cashier'"
-                :class="posTab === 'cashier' ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+            <a href="#" v-if="canAccess('pos_cashier')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'cashier'"
+                :class="(view === 'restaurant_pos_module' && posTab === 'cashier') ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
                 <i class="fas fa-cash-register w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? (posMode === 'direct' ? 'كاشير مبيعات مباشرة' : 'كاشير المطعم') : (posMode === 'direct' ? 'Direct POS Terminal' : 'Restaurant POS Terminal')"></span>
             </a>
 
-            <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="posTab = 'direct_move'"
-                :class="posTab === 'direct_move' ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+            <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'direct_move'"
+                :class="(view === 'restaurant_pos_module' && posTab === 'direct_move') ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
                 <i class="fas fa-exchange-alt w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'حركات مخزنية مباشرة' : 'Direct Stock Move'"></span>
             </a>
 
-            <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="posTab = 'recipes'"
-                :class="posTab === 'recipes' ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+            <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'recipes'"
+                :class="(view === 'restaurant_pos_module' && posTab === 'recipes') ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
                 <i class="fas fa-layer-group w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'هندسة المكونات (BOM)' : 'Recipes & BOM'"></span>
             </a>
             
-            <a href="#" v-if="posMode === 'restaurant' && canAccess('pos_kitchen')" @click.prevent="posTab = 'kitchen'"
-                :class="posTab === 'kitchen' ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+            <a href="#" v-if="posMode === 'restaurant' && canAccess('pos_kitchen')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'kitchen'"
+                :class="(view === 'restaurant_pos_module' && posTab === 'kitchen') ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
                 <i class="fas fa-fire-burner w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
@@ -298,20 +298,28 @@
             </a>
             
             <!-- POS Settings Link -->
-            <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="posTab = 'settings'; fetchPOSTerminals()"
-                :class="posTab === 'settings' ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+            <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'settings'; fetchPOSTerminals()"
+                :class="(view === 'restaurant_pos_module' && posTab === 'settings') ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
                 <i class="fas fa-sliders w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'إعدادات نقاط البيع' : 'POS Settings'"></span>
             </a>
 
-            <a href="#" v-if="canAccess('pos_history')" @click.prevent="posTab = 'orders'; selectedSession = null; fetchSessionsHistory()"
-                :class="posTab === 'orders' ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+            <a href="#" v-if="canAccess('pos_history')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'orders'; selectedSession = null; fetchSessionsHistory()"
+                :class="(view === 'restaurant_pos_module' && posTab === 'orders') ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
                 <i class="fas fa-receipt w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'سجل الطلبات' : 'Orders History'"></span>
+            </a>
+
+            <!-- Active Vendors Register Item (only shown when viewing vendors from POS) -->
+            <a href="#" v-if="['vendors_list', 'vendor_ledger'].includes(view)"
+                class="bg-white text-emerald-500 shadow-md font-bold flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                <i class="fas fa-truck w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
+                    v-text="isArabic ? 'سجل الموردين' : 'Vendors Register'"></span>
             </a>
         </template>
 
