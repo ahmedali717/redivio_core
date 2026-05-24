@@ -3037,6 +3037,16 @@ createApp({
             }
         },
 
+        viewContactLedger() {
+            if (this.forms.stock_entry.receipt_type === 'PURCHASE' && this.forms.stock_entry.contact_id) {
+                const vendor = this.vendors.find(v => v.id === this.forms.stock_entry.contact_id);
+                if (vendor) {
+                    this.showModal = false;
+                    this.fetchVendorLedger(vendor);
+                }
+            }
+        },
+
         calculatePOTotal(po) {
             if (!po.lines || po.lines.length === 0) return '0.00';
             const total = po.lines.reduce((sum, line) => sum + (line.quantity * line.unit_price), 0);

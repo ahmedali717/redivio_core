@@ -115,6 +115,12 @@
                                 <option value="" v-text="isArabic ? '-- اختر من القائمة --' : '-- Select from list --'"></option>
                                 <option v-for="c in (forms.stock_entry.receipt_type === 'PURCHASE' ? vendors : customers)" :key="c.id" :value="c.id" v-text="c.name"></option>
                             </select>
+                            <div v-if="forms.stock_entry.receipt_type === 'PURCHASE' && forms.stock_entry.contact_id" class="mt-1 text-left px-1">
+                                <button type="button" @click="viewContactLedger" class="text-[10px] font-black text-indigo-600 hover:text-indigo-800 hover:underline">
+                                    <i class="fas fa-file-invoice-dollar ml-1"></i>
+                                    <span v-text="isArabic ? 'عرض كشف الحساب لهذا المورد' : 'View Account Statement'"></span>
+                                </button>
+                            </div>
                             <div v-if="!forms.stock_entry.contact_id" class="mt-2">
                                 <input type="text" v-model="forms.stock_entry.manual_contact_name" class="w-full bg-white border border-slate-200 focus:border-indigo-500 p-3 rounded-xl font-bold text-slate-700 outline-none transition-all shadow-sm" :placeholder="isArabic ? 'أو اكتب الاسم هنا...' : 'Or type name here...'">
                             </div>

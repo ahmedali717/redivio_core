@@ -24,16 +24,27 @@ from apps.wms.models import StorageBin
 class OpcoAwareMixin:
     """
     يقوم تلقائياً بربط السجل بالشركة (OpCo) بناءً على الجلسة الحالية
-    أو البيانات المرسلة.
+    أو البيانات المرسلة، وتصفية السجلات للشركة النشطة فقط.
     """
-    def perform_create(self, serializer):
-        opco_id = self.request.data.get('opco')
-        active_opco_id = self.request.session.get('active_opco_id')
-        
+    def _get_opco_id(self):
+        return (self.request.query_params.get('opco') or 
+                self.request.data.get('opco') or 
+                self.request.session.get('active_opco_id'))
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        opco_id = self._get_opco_id()
         if opco_id:
-            serializer.save(opco_id=opco_id)
-        elif active_opco_id:
-            serializer.save(opco_id=active_opco_id)
+            try:
+                queryset = queryset.filter(opco_id=int(opco_id))
+            except (ValueError, TypeError):
+                pass
+        return queryset
+
+    def perform_create(self, serializer):
+        opco_id = self._get_opco_id()
+        if opco_id:
+            serializer.save(opco_id=int(opco_id))
         else:
             serializer.save()
 
