@@ -1,7 +1,7 @@
 <div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[500px] p-6 animate-in fade-in">
     <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
         <h2 class="text-xl font-black text-slate-800"><i class="fas fa-truck text-emerald-500 mr-2"></i> قائمة الموردين</h2>
-        <button @click="view = 'procurement_module'" class="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-slate-700">عودة للمشتريات</button>
+        <button @click="view = (systemMode === 'standalone' ? 'restaurant_pos_module' : 'procurement_module')" class="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-slate-700" v-text="systemMode === 'standalone' ? (isArabic ? 'عودة لنقاط البيع' : 'Back to POS') : (isArabic ? 'عودة للمشتريات' : 'Back to Procurement')"></button>
     </div>
     <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden">
         <table class="w-full text-right" dir="rtl">
