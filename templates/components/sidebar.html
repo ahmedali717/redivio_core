@@ -238,19 +238,14 @@
                 <hr v-show="sidebarCollapsed" class="border-red-800">
             </div>
 
-            <!-- Mode Selector inside the sidebar -->
+            <!-- Active Terminal Status Badge -->
             <div v-show="!sidebarCollapsed" class="px-3 mb-4 animate-in fade-in duration-300">
-                <div class="flex bg-white/10 p-1 rounded-xl border border-white/10 relative">
-                    <button @click="setPOSMode('direct')" 
-                            :class="posMode === 'direct' ? 'bg-white text-red-600 font-bold shadow-md' : 'text-white/80 hover:text-white'"
-                            class="flex-1 py-1.5 text-center rounded-lg text-[10px] font-black transition-all cursor-pointer">
-                        [[ isArabic ? 'مبيعات مباشرة' : 'Direct Sales' ]]
-                    </button>
-                    <button @click="setPOSMode('restaurant')" 
-                            :class="posMode === 'restaurant' ? 'bg-white text-red-600 font-bold shadow-md' : 'text-white/80 hover:text-white'"
-                            class="flex-1 py-1.5 text-center rounded-lg text-[10px] font-black transition-all cursor-pointer">
-                        [[ isArabic ? 'مطعم' : 'Restaurant' ]]
-                    </button>
+                <div class="bg-white/10 px-4 py-3 rounded-2xl border border-white/10 text-white/95">
+                    <div class="flex items-center justify-between text-[10px] font-bold text-white/50 uppercase tracking-wider mb-1">
+                        <span>[[ isArabic ? 'الجهاز النشط' : 'Active Register' ]]</span>
+                        <span class="bg-white/20 text-white px-2 py-0.5 rounded-md font-mono text-[9px] uppercase">[[ activePOSSession ? activePOSSession.terminal_type : '---' ]]</span>
+                    </div>
+                    <p class="text-sm font-black truncate">[[ activePOSSession ? activePOSSession.terminal_name : (isArabic ? 'لم يتم فتح وردية' : 'No active shift') ]]</p>
                 </div>
             </div>
 
@@ -302,6 +297,15 @@
                     v-text="isArabic ? 'شاشة المطبخ KDS' : 'Kitchen Display'"></span>
             </a>
             
+            <!-- POS Settings Link -->
+            <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="posTab = 'settings'; fetchPOSTerminals()"
+                :class="posTab === 'settings' ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                <i class="fas fa-sliders w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
+                    v-text="isArabic ? 'إعدادات نقاط البيع' : 'POS Settings'"></span>
+            </a>
+
             <a href="#" v-if="canAccess('pos_history')" @click.prevent="posTab = 'orders'; selectedSession = null; fetchSessionsHistory()"
                 :class="posTab === 'orders' ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">

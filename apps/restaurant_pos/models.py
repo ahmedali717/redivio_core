@@ -82,11 +82,34 @@ class Modifier(models.Model):
 # 2. محرك الطلبات ونقاط البيع (POS Orders Engine)
 # =========================================================
 
+class POSTerminal(models.Model):
+    """
+    جهاز نقطة البيع - POS Terminal / Register
+    """
+    opco = models.ForeignKey(OpCo, on_delete=models.CASCADE, related_name='pos_terminals')
+    name = models.CharField(max_length=100, help_text="اسم جهاز نقطة البيع")
+    code = models.CharField(max_length=20, help_text="كود نقطة البيع")
+    
+    TERMINAL_TYPES = [
+        ('DIRECT', 'Direct Sales (مبيعات مباشرة)'),
+        ('RESTAURANT', 'Restaurant (مطعم)')
+    ]
+    terminal_type = models.CharField(max_length=20, choices=TERMINAL_TYPES, default='DIRECT', help_text="طبيعة التشغيل")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('opco', 'code')
+
+    def __str__(self):
+        return f"{self.name} ({self.code}) - {self.get_terminal_type_display()}"
+
+
 class POSSession(models.Model):
     """
     وردية الكاشير -Shift Management
     """
     opco = models.ForeignKey(OpCo, on_delete=models.CASCADE)
+    terminal = models.ForeignKey(POSTerminal, on_delete=models.CASCADE, related_name='sessions', null=True, blank=True)
     session_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     cashier_name = models.CharField(max_length=100)
     

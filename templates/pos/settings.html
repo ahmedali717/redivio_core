@@ -1,0 +1,160 @@
+<div class="h-full flex flex-col bg-slate-50 p-6 overflow-y-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h2 class="text-2xl font-black text-slate-800 flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center shadow-md">
+                    <i class="fas fa-sliders"></i>
+                </div>
+                [[ isArabic ? 'إعدادات نقاط البيع (POS)' : 'POS Terminals Settings' ]]
+            </h2>
+            <p class="text-slate-500 text-sm mt-1">[[ isArabic ? 'إدارة أجهزة نقاط البيع وتحديد طبيعة عمل كل كاشير' : 'Manage POS register devices and configure operating natures' ]]</p>
+        </div>
+        <button @click="openTerminalModal()" class="bg-red-600 hover:bg-red-500 text-white px-5 py-3 rounded-xl font-bold shadow-lg shadow-red-200 transition-all flex items-center gap-2 cursor-pointer active:scale-95">
+            <i class="fas fa-plus"></i>
+            [[ isArabic ? 'إضافة نقطة بيع جديدة' : 'Add New POS Terminal' ]]
+        </button>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <!-- List of Terminals -->
+        <div class="xl:col-span-2 space-y-4">
+            <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <h3 class="font-bold text-slate-800 text-sm">[[ isArabic ? 'الأجهزة النشطة' : 'Active Terminals' ]]</h3>
+                    <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold">[[ posTerminals.length ]] [[ isArabic ? 'أجهزة' : 'Terminals' ]]</span>
+                </div>
+                
+                <div class="divide-y divide-slate-100">
+                    <div v-for="term in posTerminals" :key="term.id" class="p-6 hover:bg-slate-50/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-md border"
+                                 :class="term.terminal_type === 'DIRECT' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-rose-50 border-rose-100 text-rose-600'">
+                                <i :class="term.terminal_type === 'DIRECT' ? 'fas fa-cash-register' : 'fas fa-utensils'"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-black text-slate-800 text-base">[[ term.name ]]</span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md border tracking-wider font-mono uppercase bg-slate-100 text-slate-500">[[ term.code ]]</span>
+                                </div>
+                                <div class="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-regular fa-circle-dot" :class="term.is_active ? 'text-emerald-500' : 'text-slate-300'"></i>
+                                    [[ term.terminal_type === 'DIRECT' ? (isArabic ? 'مبيعات مباشرة' : 'Direct Sales') : (isArabic ? 'صالة ومطعم' : 'Restaurant Mode') ]]
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <!-- Edit Button -->
+                            <button @click="openTerminalModal(term)" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+                                <i class="fas fa-edit text-slate-400"></i>
+                                [[ isArabic ? 'تعديل' : 'Edit' ]]
+                            </button>
+                            <!-- Deactivate Toggle -->
+                            <button @click="toggleTerminalActive(term)" 
+                                    :class="term.is_active ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-800 hover:text-white'"
+                                    class="px-4 py-2 border rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
+                                [[ term.is_active ? (isArabic ? 'نشط' : 'Active') : (isArabic ? 'معطل' : 'Inactive') ]]
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-if="!posTerminals.length" class="p-12 flex flex-col items-center justify-center text-slate-400 text-center">
+                        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300 border border-dashed border-slate-200">
+                            <i class="fas fa-cash-register text-xl"></i>
+                        </div>
+                        <p class="font-bold text-sm">[[ isArabic ? 'لم يتم إضافة أجهزة بعد' : 'No POS registers defined yet' ]]</p>
+                        <p class="text-xs text-slate-400 mt-1">[[ isArabic ? 'اضغط على زر الإضافة لتعريف أول جهاز كاشير' : 'Click the button above to define your first terminal' ]]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Info Panel -->
+        <div class="space-y-6">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden">
+                <i class="fas fa-circle-info absolute -bottom-6 -right-6 text-9xl opacity-5 pointer-events-none"></i>
+                <h4 class="font-black text-lg mb-4 flex items-center gap-2">
+                    <i class="fas fa-lightbulb text-amber-300"></i>
+                    [[ isArabic ? 'حول طبيعة التشغيل' : 'Understanding Modes' ]]
+                </h4>
+                <div class="space-y-4 text-xs text-slate-300 leading-relaxed font-bold">
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                        <p class="font-black text-white text-sm mb-1">
+                            <i class="fas fa-cash-register text-indigo-400 mr-1.5"></i>
+                            [[ isArabic ? 'مبيعات مباشرة (Direct Sales)' : 'Direct Sales Mode' ]]
+                        </p>
+                        <p>[[ isArabic ? 'مخصص للبيع السريع (مثل السوبر ماركت أو محلات التجزئة). يتم تأكيد الطلبات ودفعها مباشرة دون الحاجة لطاولات أو إرسال للتحضير بالمطبخ.' : 'Best for fast counter sales. Orders are paid immediately. Floor plans, tables, and kitchen displays are fully disabled.' ]]</p>
+                    </div>
+
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                        <p class="font-black text-white text-sm mb-1">
+                            <i class="fas fa-utensils text-rose-400 mr-1.5"></i>
+                            [[ isArabic ? 'مطعم وصالة (Restaurant Mode)' : 'Restaurant Mode' ]]
+                        </p>
+                        <p>[[ isArabic ? 'مخصص للمطاعم والكافيهات. يدعم إدارة صالات الطعام والترابيزات والطلبات المفتوحة (شيك) والتحضير عبر شاشة المطبخ KDS.' : 'Best for table-service dining. Supports floors, tables, open draft tickets, guest counts, and Kitchen Display System (KDS) routing.' ]]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terminal Create/Edit Modal Overlay -->
+    <div v-if="showTerminalFormModal" class="fixed inset-0 z-[12000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div class="bg-white rounded-[2rem] p-8 w-full max-w-md mx-4 shadow-2xl border border-slate-100 transform animate-in zoom-in-95 duration-200">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-50">
+                <h3 class="text-xl font-black text-slate-800">
+                    [[ terminalForm.id ? (isArabic ? 'تعديل نقطة البيع' : 'Edit POS Terminal') : (isArabic ? 'إضافة نقطة بيع' : 'Create POS Terminal') ]]
+                </h3>
+                <button @close="showTerminalFormModal = false" @click="showTerminalFormModal = false" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form @submit.prevent="savePOSTerminal" class="space-y-6">
+                <!-- Code -->
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase px-1">[[ isArabic ? 'كود الجهاز' : 'Terminal Code' ]]</label>
+                    <input type="text" v-model="terminalForm.code" required :disabled="terminalForm.id" placeholder="e.g. POS-02" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 focus:ring-2 focus:ring-red-500 outline-none transition-all font-semibold text-slate-700">
+                </div>
+
+                <!-- Name -->
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase px-1">[[ isArabic ? 'اسم الجهاز' : 'Terminal Name' ]]</label>
+                    <input type="text" v-model="terminalForm.name" required placeholder="e.g. Counter 1" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 focus:ring-2 focus:ring-red-500 outline-none transition-all font-semibold text-slate-700">
+                </div>
+
+                <!-- Type -->
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase px-1">[[ isArabic ? 'طبيعة التشغيل' : 'Operating Mode' ]]</label>
+                    <select v-model="terminalForm.terminal_type" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 focus:ring-2 focus:ring-red-500 outline-none transition-all font-semibold text-slate-700">
+                        <option value="DIRECT">[[ isArabic ? 'مبيعات مباشرة (Direct Sales)' : 'Direct Sales' ]]</option>
+                        <option value="RESTAURANT">[[ isArabic ? 'مطعم وصالة (Restaurant)' : 'Restaurant' ]]</option>
+                    </select>
+                </div>
+
+                <!-- Active -->
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200/50">
+                    <span class="text-sm font-bold text-slate-700">[[ isArabic ? 'الحالة نشطة؟' : 'Is Terminal Active?' ]]</span>
+                    <button type="button" @click="terminalForm.is_active = !terminalForm.is_active" 
+                            class="w-10 h-5 bg-slate-200 rounded-full relative transition-colors" 
+                            :class="{'bg-emerald-500': terminalForm.is_active}">
+                        <div class="absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-transform" :class="{'translate-x-5': terminalForm.is_active}"></div>
+                    </button>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-3 pt-4 border-t border-slate-50">
+                    <button type="button" @click="showTerminalFormModal = false" class="flex-1 px-6 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all">
+                        [[ isArabic ? 'إلغاء' : 'Cancel' ]]
+                    </button>
+                    <button type="submit" :disabled="loading" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-red-200 transition-all flex items-center justify-center gap-2">
+                        <i v-if="loading" class="fas fa-spinner animate-spin"></i>
+                        [[ isArabic ? 'حفظ' : 'Save' ]]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

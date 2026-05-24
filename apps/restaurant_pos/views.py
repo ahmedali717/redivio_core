@@ -1,8 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import POSOrder, POSSession, Recipe, RestaurantFloor, RestaurantTable
-from .serializers import POSOrderSerializer, RestaurantFloorSerializer, RestaurantTableSerializer
+from .models import POSOrder, POSSession, Recipe, RestaurantFloor, RestaurantTable, POSTerminal
+from .serializers import POSOrderSerializer, RestaurantFloorSerializer, RestaurantTableSerializer, POSTerminalSerializer
 from django.utils import timezone
 
 class POSOrderViewSet(viewsets.ModelViewSet):
@@ -40,7 +40,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         except (ValueError, TypeError):
             return Response(None, status=200)
             
-        session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
+        terminal_id = request.query_params.get('terminal')
+        session_qs = POSSession.objects.filter(opco_id=opco_id, is_closed=False)
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            session_qs = session_qs.filter(terminal_id=terminal_id)
+        session = session_qs.first()
         if session:
             from .serializers import POSSessionSerializer
             return Response(POSSessionSerializer(session).data)
@@ -76,14 +80,19 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         opco_id = request.data.get('opco')
         cashier_name = request.data.get('cashier_name', 'Admin')
         opening_balance = request.data.get('opening_balance', 0)
+        terminal_id = request.data.get('terminal')
         
-        # Close previous sessions for this OpCo
-        POSSession.objects.filter(opco_id=opco_id, is_closed=False).update(is_closed=True, end_time=timezone.now())
+        # Close previous sessions for this terminal / OpCo
+        if terminal_id:
+            POSSession.objects.filter(opco_id=opco_id, terminal_id=terminal_id, is_closed=False).update(is_closed=True, end_time=timezone.now())
+        else:
+            POSSession.objects.filter(opco_id=opco_id, is_closed=False).update(is_closed=True, end_time=timezone.now())
         
         session = POSSession.objects.create(
             opco_id=opco_id,
             cashier_name=cashier_name,
             opening_balance=opening_balance,
+            terminal_id=terminal_id,
             is_closed=False
         )
         from .serializers import POSSessionSerializer
@@ -699,3 +708,32 @@ class RestaurantTableViewSet(viewsets.ModelViewSet):
         table.current_guests = 0
         table.save()
         return Response({'success': True})
+
+
+class POSTerminalViewSet(viewsets.ModelViewSet):
+    queryset = POSTerminal.objects.all()
+    serializer_class = POSTerminalSerializer
+
+    def get_queryset(self):
+        opco_id = self.request.query_params.get('opco')
+        if not opco_id or opco_id in ['null', 'undefined']:
+            return POSTerminal.objects.none()
+        try:
+            opco_id = int(opco_id)
+        except (ValueError, TypeError):
+            return POSTerminal.objects.none()
+            
+        queryset = POSTerminal.objects.filter(opco_id=opco_id)
+        if not queryset.exists():
+            # Auto-create a default terminal
+            from apps.core.models import OpCo
+            opco = OpCo.objects.filter(id=opco_id).first()
+            if opco:
+                POSTerminal.objects.create(
+                    opco=opco,
+                    name="Main Terminal (نقطة البيع الرئيسية)",
+                    code="POS-01",
+                    terminal_type="RESTAURANT"
+                )
+                queryset = POSTerminal.objects.filter(opco_id=opco_id)
+        return queryset.order_by('code')

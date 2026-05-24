@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from .models import POSOrder, POSOrderLine, POSSession, Recipe, RecipeItem, POSCashTransaction, RestaurantFloor, RestaurantTable
+from .models import POSTerminal, POSOrder, POSOrderLine, POSSession, Recipe, RecipeItem, POSCashTransaction, RestaurantFloor, RestaurantTable
+
+class POSTerminalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = POSTerminal
+        fields = '__all__'
 
 class POSOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.CharField(source='material.name', read_only=True)
@@ -26,6 +31,8 @@ class POSOrderSerializer(serializers.ModelSerializer):
         return order
 
 class POSSessionSerializer(serializers.ModelSerializer):
+    terminal_type = serializers.CharField(source='terminal.terminal_type', read_only=True)
+    terminal_name = serializers.CharField(source='terminal.name', read_only=True)
     class Meta:
         model = POSSession
         fields = '__all__'

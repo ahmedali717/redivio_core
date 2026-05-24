@@ -45,6 +45,11 @@ createApp({
             posReportTab: 'detailed_sales',
             posMode: localStorage.getItem('pos_mode') || 'restaurant',
             activePOSSession: null,
+            posTerminals: [],
+            selectedTerminalId: localStorage.getItem('selected_terminal_id') || '',
+            posOpeningBalance: 0.00,
+            showTerminalFormModal: false,
+            terminalForm: { id: null, code: '', name: '', terminal_type: 'DIRECT', is_active: true },
             posCart: [],
             posSearch: '',
             posCategory: 'all',
@@ -641,14 +646,18 @@ createApp({
         activeOpcoId(newId) {
             if (newId) {
                 this.syncGlobalConfig(newId);
-                if (this.view === 'restaurant_pos_module') this.checkActivePOSSession();
+                if (this.view === 'restaurant_pos_module') {
+                    this.fetchPOSTerminals();
+                }
             }
         },
         view(newView) {
             if (newView === 'users') this.fetchCompanyUsers();
             if (newView === 'org_builder') this.fetchAll();
             if (newView === 'global_config' && this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
-            if (newView === 'restaurant_pos_module') this.checkActivePOSSession();
+            if (newView === 'restaurant_pos_module') {
+                this.fetchPOSTerminals();
+            }
         }
     },
 
@@ -668,7 +677,11 @@ createApp({
         
         // Initial KPI calculation
         this.refreshKpis();
-        this.checkActivePOSSession();
+        if (this.activeOpcoId) {
+            this.fetchPOSTerminals();
+        } else {
+            this.checkActivePOSSession();
+        }
         
         // 🚀 KDS Timer & Polling
         setInterval(() => { this.kdsCurrentTime = new Date(); }, 1000);
@@ -2428,11 +2441,16 @@ createApp({
 
         async checkActivePOSSession() {
             try {
-                const res = await fetch('/api/pos/orders/active_session/?opco=' + this.activeOpcoId);
+                let url = '/api/pos/orders/active_session/?opco=' + this.activeOpcoId;
+                if (this.selectedTerminalId) {
+                    url += '&terminal=' + this.selectedTerminalId;
+                }
+                const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
                     if (data && data.id) {
                         this.activePOSSession = data;
+                        this.posMode = data.terminal_type === 'DIRECT' ? 'direct' : 'restaurant';
                     } else {
                         this.activePOSSession = null;
                     }
@@ -2441,6 +2459,10 @@ createApp({
         },
 
         async startPOSSession() {
+            if (!this.selectedTerminalId) {
+                this.showToast(this.isArabic ? "برجاء اختيار جهاز نقطة البيع" : "Please select a POS Terminal", "warning");
+                return;
+            }
             if (!this.posActiveCashierId) {
                 this.showToast(this.isArabic ? "برجاء اختيار الكاشير" : "Please select a cashier", "warning");
                 return;
@@ -2486,26 +2508,7 @@ createApp({
             }
             // --- End Password Verification ---
 
-            let lastBalance = 0;
-            try {
-                const res = await fetch(`/api/pos/orders/last_session_balance/?opco=${this.activeOpcoId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    lastBalance = Number(data.last_balance || 0);
-                }
-            } catch (e) { console.error("Balance fetch error", e); }
-
-            const { value: openingBalance } = await Swal.fire({
-                title: this.isArabic ? 'فتح وردية جديدة' : 'Open New Shift',
-                input: 'number',
-                inputLabel: this.isArabic ? 'رصيد بداية الدرج (Cash Start)' : 'Opening Cash Balance',
-                inputValue: lastBalance,
-                showCancelButton: true,
-                confirmButtonText: this.isArabic ? 'بدء الوردية' : 'Start Shift',
-                footer: `<div style="text-align:center">${this.isArabic ? 'رصيد إغلاق آخر وردية: ' : 'Last shift closing balance: '} <b>${lastBalance}</b></div>`
-            });
-
-            if (openingBalance === undefined || openingBalance === null) return;
+            const openingBalance = parseFloat(this.posOpeningBalance) || 0;
 
             try {
                 this.loading = true;
@@ -2518,16 +2521,144 @@ createApp({
                     body: JSON.stringify({
                         opco: this.activeOpcoId,
                         cashier_name: this.companyUsers.find(u => u.id === this.posActiveCashierId)?.user_details.email || this.user.email || 'Admin',
-                        opening_balance: openingBalance
+                        opening_balance: openingBalance,
+                        terminal: this.selectedTerminalId
                     })
                 });
                 
                 if (res.ok) {
-                    this.activePOSSession = await res.json();
+                    const session = await res.json();
+                    this.activePOSSession = session;
+                    this.posMode = session.terminal_type === 'DIRECT' ? 'direct' : 'restaurant';
                     this.showToast(this.isArabic ? "تم فتح الوردية بنجاح" : "Session started successfully", "success");
                 }
             } catch (e) {
                 this.showToast("Error starting session", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchPOSTerminals() {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/pos/terminals/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.posTerminals = await res.json();
+                    
+                    if (!this.selectedTerminalId && this.posTerminals.length > 0) {
+                        this.selectedTerminalId = this.posTerminals[0].id;
+                        localStorage.setItem('selected_terminal_id', this.selectedTerminalId);
+                    }
+                    
+                    if (this.selectedTerminalId) {
+                        this.onTerminalSelectionChange();
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching terminals:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async onTerminalSelectionChange() {
+            if (!this.selectedTerminalId) return;
+            localStorage.setItem('selected_terminal_id', this.selectedTerminalId);
+            
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/pos/orders/active_session/?opco=${this.activeOpcoId}&terminal=${this.selectedTerminalId}`);
+                if (res.ok) {
+                    const session = await res.json();
+                    if (session && session.id) {
+                        this.activePOSSession = session;
+                        this.posMode = session.terminal_type === 'DIRECT' ? 'direct' : 'restaurant';
+                    } else {
+                        this.activePOSSession = null;
+                        const term = this.posTerminals.find(t => t.id === parseInt(this.selectedTerminalId));
+                        if (term) {
+                            this.posMode = term.terminal_type === 'DIRECT' ? 'direct' : 'restaurant';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Error checking terminal session:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        openTerminalModal(term = null) {
+            if (term) {
+                this.terminalForm = {
+                    id: term.id,
+                    code: term.code,
+                    name: term.name,
+                    terminal_type: term.terminal_type,
+                    is_active: term.is_active
+                };
+            } else {
+                this.terminalForm = {
+                    id: null,
+                    code: 'POS-' + String(this.posTerminals.length + 1).padStart(2, '0'),
+                    name: '',
+                    terminal_type: 'DIRECT',
+                    is_active: true
+                };
+            }
+            this.showTerminalFormModal = true;
+        },
+
+        async savePOSTerminal() {
+            if (!this.terminalForm.code || !this.terminalForm.name) {
+                this.showToast(this.isArabic ? "الكود والاسم مطلوبان" : "Code and Name are required", "error");
+                return;
+            }
+            try {
+                this.loading = true;
+                const method = this.terminalForm.id ? 'PUT' : 'POST';
+                const url = this.terminalForm.id ? `/api/pos/terminals/${this.terminalForm.id}/` : '/api/pos/terminals/';
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        code: this.terminalForm.code,
+                        name: this.terminalForm.name,
+                        terminal_type: this.terminalForm.terminal_type,
+                        is_active: this.terminalForm.is_active
+                    })
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم حفظ جهاز نقطة البيع" : "POS terminal saved successfully", "success");
+                    this.showTerminalFormModal = false;
+                    await this.fetchPOSTerminals();
+                } else {
+                    const err = await res.json();
+                    this.showToast(JSON.stringify(err), "error");
+                }
+            } catch (e) {
+                console.error("Error saving terminal:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async toggleTerminalActive(term) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/pos/terminals/${term.id}/`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({ is_active: !term.is_active })
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تحديث حالة جهاز نقطة البيع" : "Terminal status updated", "success");
+                    await this.fetchPOSTerminals();
+                }
+            } catch (e) {
+                console.error("Error toggling terminal:", e);
             } finally {
                 this.loading = false;
             }
