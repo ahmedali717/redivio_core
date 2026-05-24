@@ -96,6 +96,12 @@ class POSTerminal(models.Model):
     ]
     terminal_type = models.CharField(max_length=20, choices=TERMINAL_TYPES, default='DIRECT', help_text="طبيعة التشغيل")
     is_active = models.BooleanField(default=True)
+    allowed_users = models.ManyToManyField(
+        'auth.User',
+        blank=True,
+        related_name='allowed_pos_terminals',
+        help_text='المستخدمون المسموح لهم بفتح نقطة البيع هذه'
+    )
 
     class Meta:
         unique_together = ('opco', 'code')

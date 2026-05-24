@@ -205,6 +205,7 @@ class CheckAuthAPI(APIView):
 
         return Response({
             "authenticated": True,
+            "user_id": request.user.id,
             "user": request.user.username,
             "company_id": user_opco.id if user_opco else None,
             "company_name": user_opco.name if user_opco else "REDIVIO",

@@ -81,6 +81,26 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         cashier_name = request.data.get('cashier_name', 'Admin')
         opening_balance = request.data.get('opening_balance', 0)
         terminal_id = request.data.get('terminal')
+        cashier_id = request.data.get('cashier_id')
+        
+        # Resolve cashier_id (CompanyUser ID) to the actual Django User object
+        from apps.core.models import CompanyUser
+        cashier_user = None
+        if cashier_id:
+            cu = CompanyUser.objects.filter(id=cashier_id).first()
+            if cu:
+                cashier_user = cu.user
+                
+        # Enforce terminal access permission
+        if terminal_id:
+            terminal = POSTerminal.objects.filter(id=terminal_id).first()
+            if terminal and terminal.allowed_users.exists():
+                user_to_check = cashier_user or request.user
+                if user_to_check and not user_to_check.is_superuser:
+                    if not terminal.allowed_users.filter(id=user_to_check.id).exists():
+                        return Response({
+                            'error': 'ليس لديك صلاحية لفتح نقطة البيع هذه.'
+                        }, status=status.HTTP_403_FORBIDDEN)
         
         # Close previous sessions for this terminal / OpCo
         if terminal_id:

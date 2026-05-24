@@ -49,7 +49,7 @@ createApp({
             selectedTerminalId: localStorage.getItem('selected_terminal_id') || '',
             posOpeningBalance: 0.00,
             showTerminalFormModal: false,
-            terminalForm: { id: null, code: '', name: '', terminal_type: 'DIRECT', is_active: true },
+            terminalForm: { id: null, code: '', name: '', terminal_type: 'DIRECT', is_active: true, allowed_users: [] },
             posCart: [],
             posSearch: '',
             posCategory: 'all',
@@ -2521,6 +2521,7 @@ createApp({
                     body: JSON.stringify({
                         opco: this.activeOpcoId,
                         cashier_name: this.companyUsers.find(u => u.id === this.posActiveCashierId)?.user_details.email || this.user.email || 'Admin',
+                        cashier_id: this.posActiveCashierId,
                         opening_balance: openingBalance,
                         terminal: this.selectedTerminalId
                     })
@@ -2589,14 +2590,26 @@ createApp({
             }
         },
 
+        getAllowedCashiers() {
+            const cashiers = this.companyUsers.filter(u => ['cashier', 'administrator', 'admin', 'manager'].includes(u.role.toLowerCase()));
+            if (!this.selectedTerminalId) return cashiers;
+            const term = this.posTerminals.find(t => t.id === parseInt(this.selectedTerminalId));
+            if (!term || !term.allowed_users || term.allowed_users.length === 0) {
+                return cashiers;
+            }
+            return cashiers.filter(c => term.allowed_users.includes(c.user));
+        },
+
         openTerminalModal(term = null) {
+            this.fetchCompanyUsers();
             if (term) {
                 this.terminalForm = {
                     id: term.id,
                     code: term.code,
                     name: term.name,
                     terminal_type: term.terminal_type,
-                    is_active: term.is_active
+                    is_active: term.is_active,
+                    allowed_users: term.allowed_users ? [...term.allowed_users] : []
                 };
             } else {
                 this.terminalForm = {
@@ -2604,7 +2617,8 @@ createApp({
                     code: 'POS-' + String(this.posTerminals.length + 1).padStart(2, '0'),
                     name: '',
                     terminal_type: 'DIRECT',
-                    is_active: true
+                    is_active: true,
+                    allowed_users: []
                 };
             }
             this.showTerminalFormModal = true;
@@ -2627,7 +2641,8 @@ createApp({
                         code: this.terminalForm.code,
                         name: this.terminalForm.name,
                         terminal_type: this.terminalForm.terminal_type,
-                        is_active: this.terminalForm.is_active
+                        is_active: this.terminalForm.is_active,
+                        allowed_users: this.terminalForm.allowed_users || []
                     })
                 });
                 if (res.ok) {
@@ -4520,6 +4535,7 @@ createApp({
                 const data = await res.json();
                 if (data.authenticated) {
                     this.user = {
+                        id: data.user_id,
                         name: data.user,
                         is_superuser: data.is_superuser,
                         role: data.role
