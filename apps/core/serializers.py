@@ -16,17 +16,6 @@ class OpCoSerializer(serializers.ModelSerializer):
             'system_mode', 'purchased_modules'
         ]
 
-    def to_internal_value(self, data):
-        import json
-        if 'purchased_modules' in data:
-            val = data['purchased_modules']
-            if isinstance(val, str):
-                try:
-                    data = data.copy()
-                    data['purchased_modules'] = json.loads(val)
-                except ValueError:
-                    pass
-        return super().to_internal_value(data)
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
