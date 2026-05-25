@@ -683,6 +683,16 @@ createApp({
         },
         manualMoveGrandTotal() {
             return this.manualMoveTotalBeforeTax + this.manualMoveTaxAmount;
+        },
+        filteredReviewItems() {
+            if (!this.openingCountReviewItems) return [];
+            const query = (this.openingCountSearchQuery || '').toLowerCase().trim();
+            if (!query) return this.openingCountReviewItems;
+            return this.openingCountReviewItems.filter(item => {
+                return (item.sku || '').toLowerCase().includes(query) || 
+                       (item.material_name || '').toLowerCase().includes(query) ||
+                       (item.bin_code || '').toLowerCase().includes(query);
+            });
         }
     },
 
@@ -768,19 +778,6 @@ createApp({
                 }, 500);
             }
         }, 400);
-    },
-
-    computed: {
-        filteredReviewItems() {
-            if (!this.openingCountReviewItems) return [];
-            const query = (this.openingCountSearchQuery || '').toLowerCase().trim();
-            if (!query) return this.openingCountReviewItems;
-            return this.openingCountReviewItems.filter(item => {
-                return (item.sku || '').toLowerCase().includes(query) || 
-                       (item.material_name || '').toLowerCase().includes(query) ||
-                       (item.bin_code || '').toLowerCase().includes(query);
-            });
-        }
     },
 
     methods: {
