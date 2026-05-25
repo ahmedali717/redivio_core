@@ -812,9 +812,12 @@ class OpeningInventoryAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def _get_opco_id(self, request):
-        return (request.query_params.get('opco') or 
-                request.data.get('opco') or 
-                request.session.get('active_opco_id'))
+        val = (request.query_params.get('opco') or 
+               request.data.get('opco') or 
+               request.session.get('active_opco_id'))
+        if val == 'null' or val == 'undefined':
+            return None
+        return val
 
     def check_manager_permissions(self, request, opco_id):
         if request.user.is_superuser:
@@ -850,7 +853,7 @@ class OpeningInventoryAPIView(APIView):
         elif action_param == 'print_sheet':
             from apps.item_master.models import Material
             from django.utils import timezone
-            materials = Material.objects.filter(opco=opco, recipe__isnull=True).order_by('name')
+            materials = Material.all_objects.filter(opco=opco, recipe__isnull=True).order_by('name')
             
             items_data = []
             for m in materials:
@@ -961,7 +964,7 @@ class OpeningInventoryAPIView(APIView):
                     except:
                         counted_qty = 0.0
 
-                    material = Material.objects.filter(sku=sku_val, opco=opco).first()
+                    material = Material.all_objects.filter(sku=sku_val, opco=opco).first()
                     if not material:
                         errors.append(f"السطر {idx + 2}: الصنف ذو الرمز ({sku_val}) غير موجود بالنظام.")
                         continue
@@ -1026,7 +1029,7 @@ class OpeningInventoryAPIView(APIView):
                         bin_code = item.get('bin_code')
                         counted_qty = float(item.get('counted_qty', 0))
 
-                        material = Material.objects.filter(sku=sku, opco=opco).first()
+                        material = Material.all_objects.filter(sku=sku, opco=opco).first()
                         if not material:
                             continue
 
