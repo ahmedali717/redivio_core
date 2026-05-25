@@ -107,8 +107,16 @@ createApp({
             isArabic: window.is_arabic,
             isEditing: false,
             isAdvancedMode: false,
-            notifications: [],
             posOrdersState: {}, // { orderId: status },
+            showStockAdjustModal: false,
+            stockAdjustForm: {
+                bin_id: '',
+                bin_code: '',
+                current_quantity: 0,
+                new_quantity: 0,
+                reason: '',
+                is_new_bin: false
+            },
 
             confirmModal: {
                 show: false,
@@ -3890,6 +3898,108 @@ createApp({
                     purchased_modules: active.purchased_modules || []
                 };
                 this.imagePreview = finalLogo;
+            }
+        },
+
+        openStockAdjustment(st = null) {
+            if (st) {
+                this.stockAdjustForm = {
+                    bin_id: st.bin_id,
+                    bin_code: st.bin,
+                    current_quantity: parseFloat(st.quantity) || 0,
+                    new_quantity: parseFloat(st.quantity) || 0,
+                    reason: '',
+                    is_new_bin: false
+                };
+            } else {
+                this.stockAdjustForm = {
+                    bin_id: '',
+                    bin_code: '',
+                    current_quantity: 0,
+                    new_quantity: 0,
+                    reason: '',
+                    is_new_bin: true
+                };
+            }
+            this.showStockAdjustModal = true;
+        },
+
+        async submitStockAdjustment() {
+            const form = this.stockAdjustForm;
+            if (!form.bin_id) {
+                this.showToast(this.isArabic ? "برجاء اختيار الرف" : "Please select a bin", "error");
+                return;
+            }
+            
+            const diff = parseFloat(form.new_quantity) - parseFloat(form.current_quantity);
+            if (diff === 0) {
+                this.showToast(this.isArabic ? "لم تقم بتغيير الكمية" : "No quantity change detected", "info");
+                this.showStockAdjustModal = false;
+                return;
+            }
+
+            const moveType = diff > 0 ? 'IN' : 'OUT';
+            const adjustQty = Math.abs(diff);
+
+            // Construct payload for StockMove API
+            const payload = {
+                opco: this.activeOpcoId,
+                receipt_type: 'ADJUSTMENT',
+                move_type: moveType,
+                manual_contact_name: form.reason || (this.isArabic ? "تسوية مخزنية" : "Stock Adjustment"),
+                items: [
+                    {
+                        material_id: this.forms.material.id,
+                        quantity: adjustQty,
+                        bin_id: form.bin_id,
+                        unit_cost: 0,
+                        sales_price: 0
+                    }
+                ]
+            };
+
+            this.loading = true;
+            try {
+                const res = await fetch('/api/wms/moves/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تحديث الرصيد بنجاح" : "Stock adjusted successfully", "success");
+                    this.showStockAdjustModal = false;
+                    
+                    // Reload active material stock details in the modal
+                    await this.reloadMaterialStockDetails();
+                    await this.refreshAllData();
+                } else {
+                    const errorText = await res.text();
+                    this.showToast(this.isArabic ? "فشل التحديث: " + errorText : "Adjustment failed: " + errorText, "error");
+                }
+            } catch (e) {
+                console.error("Stock adjustment error:", e);
+                this.showToast(this.isArabic ? "حدث خطأ أثناء الاتصال بالسيرفر" : "Network error during adjustment", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async reloadMaterialStockDetails() {
+            const materialId = this.forms.material.id;
+            if (!materialId) return;
+            try {
+                const res = await fetch(`/api/materials/${materialId}/`);
+                if (res.ok) {
+                    const updatedMaterial = await res.json();
+                    this.forms.material.on_hand = updatedMaterial.on_hand || 0;
+                    this.forms.material.stock_details = updatedMaterial.stock_details || [];
+                }
+            } catch (e) {
+                console.error("Error reloading stock details:", e);
             }
         },
 

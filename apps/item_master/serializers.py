@@ -56,6 +56,7 @@ class MaterialSerializer(serializers.ModelSerializer):
         from apps.wms.models import StockQuant
         quants = StockQuant.objects.filter(material=obj, opco=obj.opco)
         return [{
+            'bin_id': q.storage_bin.id,
             'bin': q.storage_bin.code,
             'location': q.storage_bin.storage_location.name,
             'plant': q.storage_bin.storage_location.plant.name,
