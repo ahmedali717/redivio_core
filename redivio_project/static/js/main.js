@@ -5285,6 +5285,7 @@ createApp({
         },
 
         async fetchCompanyUsers() {
+            if (!this.activeOpcoId || this.activeOpcoId === 'null') return;
             try {
                 const res = await fetch(`/api/company-users/?opco=${this.activeOpcoId}`);
                 if (res.ok) {

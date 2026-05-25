@@ -794,24 +794,27 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
 
         # Add owner if not present
         active_id = request.query_params.get('opco')
-        if active_id:
-            active_opco = OpCo.all_objects.filter(id=active_id).first()
-            if active_opco and active_opco.owner:
-                owner_email = active_opco.owner.email or active_opco.owner.username
-                is_owner_in_list = any(u['user_details']['email'] == owner_email or u['user_details']['username'] == owner_email for u in data)
-                
-                if not is_owner_in_list:
-                    data.insert(0, {
-                        'id': 'OWNER',
-                        'role': 'ADMINISTRATOR',
-                        'company_name': active_opco.name,
-                        'company': active_opco.id,
-                        'user_details': {
-                            'id': active_opco.owner.id,
-                            'username': active_opco.owner.username,
-                            'email': active_opco.owner.email or active_opco.owner.username,
-                        }
-                    })
+        if active_id and active_id not in ['null', 'None', '']:
+            try:
+                active_opco = OpCo.all_objects.filter(id=active_id).first()
+                if active_opco and active_opco.owner:
+                    owner_email = active_opco.owner.email or active_opco.owner.username
+                    is_owner_in_list = any(u['user_details']['email'] == owner_email or u['user_details']['username'] == owner_email for u in data)
+                    
+                    if not is_owner_in_list:
+                        data.insert(0, {
+                            'id': 'OWNER',
+                            'role': 'ADMINISTRATOR',
+                            'company_name': active_opco.name,
+                            'company': active_opco.id,
+                            'user_details': {
+                                'id': active_opco.owner.id,
+                                'username': active_opco.owner.username,
+                                'email': active_opco.owner.email or active_opco.owner.username,
+                            }
+                        })
+            except (ValueError, TypeError):
+                pass
         
         return Response(data)
 
