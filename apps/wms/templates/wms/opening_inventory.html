@@ -85,10 +85,16 @@
                                     : 'Print a paper sheet listing raw materials (no recipe) for workers to fill out with physical quantities.' ]]
                     </p>
                 </div>
-                <button @click="printInventorySheet" class="mt-6 w-full py-2.5 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-xs transition-all flex items-center justify-center gap-1.5">
-                    <i class="fas fa-file-pdf"></i>
-                    [[ isArabic ? 'طباعة كشف الأصناف' : 'Print Material List' ]]
-                </button>
+                <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                    <button @click="printInventorySheet" class="flex-1 py-2.5 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-xs transition-all flex items-center justify-center gap-1.5">
+                        <i class="fas fa-file-pdf"></i>
+                        [[ isArabic ? 'طباعة كشف الأصناف' : 'Print Material List' ]]
+                    </button>
+                    <button @click="exportInventoryExcel" class="flex-1 py-2.5 rounded-xl border border-emerald-200 text-emerald-600 hover:bg-emerald-50 font-bold text-xs transition-all flex items-center justify-center gap-1.5">
+                        <i class="fas fa-file-excel"></i>
+                        [[ isArabic ? 'تصدير إكسيل' : 'Export Excel' ]]
+                    </button>
+                </div>
             </div>
 
             <!-- 2. Upload Excel Card -->

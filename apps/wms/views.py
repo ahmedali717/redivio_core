@@ -876,6 +876,43 @@ class OpeningInventoryAPIView(APIView):
             }
             return render(request, 'wms/print_opening_sheet.html', context)
 
+        elif action_param == 'export_excel':
+            from apps.item_master.models import Material
+            import csv
+            import io
+            from django.http import HttpResponse
+
+            materials = Material.all_objects.filter(opco=opco, recipe__isnull=True).order_by('name')
+            
+            output = io.StringIO()
+            output.write('\ufeff')  # UTF-8 BOM
+            writer = csv.writer(output)
+            
+            writer.writerow([
+                "رمز الصنف (SKU)",
+                "اسم الصنف (Material Name)",
+                "الرف / الموقع الافتراضي (Bin Code)",
+                "الكمية الفعلية (Physical Qty)"
+            ])
+            
+            for m in materials:
+                from apps.item_master.models import MaterialLocation
+                loc = MaterialLocation.objects.filter(material=m, material__opco=opco, is_primary=True).first()
+                if not loc:
+                    loc = MaterialLocation.objects.filter(material=m, material__opco=opco).first()
+                
+                bin_code = loc.storage_bin.code if loc and loc.storage_bin else "MAIN"
+                writer.writerow([
+                    m.sku,
+                    m.name,
+                    bin_code,
+                    ""
+                ])
+                
+            response = HttpResponse(output.getvalue(), content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = f'attachment; filename="opening_inventory_sheet_{opco.code}.csv"'
+            return response
+
         return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request):

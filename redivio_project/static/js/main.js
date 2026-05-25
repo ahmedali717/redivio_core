@@ -5483,6 +5483,12 @@ createApp({
             window.open(url, '_blank');
         },
 
+        exportInventoryExcel() {
+            if (!this.activeOpcoId) return;
+            const url = `/api/wms/opening-inventory/?opco=${this.activeOpcoId}&action=export_excel`;
+            window.open(url, '_blank');
+        },
+
         async uploadInventoryFile(event) {
             if (!this.activeOpcoId) return;
             const file = event.target.files[0];
