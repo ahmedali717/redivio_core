@@ -48,6 +48,12 @@ class OpCo(models.Model):
         help_text="حدد هذا الخيار إذا كانت هذه الشركة تمتلك شركات أخرى تحتها"
     )
 
+    is_inventory_active = models.BooleanField(
+        default=False,
+        verbose_name="جرد مخزني نشط؟",
+        help_text="تفعيل هذا الخيار يجمد كافة حركات المخزون والمبيعات حتى إتمام الجرد"
+    )
+
     is_system_root = models.BooleanField(
         default=False, 
         verbose_name="شركة أساسية للنظام"

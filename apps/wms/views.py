@@ -430,6 +430,16 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = StockMove.objects.all().order_by('-id')
     serializer_class = StockMoveSerializer
 
+    def create(self, request, *args, **kwargs):
+        active_opco_id = self._get_opco_id()
+        if active_opco_id:
+            opco = OpCo.objects.filter(id=active_opco_id).first()
+            if opco and opco.is_inventory_active:
+                is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                err_msg = "لا يمكن إجراء حركات مخزنية أثناء عملية الجرد النشطة." if is_arabic else "Cannot perform stock moves. Inventory count is currently active and stock movements are frozen."
+                return Response({"error": err_msg}, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
+
     def get_queryset(self):
         from django.db.models import Q
         queryset = super().get_queryset()
@@ -797,3 +807,270 @@ class StockDeliveryAPI(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         return Response({"status": "deprecated, use StockMoveViewSet"}, status=200)
+
+class OpeningInventoryAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def _get_opco_id(self, request):
+        return (request.query_params.get('opco') or 
+                request.data.get('opco') or 
+                request.session.get('active_opco_id'))
+
+    def check_manager_permissions(self, request, opco_id):
+        if request.user.is_superuser:
+            return True
+        if OpCo.objects.filter(id=opco_id, owner=request.user).exists():
+            return True
+        from apps.core.models import CompanyUser
+        return CompanyUser.objects.filter(
+            user=request.user, 
+            company_id=opco_id, 
+            role__in=['admin', 'administrator', 'manager']
+        ).exists()
+
+    def get(self, request):
+        opco_id = self._get_opco_id(request)
+        if not opco_id:
+            return Response({"error": "OpCo ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not self.check_manager_permissions(request, opco_id):
+            return Response({"error": "Only Administrators or Managers are authorized to perform this operation."}, status=status.HTTP_403_FORBIDDEN)
+
+        opco = OpCo.objects.filter(id=opco_id).first()
+        if not opco:
+            return Response({"error": "OpCo not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        action_param = request.query_params.get('action', 'status')
+
+        if action_param == 'status':
+            return Response({
+                "is_inventory_active": opco.is_inventory_active
+            })
+
+        elif action_param == 'print_sheet':
+            from apps.item_master.models import Material
+            from django.utils import timezone
+            materials = Material.objects.filter(opco=opco, recipe__isnull=True).order_by('name')
+            
+            items_data = []
+            for m in materials:
+                from apps.item_master.models import MaterialLocation
+                loc = MaterialLocation.objects.filter(material=m, material__opco=opco, is_primary=True).first()
+                if not loc:
+                    loc = MaterialLocation.objects.filter(material=m, material__opco=opco).first()
+                
+                bin_code = loc.storage_bin.code if loc and loc.storage_bin else "---"
+                items_data.append({
+                    "name": m.name,
+                    "sku": m.sku,
+                    "bin_code": bin_code
+                })
+
+            context = {
+                "report_date": timezone.now(),
+                "opco": opco,
+                "items": items_data
+            }
+            return render(request, 'wms/print_opening_sheet.html', context)
+
+        return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request):
+        opco_id = self._get_opco_id(request)
+        if not opco_id:
+            return Response({"error": "OpCo ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not self.check_manager_permissions(request, opco_id):
+            return Response({"error": "Only Administrators or Managers are authorized to perform this operation."}, status=status.HTTP_403_FORBIDDEN)
+
+        opco = OpCo.objects.filter(id=opco_id).first()
+        if not opco:
+            return Response({"error": "OpCo not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        action_param = request.data.get('action')
+
+        if action_param == 'start':
+            opco.is_inventory_active = True
+            opco.save()
+            return Response({"success": True, "is_inventory_active": True})
+
+        elif action_param == 'cancel':
+            opco.is_inventory_active = False
+            opco.save()
+            return Response({"success": True, "is_inventory_active": False})
+
+        elif action_param == 'upload':
+            file = request.FILES.get('file')
+            if not file:
+                return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                import pandas as pd
+                if file.name.endswith('.csv'):
+                    content = file.read()
+                    try:
+                        decoded = content.decode('utf-8-sig')
+                    except UnicodeDecodeError:
+                        decoded = content.decode('windows-1256', errors='ignore')
+                    
+                    import csv
+                    reader = csv.DictReader(decoded.splitlines())
+                    rows = [r for r in reader]
+                    headers = reader.fieldnames or []
+                else:
+                    df = pd.read_excel(file)
+                    rows = df.to_dict(orient='records')
+                    headers = [str(c).strip() for c in df.columns]
+
+                sku_col = None
+                bin_col = None
+                qty_col = None
+
+                for h in headers:
+                    h_clean = str(h).strip().lower()
+                    if 'sku' in h_clean or 'صنف' in h_clean or 'رمز' in h_clean:
+                        sku_col = h
+                    elif 'bin' in h_clean or 'رف' in h_clean:
+                        bin_col = h
+                    elif 'qty' in h_clean or 'quant' in h_clean or 'كمية' in h_clean or 'عدد' in h_clean:
+                        qty_col = h
+
+                if not sku_col:
+                    return Response({"error": "تعذر العثور على عمود الصنف/SKU. يرجى التأكد من احتواء الملف على عمود 'SKU'."}, status=status.HTTP_400_BAD_REQUEST)
+                if not bin_col:
+                    return Response({"error": "تعذر العثور على عمود الرف/Bin. يرجى التأكد من احتواء الملف على عمود 'Bin Code'."}, status=status.HTTP_400_BAD_REQUEST)
+                if not qty_col:
+                    return Response({"error": "تعذر العثور على عمود الكمية/Quantity. يرجى التأكد من احتواء الملف على عمود 'Quantity'."}, status=status.HTTP_400_BAD_REQUEST)
+
+                from apps.item_master.models import Material
+
+                comparison_items = []
+                uploaded_keys = set()
+                errors = []
+
+                for idx, r in enumerate(rows):
+                    sku_val = str(r.get(sku_col, '')).strip()
+                    bin_val = str(r.get(bin_col, '')).strip()
+                    qty_val = r.get(qty_col)
+
+                    if not sku_val or sku_val.lower() == 'nan':
+                        continue
+
+                    try:
+                        counted_qty = float(qty_val) if qty_val is not None and str(qty_val).lower() != 'nan' else 0.0
+                    except:
+                        counted_qty = 0.0
+
+                    material = Material.objects.filter(sku=sku_val, opco=opco).first()
+                    if not material:
+                        errors.append(f"السطر {idx + 2}: الصنف ذو الرمز ({sku_val}) غير موجود بالنظام.")
+                        continue
+
+                    has_recipe = hasattr(material, 'recipe') and material.recipe is not None
+                    bin_obj = StorageBin.objects.filter(code=bin_val, storage_location__plant__opco=opco).first()
+                    
+                    system_qty = 0.0
+                    if bin_obj:
+                        quant = StockQuant.objects.filter(storage_bin=bin_obj, material=material, opco=opco).first()
+                        if quant:
+                            system_qty = float(quant.quantity)
+
+                    comparison_items.append({
+                        "sku": sku_val,
+                        "material_name": material.name,
+                        "bin_code": bin_val,
+                        "system_qty": system_qty,
+                        "counted_qty": counted_qty,
+                        "difference": counted_qty - system_qty,
+                        "has_recipe": has_recipe
+                    })
+                    uploaded_keys.add((sku_val, bin_val))
+
+                all_quants = StockQuant.objects.filter(opco=opco).select_related('material', 'storage_bin')
+                for q in all_quants:
+                    key = (q.material.sku, q.storage_bin.code)
+                    if key not in uploaded_keys:
+                        has_recipe = hasattr(q.material, 'recipe') and q.material.recipe is not None
+                        comparison_items.append({
+                            "sku": q.material.sku,
+                            "material_name": q.material.name,
+                            "bin_code": q.storage_bin.code,
+                            "system_qty": float(q.quantity),
+                            "counted_qty": 0.0,
+                            "difference": -float(q.quantity),
+                            "has_recipe": has_recipe
+                        })
+
+                return Response({
+                    "success": True,
+                    "items": comparison_items,
+                    "errors": errors
+                })
+
+            except Exception as e:
+                return Response({"error": f"Error parsing file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        elif action_param == 'commit':
+            items = request.data.get('items', [])
+            if not items:
+                return Response({"error": "No items to commit"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                from apps.item_master.models import Material
+                with transaction.atomic():
+                    opco.is_inventory_active = False
+                    opco.save()
+
+                    for item in items:
+                        sku = item.get('sku')
+                        bin_code = item.get('bin_code')
+                        counted_qty = float(item.get('counted_qty', 0))
+
+                        material = Material.objects.filter(sku=sku, opco=opco).first()
+                        if not material:
+                            continue
+
+                        bin_obj = StorageBin.objects.filter(code=bin_code, storage_location__plant__opco=opco).first()
+                        if not bin_obj:
+                            loc = StorageLocation.objects.filter(plant__opco=opco).first()
+                            if not loc:
+                                plant = Plant.objects.filter(opco=opco).first()
+                                if not plant:
+                                    plant = Plant.objects.create(opco=opco, code="MAIN", name=f"{opco.name} Warehouse")
+                                loc = StorageLocation.objects.create(plant=plant, code="IN-1", name="Receiving")
+                            bin_obj = StorageBin.objects.create(storage_location=loc, code=bin_code)
+
+                        quant = StockQuant.objects.filter(storage_bin=bin_obj, material=material, opco=opco).first()
+                        system_qty = float(quant.quantity) if quant else 0.0
+
+                        diff = counted_qty - system_qty
+                        if diff == 0:
+                            continue
+
+                        if diff > 0:
+                            StockMove.objects.create(
+                                opco=opco,
+                                material=material,
+                                source_bin=None,
+                                dest_bin=bin_obj,
+                                quantity=diff,
+                                reference="Opening Inventory Count (IN Adjustment)",
+                                move_type='IN'
+                            )
+                        else:
+                            StockMove.objects.create(
+                                opco=opco,
+                                material=material,
+                                source_bin=bin_obj,
+                                dest_bin=None,
+                                quantity=abs(diff),
+                                reference="Opening Inventory Count (OUT Adjustment)",
+                                move_type='OUT'
+                            )
+
+                return Response({"success": True, "message": "Opening inventory count saved and adjusted successfully."})
+
+            except Exception as e:
+                return Response({"error": f"Failed to commit inventory count: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)

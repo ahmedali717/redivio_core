@@ -148,6 +148,12 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def process_payment(self, request, pk=None):
         order = self.get_object()
+        # Enforce inventory freeze
+        if order.opco.is_inventory_active:
+            is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+            err_msg = "لا يمكن إتمام البيع حالياً لوجود عملية جرد مخزني نشطة." if is_arabic else "Cannot process payment. Inventory count is currently active and stock movements are frozen."
+            return Response({'error': err_msg}, status=status.HTTP_400_BAD_REQUEST)
+
         # Allow processing payment for unpaid orders (draft, inprogress, done)
         if order.status in ['paid', 'refunded', 'cancelled']:
             return Response({'error': 'Order already processed'}, status=status.HTTP_400_BAD_REQUEST)
@@ -196,6 +202,17 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         from .models import POSOrderLine
         data = request.data
         opco_id = data.get('opco')
+        
+        # Enforce inventory freeze
+        if opco_id:
+            try:
+                opco = OpCo.objects.filter(id=opco_id).first()
+                if opco and opco.is_inventory_active:
+                    is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                    err_msg = "لا يمكن إتمام العملية حالياً لوجود عملية جرد مخزني نشطة." if is_arabic else "Cannot perform operation. Inventory count is currently active and stock movements are frozen."
+                    return Response({'error': err_msg}, status=status.HTTP_400_BAD_REQUEST)
+            except:
+                pass
         session_id = data.get('session')
         table_number = data.get('table_number')
         guest_count = data.get('guest_count', 1)

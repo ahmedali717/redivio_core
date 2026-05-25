@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { size: A4; margin: 20px; }
+        body { font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; }
+        .header-table { width: 100%; border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-bottom: 20px; }
+        .company-logo { width: 150px; height: auto; }
+        .report-title { color: #10b981; font-size: 24px; font-weight: bold; }
+        
+        .info-section { width: 100%; margin-bottom: 30px; }
+        .label { color: #666; font-size: 12px; font-weight: bold; }
+        .value { font-size: 14px; font-weight: bold; }
+
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .items-table th { background: #f8fafc; border-bottom: 2px solid #e2e8f0; padding: 12px; text-align: right; font-size: 12px; }
+        .items-table td { border-bottom: 1px solid #f1f5f9; padding: 12px; font-size: 13px; }
+        
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 5px; }
+        @media print {
+            body { -webkit-print-color-adjust: exact; }
+            .no-print { display: none !important; }
+        }
+        .no-print {
+            text-align: center;
+            padding: 40px;
+            background: #f8fafc;
+            border-top: 2px solid #e2e8f0;
+            margin-top: 100px;
+        }
+    </style>
+</head>
+<body>
+
+    <table class="header-table">
+        <tr>
+            <td style="width: 60%;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    {% if opco.logo %}
+                        <img src="{{ opco.logo.url }}" class="company-logo" style="max-height: 80px; width: auto; margin-left: 15px;">
+                    {% endif %}
+                    <div style="display: inline-block; vertical-align: top;">
+                        <h1 style="color: #10b981; margin: 0; font-size: 22px;">{{ opco.name }}</h1>
+                        <div style="font-size: 10px; color: #666; margin-top: 5px;">
+                            سجل تجاري: {{ opco.cr_number|default:"---" }} | رقم ضريبي: {{ opco.tax_id|default:"---" }}
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td style="text-align: left; vertical-align: top;">
+                <div class="report-title">مسودة جرد الرصيد الافتتاحي</div>
+                <div class="label" style="margin-top: 5px;">تاريخ إصدار المسودة: {{ report_date|date:"d/m/Y H:i" }}</div>
+                <div class="label">نوع القائمة: <span style="color: #10b981; font-weight: bold;">أصناف المخزون الخام</span></div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 50px;">#</th>
+                <th>الصنف (Raw Material)</th>
+                <th>رمز الصنف (SKU)</th>
+                <th>الرف / الموقع الافتراضي</th>
+                <th style="text-align: center; width: 150px; border-left: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1;">الكمية الفعلية (Physical Qty)</th>
+                <th style="text-align: center; width: 200px;">ملاحظات (Notes)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><strong>{{ item.name }}</strong></td>
+                <td style="font-family: monospace;">{{ item.sku }}</td>
+                <td>{{ item.bin_code }}</td>
+                <td style="border-left: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; height: 35px;"></td>
+                <td></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 30px; color: #999;">لا توجد أصناف خام مسجلة حالياً في النظام</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 100px;">
+        <table style="width: 100%;">
+            <tr>
+                <td style="width: 33%; text-align: center;">
+                    <div class="label">أمين المستودع (المسؤول عن الجرد)</div>
+                    <div style="margin-top: 50px; border-bottom: 1px dashed #ccc; width: 120px; margin: 40px auto 0;"></div>
+                </td>
+                <td style="width: 33%; text-align: center;">
+                    <div class="label">المراجع الجردي</div>
+                    <div style="margin-top: 50px; border-bottom: 1px dashed #ccc; width: 120px; margin: 40px auto 0;"></div>
+                </td>
+                <td style="width: 33%; text-align: center;">
+                    <div class="label">اعتماد مدير الفرع</div>
+                    <div style="margin-top: 50px; border-bottom: 1px dashed #ccc; width: 120px; margin: 40px auto 0;"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer no-print">
+        <button onclick="window.print()" style="background: #10b981; color: white; padding: 12px 30px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);">
+            <i class="fas fa-print"></i> طباعة قائمة الجرد الفعلي
+        </button>
+        <div style="margin-top: 10px;">تم إنشاء هذه المسودة آلياً بواسطة نظام REDIVIO ERP</div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

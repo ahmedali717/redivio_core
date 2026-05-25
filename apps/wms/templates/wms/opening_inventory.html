@@ -1,0 +1,277 @@
+<div class="p-6 space-y-6 animate-in fade-in duration-500">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+        <div>
+            <h2 class="text-2xl font-black text-slate-800">
+                [[ isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Inventory Count' ]]
+            </h2>
+            <p class="text-slate-500 text-sm mt-1">
+                [[ isArabic ? 'تسجيل ومطابقة الكميات الفعلية للمواد الخام وتحديث أرصدة البداية' : 'Audit and match actual raw material levels to update opening stock balances' ]]
+            </p>
+        </div>
+        
+        <!-- Status Indicator Badge -->
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-400 uppercase">[[ isArabic ? 'حالة النظام:' : 'System Status:' ]]</span>
+            <span v-if="isInventoryCountActive" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-rose-50 text-rose-600 border border-rose-100 animate-pulse">
+                <span class="w-2 h-2 bg-rose-500 rounded-full"></span>
+                [[ isArabic ? 'تجميد الحركات نشط' : 'Inventory Freeze Active' ]]
+            </span>
+            <span v-else class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                [[ isArabic ? 'النظام يعمل بشكل طبيعي' : 'System Operating Normal' ]]
+            </span>
+        </div>
+    </div>
+
+    <!-- State A: No Active Count -->
+    <div v-if="!isInventoryCountActive" class="max-w-2xl mx-auto py-12 text-center space-y-8">
+        <div class="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-4xl mx-auto shadow-sm">
+            <i class="fas fa-clipboard-list"></i>
+        </div>
+        
+        <div class="space-y-3">
+            <h3 class="text-xl font-bold text-slate-800">[[ isArabic ? 'بدء جرد جديد للرصيد الافتتاحي' : 'Start New Opening Stock Count' ]]</h3>
+            <p class="text-slate-500 text-sm leading-relaxed max-w-lg mx-auto">
+                [[ isArabic ? 'عند بدء الجرد، سيقوم النظام بتجميد كافة حركات المخازن وعمليات البيع (POS) لمنع أي تداخل في الكميات أثناء عملية الجرد الفعلي. لا ينصح ببدء الجرد خلال ساعات العمل النشطة.' 
+                            : 'Starting a count freezes all warehouse movements and POS sales to prevent count discrepancies. It is recommended to perform counts outside of active business hours.' ]]
+            </p>
+        </div>
+
+        <button @click="startInventoryCount" :disabled="loading" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-emerald-100 transition-all flex items-center gap-2 mx-auto disabled:opacity-50">
+            <i v-if="loading" class="fas fa-spinner animate-spin"></i>
+            <i v-else class="fas fa-play"></i>
+            [[ isArabic ? 'إنشاء جرد وتجميد الحركات' : 'Create Count & Freeze System' ]]
+        </button>
+    </div>
+
+    <!-- State B: Active Count -->
+    <div v-else class="space-y-6">
+        <!-- System Freeze Notice -->
+        <div class="bg-rose-50 border border-rose-100 rounded-3xl p-5 flex items-start gap-4">
+            <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 text-lg">
+                <i class="fas fa-lock"></i>
+            </div>
+            <div class="space-y-1">
+                <h4 class="font-bold text-rose-800 text-sm">[[ isArabic ? 'تنبيه: تم تجميد حركة المخزن والبيع' : 'Attention: Stock Operations Frozen' ]]</h4>
+                <p class="text-rose-600/90 text-xs leading-relaxed">
+                    [[ isArabic ? 'جميع حركات المخازن المباشرة وفواتير المشتريات ومبيعات الكاشير مجمدة حالياً. يرجى إتمام الجرد أو إلغائه لإلغاء التجميد.' 
+                                : 'All direct stock moves, supplier receipts, and POS cashier sales are currently blocked. Complete or cancel this count to restore access.' ]]
+                </p>
+            </div>
+        </div>
+
+        <!-- 3-Column Action Cards (Print, Upload, Cancel) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- 1. Print Sheet Card -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+                <div class="space-y-3">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-print"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm">[[ isArabic ? '1. طباعة مسودة الجرد' : '1. Print Count Sheet' ]]</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        [[ isArabic ? 'طباعة كشف جرد ورقي يحتوي على قائمة بكافة الأصناف الخام (بدون وصفة) لمساعدة الموظفين على تسجيل الكميات يدوياً.' 
+                                    : 'Print a paper sheet listing raw materials (no recipe) for workers to fill out with physical quantities.' ]]
+                    </p>
+                </div>
+                <button @click="printInventorySheet" class="mt-6 w-full py-2.5 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-xs transition-all flex items-center justify-center gap-1.5">
+                    <i class="fas fa-file-pdf"></i>
+                    [[ isArabic ? 'طباعة كشف الأصناف' : 'Print Material List' ]]
+                </button>
+            </div>
+
+            <!-- 2. Upload Excel Card -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-all md:col-span-1 border-2 border-dashed hover:border-emerald-300">
+                <div class="space-y-3">
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm">[[ isArabic ? '2. رفع ملف الكميات (Excel/CSV)' : '2. Upload Physical Count File' ]]</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        [[ isArabic ? 'قم برفع ملف الإكسيل المحتوي على كميات الجرد الفعلي. يجب أن يحتوي على أعمدة: SKU (رمز الصنف)، Bin Code (رمز الرف)، و Quantity (الكمية الفعلية).' 
+                                    : 'Upload the spreadsheet with counted quantities. Must include columns: SKU, Bin Code, and Quantity.' ]]
+                    </p>
+                </div>
+                
+                <div class="mt-6 relative">
+                    <input type="file" ref="inventoryFile" @change="uploadInventoryFile" accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
+                    <button @click="$refs.inventoryFile.click()" :disabled="loading" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50">
+                        <i v-if="loading" class="fas fa-spinner animate-spin"></i>
+                        <i v-else class="fas fa-cloud-upload-alt"></i>
+                        [[ isArabic ? 'اختيار ورفع الملف' : 'Browse & Upload File' ]]
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. Cancel Count Card -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+                <div class="space-y-3">
+                    <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-ban"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm">[[ isArabic ? 'إلغاء عملية الجرد' : 'Cancel Count Operations' ]]</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        [[ isArabic ? 'يمكنك التراجع وإلغاء عملية الجرد في أي وقت. سيؤدي هذا إلى إلغاء تجميد المخزن فوراً وإرجاع صلاحيات البيع والحركات.' 
+                                    : 'Cancel count operations to instantly restore system functionality and unfreeze all transaction permissions.' ]]
+                    </p>
+                </div>
+                <button @click="cancelInventoryCount" :disabled="loading" class="mt-6 w-full py-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold text-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50">
+                    <i class="fas fa-times"></i>
+                    [[ isArabic ? 'إلغاء الجرد وإلغاء التجميد' : 'Cancel & Unfreeze System' ]]
+                </button>
+            </div>
+        </div>
+
+        <!-- State C: Review Screen (when upload completes) -->
+        <div v-if="openingCountReviewItems.length > 0" class="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+            
+            <!-- Summary Stats Widgets -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- 1. Total items in file -->
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="w-10 h-10 bg-slate-50 text-slate-600 rounded-xl flex items-center justify-center text-lg">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <span class="text-[9px] font-black text-slate-400 uppercase">Items Audited</span>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-black text-slate-800">[[ openingCountReviewItems.length ]]</p>
+                        <p class="text-[10px] text-slate-400 mt-1">[[ isArabic ? 'إجمالي الأصناف في الجرد' : 'Total Items in Count' ]]</p>
+                    </div>
+                </div>
+
+                <!-- 2. Items with Discrepancies -->
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between border-l-4 border-l-amber-400">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-lg">
+                            <i class="fas fa-triangle-exclamation"></i>
+                        </div>
+                        <span class="text-[9px] font-black text-amber-500 uppercase">Discrepancies</span>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-black text-slate-800">[[ openingCountReviewItems.filter(i => i.difference !== 0).length ]]</p>
+                        <p class="text-[10px] text-slate-400 mt-1">[[ isArabic ? 'أصناف بها فروقات كمية' : 'Items with Discrepancies' ]]</p>
+                    </div>
+                </div>
+
+                <!-- 3. Perfect Matches -->
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between border-l-4 border-l-emerald-400">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-lg">
+                            <i class="fas fa-circle-check"></i>
+                        </div>
+                        <span class="text-[9px] font-black text-emerald-500 uppercase">Matches</span>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-black text-slate-800">[[ openingCountReviewItems.filter(i => i.difference === 0).length ]]</p>
+                        <p class="text-[10px] text-slate-400 mt-1">[[ isArabic ? 'أصناف متطابقة تماماً' : 'Perfect Matches' ]]</p>
+                    </div>
+                </div>
+
+                <!-- 4. Warnings / Finished Goods Count -->
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-lg">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <span class="text-[9px] font-black text-blue-500 uppercase">Finished Goods</span>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-black text-slate-800">[[ openingCountReviewItems.filter(i => i.has_recipe).length ]]</p>
+                        <p class="text-[10px] text-slate-400 mt-1">[[ isArabic ? 'أصناف نهائية (بها وصفة)' : 'Finished Goods Included' ]]</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Errors and Warnings banner -->
+            <div v-if="openingCountErrors.length > 0" class="bg-amber-50 border border-amber-200 rounded-3xl p-5 space-y-2">
+                <h5 class="font-bold text-amber-800 text-sm flex items-center gap-2">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    [[ isArabic ? 'ملاحظات وتنبيهات أثناء الرفع:' : 'Warnings during upload:' ]]
+                </h5>
+                <ul class="list-disc list-inside text-xs text-amber-700 space-y-1">
+                    <li v-for="(err, idx) in openingCountErrors" :key="idx">[[ err ]]</li>
+                </ul>
+            </div>
+
+            <!-- Review Grid Table -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <!-- Grid Header Search & Filter -->
+                <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h4 class="font-bold text-slate-800 text-base">
+                        [[ isArabic ? 'مراجعة وتأكيد جدول الفروقات المخزنية' : 'Review Stock Differences Table' ]]
+                    </h4>
+                    
+                    <!-- Search Input -->
+                    <div class="relative w-full sm:w-64">
+                        <i class="fas fa-search absolute right-3 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" v-model="openingCountSearchQuery" :placeholder="isArabic ? 'بحث بالاسم أو الرمز...' : 'Search by name/SKU...'" class="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-10 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-50 border-b border-slate-100 text-slate-500 uppercase font-black">
+                            <tr>
+                                <th class="px-6 py-4">[[ isArabic ? 'رمز الصنف (SKU)' : 'SKU' ]]</th>
+                                <th class="px-6 py-4">[[ isArabic ? 'اسم الصنف' : 'Material Name' ]]</th>
+                                <th class="px-6 py-4">[[ isArabic ? 'رمز الرف / الموقع' : 'Bin Code' ]]</th>
+                                <th class="px-6 py-4 text-center">[[ isArabic ? 'الكمية الدفترية' : 'System Qty' ]]</th>
+                                <th class="px-6 py-4 text-center">[[ isArabic ? 'الكمية الفعلية' : 'Counted Qty' ]]</th>
+                                <th class="px-6 py-4 text-center">[[ isArabic ? 'الفارق' : 'Difference' ]]</th>
+                                <th class="px-6 py-4 text-center">[[ isArabic ? 'الحالة' : 'Status' ]]</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 text-slate-700 font-semibold">
+                            <tr v-for="item in filteredReviewItems" :key="item.sku + '_' + item.bin_code" class="hover:bg-slate-50/50 transition-colors">
+                                <td class="px-6 py-4 font-mono">[[ item.sku ]]</td>
+                                <td class="px-6 py-4">
+                                    <div>
+                                        <p class="font-bold text-slate-800">[[ item.material_name ]]</p>
+                                        <span v-if="item.has_recipe" class="text-[9px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded uppercase mt-1 inline-block">
+                                            [[ isArabic ? 'منتج نهائي (له وصفة)' : 'Finished Good' ]]
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4"><span class="bg-slate-100 px-2.5 py-1 rounded-xl text-slate-600 font-bold">[[ item.bin_code ]]</span></td>
+                                <td class="px-6 py-4 text-center text-slate-500 font-mono">[[ item.system_qty ]]</td>
+                                <td class="px-6 py-4 text-center font-mono font-bold text-slate-800">[[ item.counted_qty ]]</td>
+                                <td class="px-6 py-4 text-center font-mono">
+                                    <span :class="item.difference > 0 ? 'text-emerald-600' : (item.difference < 0 ? 'text-rose-600' : 'text-slate-400')">
+                                        [[ item.difference > 0 ? '+' : '' ]][[ item.difference ]]
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span v-if="item.difference === 0" class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-bold">
+                                        <i class="fas fa-check"></i> [[ isArabic ? 'متطابق' : 'Matched' ]]
+                                    </span>
+                                    <span v-else-if="item.difference > 0" class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-bold">
+                                        <i class="fas fa-arrow-trend-up"></i> [[ isArabic ? 'فائض (+)' : 'Surplus (+)' ]]
+                                    </span>
+                                    <span v-else class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full font-bold">
+                                        <i class="fas fa-arrow-trend-down"></i> [[ isArabic ? 'عجز (-)' : 'Deficit (-)' ]]
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Review Footer Commit Button -->
+                <div class="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                    <p class="text-xs text-slate-400 leading-relaxed max-w-md">
+                        [[ isArabic ? 'تنبيه: سيؤدي الضغط على اعتماد وحفظ الجرد إلى إنشاء حركات تسوية مخزنية تلقائية لجميع الفروقات وتعديل كميات النظام لتطابق الكميات الفعلية فوراً.'
+                                    : 'Warning: Committing will automatically create adjusting stock moves for all discrepancies to match system stock to actual physical counts.' ]]
+                    </p>
+                    <button @click="commitInventoryCount" :disabled="loading" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-emerald-100 transition-all flex items-center gap-2 disabled:opacity-50">
+                        <i v-if="loading" class="fas fa-spinner animate-spin"></i>
+                        <i v-else class="fas fa-check-double"></i>
+                        [[ isArabic ? 'اعتماد وحفظ الجرد' : 'Commit & Save Count' ]]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

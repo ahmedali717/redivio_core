@@ -91,6 +91,14 @@
                 <span v-show="!sidebarCollapsed" class="text-sm whitespace-nowrap" :class="inventoryTab === 'levels' ? 'font-bold' : 'font-medium'"
                     v-text="isArabic ? 'الأرصدة' : 'Stock Levels'"></span>
             </a>
+            
+            <a href="#" v-if="canAccess('inventory_module') && (['admin', 'administrator', 'manager'].includes((user.role || '').toLowerCase()) || user.is_superuser)" @click.prevent="inventoryTab = 'opening_count'"
+                :class="inventoryTab === 'opening_count' ? 'bg-white text-emerald-500 shadow-[0_5px_15px_rgba(0,0,0,0.1)] font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                <i class="fas fa-clipboard-check w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="text-sm whitespace-nowrap font-medium"
+                    v-text="isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Count'"></span>
+            </a>
             <a href="#" v-if="canAccess('inventory_module')" @click.prevent="inventoryTab = 'items'"
                 :class="inventoryTab === 'items' ? 'bg-white text-brand shadow-[0_5px_15px_rgba(0,0,0,0.1)] font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">

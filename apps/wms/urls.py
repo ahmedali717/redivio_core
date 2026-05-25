@@ -19,6 +19,9 @@ urlpatterns = [
     # رابط الصرف (Delivery): /api/wms/stock-deliveries/
     path('stock-deliveries/', views.StockDeliveryAPI.as_view(), name='api_stock_deliveries'),
     
+    # رابط جرد الرصيد الافتتاحي
+    path('opening-inventory/', views.OpeningInventoryAPIView.as_view(), name='api_opening_inventory'),
+    
     # رابط التفاصيل للمشتريات والمبيعات
     path('purchase-orders/<int:po_id>/', views.get_purchase_order_details, name='api_po_details'),
     path('sales-orders/<int:so_id>/', views.get_sales_order_details, name='api_so_details'),

@@ -385,6 +385,9 @@
                     <div v-if="inventoryTab === 'levels'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
                         {% include "wms/dashboard.html" %}
                     </div>
+                    <div v-if="inventoryTab === 'opening_count'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
+                        {% include "wms/opening_inventory.html" %}
+                    </div>
                     <div v-if="inventoryTab === 'items'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
                         {% include "components/item_master_list.html" %}
                     </div>

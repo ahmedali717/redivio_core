@@ -83,6 +83,10 @@ class StockMove(models.Model):
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
+        if is_new and self.opco.is_inventory_active:
+            from django.core.exceptions import ValidationError
+            raise ValidationError("لا يمكن إجراء حركات مخزنية أثناء عملية الجرد النشطة.")
+            
         super().save(*args, **kwargs)
         
         if is_new:

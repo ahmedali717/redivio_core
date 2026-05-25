@@ -123,6 +123,11 @@ createApp({
                 onConfirm: null,
                 onCancel: null
             },
+            
+            isInventoryCountActive: false,
+            openingCountReviewItems: [],
+            openingCountErrors: [],
+            openingCountSearchQuery: '',
 
             // 2. تحديث القائمة الجانبية لتكون "موديولات" بدلاً من شاشات
             sidebarGroups: {
@@ -685,6 +690,7 @@ createApp({
         activeOpcoId(newId) {
             if (newId) {
                 this.syncGlobalConfig(newId);
+                this.checkInventoryFreezeStatus();
                 if (this.view === 'restaurant_pos_module') {
                     this.fetchPOSTerminals();
                 }
@@ -762,6 +768,19 @@ createApp({
                 }, 500);
             }
         }, 400);
+    },
+
+    computed: {
+        filteredReviewItems() {
+            if (!this.openingCountReviewItems) return [];
+            const query = (this.openingCountSearchQuery || '').toLowerCase().trim();
+            if (!query) return this.openingCountReviewItems;
+            return this.openingCountReviewItems.filter(item => {
+                return (item.sku || '').toLowerCase().includes(query) || 
+                       (item.material_name || '').toLowerCase().includes(query) ||
+                       (item.bin_code || '').toLowerCase().includes(query);
+            });
+        }
     },
 
     methods: {
@@ -4623,7 +4642,8 @@ createApp({
                     this.fetchVendors(),
                     this.fetchCompanyUsers(),
                     this.fetchFloorsAndTables(),
-                    this.fetchPOSDashboard()
+                    this.fetchPOSDashboard(),
+                    this.checkInventoryFreezeStatus()
                 ]);
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {
@@ -5370,6 +5390,184 @@ createApp({
                     });
                 }
             } catch (e) { console.error("POS Update Check Error", e); }
+        },
+
+        async checkInventoryFreezeStatus() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/wms/opening-inventory/?opco=${this.activeOpcoId}&action=status`);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.isInventoryCountActive = !!data.is_inventory_active;
+                }
+            } catch (e) {
+                console.error("Error checking inventory status:", e);
+            }
+        },
+
+        async startInventoryCount() {
+            if (!this.activeOpcoId) return;
+            this.loading = true;
+            try {
+                const res = await fetch('/api/wms/opening-inventory/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        action: 'start'
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.isInventoryCountActive = !!data.is_inventory_active;
+                    this.showToast(
+                        this.isArabic ? "تم بدء جرد الرصيد الافتتاحي وتجميد الحركات بنجاح." : "Opening Inventory Count started and transactions frozen successfully.",
+                        "success"
+                    );
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Failed to start count", "error");
+                }
+            } catch (e) {
+                console.error("Error starting inventory count:", e);
+                this.showToast("Connection error", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async cancelInventoryCount() {
+            if (!this.activeOpcoId) return;
+            const confirmed = confirm(
+                this.isArabic ? "هل أنت متأكد من إلغاء عملية الجرد؟ سيتم إلغاء تجميد الحركات فوراً." : "Are you sure you want to cancel the count? Transactions will be unfrozen immediately."
+            );
+            if (!confirmed) return;
+            this.loading = true;
+            try {
+                const res = await fetch('/api/wms/opening-inventory/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        action: 'cancel'
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.isInventoryCountActive = !!data.is_inventory_active;
+                    this.openingCountReviewItems = [];
+                    this.openingCountErrors = [];
+                    this.showToast(
+                        this.isArabic ? "تم إلغاء الجرد وإلغاء تجميد حركة العمليات بنجاح." : "Inventory count cancelled and system unfrozen successfully.",
+                        "success"
+                    );
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Failed to cancel count", "error");
+                }
+            } catch (e) {
+                console.error("Error cancelling inventory count:", e);
+                this.showToast("Connection error", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        printInventorySheet() {
+            if (!this.activeOpcoId) return;
+            const url = `/api/wms/opening-inventory/?opco=${this.activeOpcoId}&action=print_sheet`;
+            window.open(url, '_blank');
+        },
+
+        async uploadInventoryFile(event) {
+            if (!this.activeOpcoId) return;
+            const file = event.target.files[0];
+            if (!file) return;
+            this.loading = true;
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('opco', this.activeOpcoId);
+                formData.append('action', 'upload');
+
+                const res = await fetch('/api/wms/opening-inventory/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.openingCountReviewItems = data.items || [];
+                    this.openingCountErrors = data.errors || [];
+                    this.showToast(
+                        this.isArabic ? "تم رفع وتدقيق الملف بنجاح. يرجى مراجعة فروقات الجرد أدناه." : "File uploaded and audited successfully. Please review discrepancy table below.",
+                        "success"
+                    );
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Failed to upload file", "error");
+                }
+            } catch (e) {
+                console.error("Error uploading file:", e);
+                this.showToast("Connection error", "error");
+            } finally {
+                this.loading = false;
+                event.target.value = '';
+            }
+        },
+
+        async commitInventoryCount() {
+            if (!this.activeOpcoId) return;
+            if (!this.openingCountReviewItems || this.openingCountReviewItems.length === 0) {
+                this.showToast(this.isArabic ? "لا توجد كميات تم رفعها لاعتمادها." : "No uploaded quantities to commit.", "warning");
+                return;
+            }
+            const confirmed = confirm(
+                this.isArabic ? "تنبيه: هل أنت متأكد من اعتماد وحفظ الجرد؟ سيتم تعديل أرصدة الكميات الدفترية لتطابق الجرد الفعلي فوراً." : "Warning: Are you sure you want to commit the count? System stock balances will be adjusted to match physical counts immediately."
+            );
+            if (!confirmed) return;
+            this.loading = true;
+            try {
+                const res = await fetch('/api/wms/opening-inventory/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        opco: this.activeOpcoId,
+                        action: 'commit',
+                        items: this.openingCountReviewItems
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.isInventoryCountActive = false;
+                    this.openingCountReviewItems = [];
+                    this.openingCountErrors = [];
+                    this.showToast(
+                        this.isArabic ? "تم اعتماد وحفظ الجرد الافتتاحي وتعديل المخازن بنجاح." : "Opening inventory count committed and stock adjusted successfully.",
+                        "success"
+                    );
+                    await this.refreshAllData();
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Failed to commit count", "error");
+                }
+            } catch (e) {
+                console.error("Error committing inventory count:", e);
+                this.showToast("Connection error", "error");
+            } finally {
+                this.loading = false;
+            }
         }
     }
 }).mount('#app');
