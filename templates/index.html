@@ -407,6 +407,12 @@
             </div>
         </div>
 
+        <div v-if="view === 'opening_count'" class="flex flex-col h-full space-y-4 p-4 bg-slate-100">
+            <div class="flex-1 relative min-h-[500px] bg-white rounded-[2rem] overflow-y-auto">
+                {% include "wms/opening_inventory.html" %}
+            </div>
+        </div>
+
         <transition name="ready-fade">
             <div v-if="showReadyMessage" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[9999] flex items-center gap-4 bg-emerald-600 text-white px-8 py-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-emerald-400/30 backdrop-blur-md">
                 <div class="flex items-center justify-center bg-white/20 rounded-full w-10 h-10 animate-pulse">

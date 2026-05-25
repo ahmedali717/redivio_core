@@ -1,13 +1,23 @@
 <div class="p-6 space-y-6 animate-in fade-in duration-500">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800">
-                [[ isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Inventory Count' ]]
-            </h2>
-            <p class="text-slate-500 text-sm mt-1">
-                [[ isArabic ? 'تسجيل ومطابقة الكميات الفعلية للمواد الخام وتحديث أرصدة البداية' : 'Audit and match actual raw material levels to update opening stock balances' ]]
-            </p>
+        <div class="flex items-center gap-4">
+            <!-- Back Button -->
+            <button v-if="view === 'opening_count'" 
+                    @click="view = (vendorsListBackView || (systemMode === 'standalone' ? 'restaurant_pos_module' : 'inventory_module')); vendorsListBackView = null;" 
+                    class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2">
+                <i class="fas" :class="isArabic ? 'fa-arrow-right' : 'fa-arrow-left'"></i>
+                [[ (vendorsListBackView === 'restaurant_pos_module' || systemMode === 'standalone') ? (isArabic ? 'العودة لنقاط البيع' : 'Back to POS') : (isArabic ? 'العودة للمخازن' : 'Back to Inventory') ]]
+            </button>
+            
+            <div>
+                <h2 class="text-2xl font-black text-slate-800">
+                    [[ isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Inventory Count' ]]
+                </h2>
+                <p class="text-slate-500 text-sm mt-1">
+                    [[ isArabic ? 'تسجيل ومطابقة الكميات الفعلية للمواد الخام وتحديث أرصدة البداية' : 'Audit and match actual raw material levels to update opening stock balances' ]]
+                </p>
+            </div>
         </div>
         
         <!-- Status Indicator Badge -->

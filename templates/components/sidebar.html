@@ -240,7 +240,7 @@
 
 
         <!-- Restaurant POS Context -->
-        <template v-else-if="view === 'restaurant_pos_module' || (['vendors_list', 'vendor_ledger'].includes(view) && (vendorsListBackView === 'restaurant_pos_module' || systemMode === 'standalone'))">
+        <template v-else-if="view === 'restaurant_pos_module' || (['vendors_list', 'vendor_ledger', 'opening_count'].includes(view) && (vendorsListBackView === 'restaurant_pos_module' || systemMode === 'standalone'))">
             <div class="text-[10px] font-bold text-red-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
                 <span v-show="!sidebarCollapsed" v-text="isArabic ? 'إدارة نقاط البيع (POS)' : 'POS Management'"></span>
                 <hr v-show="sidebarCollapsed" class="border-red-800">
@@ -328,6 +328,14 @@
                 <i class="fas fa-truck w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'سجل الموردين' : 'Vendors Register'"></span>
+            </a>
+
+            <!-- Active Opening Count Item (only shown when viewing opening count from POS) -->
+            <a href="#" v-if="view === 'opening_count'"
+                class="bg-white text-emerald-500 shadow-md font-bold flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                <i class="fas fa-clipboard-check w-6 text-center text-lg"></i>
+                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
+                    v-text="isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Count'"></span>
             </a>
         </template>
 

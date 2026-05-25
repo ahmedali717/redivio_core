@@ -22,7 +22,7 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <!-- Opening Inventory Count -->
             <button v-if="['admin', 'administrator', 'manager'].includes((user.role || '').toLowerCase()) || user.is_superuser" 
-                    @click="view = 'inventory_module'; inventoryTab = 'opening_count';" 
+                    @click="vendorsListBackView = 'restaurant_pos_module'; view = 'opening_count';" 
                     class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between hover:shadow-md hover:border-emerald-200 transition-all text-right group">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl transition-transform group-hover:scale-110">
