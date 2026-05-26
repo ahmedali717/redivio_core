@@ -971,6 +971,17 @@ class OpeningInventoryAPIView(APIView):
                     except ImportError:
                         return Response({"error": "استيراد ملفات Excel غير مدعوم لعدم وجود مكتبة 'pandas'. يرجى رفع ملف بصيغة CSV (.csv). / Excel import is not supported because 'pandas' is not installed. Please upload a CSV (.csv) file."}, status=status.HTTP_400_BAD_REQUEST)
 
+                # Clean and normalize headers and row keys/values
+                headers = [str(h).strip() for h in headers if h is not None]
+                normalized_rows = []
+                for r in rows:
+                    cleaned_row = {}
+                    for k, v in r.items():
+                        if k is not None:
+                            cleaned_row[str(k).strip()] = str(v).strip() if v is not None else ''
+                    normalized_rows.append(cleaned_row)
+                rows = normalized_rows
+
                 sku_col = None
                 bin_col = None
                 qty_col = None
