@@ -1032,6 +1032,7 @@ class OpeningInventoryAPIView(APIView):
                         if quant:
                             system_qty = float(quant.quantity)
 
+                    standard_price = float(material.standard_price or 0)
                     comparison_items.append({
                         "sku": material.sku,
                         "material_name": material.name,
@@ -1039,6 +1040,10 @@ class OpeningInventoryAPIView(APIView):
                         "system_qty": system_qty,
                         "counted_qty": counted_qty,
                         "difference": counted_qty - system_qty,
+                        "standard_price": standard_price,
+                        "system_value": system_qty * standard_price,
+                        "counted_value": counted_qty * standard_price,
+                        "difference_value": (counted_qty - system_qty) * standard_price,
                         "has_recipe": has_recipe
                     })
                     uploaded_keys.add((material.sku, bin_val))
@@ -1052,13 +1057,20 @@ class OpeningInventoryAPIView(APIView):
                             has_recipe = q.material.recipe and q.material.recipe.ingredients.exists()
                         except ObjectDoesNotExist:
                             pass
+                        
+                        system_qty = float(q.quantity)
+                        standard_price = float(q.material.standard_price or 0)
                         comparison_items.append({
                             "sku": q.material.sku,
                             "material_name": q.material.name,
                             "bin_code": q.storage_bin.code,
-                            "system_qty": float(q.quantity),
+                            "system_qty": system_qty,
                             "counted_qty": 0.0,
-                            "difference": -float(q.quantity),
+                            "difference": -system_qty,
+                            "standard_price": standard_price,
+                            "system_value": system_qty * standard_price,
+                            "counted_value": 0.0,
+                            "difference_value": -system_qty * standard_price,
                             "has_recipe": has_recipe
                         })
 

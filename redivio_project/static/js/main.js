@@ -5585,6 +5585,7 @@ createApp({
             this.filteredReviewItems.forEach((item, idx) => {
                 const diffClass = item.difference > 0 ? 'text-emerald-600' : (item.difference < 0 ? 'text-rose-600' : 'text-slate-400');
                 const diffSign = item.difference > 0 ? '+' : '';
+                const diffValSign = item.difference_value > 0 ? '+' : '';
                 const statusLabel = item.difference === 0 
                     ? (this.isArabic ? 'متطابق' : 'Matched') 
                     : (item.difference > 0 ? (this.isArabic ? 'فائض (+)' : 'Surplus (+)') : (this.isArabic ? 'عجز (-)' : 'Deficit (-)'));
@@ -5601,6 +5602,9 @@ createApp({
                         <td style="text-align: center; font-family: monospace;">${item.system_qty}</td>
                         <td style="text-align: center; font-family: monospace; font-weight: bold;">${item.counted_qty}</td>
                         <td style="text-align: center; font-family: monospace; font-weight: bold;" class="${diffClass}">${diffSign}${item.difference}</td>
+                        <td style="text-align: center; font-family: monospace;">${Number(item.standard_price).toFixed(2)}</td>
+                        <td style="text-align: center; font-family: monospace; font-weight: bold;">${Number(item.counted_value).toFixed(2)}</td>
+                        <td style="text-align: center; font-family: monospace; font-weight: bold;" class="${diffClass}">${diffValSign}${Number(item.difference_value).toFixed(2)}</td>
                         <td style="text-align: center;">${statusLabel}</td>
                     </tr>
                 `;
@@ -5652,6 +5656,9 @@ createApp({
                                 <th style="text-align: center;">${this.isArabic ? 'الكمية الدفترية' : 'System Qty'}</th>
                                 <th style="text-align: center;">${this.isArabic ? 'الكمية الفعلية' : 'Counted Qty'}</th>
                                 <th style="text-align: center;">${this.isArabic ? 'الفارق' : 'Difference'}</th>
+                                <th style="text-align: center;">${this.isArabic ? 'سعر التكلفة' : 'Unit Cost'}</th>
+                                <th style="text-align: center;">${this.isArabic ? 'قيمة الجرد' : 'Counted Value'}</th>
+                                <th style="text-align: center;">${this.isArabic ? 'قيمة الفارق' : 'Diff Value'}</th>
                                 <th style="text-align: center;">${this.isArabic ? 'الحالة' : 'Status'}</th>
                             </tr>
                         </thead>
