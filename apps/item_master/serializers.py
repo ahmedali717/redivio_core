@@ -124,6 +124,9 @@ class MaterialSerializer(serializers.ModelSerializer):
                     try: recipe_data = json.loads(recipe_data)
                     except: recipe_data = []
                 
+                if not isinstance(recipe_data, (list, tuple, set)):
+                    recipe_data = []
+
                 from apps.restaurant_pos.models import Recipe, RecipeItem
                 recipe, _ = Recipe.objects.update_or_create(
                     opco=mat.opco, finished_good=mat,
@@ -146,6 +149,9 @@ class MaterialSerializer(serializers.ModelSerializer):
                     try: combo_data = json.loads(combo_data)
                     except: combo_data = []
                 
+                if not isinstance(combo_data, (list, tuple, set)):
+                    combo_data = []
+
                 mat.combo_items.all().delete()
                 for c_line in combo_data:
                     if c_line.get('item_id'):
@@ -165,6 +171,12 @@ class MaterialSerializer(serializers.ModelSerializer):
                 else:
                     allowed_terminals = allowed_terminals_data
                 
+                if not isinstance(allowed_terminals, (list, tuple, set)):
+                    if allowed_terminals and not isinstance(allowed_terminals, bool):
+                        allowed_terminals = [allowed_terminals]
+                    else:
+                        allowed_terminals = []
+
                 from apps.restaurant_pos.models import POSTerminal
                 valid_terminals = POSTerminal.objects.filter(id__in=allowed_terminals, opco_id=mat.opco_id)
                 mat.allowed_terminals.set(valid_terminals)
@@ -189,6 +201,13 @@ class MaterialSerializer(serializers.ModelSerializer):
                     except: allowed_terminals = []
                 else:
                     allowed_terminals = allowed_terminals_data
+                
+                if not isinstance(allowed_terminals, (list, tuple, set)):
+                    if allowed_terminals and not isinstance(allowed_terminals, bool):
+                        allowed_terminals = [allowed_terminals]
+                    else:
+                        allowed_terminals = []
+
                 from apps.restaurant_pos.models import POSTerminal
                 valid_terminals = POSTerminal.objects.filter(id__in=allowed_terminals, opco_id=material_instance.opco_id)
                 material_instance.allowed_terminals.set(valid_terminals)
@@ -242,6 +261,9 @@ class MaterialSerializer(serializers.ModelSerializer):
                         try: recipe_data = json.loads(recipe_data)
                         except: recipe_data = []
                     
+                    if not isinstance(recipe_data, (list, tuple, set)):
+                        recipe_data = []
+
                     from apps.restaurant_pos.models import Recipe, RecipeItem
                     recipe, _ = Recipe.objects.update_or_create(
                         opco=mat.opco, finished_good=mat,
@@ -264,6 +286,9 @@ class MaterialSerializer(serializers.ModelSerializer):
                         try: combo_data = json.loads(combo_data)
                         except: combo_data = []
                     
+                    if not isinstance(combo_data, (list, tuple, set)):
+                        combo_data = []
+
                     mat.combo_items.all().delete()
                     for c_line in combo_data:
                         if c_line.get('item_id'):
@@ -283,6 +308,12 @@ class MaterialSerializer(serializers.ModelSerializer):
                     else:
                         allowed_terminals = allowed_terminals_data
                     
+                    if not isinstance(allowed_terminals, (list, tuple, set)):
+                        if allowed_terminals and not isinstance(allowed_terminals, bool):
+                            allowed_terminals = [allowed_terminals]
+                        else:
+                            allowed_terminals = []
+
                     from apps.restaurant_pos.models import POSTerminal
                     valid_terminals = POSTerminal.objects.filter(id__in=allowed_terminals, opco_id=mat.opco_id)
                     mat.allowed_terminals.set(valid_terminals)
@@ -306,6 +337,12 @@ class MaterialSerializer(serializers.ModelSerializer):
             else:
                 allowed_terminals = allowed_terminals_data
             
+            if not isinstance(allowed_terminals, (list, tuple, set)):
+                if allowed_terminals and not isinstance(allowed_terminals, bool):
+                    allowed_terminals = [allowed_terminals]
+                else:
+                    allowed_terminals = []
+
             from apps.restaurant_pos.models import POSTerminal
             valid_terminals = POSTerminal.objects.filter(id__in=allowed_terminals, opco_id=instance.opco_id)
             instance.allowed_terminals.set(valid_terminals)
