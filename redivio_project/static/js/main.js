@@ -5572,6 +5572,128 @@ createApp({
             } finally {
                 this.loading = false;
             }
+        },
+
+        printReviewTable() {
+            if (!this.openingCountReviewItems || this.openingCountReviewItems.length === 0) return;
+            
+            const printWindow = window.open('', '_blank');
+            const opcoName = this.activeOpcoName || (this.opcos.find(o => o.id === this.activeOpcoId) || {}).name || '';
+            const reportDate = new Date().toLocaleString(this.isArabic ? 'ar-EG' : 'en-US');
+            
+            let tableRows = '';
+            this.filteredReviewItems.forEach((item, idx) => {
+                const diffClass = item.difference > 0 ? 'text-emerald-600' : (item.difference < 0 ? 'text-rose-600' : 'text-slate-400');
+                const diffSign = item.difference > 0 ? '+' : '';
+                const statusLabel = item.difference === 0 
+                    ? (this.isArabic ? 'متطابق' : 'Matched') 
+                    : (item.difference > 0 ? (this.isArabic ? 'فائض (+)' : 'Surplus (+)') : (this.isArabic ? 'عجز (-)' : 'Deficit (-)'));
+                
+                tableRows += `
+                    <tr>
+                        <td style="text-align: center;">${idx + 1}</td>
+                        <td style="font-family: monospace;">${item.sku}</td>
+                        <td>
+                            <strong>${item.material_name}</strong>
+                            ${item.has_recipe ? `<span style="font-size: 9px; color: #6366f1; background: #eef2ff; padding: 2px 5px; border-radius: 4px; margin-left: 5px;">${this.isArabic ? 'منتج نهائي' : 'Finished Good'}</span>` : ''}
+                        </td>
+                        <td>${item.bin_code}</td>
+                        <td style="text-align: center; font-family: monospace;">${item.system_qty}</td>
+                        <td style="text-align: center; font-family: monospace; font-weight: bold;">${item.counted_qty}</td>
+                        <td style="text-align: center; font-family: monospace; font-weight: bold;" class="${diffClass}">${diffSign}${item.difference}</td>
+                        <td style="text-align: center;">${statusLabel}</td>
+                    </tr>
+                `;
+            });
+            
+            const isRtl = this.isArabic ? 'dir="rtl"' : '';
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html lang="${this.isArabic ? 'ar' : 'en'}" ${isRtl}>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${this.isArabic ? 'تقرير فروقات الجرد' : 'Inventory Discrepancy Report'}</title>
+                    <style>
+                        body { font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; padding: 20px; }
+                        .header-table { width: 100%; border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-bottom: 20px; }
+                        .report-title { color: #10b981; font-size: 22px; font-weight: bold; }
+                        .items-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        .items-table th { background: #f8fafc; border-bottom: 2px solid #cbd5e1; padding: 10px; text-align: ${this.isArabic ? 'right' : 'left'}; font-size: 11px; }
+                        .items-table td { border-bottom: 1px solid #e2e8f0; padding: 10px; font-size: 12px; }
+                        .text-emerald-600 { color: #10b981; }
+                        .text-rose-600 { color: #f43f5e; }
+                        .text-slate-400 { color: #94a3b8; }
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <table class="header-table">
+                        <tr>
+                            <td>
+                                <h1 style="color: #10b981; margin: 0; font-size: 20px;">${opcoName}</h1>
+                                <div style="font-size: 10px; color: #666; margin-top: 5px;">نظام جرد الرصيد الافتتاحي</div>
+                            </td>
+                            <td style="text-align: ${this.isArabic ? 'left' : 'right'}; vertical-align: top;">
+                                <div class="report-title">${this.isArabic ? 'تقرير فروقات جرد الرصيد الافتتاحي' : 'Opening Stock Discrepancy Report'}</div>
+                                <div style="font-size: 10px; color: #666; margin-top: 5px;">${this.isArabic ? 'تاريخ التقرير' : 'Report Date'}: ${reportDate}</div>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; text-align: center;">#</th>
+                                <th>${this.isArabic ? 'رمز الصنف (SKU)' : 'SKU'}</th>
+                                <th>${this.isArabic ? 'اسم الصنف' : 'Material Name'}</th>
+                                <th>${this.isArabic ? 'رمز الرف / الموقع' : 'Bin Code'}</th>
+                                <th style="text-align: center;">${this.isArabic ? 'الكمية الدفترية' : 'System Qty'}</th>
+                                <th style="text-align: center;">${this.isArabic ? 'الكمية الفعلية' : 'Counted Qty'}</th>
+                                <th style="text-align: center;">${this.isArabic ? 'الفارق' : 'Difference'}</th>
+                                <th style="text-align: center;">${this.isArabic ? 'الحالة' : 'Status'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                    
+                    <div style="margin-top: 80px; width: 100%;">
+                        <table style="width: 100%; font-size: 11px;">
+                            <tr>
+                                <td style="text-align: center; width: 33%;">
+                                    <strong>${this.isArabic ? 'أمين المستودع' : 'Storekeeper'}</strong>
+                                    <div style="margin-top: 40px; border-bottom: 1px dashed #ccc; width: 120px; margin: 30px auto 0;"></div>
+                                </td>
+                                <td style="text-align: center; width: 33%;">
+                                    <strong>${this.isArabic ? 'المراجع الجردي' : 'Auditor'}</strong>
+                                    <div style="margin-top: 40px; border-bottom: 1px dashed #ccc; width: 120px; margin: 30px auto 0;"></div>
+                                </td>
+                                <td style="text-align: center; width: 33%;">
+                                    <strong>${this.isArabic ? 'اعتماد الإدارة' : 'Manager Approval'}</strong>
+                                    <div style="margin-top: 40px; border-bottom: 1px dashed #ccc; width: 120px; margin: 30px auto 0;"></div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.print();
+                                window.close();
+                            }, 500);
+                        };
+                    </script>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.open();
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
         }
     }
 }).mount('#app');

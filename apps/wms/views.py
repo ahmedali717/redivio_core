@@ -951,7 +951,6 @@ class OpeningInventoryAPIView(APIView):
                 return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
 
             try:
-                import pandas as pd
                 if file.name.endswith('.csv'):
                     content = file.read()
                     try:
@@ -964,9 +963,13 @@ class OpeningInventoryAPIView(APIView):
                     rows = [r for r in reader]
                     headers = reader.fieldnames or []
                 else:
-                    df = pd.read_excel(file)
-                    rows = df.to_dict(orient='records')
-                    headers = [str(c).strip() for c in df.columns]
+                    try:
+                        import pandas as pd
+                        df = pd.read_excel(file)
+                        rows = df.to_dict(orient='records')
+                        headers = [str(c).strip() for c in df.columns]
+                    except ImportError:
+                        return Response({"error": "استيراد ملفات Excel غير مدعوم لعدم وجود مكتبة 'pandas'. يرجى رفع ملف بصيغة CSV (.csv). / Excel import is not supported because 'pandas' is not installed. Please upload a CSV (.csv) file."}, status=status.HTTP_400_BAD_REQUEST)
 
                 sku_col = None
                 bin_col = None
