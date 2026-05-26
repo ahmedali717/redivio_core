@@ -853,7 +853,10 @@ class OpeningInventoryAPIView(APIView):
         elif action_param == 'print_sheet':
             from apps.item_master.models import Material
             from django.utils import timezone
-            materials = Material.all_objects.filter(opco=opco, recipe__isnull=True).order_by('name')
+            from django.db.models import Q
+            materials = Material.all_objects.filter(opco=opco).filter(
+                Q(recipe__isnull=True) | Q(recipe__ingredients__isnull=True)
+            ).distinct().order_by('name')
             
             items_data = []
             for m in materials:
@@ -881,8 +884,11 @@ class OpeningInventoryAPIView(APIView):
             import csv
             import io
             from django.http import HttpResponse
+            from django.db.models import Q
 
-            materials = Material.all_objects.filter(opco=opco, recipe__isnull=True).order_by('name')
+            materials = Material.all_objects.filter(opco=opco).filter(
+                Q(recipe__isnull=True) | Q(recipe__ingredients__isnull=True)
+            ).distinct().order_by('name')
             
             output = io.StringIO()
             output.write('\ufeff')  # UTF-8 BOM
@@ -1006,7 +1012,11 @@ class OpeningInventoryAPIView(APIView):
                         errors.append(f"السطر {idx + 2}: الصنف ذو الرمز ({sku_val}) غير موجود بالنظام.")
                         continue
 
-                    has_recipe = hasattr(material, 'recipe') and material.recipe is not None
+                    has_recipe = False
+                    try:
+                        has_recipe = material.recipe and material.recipe.ingredients.exists()
+                    except ObjectDoesNotExist:
+                        pass
                     bin_obj = StorageBin.objects.filter(code=bin_val, storage_location__plant__opco=opco).first()
                     
                     system_qty = 0.0
@@ -1030,7 +1040,11 @@ class OpeningInventoryAPIView(APIView):
                 for q in all_quants:
                     key = (q.material.sku, q.storage_bin.code)
                     if key not in uploaded_keys:
-                        has_recipe = hasattr(q.material, 'recipe') and q.material.recipe is not None
+                        has_recipe = False
+                        try:
+                            has_recipe = q.material.recipe and q.material.recipe.ingredients.exists()
+                        except ObjectDoesNotExist:
+                            pass
                         comparison_items.append({
                             "sku": q.material.sku,
                             "material_name": q.material.name,
