@@ -220,6 +220,12 @@
                         <h4 class="font-bold text-slate-800 text-base">
                             [[ isArabic ? 'مراجعة وتأكيد جدول الفروقات المخزنية' : 'Review Stock Differences Table' ]]
                         </h4>
+                        <!-- Apply button in header -->
+                        <button @click="commitInventoryCount" :disabled="loading" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[10px] flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50">
+                            <i v-if="loading" class="fas fa-spinner animate-spin"></i>
+                            <i v-else class="fas fa-circle-check"></i>
+                            [[ isArabic ? 'تطبيق واعتماد الجرد (Apply)' : 'Apply' ]]
+                        </button>
                         <button @click="printReviewTable" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] flex items-center gap-1.5 transition-all shadow-sm">
                             <i class="fas fa-print"></i>
                             [[ isArabic ? 'طباعة تقرير الفروقات' : 'Print Discrepancy Report' ]]
@@ -237,19 +243,76 @@
                     <table class="w-full text-right text-xs">
                         <thead class="bg-slate-50 border-b border-slate-100 text-slate-500 uppercase font-black">
                             <tr>
-                                <th class="px-6 py-4">[[ isArabic ? 'رمز الصنف (SKU)' : 'SKU' ]]</th>
-                                <th class="px-6 py-4">[[ isArabic ? 'اسم الصنف' : 'Material Name' ]]</th>
-                                <th class="px-6 py-4">[[ isArabic ? 'رمز الرف / الموقع' : 'Bin Code' ]]</th>
-                                <th class="px-6 py-4 text-center">[[ isArabic ? 'الكمية الدفترية' : 'System Qty' ]]</th>
-                                <th class="px-6 py-4 text-center">[[ isArabic ? 'الكمية الفعلية' : 'Counted Qty' ]]</th>
-                                <th class="px-6 py-4 text-center">[[ isArabic ? 'الفارق' : 'Difference' ]]</th>
-                                <th class="px-6 py-4 text-center">[[ isArabic ? 'سعر التكلفة' : 'Unit Cost' ]]</th>
-                                <th class="px-6 py-4 text-center">[[ isArabic ? 'قيمة الجرد' : 'Counted Value' ]]</th>
-                                <th class="px-6 py-4 text-center">[[ isArabic ? 'قيمة الفارق' : 'Diff Value' ]]</th>
-                                <th class="px-6 py-4 text-center">[[ isArabic ? 'الحالة' : 'Status' ]]</th>
+                                <th class="px-6 py-4 cursor-pointer select-none hover:bg-slate-100 transition-colors" @click="sortReviewItems('sku')">
+                                    [[ isArabic ? 'رمز الصنف (SKU)' : 'SKU' ]]
+                                    <i v-if="openingCountSortKey === 'sku'" class="fas ml-1" :class="openingCountSortAsc ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </th>
+                                <th class="px-6 py-4 cursor-pointer select-none hover:bg-slate-100 transition-colors" @click="sortReviewItems('material_name')">
+                                    [[ isArabic ? 'اسم الصنف' : 'Material Name' ]]
+                                    <i v-if="openingCountSortKey === 'material_name'" class="fas ml-1" :class="openingCountSortAsc ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </th>
+                                <th class="px-6 py-4 cursor-pointer select-none hover:bg-slate-100 transition-colors" @click="sortReviewItems('bin_code')">
+                                    [[ isArabic ? 'رمز الرف / الموقع' : 'Bin Code' ]]
+                                    <i v-if="openingCountSortKey === 'bin_code'" class="fas ml-1" :class="openingCountSortAsc ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </th>
+                                <th class="px-6 py-4 text-center cursor-pointer select-none hover:bg-slate-100 transition-colors" @click="sortReviewItems('system_qty')">
+                                    [[ isArabic ? 'الكمية الدفترية' : 'System Qty' ]]
+                                    <i v-if="openingCountSortKey === 'system_qty'" class="fas ml-1" :class="openingCountSortAsc ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </th>
+                                <th class="px-6 py-4 text-center cursor-pointer select-none hover:bg-slate-100 transition-colors" @click="sortReviewItems('counted_qty')">
+                                    [[ isArabic ? 'الكمية الفعلية' : 'Counted Qty' ]]
+                                    <i v-if="openingCountSortKey === 'counted_qty'" class="fas ml-1" :class="openingCountSortAsc ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </th>
+                                <th class="px-6 py-4 text-center cursor-pointer select-none hover:bg-slate-100 transition-colors" @click="sortReviewItems('difference')">
+                                    [[ isArabic ? 'الفارق' : 'Difference' ]]
+                                    <i v-if="openingCountSortKey === 'difference'" class="fas ml-1" :class="openingCountSortAsc ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </th>
+                                <th class="px-6 py-4 text-center cursor-pointer select-none hover:bg-slate-100 transition-colors" @click="sortReviewItems('standard_price')">
+                                    [[ isArabic ? 'سعر التكلفة' : 'Unit Cost' ]]
+                                    <i v-if="openingCountSortKey === 'standard_price'" class="fas ml-1" :class="openingCountSortAsc ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </th>
+                                <th class="px-6 py-4 text-center cursor-pointer select-none hover:bg-slate-100 transition-colors" @click="sortReviewItems('system_value')">
+                                    [[ isArabic ? 'القيمة الدفترية' : 'System Value' ]]
+                                    <i v-if="openingCountSortKey === 'system_value'" class="fas ml-1" :class="openingCountSortAsc ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </th>
+                                <th class="px-6 py-4 text-center cursor-pointer select-none hover:bg-slate-100 transition-colors" @click="sortReviewItems('counted_value')">
+                                    [[ isArabic ? 'قيمة الجرد' : 'Counted Value' ]]
+                                    <i v-if="openingCountSortKey === 'counted_value'" class="fas ml-1" :class="openingCountSortAsc ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </th>
+                                <th class="px-6 py-4 text-center cursor-pointer select-none hover:bg-slate-100 transition-colors" @click="sortReviewItems('difference_value')">
+                                    [[ isArabic ? 'قيمة الفارق' : 'Diff Value' ]]
+                                    <i v-if="openingCountSortKey === 'difference_value'" class="fas ml-1" :class="openingCountSortAsc ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                </th>
+                                <th class="px-6 py-4 text-center select-none">[[ isArabic ? 'الحالة' : 'Status' ]]</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50 text-slate-700 font-semibold">
+                            <!-- Grand Summary Row -->
+                            <tr class="bg-slate-100/90 font-black text-slate-900 border-b-2 border-slate-200">
+                                <td class="px-6 py-4 text-center" colspan="3">
+                                    [[ isArabic ? 'الإجمالي العام (الملخص)' : 'Grand Totals (Summary)' ]]
+                                </td>
+                                <td class="px-6 py-4 text-center font-mono">[[ openingCountTotals.systemQty ]]</td>
+                                <td class="px-6 py-4 text-center font-mono">[[ openingCountTotals.countedQty ]]</td>
+                                <td class="px-6 py-4 text-center font-mono">
+                                    <span :class="openingCountTotals.difference > 0 ? 'text-emerald-600' : (openingCountTotals.difference < 0 ? 'text-rose-600' : 'text-slate-500')">
+                                        [[ openingCountTotals.difference > 0 ? '+' : '' ]][[ openingCountTotals.difference ]]
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center font-mono">-</td>
+                                <td class="px-6 py-4 text-center font-mono">[[ Number(openingCountTotals.systemValue).toFixed(2) ]]</td>
+                                <td class="px-6 py-4 text-center font-mono">[[ Number(openingCountTotals.countedValue).toFixed(2) ]]</td>
+                                <td class="px-6 py-4 text-center font-mono font-bold">
+                                    <span :class="openingCountTotals.differenceValue > 0 ? 'text-emerald-600' : (openingCountTotals.differenceValue < 0 ? 'text-rose-600' : 'text-slate-500')">
+                                        [[ openingCountTotals.differenceValue > 0 ? '+' : '' ]][[ Number(openingCountTotals.differenceValue).toFixed(2) ]]
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="text-[9px] font-bold text-slate-400 bg-slate-200/60 px-2 py-0.5 rounded-full uppercase">[[ isArabic ? 'ملخص' : 'SUMMARY' ]]</span>
+                                </td>
+                            </tr>
+
+                            <!-- Item Rows -->
                             <tr v-for="item in filteredReviewItems" :key="item.sku + '_' + item.bin_code" class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-6 py-4 font-mono">[[ item.sku ]]</td>
                                 <td class="px-6 py-4">
@@ -269,6 +332,7 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center font-mono">[[ item.standard_price ]]</td>
+                                <td class="px-6 py-4 text-center font-mono font-bold text-slate-800">[[ Number(item.system_value).toFixed(2) ]]</td>
                                 <td class="px-6 py-4 text-center font-mono font-bold text-slate-800">[[ Number(item.counted_value).toFixed(2) ]]</td>
                                 <td class="px-6 py-4 text-center font-mono font-bold">
                                     <span :class="item.difference_value > 0 ? 'text-emerald-600' : (item.difference_value < 0 ? 'text-rose-600' : 'text-slate-400')">

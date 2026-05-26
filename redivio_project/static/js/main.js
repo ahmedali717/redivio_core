@@ -128,6 +128,8 @@ createApp({
             openingCountReviewItems: [],
             openingCountErrors: [],
             openingCountSearchQuery: '',
+            openingCountSortKey: '',
+            openingCountSortAsc: true,
 
             // 2. تحديث القائمة الجانبية لتكون "موديولات" بدلاً من شاشات
             sidebarGroups: {
@@ -687,12 +689,60 @@ createApp({
         filteredReviewItems() {
             if (!this.openingCountReviewItems) return [];
             const query = (this.openingCountSearchQuery || '').toLowerCase().trim();
-            if (!query) return this.openingCountReviewItems;
-            return this.openingCountReviewItems.filter(item => {
-                return (item.sku || '').toLowerCase().includes(query) || 
-                       (item.material_name || '').toLowerCase().includes(query) ||
-                       (item.bin_code || '').toLowerCase().includes(query);
+            let items = this.openingCountReviewItems;
+            if (query) {
+                items = items.filter(item => {
+                    return (item.sku || '').toLowerCase().includes(query) || 
+                           (item.material_name || '').toLowerCase().includes(query) ||
+                           (item.bin_code || '').toLowerCase().includes(query);
+                });
+            }
+            if (this.openingCountSortKey) {
+                const key = this.openingCountSortKey;
+                const asc = this.openingCountSortAsc ? 1 : -1;
+                items = [...items].sort((a, b) => {
+                    let valA = a[key];
+                    let valB = b[key];
+                    if (!isNaN(valA) && !isNaN(valB)) {
+                        valA = Number(valA);
+                        valB = Number(valB);
+                    } else {
+                        valA = (valA || '').toString().toLowerCase();
+                        valB = (valB || '').toString().toLowerCase();
+                    }
+                    if (valA < valB) return -1 * asc;
+                    if (valA > valB) return 1 * asc;
+                    return 0;
+                });
+            }
+            return items;
+        },
+        openingCountTotals() {
+            let totalSystemQty = 0;
+            let totalCountedQty = 0;
+            let totalDiffQty = 0;
+            let totalSystemValue = 0;
+            let totalCountedValue = 0;
+            let totalDiffValue = 0;
+
+            const items = this.filteredReviewItems || [];
+            items.forEach(item => {
+                totalSystemQty += parseFloat(item.system_qty) || 0;
+                totalCountedQty += parseFloat(item.counted_qty) || 0;
+                totalDiffQty += parseFloat(item.difference) || 0;
+                totalSystemValue += parseFloat(item.system_value) || 0;
+                totalCountedValue += parseFloat(item.counted_value) || 0;
+                totalDiffValue += parseFloat(item.difference_value) || 0;
             });
+
+            return {
+                systemQty: totalSystemQty,
+                countedQty: totalCountedQty,
+                difference: totalDiffQty,
+                systemValue: totalSystemValue,
+                countedValue: totalCountedValue,
+                differenceValue: totalDiffValue
+            };
         }
     },
 
@@ -5461,6 +5511,8 @@ createApp({
                     this.isInventoryCountActive = !!data.is_inventory_active;
                     this.openingCountReviewItems = [];
                     this.openingCountErrors = [];
+                    this.openingCountSortKey = '';
+                    this.openingCountSortAsc = true;
                     this.showToast(
                         this.isArabic ? "تم إلغاء الجرد وإلغاء تجميد حركة العمليات بنجاح." : "Inventory count cancelled and system unfrozen successfully.",
                         "success"
@@ -5528,6 +5580,15 @@ createApp({
             }
         },
 
+        sortReviewItems(key) {
+            if (this.openingCountSortKey === key) {
+                this.openingCountSortAsc = !this.openingCountSortAsc;
+            } else {
+                this.openingCountSortKey = key;
+                this.openingCountSortAsc = true;
+            }
+        },
+
         async commitInventoryCount() {
             if (!this.activeOpcoId) return;
             if (!this.openingCountReviewItems || this.openingCountReviewItems.length === 0) {
@@ -5557,6 +5618,8 @@ createApp({
                     this.isInventoryCountActive = false;
                     this.openingCountReviewItems = [];
                     this.openingCountErrors = [];
+                    this.openingCountSortKey = '';
+                    this.openingCountSortAsc = true;
                     this.showToast(
                         this.isArabic ? "تم اعتماد وحفظ الجرد الافتتاحي وتعديل المخازن بنجاح." : "Opening inventory count committed and stock adjusted successfully.",
                         "success"
@@ -5582,6 +5645,28 @@ createApp({
             const reportDate = new Date().toLocaleString(this.isArabic ? 'ar-EG' : 'en-US');
             
             let tableRows = '';
+            
+            // Add Summary Row at the top of table rows in print layout
+            const totals = this.openingCountTotals;
+            const totDiffClass = totals.difference > 0 ? 'text-emerald-600' : (totals.difference < 0 ? 'text-rose-600' : 'text-slate-400');
+            const totDiffSign = totals.difference > 0 ? '+' : '';
+            const totDiffValSign = totals.differenceValue > 0 ? '+' : '';
+            
+            tableRows += `
+                <tr style="background: #f1f5f9; font-weight: bold; border-bottom: 2px solid #cbd5e1;">
+                    <td style="text-align: center;">-</td>
+                    <td colspan="3" style="text-align: center;"><strong>${this.isArabic ? 'الإجمالي العام (الملخص)' : 'Grand Totals (Summary)'}</strong></td>
+                    <td style="text-align: center; font-family: monospace;">${totals.systemQty}</td>
+                    <td style="text-align: center; font-family: monospace;">${totals.countedQty}</td>
+                    <td style="text-align: center; font-family: monospace;" class="${totDiffClass}">${totDiffSign}${totals.difference}</td>
+                    <td style="text-align: center; font-family: monospace;">-</td>
+                    <td style="text-align: center; font-family: monospace;">${Number(totals.systemValue).toFixed(2)}</td>
+                    <td style="text-align: center; font-family: monospace;">${Number(totals.countedValue).toFixed(2)}</td>
+                    <td style="text-align: center; font-family: monospace;" class="${totDiffClass}">${totDiffValSign}${Number(totals.differenceValue).toFixed(2)}</td>
+                    <td style="text-align: center; font-size: 10px; color: #64748b;">${this.isArabic ? 'ملخص' : 'SUMMARY'}</td>
+                </tr>
+            `;
+
             this.filteredReviewItems.forEach((item, idx) => {
                 const diffClass = item.difference > 0 ? 'text-emerald-600' : (item.difference < 0 ? 'text-rose-600' : 'text-slate-400');
                 const diffSign = item.difference > 0 ? '+' : '';
@@ -5603,6 +5688,7 @@ createApp({
                         <td style="text-align: center; font-family: monospace; font-weight: bold;">${item.counted_qty}</td>
                         <td style="text-align: center; font-family: monospace; font-weight: bold;" class="${diffClass}">${diffSign}${item.difference}</td>
                         <td style="text-align: center; font-family: monospace;">${Number(item.standard_price).toFixed(2)}</td>
+                        <td style="text-align: center; font-family: monospace; font-weight: bold;">${Number(item.system_value).toFixed(2)}</td>
                         <td style="text-align: center; font-family: monospace; font-weight: bold;">${Number(item.counted_value).toFixed(2)}</td>
                         <td style="text-align: center; font-family: monospace; font-weight: bold;" class="${diffClass}">${diffValSign}${Number(item.difference_value).toFixed(2)}</td>
                         <td style="text-align: center;">${statusLabel}</td>
@@ -5657,6 +5743,7 @@ createApp({
                                 <th style="text-align: center;">${this.isArabic ? 'الكمية الفعلية' : 'Counted Qty'}</th>
                                 <th style="text-align: center;">${this.isArabic ? 'الفارق' : 'Difference'}</th>
                                 <th style="text-align: center;">${this.isArabic ? 'سعر التكلفة' : 'Unit Cost'}</th>
+                                <th style="text-align: center;">${this.isArabic ? 'القيمة الدفترية' : 'System Value'}</th>
                                 <th style="text-align: center;">${this.isArabic ? 'قيمة الجرد' : 'Counted Value'}</th>
                                 <th style="text-align: center;">${this.isArabic ? 'قيمة الفارق' : 'Diff Value'}</th>
                                 <th style="text-align: center;">${this.isArabic ? 'الحالة' : 'Status'}</th>
