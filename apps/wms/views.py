@@ -1012,7 +1012,11 @@ class OpeningInventoryAPIView(APIView):
 
                     material = Material.all_objects.filter(sku=sku_val, opco=opco).first()
                     if not material:
-                        errors.append(f"السطر {idx + 2}: الصنف ذو الرمز ({sku_val}) غير موجود بالنظام.")
+                        # Try matching by name as fallback
+                        material = Material.all_objects.filter(name=sku_val, opco=opco).first()
+
+                    if not material:
+                        errors.append(f"السطر {idx + 2}: الصنف ذو الرمز أو الاسم ({sku_val}) غير موجود بالنظام.")
                         continue
 
                     has_recipe = False
@@ -1029,7 +1033,7 @@ class OpeningInventoryAPIView(APIView):
                             system_qty = float(quant.quantity)
 
                     comparison_items.append({
-                        "sku": sku_val,
+                        "sku": material.sku,
                         "material_name": material.name,
                         "bin_code": bin_val,
                         "system_qty": system_qty,
@@ -1037,7 +1041,7 @@ class OpeningInventoryAPIView(APIView):
                         "difference": counted_qty - system_qty,
                         "has_recipe": has_recipe
                     })
-                    uploaded_keys.add((sku_val, bin_val))
+                    uploaded_keys.add((material.sku, bin_val))
 
                 all_quants = StockQuant.objects.filter(opco=opco).select_related('material', 'storage_bin')
                 for q in all_quants:
