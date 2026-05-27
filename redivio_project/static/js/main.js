@@ -3729,7 +3729,17 @@ createApp({
                     // طباعة الإذن فوراً
                     const printMsg = isDelivery ? "هل تريد طباعة إذن الصرف الآن؟" : "هل تريد طباعة إذن الإضافة الآن؟";
                     const printMsgEn = isDelivery ? "Print Delivery Note now?" : "Print GRN now?";
-                    if (confirm(this.isArabic ? printMsg : printMsgEn)) {
+                    const { isConfirmed } = await Swal.fire({
+                        title: this.isArabic ? 'طباعة المستند' : 'Print Document',
+                        text: this.isArabic ? printMsg : printMsgEn,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#10b981',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: this.isArabic ? 'نعم، طباعة' : 'Yes, print',
+                        cancelButtonText: this.isArabic ? 'لا' : 'No'
+                    });
+                    if (isConfirmed) {
                         if (isDelivery) {
                             this.printDelivery(data.id);
                         } else {
@@ -5377,7 +5387,17 @@ createApp({
         },
 
         async deleteCompanyUser(id) {
-            if (!confirm(this.isArabic ? "هل أنت متأكد من حذف هذا المستخدم؟" : "Are you sure you want to delete this user?")) return;
+            const { isConfirmed } = await Swal.fire({
+                title: this.isArabic ? 'تأكيد الحذف' : 'Confirm Delete',
+                text: this.isArabic ? "هل أنت متأكد من حذف هذا المستخدم؟" : "Are you sure you want to delete this user?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: this.isArabic ? 'نعم، حذف' : 'Yes, delete',
+                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel'
+            });
+            if (!isConfirmed) return;
             try {
                 const res = await fetch(`/api/company-users/${id}/`, {
                     method: 'DELETE',
@@ -5489,10 +5509,17 @@ createApp({
 
         async cancelInventoryCount() {
             if (!this.activeOpcoId) return;
-            const confirmed = confirm(
-                this.isArabic ? "هل أنت متأكد من إلغاء عملية الجرد؟ سيتم إلغاء تجميد الحركات فوراً." : "Are you sure you want to cancel the count? Transactions will be unfrozen immediately."
-            );
-            if (!confirmed) return;
+            const { isConfirmed } = await Swal.fire({
+                title: this.isArabic ? 'تنبيه' : 'Warning',
+                text: this.isArabic ? "هل أنت متأكد من إلغاء عملية الجرد؟ سيتم إلغاء تجميد الحركات فوراً." : "Are you sure you want to cancel the count? Transactions will be unfrozen immediately.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: this.isArabic ? 'نعم، إلغاء الجرد' : 'Yes, cancel count',
+                cancelButtonText: this.isArabic ? 'تراجع' : 'Cancel'
+            });
+            if (!isConfirmed) return;
             this.loading = true;
             try {
                 const res = await fetch('/api/wms/opening-inventory/', {
@@ -5595,10 +5622,17 @@ createApp({
                 this.showToast(this.isArabic ? "لا توجد كميات تم رفعها لاعتمادها." : "No uploaded quantities to commit.", "warning");
                 return;
             }
-            const confirmed = confirm(
-                this.isArabic ? "تنبيه: هل أنت متأكد من اعتماد وحفظ الجرد؟ سيتم تعديل أرصدة الكميات الدفترية لتطابق الجرد الفعلي فوراً." : "Warning: Are you sure you want to commit the count? System stock balances will be adjusted to match physical counts immediately."
-            );
-            if (!confirmed) return;
+            const { isConfirmed } = await Swal.fire({
+                title: this.isArabic ? 'تأكيد اعتماد الجرد' : 'Confirm Save',
+                text: this.isArabic ? "تنبيه: هل أنت متأكد من اعتماد وحفظ الجرد؟ سيتم تعديل أرصدة الكميات الدفترية لتطابق الجرد الفعلي فوراً." : "Warning: Are you sure you want to commit the count? System stock balances will be adjusted to match physical counts immediately.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: this.isArabic ? 'نعم، اعتماد وحفظ' : 'Yes, commit and save',
+                cancelButtonText: this.isArabic ? 'تراجع' : 'Cancel'
+            });
+            if (!isConfirmed) return;
             this.loading = true;
             try {
                 const res = await fetch('/api/wms/opening-inventory/', {

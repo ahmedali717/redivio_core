@@ -1108,7 +1108,7 @@ class OpeningInventoryAPIView(APIView):
                     for item in items:
                         sku = item.get('sku')
                         bin_code = item.get('bin_code')
-                        counted_qty = float(item.get('counted_qty', 0))
+                        counted_qty = Decimal(str(item.get('counted_qty', 0)))
 
                         material = Material.all_objects.filter(sku=sku, opco=opco).first()
                         if not material:
@@ -1125,7 +1125,7 @@ class OpeningInventoryAPIView(APIView):
                             bin_obj = StorageBin.objects.create(storage_location=loc, code=bin_code)
 
                         quant = StockQuant.objects.filter(storage_bin=bin_obj, material=material, opco=opco).first()
-                        system_qty = float(quant.quantity) if quant else 0.0
+                        system_qty = quant.quantity if quant else Decimal('0.0')
 
                         diff = counted_qty - system_qty
                         if diff == 0:
