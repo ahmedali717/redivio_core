@@ -578,45 +578,50 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         resolved_vendor = None
         resolved_customer = None
         
-        if move_type == 'IN':
-            if manual_contact_name:
-                try:
-                    Vendor = apps.get_model('procurement', 'Vendor')
-                    manual_code = f"V-MAN-{manual_contact_name[:10].upper()}-{opco_id}"
-                    resolved_vendor, _ = Vendor.objects.get_or_create(
-                        opco_id=opco_id, name=manual_contact_name,
-                        defaults={'code': manual_code}
-                    )
-                    reference_text = f"Receipt from {resolved_vendor.name}"
-                    manual_contact_name = resolved_vendor.name # Sync name
-                except Exception: reference_text = f"Receipt from {manual_contact_name}"
-            elif contact_id:
-                try:
-                    Vendor = apps.get_model('procurement', 'Vendor')
-                    resolved_vendor = Vendor.objects.get(id=contact_id)
-                    manual_contact_name = resolved_vendor.name
-                    reference_text = f"Receipt from {resolved_vendor.name}"
-                except Exception: pass
+        if receipt_type == 'ADJUSTMENT':
+            reference_text = f"Adjustment: {manual_contact_name}" if manual_contact_name else "Stock Adjustment"
+        elif receipt_type == 'TRANSFER':
+            reference_text = f"Transfer: {manual_contact_name}" if manual_contact_name else "Stock Transfer"
+        else:
+            if move_type == 'IN':
+                if manual_contact_name:
+                    try:
+                        Vendor = apps.get_model('procurement', 'Vendor')
+                        manual_code = f"V-MAN-{manual_contact_name[:10].upper()}-{opco_id}"
+                        resolved_vendor, _ = Vendor.objects.get_or_create(
+                            opco_id=opco_id, name=manual_contact_name,
+                            defaults={'code': manual_code}
+                        )
+                        reference_text = f"Receipt from {resolved_vendor.name}"
+                        manual_contact_name = resolved_vendor.name # Sync name
+                    except Exception: reference_text = f"Receipt from {manual_contact_name}"
+                elif contact_id:
+                    try:
+                        Vendor = apps.get_model('procurement', 'Vendor')
+                        resolved_vendor = Vendor.objects.get(id=contact_id)
+                        manual_contact_name = resolved_vendor.name
+                        reference_text = f"Receipt from {resolved_vendor.name}"
+                    except Exception: pass
 
-        elif move_type == 'OUT':
-            if manual_contact_name:
-                try:
-                    Customer = apps.get_model('sales', 'Customer')
-                    manual_code = f"C-MAN-{manual_contact_name[:10].upper()}-{opco_id}"
-                    resolved_customer, _ = Customer.objects.get_or_create(
-                        opco_id=opco_id, name=manual_contact_name,
-                        defaults={'code': manual_code}
-                    )
-                    reference_text = f"Issue to {resolved_customer.name}"
-                    manual_contact_name = resolved_customer.name # Sync name
-                except Exception: reference_text = f"Issue to {manual_contact_name}"
-            elif contact_id:
-                try:
-                    Customer = apps.get_model('sales', 'Customer')
-                    resolved_customer = Customer.objects.get(id=contact_id)
-                    manual_contact_name = resolved_customer.name
-                    reference_text = f"Issue to {resolved_customer.name}"
-                except Exception: pass
+            elif move_type == 'OUT':
+                if manual_contact_name:
+                    try:
+                        Customer = apps.get_model('sales', 'Customer')
+                        manual_code = f"C-MAN-{manual_contact_name[:10].upper()}-{opco_id}"
+                        resolved_customer, _ = Customer.objects.get_or_create(
+                            opco_id=opco_id, name=manual_contact_name,
+                            defaults={'code': manual_code}
+                        )
+                        reference_text = f"Issue to {resolved_customer.name}"
+                        manual_contact_name = resolved_customer.name # Sync name
+                    except Exception: reference_text = f"Issue to {manual_contact_name}"
+                elif contact_id:
+                    try:
+                        Customer = apps.get_model('sales', 'Customer')
+                        resolved_customer = Customer.objects.get(id=contact_id)
+                        manual_contact_name = resolved_customer.name
+                        reference_text = f"Issue to {resolved_customer.name}"
+                    except Exception: pass
 
         # 🚀 1. Process Material Inbound (Receipt)
         if move_type == 'IN':
