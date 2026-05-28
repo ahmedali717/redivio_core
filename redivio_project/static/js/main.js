@@ -763,6 +763,19 @@ createApp({
             if (newView === 'restaurant_pos_module') {
                 this.fetchPOSTerminals();
             }
+        },
+        posMode: {
+            immediate: true,
+            handler(newMode) {
+                if (newMode === 'direct') {
+                    if (this.posOrderType === 'DINE_IN') {
+                        this.posOrderType = 'TAKEAWAY';
+                    }
+                    if (['floor_layout', 'kitchen'].includes(this.posTab)) {
+                        this.posTab = 'cashier';
+                    }
+                }
+            }
         }
     },
 
@@ -1724,6 +1737,11 @@ createApp({
                         this.posCart = [];
                         this.posTableNumber = '';
                         this.posGuestCount = 1;
+                        if (this.posMode === 'direct') {
+                            this.posOrderType = 'TAKEAWAY';
+                        } else {
+                            this.posOrderType = 'DINE_IN';
+                        }
                         this.refreshAllData(); // 🚀 تحديث شامل لكل البيانات والتقارير وحركات المخزن فوراً
                     } else {
                         const err = await payRes.json();
