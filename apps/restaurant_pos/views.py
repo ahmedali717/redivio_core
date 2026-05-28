@@ -693,6 +693,8 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         if not session:
             return Response({'error': 'No active session found'}, status=status.HTTP_400_BAD_REQUEST)
 
+        from django.db.models import Sum
+
         # ✋ منع إغلاق الوردية إذا كان هناك أوردر مفتوح (مسودة أو قيد التحضير)
         open_orders = POSOrder.objects.filter(session=session, status__in=['draft', 'inprogress'])
         if open_orders.exists():
@@ -702,8 +704,6 @@ class POSOrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        from .models import POSOrder
-        from django.db.models import Sum
         valid_statuses = ['paid', 'inprogress', 'done']
         orders = POSOrder.objects.filter(session=session, status__in=valid_statuses)
         cash_sales = orders.filter(payment_method='cash').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
