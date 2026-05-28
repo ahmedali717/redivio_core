@@ -1992,10 +1992,20 @@ createApp({
                         const data = await res.json();
                         this.activePOSSession = null;
                         this.showToast(this.isArabic ? "تم إغلاق الوردية" : "Shift closed");
+                    } else {
+                        const errData = await res.json().catch(() => ({}));
+                        const errMsg = errData.error || (this.isArabic ? "حدث خطأ أثناء إغلاق الوردية" : "Error closing session");
+                        Swal.fire({
+                            icon: 'error',
+                            title: this.isArabic ? 'لا يمكن إغلاق الوردية' : 'Cannot Close Shift',
+                            text: errMsg,
+                            confirmButtonText: this.isArabic ? 'حسناً' : 'OK',
+                            confirmButtonColor: '#ef4444'
+                        });
                     }
                 }
             } catch (e) {
-                this.showToast("Error closing session", "error");
+                this.showToast(this.isArabic ? "حدث خطأ أثناء إغلاق الوردية" : "Error closing session", "error");
             } finally {
                 this.loading = false;
             }

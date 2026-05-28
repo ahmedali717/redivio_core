@@ -693,6 +693,15 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         if not session:
             return Response({'error': 'No active session found'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # ✋ منع إغلاق الوردية إذا كان هناك أوردر مفتوح (مسودة أو قيد التحضير)
+        open_orders = POSOrder.objects.filter(session=session, status__in=['draft', 'inprogress'])
+        if open_orders.exists():
+            open_count = open_orders.count()
+            return Response(
+                {'error': f'لا يمكن إغلاق الوردية! يوجد {open_count} طلب مفتوح لم يتم تسويته بعد. يرجى إتمام أو إلغاء جميع الطلبات المفتوحة قبل إغلاق الوردية.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         from .models import POSOrder
         from django.db.models import Sum
         valid_statuses = ['paid', 'inprogress', 'done']
