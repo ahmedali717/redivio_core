@@ -79,7 +79,39 @@ class Modifier(models.Model):
 
 
 # =========================================================
-# 2. محرك الطلبات ونقاط البيع (POS Orders Engine)
+# 2. أكواد العروض والخصومات (Promo Codes & Discounts)
+# =========================================================
+
+class PromoCode(models.Model):
+    """
+    كود العرض / الخصم المسبق التعريف
+    """
+    opco = models.ForeignKey(OpCo, on_delete=models.CASCADE, related_name='promo_codes')
+    code = models.CharField(max_length=50, help_text="كود العرض (مثال: WELCOME10)")
+    description = models.CharField(max_length=200, null=True, blank=True, help_text="وصف العرض")
+
+    DISCOUNT_TYPES = [
+        ('percentage', 'نسبة مئوية (%)'),
+        ('fixed', 'قيمة ثابتة (Fixed Amount)'),
+    ]
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPES, default='percentage')
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, help_text="قيمة الخصم (نسبة أو مبلغ)")
+
+    min_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="الحد الأدنى للطلب لتطبيق الكود")
+    max_uses = models.IntegerField(default=0, help_text="أقصى عدد مرات الاستخدام (0 = غير محدود)")
+    used_count = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    expires_at = models.DateTimeField(null=True, blank=True, help_text="تاريخ انتهاء العرض (اختياري)")
+
+    class Meta:
+        unique_together = ('opco', 'code')
+
+    def __str__(self):
+        return f"{self.code} ({self.discount_value}{'%' if self.discount_type == 'percentage' else ' EGP'})"
+
+
+# =========================================================
+# 3. محرك الطلبات ونقاط البيع (POS Orders Engine)
 # =========================================================
 
 class POSTerminal(models.Model):
@@ -174,7 +206,20 @@ class POSOrder(models.Model):
     
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
+    # الخصومات والعروض
+    DISCOUNT_TYPES = [
+        ('none', 'بدون خصم'),
+        ('percentage', 'نسبة مئوية (%)'),
+        ('fixed', 'قيمة ثابتة (Fixed Amount)'),
+    ]
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPES, default='none')
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="قيمة الخصم (% أو مبلغ)")
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="قيمة الخصم الفعلية بالجنيه")
+    promo_code = models.ForeignKey('PromoCode', null=True, blank=True, on_delete=models.SET_NULL, related_name='orders')
+    promo_code_text = models.CharField(max_length=50, null=True, blank=True, help_text="نص كود العرض المستخدم")
+    discount_approved_by = models.CharField(max_length=100, null=True, blank=True, help_text="اسم من وافق على الخصم")
+
     STATUS_CHOICES = [
         ('draft', 'Draft (لم يدفع)'),
         ('paid', 'Received (تم الاستلام - في المطبخ)'),

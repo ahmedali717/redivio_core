@@ -1,8 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import POSOrder, POSSession, Recipe, RestaurantFloor, RestaurantTable, POSTerminal
-from .serializers import POSOrderSerializer, RestaurantFloorSerializer, RestaurantTableSerializer, POSTerminalSerializer
+from .models import POSOrder, POSSession, Recipe, RestaurantFloor, RestaurantTable, POSTerminal, PromoCode
+from .serializers import POSOrderSerializer, RestaurantFloorSerializer, RestaurantTableSerializer, POSTerminalSerializer, PromoCodeSerializer
 from django.utils import timezone
 
 class POSOrderViewSet(viewsets.ModelViewSet):
@@ -813,3 +813,70 @@ class POSTerminalViewSet(viewsets.ModelViewSet):
                 )
                 queryset = POSTerminal.objects.filter(opco_id=opco_id)
         return queryset.order_by('code')
+
+
+class PromoCodeViewSet(viewsets.ModelViewSet):
+    """
+    إدارة أكواد العروض
+    """
+    queryset = PromoCode.objects.all()
+    serializer_class = PromoCodeSerializer
+
+    def get_queryset(self):
+        opco_id = self.request.query_params.get('opco')
+        if not opco_id or opco_id in ['null', 'undefined']:
+            return PromoCode.objects.none()
+        try:
+            opco_id = int(opco_id)
+        except (ValueError, TypeError):
+            return PromoCode.objects.none()
+        return PromoCode.objects.filter(opco_id=opco_id).order_by('code')
+
+    @action(detail=False, methods=['post'])
+    def validate_code(self, request):
+        """
+        التحقق من صحة كود العرض وإرجاع بيانات الخصم
+        """
+        from django.utils import timezone as tz
+        opco_id = request.data.get('opco')
+        code_text = (request.data.get('code') or '').strip().upper()
+        order_total = float(request.data.get('order_total', 0))
+
+        if not opco_id or not code_text:
+            return Response({'error': 'بيانات ناقصة'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            promo = PromoCode.objects.get(opco_id=opco_id, code__iexact=code_text, is_active=True)
+        except PromoCode.DoesNotExist:
+            return Response({'error': 'كود العرض غير صحيح أو غير نشط.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # التحقق من تاريخ انتهاء العرض
+        if promo.expires_at and promo.expires_at < tz.now():
+            return Response({'error': 'كود العرض منتهي الصلاحية.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # التحقق من عدد الاستخدامات
+        if promo.max_uses > 0 and promo.used_count >= promo.max_uses:
+            return Response({'error': 'تم استخدام كود العرض بالكامل.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # التحقق من الحد الأدنى للطلب
+        if order_total < float(promo.min_order_amount):
+            return Response({
+                'error': f'الحد الأدنى لتطبيق هذا الكود هو {promo.min_order_amount} جنيه.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # حساب مبلغ الخصم
+        if promo.discount_type == 'percentage':
+            discount_amount = round(order_total * float(promo.discount_value) / 100, 2)
+        else:
+            discount_amount = float(promo.discount_value)
+        discount_amount = min(discount_amount, order_total)  # لا يتجاوز الإجمالي
+
+        return Response({
+            'valid': True,
+            'promo_id': promo.id,
+            'code': promo.code,
+            'description': promo.description or promo.code,
+            'discount_type': promo.discount_type,
+            'discount_value': float(promo.discount_value),
+            'discount_amount': discount_amount,
+        })

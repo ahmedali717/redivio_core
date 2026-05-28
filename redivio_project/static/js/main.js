@@ -52,6 +52,14 @@ createApp({
             showTerminalFormModal: false,
             terminalForm: { id: null, code: '', name: '', terminal_type: 'DIRECT', is_active: true, allowed_users: [] },
             posCart: [],
+            // 🏷️ حقول الخصم الحالي على الفاتورة
+            posDiscount: {
+                type: 'none',       // 'none' | 'percentage' | 'fixed'
+                value: 0,           // نسبة % أو مبلغ ثابت
+                amount: 0,          // المبلغ الفعلي بعد الحساب
+                promoCodeText: '',  // كود العرض المستخدم (إن وجد)
+                approvedBy: '',     // اسم المدير الذي وافق
+            },
             posSearch: '',
             posCategory: 'all',
             posPaymentMethod: 'cash',
@@ -384,8 +392,19 @@ createApp({
             });
             return groups;
         },
+        cartDiscountAmount() {
+            const subtotalPlusTax = Math.round((this.cartSubtotal + this.cartTax) * 100) / 100;
+            if (this.posDiscount.type === 'none' || !this.posDiscount.value) return 0;
+            if (this.posDiscount.type === 'percentage') {
+                return Math.round(subtotalPlusTax * (this.posDiscount.value / 100) * 100) / 100;
+            } else if (this.posDiscount.type === 'fixed') {
+                return Math.min(this.posDiscount.value, subtotalPlusTax);
+            }
+            return 0;
+        },
         cartTotal() {
-            return Math.round((this.cartSubtotal + this.cartTax) * 100) / 100;
+            const subtotalPlusTax = Math.round((this.cartSubtotal + this.cartTax) * 100) / 100;
+            return Math.max(0, subtotalPlusTax - this.cartDiscountAmount);
         },
         activeOpco() {
             if (!this.activeOpcoId || !this.allOpcos.length) return null;
@@ -1502,6 +1521,154 @@ createApp({
             }
         },
 
+        // ==================== 🏷️ DISCOUNT METHODS ====================
+        clearDiscount() {
+            this.posDiscount = { type: 'none', value: 0, amount: 0, promoCodeText: '', approvedBy: '' };
+        },
+
+        async applyManualDiscount() {
+            if (this.posCart.length === 0) {
+                this.showToast(this.isArabic ? "الكارت فارغ!" : "Cart is empty!", "error");
+                return;
+            }
+
+            // 🔐 التحقق من صلاحية المدير
+            const managerUser = this.companyUsers.find(u =>
+                ['administrator', 'admin', 'manager'].includes((u.role || '').toLowerCase())
+            );
+            if (!managerUser) {
+                this.showToast(this.isArabic ? "لا يوجد مدير مسجل في النظام" : "No manager found", "error");
+                return;
+            }
+
+            const { value: pin } = await Swal.fire({
+                title: this.isArabic ? '🔐 صلاحية المدير مطلوبة' : '🔐 Manager Authorization',
+                html: `<div style="text-align:right;direction:rtl;margin-bottom:8px;font-size:13px;color:#64748b;">${this.isArabic ? 'أدخل كلمة مرور المدير لتطبيق الخصم:' : 'Enter manager password to apply discount:'}</div>`,
+                input: 'password',
+                inputPlaceholder: '********',
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'تحقق' : 'Verify',
+                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
+                confirmButtonColor: '#6366f1',
+            });
+
+            if (!pin) return;
+
+            // التحقق من كلمة المرور
+            try {
+                this.loading = true;
+                const verifyRes = await fetch('/api/company-users/verify_password/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({ user_id: managerUser.id, password: pin })
+                });
+                if (!verifyRes.ok) {
+                    this.showToast(this.isArabic ? "كلمة مرور المدير غير صحيحة" : "Invalid manager password", "error");
+                    return;
+                }
+            } catch (e) {
+                this.showToast("Connection error", "error");
+                return;
+            } finally {
+                this.loading = false;
+            }
+
+            // إدخال الخصم
+            const { value: formValues } = await Swal.fire({
+                title: this.isArabic ? '🏷️ تطبيق خصم يدوي' : '🏷️ Apply Manual Discount',
+                html: `
+                    <div style="text-align:right;direction:rtl;" class="space-y-4">
+                        <div style="margin-bottom:12px;">
+                            <label style="font-weight:bold;font-size:12px;color:#64748b;display:block;margin-bottom:5px;">${this.isArabic ? 'نوع الخصم' : 'Discount Type'}</label>
+                            <select id="swal-discount-type" class="swal2-input" style="margin:0;width:100%;">
+                                <option value="percentage">${this.isArabic ? 'نسبة مئوية (%)' : 'Percentage (%)'}</option>
+                                <option value="fixed">${this.isArabic ? 'قيمة ثابتة (جنيه)' : 'Fixed Amount'}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-weight:bold;font-size:12px;color:#64748b;display:block;margin-bottom:5px;">${this.isArabic ? 'قيمة الخصم' : 'Discount Value'}</label>
+                            <input id="swal-discount-value" class="swal2-input" type="number" min="0" step="0.01" placeholder="0" style="margin:0;width:100%;">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'تطبيق الخصم' : 'Apply Discount',
+                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
+                confirmButtonColor: '#10b981',
+                preConfirm: () => {
+                    const dtype = document.getElementById('swal-discount-type').value;
+                    const dval = parseFloat(document.getElementById('swal-discount-value').value || 0);
+                    if (!dval || dval <= 0) { Swal.showValidationMessage(this.isArabic ? 'أدخل قيمة خصم صحيحة' : 'Enter a valid discount value'); return false; }
+                    if (dtype === 'percentage' && dval > 100) { Swal.showValidationMessage(this.isArabic ? 'النسبة لا تتجاوز 100%' : 'Percentage cannot exceed 100%'); return false; }
+                    return { type: dtype, value: dval };
+                }
+            });
+
+            if (!formValues) return;
+
+            this.posDiscount = {
+                type: formValues.type,
+                value: formValues.value,
+                amount: this.cartDiscountAmount,
+                promoCodeText: '',
+                approvedBy: managerUser.user_details?.email || 'Manager'
+            };
+            this.showToast(
+                this.isArabic
+                    ? `✅ تم تطبيق خصم ${formValues.type === 'percentage' ? formValues.value + '%' : this.formatCurrency(formValues.value)}`
+                    : `✅ Discount applied: ${formValues.type === 'percentage' ? formValues.value + '%' : this.formatCurrency(formValues.value)}`,
+                "success"
+            );
+        },
+
+        async applyPromoCode() {
+            if (this.posCart.length === 0) {
+                this.showToast(this.isArabic ? "الكارت فارغ!" : "Cart is empty!", "error");
+                return;
+            }
+            const { value: code } = await Swal.fire({
+                title: this.isArabic ? '🎟️ كود العرض' : '🎟️ Promo Code',
+                input: 'text',
+                inputPlaceholder: this.isArabic ? 'أدخل كود العرض...' : 'Enter promo code...',
+                showCancelButton: true,
+                confirmButtonText: this.isArabic ? 'تطبيق' : 'Apply',
+                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
+                inputAttributes: { style: 'text-transform: uppercase;' }
+            });
+            if (!code) return;
+
+            try {
+                this.loading = true;
+                const subtotalPlusTax = Math.round((this.cartSubtotal + this.cartTax) * 100) / 100;
+                const res = await fetch('/api/pos/promos/validate_code/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({ opco: this.activeOpcoId, code: code.trim().toUpperCase(), order_total: subtotalPlusTax })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    this.showToast(data.error || (this.isArabic ? "كود غير صحيح" : "Invalid code"), "error");
+                    return;
+                }
+                this.posDiscount = {
+                    type: data.discount_type,
+                    value: data.discount_value,
+                    amount: data.discount_amount,
+                    promoCodeText: data.code,
+                    approvedBy: `Promo: ${data.code}`
+                };
+                this.showToast(
+                    `✅ ${data.description || data.code} — ${this.formatCurrency(data.discount_amount)} ${this.isArabic ? 'خصم' : 'discount'}`,
+                    "success"
+                );
+            } catch (e) {
+                this.showToast("Error validating promo code", "error");
+            } finally {
+                this.loading = false;
+            }
+        },
+        // ==================== END DISCOUNT METHODS ====================
+
         selectCartItem(index) {
             this.posSelectedCartIndex = index;
             this.posNumpadBuffer = '';
@@ -1692,6 +1859,11 @@ createApp({
                         table_number: this.posTableNumber,
                         guest_count: this.posGuestCount,
                         total_amount: parseFloat(this.cartTotal.toFixed(2)),
+                        discount_type: this.posDiscount.type,
+                        discount_value: this.posDiscount.value,
+                        discount_amount: parseFloat(this.cartDiscountAmount.toFixed(2)),
+                        promo_code_text: this.posDiscount.promoCodeText || '',
+                        discount_approved_by: this.posDiscount.approvedBy || '',
                         lines: this.posCart.map(i => ({
                             material: i.id,
                             qty: i.qty,
@@ -1735,6 +1907,7 @@ createApp({
                         this.printReceipt(order, this.posCart);
                         
                         this.posCart = [];
+                        this.clearDiscount(); // 🏷️ مسح الخصم بعد إتمام الطلب
                         this.posTableNumber = '';
                         this.posGuestCount = 1;
                         if (this.posMode === 'direct') {
@@ -2718,6 +2891,18 @@ createApp({
                         const term = this.posTerminals.find(t => t.id === parseInt(this.selectedTerminalId));
                         if (term) {
                             this.posMode = term.terminal_type === 'DIRECT' ? 'direct' : 'restaurant';
+                        }
+                        // 💰 Auto-fill opening balance from last closed session
+                        try {
+                            const balRes = await fetch(`/api/pos/orders/last_session_balance/?opco=${this.activeOpcoId}`);
+                            if (balRes.ok) {
+                                const balData = await balRes.json();
+                                if (balData.last_balance !== undefined) {
+                                    this.posOpeningBalance = parseFloat(balData.last_balance) || 0;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Could not fetch last session balance:', e);
                         }
                     }
                 }

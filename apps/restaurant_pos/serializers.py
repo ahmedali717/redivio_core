@@ -1,25 +1,30 @@
 from rest_framework import serializers
-from .models import POSTerminal, POSOrder, POSOrderLine, POSSession, Recipe, RecipeItem, POSCashTransaction, RestaurantFloor, RestaurantTable
+from .models import POSTerminal, POSOrder, POSOrderLine, POSSession, Recipe, RecipeItem, POSCashTransaction, RestaurantFloor, RestaurantTable, PromoCode
+
 
 class POSTerminalSerializer(serializers.ModelSerializer):
     class Meta:
         model = POSTerminal
         fields = '__all__'
 
+
 class POSOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.CharField(source='material.name', read_only=True)
+
     class Meta:
         model = POSOrderLine
         fields = ['id', 'material', 'material_name', 'qty', 'unit_price', 'subtotal', 'kitchen_notes']
 
+
 class POSOrderSerializer(serializers.ModelSerializer):
     lines = POSOrderLineSerializer(many=True)
-    
+
     class Meta:
         model = POSOrder
         fields = [
-            'id', 'opco', 'session', 'order_ref', 'order_type', 
-            'table_number', 'guest_count', 'total_amount', 'payment_method', 'status', 'created_at', 'lines'
+            'id', 'opco', 'session', 'order_ref', 'order_type',
+            'table_number', 'guest_count', 'total_amount', 'payment_method', 'status', 'created_at', 'lines',
+            'discount_type', 'discount_value', 'discount_amount', 'promo_code_text', 'discount_approved_by'
         ]
         read_only_fields = ['order_ref']
 
@@ -30,10 +35,11 @@ class POSOrderSerializer(serializers.ModelSerializer):
             POSOrderLine.objects.create(order=order, **line_data)
         return order
 
+
 class POSSessionSerializer(serializers.ModelSerializer):
     terminal_type = serializers.SerializerMethodField()
     terminal_name = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = POSSession
         fields = '__all__'
@@ -47,6 +53,7 @@ class POSSessionSerializer(serializers.ModelSerializer):
         if obj.terminal:
             return obj.terminal.name
         return ''
+
 
 class POSCashTransactionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -74,3 +81,8 @@ class RestaurantTableSerializer(serializers.ModelSerializer):
             'active_order', 'active_order_ref', 'active_order_total', 'active_order_detail'
         ]
 
+
+class PromoCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PromoCode
+        fields = '__all__'

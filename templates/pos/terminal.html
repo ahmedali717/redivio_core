@@ -125,6 +125,16 @@
                         <span>[[ isArabic ? 'الضريبة' : 'Tax' ]]</span>
                         <span class="font-mono">[[ formatCurrency(cartTax) ]]</span>
                     </div>
+                    <!-- 🏷️ صف الخصم — يظهر فقط لو في خصم نشط -->
+                    <div v-if="posDiscount.type !== 'none' && cartDiscountAmount > 0" class="flex justify-between text-xs text-amber-400 animate-pulse">
+                        <span class="flex items-center gap-1">
+                            <i class="fas fa-tag text-[10px]"></i>
+                            [[ posDiscount.promoCodeText ? posDiscount.promoCodeText : (isArabic ? 'خصم' : 'Discount') ]]
+                            [[ posDiscount.type === 'percentage' ? '(' + posDiscount.value + '%)' : '' ]]
+                            <button @click="clearDiscount()" class="text-[8px] text-red-400 hover:text-red-300 ml-1" title="Remove discount">✕</button>
+                        </span>
+                        <span class="font-mono text-amber-400">- [[ formatCurrency(cartDiscountAmount) ]]</span>
+                    </div>
                     <div class="pt-2 border-t border-slate-700/30 flex justify-between items-end">
                         <span class="text-xs font-black text-white uppercase">[[ isArabic ? 'الإجمالي' : 'Total' ]]</span>
                         <span class="text-2xl font-black text-emerald-400 tech-font leading-none">[[ formatCurrency(cartTotal) ]]</span>
@@ -144,6 +154,20 @@
 
             <!-- Action Buttons: Smart based on order type -->
             <div class="p-4 bg-slate-800/30 border-t border-slate-700/50 space-y-2">
+
+                <!-- 🏷️ أزرار الخصم -->
+                <div v-if="posCart.length > 0" class="flex gap-2">
+                    <button @click="applyManualDiscount()"
+                            class="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5">
+                        <i class="fas fa-percent text-[10px]"></i>
+                        <span>[[ isArabic ? 'خصم يدوي' : 'Manual Disc.' ]]</span>
+                    </button>
+                    <button @click="applyPromoCode()"
+                            class="flex-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5">
+                        <i class="fas fa-ticket text-[10px]"></i>
+                        <span>[[ isArabic ? 'كود عرض' : 'Promo Code' ]]</span>
+                    </button>
+                </div>
 
                 <!-- 🍽️ DINE-IN: Send to Kitchen (save draft) -->
                 <button v-if="posOrderType === 'DINE_IN'"
@@ -168,6 +192,7 @@
                 </button>
             </div>
         </div>
+
 
         <!-- 🚀 COLUMN 2: Cart List (Dynamic Width) -->
         <div class="flex-1 flex flex-col h-full bg-white">
