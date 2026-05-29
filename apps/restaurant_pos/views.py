@@ -199,8 +199,10 @@ class POSOrderViewSet(viewsets.ModelViewSet):
                 user_to_check = cashier_user or request.user
                 if user_to_check and not user_to_check.is_superuser:
                     if not terminal.allowed_users.filter(id=user_to_check.id).exists():
+                        is_ar = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                        err_msg = 'عفواً، هذا الكاشير/المستخدم غير مصرح له بالدخول إلى نقطة البيع هذه.' if is_ar else 'Sorry, this cashier/user is not authorized to access this POS terminal.'
                         return Response({
-                            'error': 'ليس لديك صلاحية لفتح نقطة البيع هذه.'
+                            'error': err_msg
                         }, status=status.HTTP_403_FORBIDDEN)
         
         # Check if there is already an active session for this terminal to prevent duplicate sessions
@@ -965,14 +967,6 @@ class POSTerminalViewSet(viewsets.ModelViewSet):
             return POSTerminal.objects.none()
             
         queryset = POSTerminal.objects.filter(opco_id=opco_id)
-        
-        # Enforce terminal access permission filter
-        user = self.request.user
-        if user and not user.is_superuser:
-            from django.db.models import Q
-            queryset = queryset.filter(
-                Q(allowed_users__isnull=True) | Q(allowed_users=user)
-            ).distinct()
 
         if not queryset.exists():
             # Auto-create a default terminal
@@ -986,10 +980,6 @@ class POSTerminalViewSet(viewsets.ModelViewSet):
                     terminal_type="RESTAURANT"
                 )
                 queryset = POSTerminal.objects.filter(opco_id=opco_id)
-                if user and not user.is_superuser:
-                    queryset = queryset.filter(
-                        Q(allowed_users__isnull=True) | Q(allowed_users=user)
-                    ).distinct()
         return queryset.order_by('code')
 
 

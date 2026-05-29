@@ -3300,13 +3300,8 @@ createApp({
         },
 
         getAllowedCashiers() {
-            const cashiers = this.companyUsers.filter(u => ['cashier', 'administrator', 'admin', 'manager'].includes(u.role.toLowerCase()));
-            if (!this.selectedTerminalId) return cashiers;
-            const term = this.posTerminals.find(t => t.id === parseInt(this.selectedTerminalId));
-            if (!term || !term.allowed_users || term.allowed_users.length === 0) {
-                return cashiers;
-            }
-            return cashiers.filter(c => term.allowed_users.includes(c.user));
+            // Return all cashiers so they are all selectable, access control is enforced on session start
+            return this.companyUsers.filter(u => ['cashier', 'administrator', 'admin', 'manager'].includes(u.role.toLowerCase()));
         },
 
         openTerminalModal(term = null) {
