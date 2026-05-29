@@ -5,6 +5,22 @@ from .models import POSOrder, POSSession, Recipe, RestaurantFloor, RestaurantTab
 from .serializers import POSOrderSerializer, RestaurantFloorSerializer, RestaurantTableSerializer, POSTerminalSerializer, PromoCodeSerializer
 from django.utils import timezone
 
+def check_terminal_permission(user, terminal_id, language_code='en'):
+    if not terminal_id or terminal_id in ['null', 'undefined', '']:
+        return None
+    try:
+        t_id = int(terminal_id)
+        terminal = POSTerminal.objects.filter(id=t_id).first()
+        if terminal and terminal.allowed_users.exists():
+            if user and not user.is_superuser:
+                if not terminal.allowed_users.filter(id=user.id).exists():
+                    is_ar = language_code and language_code.startswith('ar')
+                    err_msg = 'ليس لديك صلاحية للدخول إلى نقطة البيع هذه.' if is_ar else 'You do not have permission to access this POS terminal.'
+                    return err_msg
+    except (ValueError, TypeError):
+        pass
+    return None
+
 class POSOrderViewSet(viewsets.ModelViewSet):
     queryset = POSOrder.objects.all()
     serializer_class = POSOrderSerializer
@@ -37,6 +53,16 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         if session_id and session_id != 'null':
             queryset = queryset.filter(session_id=session_id)
             
+        # Filter orders so non-superusers only see orders for terminals they have permission to access
+        user = self.request.user
+        if user and not user.is_superuser:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(session__terminal__isnull=True) |
+                Q(session__terminal__allowed_users__isnull=True) |
+                Q(session__terminal__allowed_users=user)
+            ).distinct()
+            
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -67,18 +93,9 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         
         # Enforce terminal access permission check if a terminal is requested
         if terminal_id and terminal_id not in ['null', 'undefined', '']:
-            try:
-                t_id = int(terminal_id)
-                terminal = POSTerminal.objects.filter(id=t_id).first()
-                if terminal and terminal.allowed_users.exists():
-                    user_to_check = request.user
-                    if user_to_check and not user_to_check.is_superuser:
-                        if not terminal.allowed_users.filter(id=user_to_check.id).exists():
-                            is_ar = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
-                            err_msg = 'ليس لديك صلاحية للدخول إلى نقطة البيع هذه.' if is_ar else 'You do not have permission to access this POS terminal.'
-                            return Response({'error': err_msg}, status=status.HTTP_403_FORBIDDEN)
-            except (ValueError, TypeError):
-                pass
+            err_msg = check_terminal_permission(request.user, terminal_id, request.LANGUAGE_CODE)
+            if err_msg:
+                return Response({'error': err_msg}, status=status.HTTP_403_FORBIDDEN)
 
         session_qs = POSSession.objects.filter(opco_id=opco_id, is_closed=False)
         if terminal_id and terminal_id not in ['null', 'undefined', '']:
@@ -92,6 +109,13 @@ class POSOrderViewSet(viewsets.ModelViewSet):
                 Q(terminal__isnull=True) | Q(terminal__allowed_users__isnull=True) | Q(terminal__allowed_users=user)
             ).distinct()
             
+        # Filter session_qs so non-superusers only see their own active sessions
+        if user and not user.is_superuser:
+            from django.db.models import Q
+            session_qs = session_qs.filter(
+                Q(cashier_name=user.email) | Q(cashier_name=user.username)
+            )
+
         session = session_qs.first()
         if session:
             # Enforce permission check for the session's active cashier
@@ -99,11 +123,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
                 from django.contrib.auth import get_user_model
                 User = get_user_model()
                 cashier_user = User.objects.filter(email=session.cashier_name).first() or User.objects.filter(username=session.cashier_name).first()
-                user_to_check = cashier_user or request.user
+                user_to_check = cashier_user
                 if user_to_check and not user_to_check.is_superuser:
                     if not session.terminal.allowed_users.filter(id=user_to_check.id).exists():
                         is_ar = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
-                        err_msg = 'ليس لديك صلاحية للدخول إلى نقطة البيع هذه (المستخدم الحالي غير مصرح له).' if is_ar else 'You do not have permission to access this POS terminal (session cashier is unauthorized).'
+                        err_msg = 'ليس لديك صلاحية للدخول إلى نقطة البيع هذه (الكاشير غير مصرح له).' if is_ar else 'You do not have permission to access this POS terminal (session cashier is unauthorized).'
                         return Response({'error': err_msg}, status=status.HTTP_403_FORBIDDEN)
 
             from .serializers import POSSessionSerializer
@@ -196,14 +220,19 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             if not terminal:
                 return Response({'error': 'نقطة البيع المحددة غير موجودة.'}, status=status.HTTP_400_BAD_REQUEST)
             if terminal.allowed_users.exists():
-                user_to_check = cashier_user or request.user
-                if user_to_check and not user_to_check.is_superuser:
-                    if not terminal.allowed_users.filter(id=user_to_check.id).exists():
+                # Check logged-in user
+                if request.user and not request.user.is_superuser:
+                    if not terminal.allowed_users.filter(id=request.user.id).exists():
                         is_ar = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
-                        err_msg = 'عفواً، هذا الكاشير/المستخدم غير مصرح له بالدخول إلى نقطة البيع هذه.' if is_ar else 'Sorry, this cashier/user is not authorized to access this POS terminal.'
-                        return Response({
-                            'error': err_msg
-                        }, status=status.HTTP_403_FORBIDDEN)
+                        err_msg = 'ليس لديك صلاحية للدخول إلى نقطة البيع هذه.' if is_ar else 'You do not have permission to access this POS terminal.'
+                        return Response({'error': err_msg}, status=status.HTTP_403_FORBIDDEN)
+                
+                # Check cashier user
+                if cashier_user and not cashier_user.is_superuser:
+                    if not terminal.allowed_users.filter(id=cashier_user.id).exists():
+                        is_ar = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                        err_msg = 'عفواً، هذا الكاشير غير مصرح له بالدخول إلى نقطة البيع هذه.' if is_ar else 'Sorry, this cashier is not authorized to access this POS terminal.'
+                        return Response({'error': err_msg}, status=status.HTTP_403_FORBIDDEN)
         
         # Check if there is already an active session for this terminal and cashier to prevent duplicate sessions
         if terminal_id:
@@ -215,11 +244,8 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             from .serializers import POSSessionSerializer
             return Response(POSSessionSerializer(existing_session).data)
 
-        # Close previous sessions for this terminal / OpCo (as safety fallback)
-        if terminal_id:
-            POSSession.objects.filter(opco_id=opco_id, terminal_id=terminal_id, is_closed=False).update(is_closed=True, end_time=timezone.now())
-        else:
-            POSSession.objects.filter(opco_id=opco_id, is_closed=False).update(is_closed=True, end_time=timezone.now())
+        # Close previous sessions for this cashier / OpCo (as safety fallback)
+        POSSession.objects.filter(opco_id=opco_id, cashier_name=cashier_name, is_closed=False).update(is_closed=True, end_time=timezone.now())
         
         session = POSSession.objects.create(
             opco_id=opco_id,
@@ -514,6 +540,21 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         session_qs = POSSession.objects.filter(opco_id=opco_id, is_closed=False)
         if terminal_id and terminal_id not in ['null', 'undefined', '']:
             session_qs = session_qs.filter(terminal_id=terminal_id)
+            
+        # Enforce terminal access permission check
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            err_msg = check_terminal_permission(request.user, terminal_id, request.LANGUAGE_CODE)
+            if err_msg:
+                return Response({'error': err_msg}, status=status.HTTP_403_FORBIDDEN)
+                
+        # Filter session_qs so non-superusers only see their own active sessions
+        user = request.user
+        if user and not user.is_superuser:
+            from django.db.models import Q
+            session_qs = session_qs.filter(
+                Q(cashier_name=user.email) | Q(cashier_name=user.username)
+            )
+
         session = session_qs.first()
         if not session:
             return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
@@ -813,9 +854,25 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
             
         terminal_id = request.query_params.get('terminal')
+        
+        # Enforce terminal access permission check
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            err_msg = check_terminal_permission(request.user, terminal_id, request.LANGUAGE_CODE)
+            if err_msg:
+                return Response({'error': err_msg}, status=status.HTTP_403_FORBIDDEN)
+
         session_qs = POSSession.objects.filter(opco_id=opco_id, is_closed=False)
         if terminal_id and terminal_id not in ['null', 'undefined', '']:
             session_qs = session_qs.filter(terminal_id=terminal_id)
+            
+        # Filter session_qs so non-superusers only see their own active sessions
+        user = request.user
+        if user and not user.is_superuser:
+            from django.db.models import Q
+            session_qs = session_qs.filter(
+                Q(cashier_name=user.email) | Q(cashier_name=user.username)
+            )
+
         session = session_qs.first()
         if not session:
             return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
@@ -852,9 +909,25 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             
         actual_balance = float(request.data.get('actual_balance', 0))
         terminal_id = request.data.get('terminal')
+        
+        # Enforce terminal access permission check
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            err_msg = check_terminal_permission(request.user, terminal_id, request.LANGUAGE_CODE)
+            if err_msg:
+                return Response({'error': err_msg}, status=status.HTTP_403_FORBIDDEN)
+
         session_qs = POSSession.objects.filter(opco_id=opco_id, is_closed=False)
         if terminal_id and terminal_id not in ['null', 'undefined', '']:
             session_qs = session_qs.filter(terminal_id=terminal_id)
+            
+        # Filter session_qs so non-superusers only see their own active sessions
+        user = request.user
+        if user and not user.is_superuser:
+            from django.db.models import Q
+            session_qs = session_qs.filter(
+                Q(cashier_name=user.email) | Q(cashier_name=user.username)
+            )
+
         session = session_qs.first()
         
         if not session:

@@ -3095,6 +3095,12 @@ createApp({
                     } else {
                         this.activePOSSession = null;
                     }
+                } else if (res.status === 403) {
+                    const data = await res.json().catch(() => ({}));
+                    this.showToast(data.error || (this.isArabic ? "ليس لديك صلاحية للدخول لنقطة البيع هذه" : "Unauthorized for this terminal"), "error");
+                    this.activePOSSession = null;
+                    this.selectedTerminalId = '';
+                    localStorage.removeItem('selected_terminal_id');
                 }
             } catch (e) { console.error("Session Check Error", e); }
         },
