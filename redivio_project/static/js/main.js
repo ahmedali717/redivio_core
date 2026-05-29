@@ -2206,9 +2206,23 @@ createApp({
 
             // ===== حساب المبالغ بشكل صحيح =====
             // السعر المُدخل دائماً غير شامل الضرائب
-            const subtotal = Math.round(
-                cart.reduce((s, i) => s + (Number(i.price || i.unit_price) * Number(i.qty)), 0) * 100
+            
+            // البحث عن صنف خدمة التوصيل
+            const deliveryItem = cart.find(i => {
+                const sku = (i.sku || i.material_sku || '').toUpperCase();
+                const name = (i.name || i.material_name || '').toLowerCase();
+                return sku === 'DELIVERY' || name.includes('delivery') || name.includes('توصيل');
+            });
+            const deliveryFee = deliveryItem ? (Number(deliveryItem.price || deliveryItem.unit_price) * deliveryItem.qty) : 0;
+            
+            // سلة الأصناف بدون التوصيل لكي لا يظهر في القائمة
+            const filteredCart = cart.filter(i => i !== deliveryItem);
+
+            const foodSubtotal = Math.round(
+                filteredCart.reduce((s, i) => s + (Number(i.price || i.unit_price) * Number(i.qty)), 0) * 100
             ) / 100;
+
+            const subtotal = Math.round((foodSubtotal + deliveryFee) * 100) / 100;
             const vatAmount     = Math.round(subtotal * 0.15 * 100) / 100;  // VAT 15% دائماً
             // رسوم الخدمة 12% — فقط للمحلي (Dine-In)
             const serviceCharge = order.order_type === 'DINE_IN'
@@ -2360,7 +2374,7 @@ createApp({
                     </div>
 
                     <div class="items">
-                        ${cart.map(i => {
+                        ${filteredCart.map(i => {
                             const note = (i.kitchen_notes || i.notes || "").trim();
                             return `
                                 <div class="item-row">
@@ -2378,8 +2392,13 @@ createApp({
                     <div class="summary">
                         <div class="summary-line">
                             <span>${this.isArabic ? 'المجموع الفرعي' : 'Subtotal'}</span>
-                            <span>${subtotal.toFixed(2)}</span>
+                            <span>${foodSubtotal.toFixed(2)}</span>
                         </div>
+                        ${deliveryFee > 0 ? `
+                        <div class="summary-line">
+                            <span>${this.isArabic ? 'خدمة التوصيل' : 'Delivery Service'}</span>
+                            <span>${deliveryFee.toFixed(2)}</span>
+                        </div>` : ''}
                         <div class="summary-line">
                             <span>${this.isArabic ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)'}</span>
                             <span>${vatAmount.toFixed(2)}</span>
