@@ -134,7 +134,7 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             return Response(POSSessionSerializer(session).data)
         return Response({}, status=200)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], permission_classes=[])
     def debug_logs(self, request):
         from django.conf import settings
         from django.http import HttpResponse
