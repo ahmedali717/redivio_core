@@ -62,6 +62,13 @@ class CustomerViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = Customer.objects.all().order_by('name')
     serializer_class = CustomerSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        phone = self.request.query_params.get('phone')
+        if phone:
+            queryset = queryset.filter(phone__icontains=phone)
+        return queryset
+
 class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = SalesOrder.objects.all().order_by('-created_at')
     serializer_class = SalesOrderSerializer

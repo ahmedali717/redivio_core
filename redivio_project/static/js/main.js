@@ -1792,6 +1792,37 @@ createApp({
                 cancelButtonColor: '#64748b',
                 width: 480,
                 customClass: { popup: 'swal-payment-popup' },
+                didOpen: () => {
+                    if (orderType === 'DELIVERY') {
+                        const phoneInput = document.getElementById('del-phone');
+                        if (phoneInput) {
+                            phoneInput.addEventListener('input', async (e) => {
+                                const val = e.target.value.trim();
+                                if (val.length >= 6) {
+                                    try {
+                                        const res = await fetch(`/api/customers/?opco=${this.activeOpcoId}&phone=${encodeURIComponent(val)}`);
+                                        if (res.ok) {
+                                            const customers = await res.json();
+                                            if (customers && customers.length > 0) {
+                                                const match = customers[0];
+                                                const nameInput = document.getElementById('del-name');
+                                                const addrInput = document.getElementById('del-address');
+                                                if (nameInput && (!nameInput.value || nameInput.value === val)) {
+                                                    nameInput.value = match.name || '';
+                                                }
+                                                if (addrInput && !addrInput.value) {
+                                                    addrInput.value = match.address || '';
+                                                }
+                                            }
+                                        }
+                                    } catch (err) {
+                                        console.error("Error fetching customer info:", err);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                },
                 preConfirm: () => {
                     const method = window._selectedPayMethod || 'cash';
                     if (orderType === 'DELIVERY') {
@@ -2058,6 +2089,12 @@ createApp({
 
                     if (payRes.ok) {
                         this.showToast(this.isArabic ? "تم تأكيد الطلب بنجاح!" : "Order Confirmed!", "success");
+                        if (payResult.deliveryInfo) {
+                            order.customer_name = payResult.deliveryInfo.name || '';
+                            order.customer_phone = payResult.deliveryInfo.phone || '';
+                            order.customer_address = payResult.deliveryInfo.address || '';
+                            order.delivery_notes = payResult.deliveryInfo.notes || '';
+                        }
                         this.printReceipt(order, this.posCart);
                         this.posCart = [];
                         this.clearDiscount();
@@ -2107,6 +2144,10 @@ createApp({
             const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
             const orderRef = order.order_ref || 'DRAFT-POS';
             const cashierName = this.companyUsers.find(u => u.id === this.posActiveCashierId)?.user_details.email || this.user.email || 'Admin';
+            const customerName = order.customer_name || '';
+            const customerPhone = order.customer_phone || '';
+            const customerAddress = order.customer_address || '';
+            const deliveryNotes = order.delivery_notes || order.notes || '';
             
             // Corporate Logo (with SVG Fallback)
             let logoUrl = '';
@@ -2211,6 +2252,33 @@ createApp({
                         <div class="cashier-meta">
                             ${this.isArabic ? 'الكاشير' : 'Cashier'}: ${cashierName}
                         </div>
+                        ${order.order_type === 'DELIVERY' ? `
+                        <div class="order-meta" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #e2e8f0; text-align: ${this.isArabic ? 'right' : 'left'}; direction: ${this.isArabic ? 'rtl' : 'ltr'};">
+                            <div style="font-weight: 900; color: ${brandColor}; margin-bottom: 6px; font-size: 13px;">
+                                🚚 ${this.isArabic ? 'بيانات التوصيل' : 'DELIVERY DETAILS'}
+                            </div>
+                            ${customerName ? `
+                            <div style="font-size: 12px; color: #0f172a; font-weight: 800;">
+                                👤 ${customerName}
+                            </div>
+                            ` : ''}
+                            ${customerPhone ? `
+                            <div style="font-size: 12px; color: #0f172a; font-weight: 800; margin-top: 2px;">
+                                📞 ${customerPhone}
+                            </div>
+                            ` : ''}
+                            ${customerAddress ? `
+                            <div style="font-size: 11px; color: #475569; margin-top: 2px; font-weight: 700; white-space: pre-line;">
+                                📍 ${customerAddress}
+                            </div>
+                            ` : ''}
+                            ${deliveryNotes ? `
+                            <div style="font-size: 11px; color: #ef4444; margin-top: 4px; font-weight: 700; font-style: italic; border-${this.isArabic ? 'right' : 'left'}: 2px solid #ef4444; padding-${this.isArabic ? 'right' : 'left'}: 5px;">
+                                📝 ${deliveryNotes}
+                            </div>
+                            ` : ''}
+                        </div>
+                        ` : ''}
                     </div>
 
                     <div class="items">

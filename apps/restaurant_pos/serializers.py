@@ -73,6 +73,14 @@ class POSOrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines')
+        
+        # Pull read-only customer fields from initial_data to save them in DB if present on the model
+        for f in ['customer_name', 'customer_phone', 'customer_address', 'delivery_notes']:
+            val = self.initial_data.get(f)
+            if val is not None:
+                if hasattr(POSOrder, f):
+                    validated_data[f] = val
+                    
         order = POSOrder.objects.create(**validated_data)
         for line_data in lines_data:
             POSOrderLine.objects.create(order=order, **line_data)
