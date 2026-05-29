@@ -111,6 +111,20 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         return Response({}, status=200)
 
     @action(detail=False, methods=['get'])
+    def debug_logs(self, request):
+        from django.conf import settings
+        from django.http import HttpResponse
+        import os
+        log_path = os.path.join(settings.BASE_DIR, 'scratch', 'debug_logs.txt')
+        if not os.path.exists(log_path):
+            log_path = os.path.join(settings.BASE_DIR, 'debug_logs.txt')
+        if os.path.exists(log_path):
+            with open(log_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return HttpResponse(content, content_type='text/plain')
+        return HttpResponse("No debug logs found.", content_type='text/plain')
+
+    @action(detail=False, methods=['get'])
     def session_history(self, request):
         opco_id = request.query_params.get('opco')
         if not opco_id or opco_id in ['null', 'undefined']:
@@ -279,6 +293,24 @@ class POSOrderViewSet(viewsets.ModelViewSet):
                 order.sales_customer = customer
                 order.save()
             except Exception as e:
+                from django.conf import settings
+                import os
+                import traceback
+                log_dir = os.path.join(settings.BASE_DIR, 'scratch')
+                if not os.path.exists(log_dir):
+                    log_dir = settings.BASE_DIR
+                log_path = os.path.join(log_dir, 'debug_logs.txt')
+                try:
+                    with open(log_path, "a", encoding="utf-8") as f:
+                        f.write(f"\n--- ERROR AT {timezone.now()} ---\n")
+                        f.write(f"Order ID: {order.id}\n")
+                        f.write(f"Customer Name: {order.customer_name}\n")
+                        f.write(f"Customer Phone: {order.customer_phone}\n")
+                        f.write(f"Customer Address: {order.customer_address}\n")
+                        f.write(f"Exception: {e}\n")
+                        f.write(traceback.format_exc())
+                except Exception as log_err:
+                    print("Error writing log file:", log_err)
                 print(f"Warning: Could not link delivery customer to sales: {e}")
 
         # Update session total sales
