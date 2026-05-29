@@ -19,10 +19,46 @@ class POSOrderLineSerializer(serializers.ModelSerializer):
 class POSOrderSerializer(serializers.ModelSerializer):
     lines = POSOrderLineSerializer(many=True)
     net_total = serializers.SerializerMethodField()
+    discount_type = serializers.SerializerMethodField()
+    discount_value = serializers.SerializerMethodField()
+    discount_amount = serializers.SerializerMethodField()
+    promo_code_text = serializers.SerializerMethodField()
+    discount_approved_by = serializers.SerializerMethodField()
+    customer_name = serializers.SerializerMethodField()
+    customer_phone = serializers.SerializerMethodField()
+    customer_address = serializers.SerializerMethodField()
+    delivery_notes = serializers.SerializerMethodField()
+    sales_customer = serializers.SerializerMethodField()
+
+    def _safe_get(self, obj, attr, default=None):
+        """يرجع قيمة الحقل بأمان حتى لو العمود مش موجود في الـ DB بعد"""
+        try:
+            return getattr(obj, attr, default)
+        except Exception:
+            return default
 
     def get_net_total(self, obj):
-        """المبلغ الصافي بعد الخصم"""
-        return round(float(obj.total_amount) - float(obj.discount_amount or 0), 2)
+        try:
+            disc = float(self._safe_get(obj, 'discount_amount', 0) or 0)
+            return round(float(obj.total_amount) - disc, 2)
+        except Exception:
+            return float(obj.total_amount)
+
+    def get_discount_type(self, obj):     return self._safe_get(obj, 'discount_type', 'none')
+    def get_discount_value(self, obj):    return self._safe_get(obj, 'discount_value', 0)
+    def get_discount_amount(self, obj):   return self._safe_get(obj, 'discount_amount', 0)
+    def get_promo_code_text(self, obj):   return self._safe_get(obj, 'promo_code_text', '')
+    def get_discount_approved_by(self, obj): return self._safe_get(obj, 'discount_approved_by', '')
+    def get_customer_name(self, obj):     return self._safe_get(obj, 'customer_name', '')
+    def get_customer_phone(self, obj):    return self._safe_get(obj, 'customer_phone', '')
+    def get_customer_address(self, obj):  return self._safe_get(obj, 'customer_address', '')
+    def get_delivery_notes(self, obj):    return self._safe_get(obj, 'delivery_notes', '')
+    def get_sales_customer(self, obj):
+        try:
+            sc = getattr(obj, 'sales_customer_id', None)
+            return sc
+        except Exception:
+            return None
 
     class Meta:
         model = POSOrder
@@ -68,6 +104,23 @@ class POSCashTransactionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class POSOrderFallbackSerializer(serializers.ModelSerializer):
+    """
+    Serializer احتياطي يستخدم فقط الحقول الأصلية القديمة.
+    يُستخدم عند فشل POSOrderSerializer بسبب migration لم تُطبَّق بعد.
+    """
+    lines = POSOrderLineSerializer(many=True)
+
+    class Meta:
+        model = POSOrder
+        fields = [
+            'id', 'opco', 'session', 'order_ref', 'order_type',
+            'table_number', 'guest_count', 'total_amount',
+            'payment_method', 'status', 'created_at', 'lines',
+        ]
+        read_only_fields = ['order_ref']
+
+
 class RestaurantFloorSerializer(serializers.ModelSerializer):
     class Meta:
         model = RestaurantFloor
@@ -78,7 +131,20 @@ class RestaurantTableSerializer(serializers.ModelSerializer):
     floor_name = serializers.CharField(source='floor.name', read_only=True)
     active_order_ref = serializers.CharField(source='active_order.order_ref', read_only=True)
     active_order_total = serializers.DecimalField(source='active_order.total_amount', max_digits=12, decimal_places=2, read_only=True)
-    active_order_detail = POSOrderSerializer(source='active_order', read_only=True)
+    active_order_detail = serializers.SerializerMethodField()
+
+    def get_active_order_detail(self, obj):
+        """يجيب تفاصيل الأوردر النشط بأمان حتى لو في columns جديدة مش في الـ DB"""
+        if not obj.active_order:
+            return None
+        try:
+            return POSOrderSerializer(obj.active_order, context=self.context).data
+        except Exception:
+            try:
+                return POSOrderFallbackSerializer(obj.active_order, context=self.context).data
+            except Exception:
+                return {'id': obj.active_order.id, 'order_ref': obj.active_order.order_ref,
+                        'total_amount': float(obj.active_order.total_amount), 'status': obj.active_order.status}
 
     class Meta:
         model = RestaurantTable

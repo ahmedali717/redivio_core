@@ -9,6 +9,15 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     queryset = POSOrder.objects.all()
     serializer_class = POSOrderSerializer
 
+    # الحقول الأساسية الموجودة دائماً (قبل أي migration جديد)
+    _CORE_FIELDS = [
+        'id', 'opco_id', 'session_id', 'order_ref', 'order_type',
+        'table_number', 'guest_count', 'total_amount', 'payment_method',
+        'status', 'created_at', 'inventory_deducted',
+        'kitchen_received_at', 'kitchen_started_at', 'kitchen_done_at', 'kitchen_cancelled_at',
+        'is_refunded',
+    ]
+
     def get_queryset(self):
         opco_id = self.request.query_params.get('opco')
         
@@ -29,6 +38,20 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(session_id=session_id)
             
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        """Override list to gracefully handle missing DB columns (unapplied migrations)."""
+        try:
+            return super().list(request, *args, **kwargs)
+        except Exception as e:
+            err_str = str(e).lower()
+            if 'no such column' in err_str or 'column' in err_str or 'does not exist' in err_str:
+                # Fallback: return only core fields, ignore new columns
+                qs = self.get_queryset().only(*self._CORE_FIELDS)
+                from .serializers import POSOrderFallbackSerializer
+                data = POSOrderFallbackSerializer(qs, many=True).data
+                return Response(data)
+            raise
 
     @action(detail=False, methods=['get'])
     def active_session(self, request):
