@@ -18,15 +18,22 @@ class POSOrderLineSerializer(serializers.ModelSerializer):
 
 class POSOrderSerializer(serializers.ModelSerializer):
     lines = POSOrderLineSerializer(many=True)
+    net_total = serializers.SerializerMethodField()
+
+    def get_net_total(self, obj):
+        """المبلغ الصافي بعد الخصم"""
+        return round(float(obj.total_amount) - float(obj.discount_amount or 0), 2)
 
     class Meta:
         model = POSOrder
         fields = [
             'id', 'opco', 'session', 'order_ref', 'order_type',
-            'table_number', 'guest_count', 'total_amount', 'payment_method', 'status', 'created_at', 'lines',
-            'discount_type', 'discount_value', 'discount_amount', 'promo_code_text', 'discount_approved_by'
+            'table_number', 'guest_count', 'total_amount', 'net_total',
+            'payment_method', 'status', 'created_at', 'lines',
+            'discount_type', 'discount_value', 'discount_amount', 'promo_code_text', 'discount_approved_by',
+            'customer_name', 'customer_phone', 'customer_address', 'delivery_notes', 'sales_customer'
         ]
-        read_only_fields = ['order_ref']
+        read_only_fields = ['order_ref', 'net_total']
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines')

@@ -247,6 +247,20 @@ class POSOrder(models.Model):
     # لمعرفة هل تم خصم المخزون بالفعل أم لا في الخلفية؟
     inventory_deducted = models.BooleanField(default=False)
 
+    # ===== حقول عميل التوصيل =====
+    customer_name = models.CharField(max_length=200, null=True, blank=True, help_text="اسم عميل التوصيل")
+    customer_phone = models.CharField(max_length=30, null=True, blank=True, help_text="رقم تليفون العميل")
+    customer_address = models.TextField(null=True, blank=True, help_text="عنوان التوصيل")
+    delivery_notes = models.TextField(null=True, blank=True, help_text="ملاحظات التوصيل")
+    # رابط للعميل في موديول المبيعات (يُنشأ تلقائياً عند تأكيد الدفع)
+    sales_customer = models.ForeignKey(
+        'sales.Customer',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='pos_delivery_orders',
+        help_text="العميل المرتبط في موديول المبيعات"
+    )
+
     def deduct_inventory(self):
         """
         محرك خصم المكونات (BOM Engine)

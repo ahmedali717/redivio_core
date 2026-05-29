@@ -77,6 +77,13 @@ createApp({
             posTableId: null,
             posExistingOrderId: null,
             posGuestCount: 1,
+            // 🚚 بيانات عميل التوصيل
+            posDeliveryCustomer: {
+                name: '',
+                phone: '',
+                address: '',
+                notes: ''
+            },
             posFloors: [],
             posTables: [],
             activeFloorId: null,
@@ -1142,54 +1149,45 @@ createApp({
 
                 const order = await saveRes.json();
                 const orderId = order.id;
-                const orderTotal = parseFloat(order.total_amount || 0);
+                const subtotal = this.cartSubtotal;
+                const tax = this.cartTax;
+                const discountAmt = this.cartDiscountAmount;
+                const netTotal = this.cartTotal;
 
-                // Stop loading state so Swal can show
                 this.loading = false;
 
-                // 2. Prompt for payment method
-                const { value: method } = await Swal.fire({
-                    title: this.isArabic ? `طلب شيك - ترابيزة ${this.posTableNumber}` : `Bill Request - Table ${this.posTableNumber}`,
-                    html: `
-                        <div style="text-align:right; direction:rtl; margin-bottom: 16px; padding: 12px; background:#f8fafc; border-radius:12px;">
-                            <div style="font-size:12px; color:#64748b; font-weight:bold; margin-bottom:4px;">${this.isArabic ? 'الإجمالي المستحق' : 'Total Amount Due'}</div>
-                            <div style="font-size:28px; font-weight:900; color:#10b981; font-family:monospace;">${this.formatCurrency(orderTotal)}</div>
-                        </div>
-                        <div style="font-size:11px; color:#64748b; font-weight:bold; margin-bottom:8px; text-align:right;">${this.isArabic ? 'اختر طريقة الدفع:' : 'Select payment method:'}</div>
-                    `,
-                    input: 'radio',
-                    inputOptions: {
-                        'cash':     this.isArabic ? '💵 نقداً (Cash)'         : '💵 Cash',
-                        'instapay': this.isArabic ? '📱 إلكتروني (InstaPay)'  : '📱 InstaPay',
-                        'credit':   this.isArabic ? '📋 آجل (Credit)'         : '📋 Credit'
-                    },
-                    inputValue: 'cash',
-                    showCancelButton: true,
-                    confirmButtonText: this.isArabic ? '✅ تأكيد الدفع' : '✅ Confirm Payment',
-                    cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
-                    confirmButtonColor: '#10b981',
+                // 2. شاشة الدفع الموحدة
+                const payResult = await this.showPaymentDialog({
+                    title: this.isArabic ? `طلب شيك — ترابيزة ${this.posTableNumber}` : `Bill — Table ${this.posTableNumber}`,
+                    subtotal,
+                    tax,
+                    discountAmount: discountAmt,
+                    promoLabel: this.posDiscount.promoCodeText || '',
+                    orderType: 'DINE_IN'
                 });
 
-                if (!method) return;
+                if (!payResult) return;
 
                 this.loading = true;
-                // 3. Process payment
+                // 3. Process payment with net total and discount info
                 const payRes = await fetch(`/api/pos/orders/${orderId}/process_payment/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
-                    body: JSON.stringify({ payment_method: method })
+                    body: JSON.stringify({
+                        payment_method: payResult.method,
+                        discount_amount: discountAmt,
+                        net_total: netTotal
+                    })
                 });
 
                 if (payRes.ok) {
                     this.showToast(
-                        this.isArabic ? `✅ تم الدفع بنجاح! الترابيزة ${this.posTableNumber} - ${this.formatCurrency(orderTotal)}` : `✅ Payment done! Table ${this.posTableNumber} - ${this.formatCurrency(orderTotal)}`,
+                        this.isArabic ? `✅ تم الدفع! ترابيزة ${this.posTableNumber} — ${this.formatCurrency(netTotal)}` : `✅ Paid! Table ${this.posTableNumber} — ${this.formatCurrency(netTotal)}`,
                         "success"
                     );
-                    // Print receipt using the updated order details
                     this.printReceipt(order, this.posCart);
-                    
-                    // Clear the cashier cart and reset terminal table fields
                     this.posCart = [];
+                    this.clearDiscount();
                     this.posExistingOrderId = null;
                     this.posTableNumber = '';
                     this.posGuestCount = 1;
@@ -1669,6 +1667,116 @@ createApp({
         },
         // ==================== END DISCOUNT METHODS ====================
 
+        // ===================================================================
+        // 💳 showPaymentDialog — شاشة دفع موحدة وجميلة لكل أنواع الطلبات
+        // ===================================================================
+        async showPaymentDialog({ title, subtotal, tax, discountAmount = 0, promoLabel = '', orderType = 'TAKEAWAY' }) {
+            const netTotal = Math.max(0, subtotal + tax - discountAmount);
+            const isAr = this.isArabic;
+            const fc = (v) => this.formatCurrency(v);
+
+            // HTML ملخص المبالغ
+            const summaryHtml = `
+                <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:18px;padding:20px;margin-bottom:20px;text-align:${isAr?'right':'left'};direction:${isAr?'rtl':'ltr'}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="font-size:12px;color:#94a3b8;font-weight:700;">${isAr?'المجموع':'Subtotal'}</span>
+                        <span style="font-size:14px;color:#e2e8f0;font-family:monospace;font-weight:700;">${fc(subtotal)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${discountAmount > 0 ? '10px' : '14px'}">
+                        <span style="font-size:12px;color:#94a3b8;font-weight:700;">${isAr?'الضريبة (15%)':'Tax (15%)'}</span>
+                        <span style="font-size:14px;color:#e2e8f0;font-family:monospace;font-weight:700;">${fc(tax)}</span>
+                    </div>
+                    ${discountAmount > 0 ? `
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <span style="font-size:12px;color:#fbbf24;font-weight:700;">🏷️ ${promoLabel || (isAr?'خصم':'Discount')}</span>
+                        <span style="font-size:14px;color:#fbbf24;font-family:monospace;font-weight:700;">- ${fc(discountAmount)}</span>
+                    </div>` : ''}
+                    <div style="border-top:1px solid #334155;padding-top:14px;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:13px;color:#fff;font-weight:900;text-transform:uppercase;letter-spacing:2px;">${isAr?'الصافي المستحق':'NET TOTAL'}</span>
+                        <span style="font-size:32px;color:#10b981;font-family:monospace;font-weight:900;line-height:1;">${fc(netTotal)}</span>
+                    </div>
+                </div>`;
+
+            // HTML طرق الدفع كـ cards
+            const methodsHtml = `
+                <div style="margin-bottom:16px;${isAr?'direction:rtl;text-align:right':''}">
+                    <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:10px;">${isAr?'اختر طريقة الدفع:':'Select payment method:'}</div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="pay-method-grid">
+                        <button type="button" data-method="cash"
+                            onclick="document.querySelectorAll('.pay-method-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');window._selectedPayMethod='cash';"
+                            class="pay-method-btn active"
+                            style="padding:14px 6px;border:2px solid #10b981;border-radius:14px;background:#10b981;color:#fff;font-weight:900;font-size:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            <span style="font-size:20px;">💵</span>
+                            <span>${isAr?'نقداً':'Cash'}</span>
+                        </button>
+                        <button type="button" data-method="instapay"
+                            onclick="document.querySelectorAll('.pay-method-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');window._selectedPayMethod='instapay';"
+                            class="pay-method-btn"
+                            style="padding:14px 6px;border:2px solid #e2e8f0;border-radius:14px;background:#f8fafc;color:#475569;font-weight:900;font-size:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            <span style="font-size:20px;">📱</span>
+                            <span>InstaPay</span>
+                        </button>
+                        <button type="button" data-method="credit"
+                            onclick="document.querySelectorAll('.pay-method-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');window._selectedPayMethod='credit';"
+                            class="pay-method-btn"
+                            style="padding:14px 6px;border:2px solid #e2e8f0;border-radius:14px;background:#f8fafc;color:#475569;font-weight:900;font-size:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            <span style="font-size:20px;">📋</span>
+                            <span>${isAr?'آجل':'Credit'}</span>
+                        </button>
+                    </div>
+                </div>`;
+
+            // فورم بيانات عميل التوصيل
+            const deliveryHtml = orderType === 'DELIVERY' ? `
+                <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:16px;margin-top:16px;${isAr?'direction:rtl;text-align:right':''}">
+                    <div style="font-size:12px;color:#c2410c;font-weight:900;margin-bottom:12px;">🚚 ${isAr?'بيانات التوصيل (مطلوبة)':'Delivery Info (Required)'}</div>
+                    <input id="del-name" placeholder="${isAr?'اسم العميل *':'Customer Name *'}" value="${this.posDeliveryCustomer.name || ''}"
+                        style="width:100%;padding:10px 12px;border:1.5px solid #fed7aa;border-radius:10px;font-size:13px;margin-bottom:8px;box-sizing:border-box;${isAr?'direction:rtl;text-align:right':''}">
+                    <input id="del-phone" placeholder="${isAr?'رقم التليفون *':'Phone Number *'}" value="${this.posDeliveryCustomer.phone || ''}" type="tel"
+                        style="width:100%;padding:10px 12px;border:1.5px solid #fed7aa;border-radius:10px;font-size:13px;margin-bottom:8px;box-sizing:border-box;${isAr?'direction:rtl;text-align:right':''}">
+                    <input id="del-address" placeholder="${isAr?'العنوان *':'Address *'}" value="${this.posDeliveryCustomer.address || ''}"
+                        style="width:100%;padding:10px 12px;border:1.5px solid #fed7aa;border-radius:10px;font-size:13px;margin-bottom:8px;box-sizing:border-box;${isAr?'direction:rtl;text-align:right':''}">
+                    <input id="del-notes" placeholder="${isAr?'ملاحظات (اختياري)':'Notes (optional)'}" value="${this.posDeliveryCustomer.notes || ''}"
+                        style="width:100%;padding:10px 12px;border:1.5px solid #fed7aa;border-radius:10px;font-size:13px;box-sizing:border-box;${isAr?'direction:rtl;text-align:right':''}">
+                </div>` : '';
+
+            // إعداد window._selectedPayMethod
+            window._selectedPayMethod = 'cash';
+
+            const result = await Swal.fire({
+                title: `<span style="font-size:16px;font-weight:900;">${title}</span>`,
+                html: summaryHtml + methodsHtml + deliveryHtml,
+                showCancelButton: true,
+                confirmButtonText: `<i class="fas fa-check-circle"></i> ${isAr ? '✅ تأكيد الدفع' : '✅ Confirm Payment'}`,
+                cancelButtonText: isAr ? 'إلغاء' : 'Cancel',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                width: 480,
+                customClass: { popup: 'swal-payment-popup' },
+                preConfirm: () => {
+                    const method = window._selectedPayMethod || 'cash';
+                    if (orderType === 'DELIVERY') {
+                        const name = document.getElementById('del-name')?.value?.trim();
+                        const phone = document.getElementById('del-phone')?.value?.trim();
+                        const address = document.getElementById('del-address')?.value?.trim();
+                        const notes = document.getElementById('del-notes')?.value?.trim();
+                        if (!name) { Swal.showValidationMessage(isAr ? 'اسم العميل مطلوب' : 'Customer name is required'); return false; }
+                        if (!phone) { Swal.showValidationMessage(isAr ? 'رقم التليفون مطلوب' : 'Phone number is required'); return false; }
+                        if (!address) { Swal.showValidationMessage(isAr ? 'العنوان مطلوب' : 'Address is required'); return false; }
+                        return { method, deliveryInfo: { name, phone, address, notes } };
+                    }
+                    return { method };
+                }
+            });
+
+            if (!result.isConfirmed) return null;
+            // حفظ بيانات التوصيل في الـ state
+            if (result.value?.deliveryInfo) {
+                this.posDeliveryCustomer = { ...result.value.deliveryInfo };
+            }
+            return result.value; // { method, deliveryInfo? }
+        },
+
         selectCartItem(index) {
             this.posSelectedCartIndex = index;
             this.posNumpadBuffer = '';
@@ -1760,48 +1868,35 @@ createApp({
 
             const orderId = table.active_order_detail.id;
             const orderTotal = parseFloat(table.active_order_total || 0);
+            const discountAmt = parseFloat(table.active_order_detail.discount_amount || 0);
+            const subtotal = orderTotal - discountAmt; // approximate
+            const tax = 0; // already included in total from server
 
-            // Show payment method selection
-            const { value: method } = await Swal.fire({
-                title: this.isArabic ? `طلب شيك - ترابيزة ${table.number}` : `Bill Request - Table ${table.number}`,
-                html: `
-                    <div style="text-align:right; direction:rtl; margin-bottom: 16px; padding: 12px; background:#f8fafc; border-radius:12px;">
-                        <div style="font-size:12px; color:#64748b; font-weight:bold; margin-bottom:4px;">${this.isArabic ? 'الإجمالي المستحق' : 'Total Amount Due'}</div>
-                        <div style="font-size:28px; font-weight:900; color:#10b981; font-family:monospace;">${this.formatCurrency(orderTotal)}</div>
-                    </div>
-                    <div style="font-size:11px; color:#64748b; font-weight:bold; margin-bottom:8px; text-align:right;">${this.isArabic ? 'اختر طريقة الدفع:' : 'Select payment method:'}</div>
-                `,
-                input: 'radio',
-                inputOptions: {
-                    'cash':     this.isArabic ? '💵 نقداً (Cash)'         : '💵 Cash',
-                    'instapay': this.isArabic ? '📱 إلكتروني (InstaPay)'  : '📱 InstaPay',
-                    'credit':   this.isArabic ? '📋 آجل (Credit)'         : '📋 Credit'
-                },
-                inputValue: 'cash',
-                showCancelButton: true,
-                confirmButtonText: this.isArabic ? '✅ تأكيد الدفع' : '✅ Confirm Payment',
-                cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
-                confirmButtonColor: '#10b981',
+            const payResult = await this.showPaymentDialog({
+                title: this.isArabic ? `شيك الحساب — ترابيزة ${table.number}` : `Bill — Table ${table.number}`,
+                subtotal: orderTotal, // gross
+                tax: 0,
+                discountAmount: discountAmt,
+                promoLabel: table.active_order_detail.promo_code_text || '',
+                orderType: 'DINE_IN'
             });
 
-            if (!method) return;
+            if (!payResult) return;
 
             try {
                 this.loading = true;
-                // Process payment for existing draft order
+                const netTotal = Math.max(0, orderTotal - discountAmt);
                 const payRes = await fetch(`/api/pos/orders/${orderId}/process_payment/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
-                    body: JSON.stringify({ payment_method: method })
+                    body: JSON.stringify({ payment_method: payResult.method, net_total: netTotal })
                 });
 
                 if (payRes.ok) {
-                    const payData = await payRes.json();
                     this.showToast(
-                        this.isArabic ? `✅ تم الدفع بنجاح! الترابيزة ${table.number} - ${this.formatCurrency(orderTotal)}` : `✅ Payment done! Table ${table.number} - ${this.formatCurrency(orderTotal)}`,
+                        this.isArabic ? `✅ تم الدفع! ترابيزة ${table.number} — ${this.formatCurrency(netTotal)}` : `✅ Paid! Table ${table.number} — ${this.formatCurrency(netTotal)}`,
                         "success"
                     );
-                    // Print receipt using existing order detail
                     if (table.active_order_detail) {
                         this.printReceipt(table.active_order_detail, table.active_order_detail.lines);
                     }
@@ -1828,24 +1923,26 @@ createApp({
                 this.showToast(this.isArabic ? "العربة فارغة!" : "Cart is empty!", "error");
                 return;
             }
-            
-            // 🚀 Prompt for Payment Method during Checkout
-            const { value: method } = await Swal.fire({
-                title: this.isArabic ? 'اختر طريقة الدفع' : 'Select Payment Method',
-                input: 'radio',
-                inputOptions: {
-                    'cash': this.isArabic ? 'نقداً (Cash)' : 'Cash',
-                    'instapay': this.isArabic ? 'إلكتروني (InstaPay)' : 'InstaPay',
-                    'credit': this.isArabic ? 'آجل (Credit)' : 'Credit'
-                },
-                inputValue: this.posPaymentMethod,
-                showCancelButton: true,
-                confirmButtonText: this.isArabic ? 'تأكيد ودفع' : 'Confirm & Pay'
+
+            // 💳 شاشة الدفع الموحدة
+            const orderTypeLabel = {
+                'TAKEAWAY': this.isArabic ? 'تيك اواي' : 'Takeaway',
+                'DELIVERY': this.isArabic ? 'توصيل' : 'Delivery',
+                'DINE_IN':  this.isArabic ? 'محلي' : 'Dine-In',
+            }[this.posOrderType] || this.posOrderType;
+
+            const payResult = await this.showPaymentDialog({
+                title: this.isArabic ? `تأكيد الطلب — ${orderTypeLabel}` : `Confirm Order — ${orderTypeLabel}`,
+                subtotal: this.cartSubtotal,
+                tax: this.cartTax,
+                discountAmount: this.cartDiscountAmount,
+                promoLabel: this.posDiscount.promoCodeText || '',
+                orderType: this.posOrderType
             });
 
-            if (!method) return;
-            this.posPaymentMethod = method;
-            
+            if (!payResult) return;
+            this.posPaymentMethod = payResult.method;
+
             try {
                 this.loading = true;
                 const res = await fetch('/api/pos/orders/', {
@@ -1864,6 +1961,11 @@ createApp({
                         discount_amount: parseFloat(this.cartDiscountAmount.toFixed(2)),
                         promo_code_text: this.posDiscount.promoCodeText || '',
                         discount_approved_by: this.posDiscount.approvedBy || '',
+                        // بيانات عميل التوصيل
+                        customer_name: payResult.deliveryInfo?.name || '',
+                        customer_phone: payResult.deliveryInfo?.phone || '',
+                        customer_address: payResult.deliveryInfo?.address || '',
+                        delivery_notes: payResult.deliveryInfo?.notes || '',
                         lines: this.posCart.map(i => ({
                             material: i.id,
                             qty: i.qty,
@@ -1876,7 +1978,7 @@ createApp({
 
                 if (res.ok) {
                     const order = await res.json();
-                    
+
                     // Link Dine-In order to table
                     if (this.posOrderType === 'DINE_IN' && this.posTableNumber) {
                         const tableObj = this.posTables.find(t => t.number === this.posTableNumber);
@@ -1892,30 +1994,39 @@ createApp({
                             }
                         }
                     }
-                    
-                    // 2. Process Payment & Deduct Inventory (BOM Deduction)
+
+                    // Process Payment & register delivery customer if needed
+                    const payBody = {
+                        payment_method: this.posPaymentMethod,
+                    };
+                    if (payResult.deliveryInfo) {
+                        payBody.customer_name    = payResult.deliveryInfo.name;
+                        payBody.customer_phone   = payResult.deliveryInfo.phone;
+                        payBody.customer_address = payResult.deliveryInfo.address;
+                        payBody.delivery_notes   = payResult.deliveryInfo.notes || '';
+                    }
+
                     const payRes = await fetch(`/api/pos/orders/${order.id}/process_payment/`, {
                         method: 'POST',
-                        headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                        body: JSON.stringify(payBody)
                     });
 
                     if (payRes.ok) {
-                        const payData = await payRes.json();
-                        this.showToast(this.isArabic ? "تم تأكيد الطلب وخصم المكونات بنجاح!" : "Order Confirmed & Ingredients Deducted!", "success");
-                        
-                        // 🖨️ طباعة الإيصال تلقائياً
+                        this.showToast(this.isArabic ? "تم تأكيد الطلب بنجاح!" : "Order Confirmed!", "success");
                         this.printReceipt(order, this.posCart);
-                        
                         this.posCart = [];
-                        this.clearDiscount(); // 🏷️ مسح الخصم بعد إتمام الطلب
+                        this.clearDiscount();
                         this.posTableNumber = '';
                         this.posGuestCount = 1;
+                        // إعادة تعيين بيانات التوصيل
+                        this.posDeliveryCustomer = { name: '', phone: '', address: '', notes: '' };
                         if (this.posMode === 'direct') {
                             this.posOrderType = 'TAKEAWAY';
                         } else {
                             this.posOrderType = 'DINE_IN';
                         }
-                        this.refreshAllData(); // 🚀 تحديث شامل لكل البيانات والتقارير وحركات المخزن فوراً
+                        this.refreshAllData();
                     } else {
                         const err = await payRes.json();
                         this.showToast(err.error || "Payment Failed", "error");

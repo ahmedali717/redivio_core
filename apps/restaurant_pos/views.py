@@ -162,6 +162,20 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         payment_method = request.data.get('payment_method')
         if payment_method:
             order.payment_method = payment_method
+
+        # Update delivery customer info if provided
+        customer_name = request.data.get('customer_name')
+        customer_phone = request.data.get('customer_phone')
+        customer_address = request.data.get('customer_address')
+        delivery_notes = request.data.get('delivery_notes')
+        if customer_name:
+            order.customer_name = customer_name
+        if customer_phone:
+            order.customer_phone = customer_phone
+        if customer_address:
+            order.customer_address = customer_address
+        if delivery_notes:
+            order.delivery_notes = delivery_notes
         
         # Update status: only change to 'paid' if it wasn't already in progress or done in the kitchen
         if order.status not in ['inprogress', 'done']:
@@ -170,6 +184,33 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         
         order.save()
         
+        # 🚚 إنشاء / ربط عميل في موديول المبيعات لطلبات التوصيل
+        if order.order_type == 'DELIVERY' and order.customer_phone:
+            try:
+                from apps.sales.models import Customer
+                import re
+                # توليد كود العميل من رقم التليفون
+                phone_clean = re.sub(r'\D', '', order.customer_phone)
+                customer_code = f"POS-{phone_clean}"
+                customer, created = Customer.objects.get_or_create(
+                    opco=order.opco,
+                    code=customer_code,
+                    defaults={
+                        'name': order.customer_name or order.customer_phone,
+                        'phone': order.customer_phone,
+                        'address': order.customer_address or '',
+                    }
+                )
+                # تحديث البيانات لو العميل موجود مسبقاً
+                if not created and order.customer_name:
+                    customer.name = order.customer_name
+                    customer.address = order.customer_address or customer.address
+                    customer.save()
+                order.sales_customer = customer
+                order.save()
+            except Exception as e:
+                print(f"Warning: Could not link delivery customer to sales: {e}")
+
         # Update session total sales
         session = order.session
         session.total_sales += order.total_amount
