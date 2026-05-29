@@ -64,9 +64,34 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             return Response({}, status=200)
             
         terminal_id = request.query_params.get('terminal')
+        
+        # Enforce terminal access permission check if a terminal is requested
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            try:
+                t_id = int(terminal_id)
+                terminal = POSTerminal.objects.filter(id=t_id).first()
+                if terminal and terminal.allowed_users.exists():
+                    user_to_check = request.user
+                    if user_to_check and not user_to_check.is_superuser:
+                        if not terminal.allowed_users.filter(id=user_to_check.id).exists():
+                            is_ar = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                            err_msg = 'ليس لديك صلاحية للدخول إلى نقطة البيع هذه.' if is_ar else 'You do not have permission to access this POS terminal.'
+                            return Response({'error': err_msg}, status=status.HTTP_403_FORBIDDEN)
+            except (ValueError, TypeError):
+                pass
+
         session_qs = POSSession.objects.filter(opco_id=opco_id, is_closed=False)
         if terminal_id and terminal_id not in ['null', 'undefined', '']:
             session_qs = session_qs.filter(terminal_id=terminal_id)
+            
+        # Filter session_qs so non-superusers only see sessions for terminals they are allowed to access
+        user = request.user
+        if user and not user.is_superuser:
+            from django.db.models import Q
+            session_qs = session_qs.filter(
+                Q(terminal__isnull=True) | Q(terminal__allowed_users__isnull=True) | Q(terminal__allowed_users=user)
+            ).distinct()
+            
         session = session_qs.first()
         if session:
             from .serializers import POSSessionSerializer
@@ -152,7 +177,17 @@ class POSOrderViewSet(viewsets.ModelViewSet):
                             'error': 'ليس لديك صلاحية لفتح نقطة البيع هذه.'
                         }, status=status.HTTP_403_FORBIDDEN)
         
-        # Close previous sessions for this terminal / OpCo
+        # Check if there is already an active session for this terminal to prevent duplicate sessions
+        if terminal_id:
+            existing_session = POSSession.objects.filter(opco_id=opco_id, terminal_id=terminal_id, is_closed=False).first()
+        else:
+            existing_session = POSSession.objects.filter(opco_id=opco_id, terminal_id__isnull=True, is_closed=False).first()
+            
+        if existing_session:
+            from .serializers import POSSessionSerializer
+            return Response(POSSessionSerializer(existing_session).data)
+
+        # Close previous sessions for this terminal / OpCo (as safety fallback)
         if terminal_id:
             POSSession.objects.filter(opco_id=opco_id, terminal_id=terminal_id, is_closed=False).update(is_closed=True, end_time=timezone.now())
         else:
@@ -429,7 +464,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     def add_transaction(self, request):
         """تسجيل حركة نقدية (مصروفات / توريد)"""
         opco_id = request.data.get('opco')
-        session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
+        terminal_id = request.data.get('terminal')
+        session_qs = POSSession.objects.filter(opco_id=opco_id, is_closed=False)
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            session_qs = session_qs.filter(terminal_id=terminal_id)
+        session = session_qs.first()
         if not session:
             return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -727,7 +766,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         except (ValueError, TypeError):
             return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
             
-        session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
+        terminal_id = request.query_params.get('terminal')
+        session_qs = POSSession.objects.filter(opco_id=opco_id, is_closed=False)
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            session_qs = session_qs.filter(terminal_id=terminal_id)
+        session = session_qs.first()
         if not session:
             return Response({'error': 'No active session'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -762,7 +805,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             return Response({'error': 'No active session found'}, status=status.HTTP_400_BAD_REQUEST)
             
         actual_balance = float(request.data.get('actual_balance', 0))
-        session = POSSession.objects.filter(opco_id=opco_id, is_closed=False).first()
+        terminal_id = request.data.get('terminal')
+        session_qs = POSSession.objects.filter(opco_id=opco_id, is_closed=False)
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            session_qs = session_qs.filter(terminal_id=terminal_id)
+        session = session_qs.first()
         
         if not session:
             return Response({'error': 'No active session found'}, status=status.HTTP_400_BAD_REQUEST)
@@ -874,6 +921,15 @@ class POSTerminalViewSet(viewsets.ModelViewSet):
             return POSTerminal.objects.none()
             
         queryset = POSTerminal.objects.filter(opco_id=opco_id)
+        
+        # Enforce terminal access permission filter
+        user = self.request.user
+        if user and not user.is_superuser:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(allowed_users__isnull=True) | Q(allowed_users=user)
+            ).distinct()
+
         if not queryset.exists():
             # Auto-create a default terminal
             from apps.core.models import OpCo
@@ -886,6 +942,10 @@ class POSTerminalViewSet(viewsets.ModelViewSet):
                     terminal_type="RESTAURANT"
                 )
                 queryset = POSTerminal.objects.filter(opco_id=opco_id)
+                if user and not user.is_superuser:
+                    queryset = queryset.filter(
+                        Q(allowed_users__isnull=True) | Q(allowed_users=user)
+                    ).distinct()
         return queryset.order_by('code')
 
 

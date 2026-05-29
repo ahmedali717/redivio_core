@@ -810,6 +810,13 @@ createApp({
                     }
                 }
             }
+        },
+        posOrderType(newType, oldType) {
+            if (newType === 'DELIVERY') {
+                this.addDeliveryServiceItem();
+            } else if (oldType === 'DELIVERY') {
+                this.removeDeliveryServiceItem();
+            }
         }
     },
 
@@ -1445,8 +1452,12 @@ createApp({
                 }
             }
 
+            const isDeliveryService = item.sku === 'DELIVERY' || 
+                                     (item.sku && item.sku.toLowerCase() === 'delivery') ||
+                                     (item.name && item.name.toLowerCase().includes('delivery')) || 
+                                     (item.name && item.name.includes('توصيل'));
             const price = parseFloat(item.sales_price || item.standard_price || 0);
-            const onHand = parseFloat(item.on_hand || 0);
+            const onHand = isDeliveryService ? 999999 : parseFloat(item.on_hand || 0);
             const hasNoBOM = !item.recipe_lines || item.recipe_lines.length === 0;
 
             const existing = this.posCart.find(i => i.id === item.id);
@@ -1466,6 +1477,7 @@ createApp({
                 }
                 this.posCart.push({
                     id: item.id,
+                    sku: item.sku,
                     name: item.name,
                     price: price,
                     tax_rate: item.tax_rate || 15,
@@ -2263,7 +2275,8 @@ createApp({
             // 1. Show Preview First
             try {
                 this.loading = true;
-                const prevRes = await fetch('/api/pos/orders/session_preview/?opco=' + this.activeOpcoId);
+                const termParam = this.selectedTerminalId ? '&terminal=' + this.selectedTerminalId : '';
+                const prevRes = await fetch('/api/pos/orders/session_preview/?opco=' + this.activeOpcoId + termParam);
                 if (prevRes.ok) {
                     const summary = await prevRes.json();
                     const { value: actualBalance } = await Swal.fire({
@@ -2301,7 +2314,8 @@ createApp({
                         },
                         body: JSON.stringify({ 
                             opco: this.activeOpcoId,
-                            actual_balance: actualBalance
+                            actual_balance: actualBalance,
+                            terminal: this.selectedTerminalId
                         })
                     });
 
@@ -2386,7 +2400,8 @@ createApp({
                         opco: this.activeOpcoId,
                         type: formValues.type,
                         amount: formValues.amount,
-                        reason: formValues.reason
+                        reason: formValues.reason,
+                        terminal: this.selectedTerminalId
                     })
                 });
                 
@@ -3050,11 +3065,61 @@ createApp({
                             console.warn('Could not fetch last session balance:', e);
                         }
                     }
+                } else if (res.status === 403) {
+                    const data = await res.json().catch(() => ({}));
+                    this.showToast(data.error || (this.isArabic ? "ليس لديك صلاحية للدخول لنقطة البيع هذه" : "Unauthorized for this terminal"), "error");
+                    this.activePOSSession = null;
+                    this.selectedTerminalId = '';
+                    localStorage.removeItem('selected_terminal_id');
+                } else {
+                    this.activePOSSession = null;
                 }
             } catch (e) {
                 console.error("Error checking terminal session:", e);
+                this.activePOSSession = null;
             } finally {
                 this.loading = false;
+            }
+        },
+
+        addDeliveryServiceItem() {
+            // Find delivery item in materials list
+            const deliveryItem = (this.materials_list || []).find(item => 
+                item.sku === 'DELIVERY' || 
+                (item.sku && item.sku.toLowerCase() === 'delivery') ||
+                (item.name && item.name.toLowerCase().includes('delivery')) || 
+                (item.name && item.name.includes('توصيل'))
+            );
+            if (deliveryItem) {
+                // Check if it's already in the cart
+                const exists = this.posCart.some(line => line.id === deliveryItem.id);
+                if (!exists) {
+                    this.addToCart(deliveryItem);
+                }
+            } else {
+                this.showToast(this.isArabic ? 
+                    "تنبيه: لم يتم العثور على صنف خدمة التوصيل في قائمة الأصناف. يرجى إضافة صنف خدمة التوصيل أولاً بسكيو DELIVERY." : 
+                    "Warning: Delivery service product not found in the materials list. Please create a product with SKU 'DELIVERY' first.", 
+                    "warning"
+                );
+            }
+        },
+
+        removeDeliveryServiceItem() {
+            // Find delivery item in cart and remove it
+            this.posCart = this.posCart.filter(line => {
+                const isDelivery = line.sku === 'DELIVERY' || 
+                                   (line.sku && line.sku.toLowerCase() === 'delivery') ||
+                                   (line.name && line.name.toLowerCase().includes('delivery')) || 
+                                   (line.name && line.name.includes('توصيل'));
+                return !isDelivery;
+            });
+        },
+
+        clearCart() {
+            this.posCart = [];
+            if (this.posOrderType === 'DELIVERY') {
+                this.addDeliveryServiceItem();
             }
         },
 
