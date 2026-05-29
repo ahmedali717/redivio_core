@@ -386,7 +386,9 @@ createApp({
             return Math.round(this.cartSubtotal * 0.15 * 100) / 100;
         },
         cartServiceCharge() {
-            // ضريبة الخدمة 12% على المجموع الفرعي
+            // رسوم الخدمة 12% — فقط للمحلي (Dine-In)
+            // التيك اواي والديلفيري: مفيش رسوم خدمة
+            if (this.posOrderType !== 'DINE_IN') return 0;
             return Math.round(this.cartSubtotal * 0.12 * 100) / 100;
         },
         cartTax() {
@@ -1696,10 +1698,10 @@ createApp({
                         <span style="font-size:12px;color:#94a3b8;font-weight:700;">${isAr?'ض.ق.م (15%)':'VAT (15%)'}</span>
                         <span style="font-size:14px;color:#e2e8f0;font-family:monospace;font-weight:700;">${fc(vat)}</span>
                     </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${discountAmount > 0 ? '8px' : '14px'}">
+                    ${sc > 0 ? `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${discountAmount > 0 ? '8px' : '14px'}">
                         <span style="font-size:12px;color:#94a3b8;font-weight:700;">${isAr?'رسوم خدمة (12%)':'Service Charge (12%)'}</span>
                         <span style="font-size:14px;color:#e2e8f0;font-family:monospace;font-weight:700;">${fc(sc)}</span>
-                    </div>
+                    </div>` : ''}
                     ${discountAmount > 0 ? `
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
                         <span style="font-size:12px;color:#fbbf24;font-weight:700;">🏷️ ${promoLabel || (isAr?'خصم':'Discount')}</span>
@@ -2069,8 +2071,11 @@ createApp({
             const subtotal = Math.round(
                 cart.reduce((s, i) => s + (Number(i.price || i.unit_price) * Number(i.qty)), 0) * 100
             ) / 100;
-            const vatAmount      = Math.round(subtotal * 0.15 * 100) / 100;  // VAT 15%
-            const serviceCharge  = Math.round(subtotal * 0.12 * 100) / 100;  // خدمة 12%
+            const vatAmount     = Math.round(subtotal * 0.15 * 100) / 100;  // VAT 15% دائماً
+            // رسوم الخدمة 12% — فقط للمحلي (Dine-In)
+            const serviceCharge = order.order_type === 'DINE_IN'
+                ? Math.round(subtotal * 0.12 * 100) / 100
+                : 0;
             const grossTotal     = Math.round((subtotal + vatAmount + serviceCharge) * 100) / 100;
             const discountAmount = Math.round((Number(order.discount_amount) || this.cartDiscountAmount || 0) * 100) / 100;
             const total          = Math.round(Math.max(0, grossTotal - discountAmount) * 100) / 100;
@@ -2210,10 +2215,11 @@ createApp({
                             <span>${this.isArabic ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)'}</span>
                             <span>${vatAmount.toFixed(2)}</span>
                         </div>
+                        ${serviceCharge > 0 ? `
                         <div class="summary-line">
                             <span>${this.isArabic ? 'رسوم الخدمة (12%)' : 'Service Charge (12%)'}</span>
                             <span>${serviceCharge.toFixed(2)}</span>
-                        </div>
+                        </div>` : ''}
                         ${discountAmount > 0 ? `
                         <div class="summary-line" style="color:#d97706;">
                             <span>🏷️ ${this.isArabic ? 'خصم' : 'Discount'}${order.promo_code_text ? ' — ' + order.promo_code_text : ''}</span>

@@ -125,7 +125,7 @@
                         <span>[[ isArabic ? 'ض.ق.م (15%)' : 'VAT (15%)' ]]</span>
                         <span class="font-mono">[[ formatCurrency(cartVAT) ]]</span>
                     </div>
-                    <div class="flex justify-between text-xs text-slate-400">
+                    <div v-if="posOrderType === 'DINE_IN'" class="flex justify-between text-xs text-slate-400">
                         <span>[[ isArabic ? 'رسوم خدمة (12%)' : 'Service (12%)' ]]</span>
                         <span class="font-mono">[[ formatCurrency(cartServiceCharge) ]]</span>
                     </div>
