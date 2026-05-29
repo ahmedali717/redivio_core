@@ -75,7 +75,7 @@
                         </div>
 
                         <!-- 🚀 Stock Level Display (Direct Sales Items) -->
-                        <div v-if="(!item.recipe_lines || item.recipe_lines.length === 0) && !isItemOutofStock(item)" 
+                        <div v-if="(!item.recipe_lines || item.recipe_lines.length === 0) && !isItemOutofStock(item) && !isDeliveryService(item)" 
                              class="absolute top-2 right-2 bg-slate-900/60 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-lg border border-white/20 shadow-lg">
                              <i class="fas fa-box ml-1"></i> [[ isArabic ? 'متاح: ' : 'Stock: ' ]] [[ parseFloat(item.on_hand || 0).toLocaleString() ]]
                         </div>

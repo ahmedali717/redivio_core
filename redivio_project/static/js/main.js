@@ -1417,7 +1417,18 @@ createApp({
             }
         },
 
+        isDeliveryService(item) {
+            return item && (
+                item.sku === 'DELIVERY' || 
+                (item.sku && item.sku.toLowerCase() === 'delivery') ||
+                (item.name && item.name.toLowerCase().includes('delivery')) || 
+                (item.name && item.name.includes('توصيل'))
+            );
+        },
+
         isItemOutofStock(item) {
+            if (this.isDeliveryService(item)) return false;
+
             if (!item.recipe_lines || item.recipe_lines.length === 0) {
                 return parseFloat(item.on_hand || 0) <= 0;
             }

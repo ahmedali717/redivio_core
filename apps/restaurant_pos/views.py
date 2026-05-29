@@ -94,6 +94,18 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             
         session = session_qs.first()
         if session:
+            # Enforce permission check for the session's active cashier
+            if session.terminal and session.terminal.allowed_users.exists():
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                cashier_user = User.objects.filter(email=session.cashier_name).first() or User.objects.filter(username=session.cashier_name).first()
+                user_to_check = cashier_user or request.user
+                if user_to_check and not user_to_check.is_superuser:
+                    if not session.terminal.allowed_users.filter(id=user_to_check.id).exists():
+                        is_ar = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                        err_msg = 'ليس لديك صلاحية للدخول إلى نقطة البيع هذه (المستخدم الحالي غير مصرح له).' if is_ar else 'You do not have permission to access this POS terminal (session cashier is unauthorized).'
+                        return Response({'error': err_msg}, status=status.HTTP_403_FORBIDDEN)
+
             from .serializers import POSSessionSerializer
             return Response(POSSessionSerializer(session).data)
         return Response({}, status=200)
