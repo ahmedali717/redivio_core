@@ -67,6 +67,14 @@ class CustomerViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         phone = self.request.query_params.get('phone')
         if phone:
             queryset = queryset.filter(phone__icontains=phone)
+            
+        search = self.request.query_params.get('search')
+        if search:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(name__icontains=search) | 
+                Q(phone__icontains=search)
+            )
         return queryset
 
 class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):

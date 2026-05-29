@@ -1736,6 +1736,46 @@ createApp({
                     </div>
                 </div>`;
 
+            // Style for payment methods buttons dynamic states
+            const styleHtml = `
+                <style>
+                    .pay-method-btn {
+                        padding: 14px 6px !important;
+                        border: 2px solid #e2e8f0 !important;
+                        border-radius: 14px !important;
+                        background: #f8fafc !important;
+                        color: #475569 !important;
+                        font-weight: 900 !important;
+                        font-size: 12px !important;
+                        cursor: pointer !important;
+                        transition: all .2s !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        gap: 4px !important;
+                    }
+                    .pay-method-btn:hover {
+                        border-color: #cbd5e1 !important;
+                        background: #f1f5f9 !important;
+                    }
+                    .pay-method-btn.active[data-method="cash"] {
+                        border-color: #10b981 !important;
+                        background: #e6f4ea !important;
+                        color: #10b981 !important;
+                    }
+                    .pay-method-btn.active[data-method="instapay"] {
+                        border-color: #6366f1 !important;
+                        background: #e0e7ff !important;
+                        color: #6366f1 !important;
+                    }
+                    .pay-method-btn.active[data-method="credit"] {
+                        border-color: #f59e0b !important;
+                        background: #fef3c7 !important;
+                        color: #d97706 !important;
+                    }
+                </style>
+            `;
+
             // HTML طرق الدفع كـ cards
             const methodsHtml = `
                 <div style="margin-bottom:16px;${isAr?'direction:rtl;text-align:right':''}">
@@ -1743,38 +1783,40 @@ createApp({
                     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="pay-method-grid">
                         <button type="button" data-method="cash"
                             onclick="document.querySelectorAll('.pay-method-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');window._selectedPayMethod='cash';"
-                            class="pay-method-btn active"
-                            style="padding:14px 6px;border:2px solid #10b981;border-radius:14px;background:#10b981;color:#fff;font-weight:900;font-size:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            class="pay-method-btn active">
                             <span style="font-size:20px;">💵</span>
                             <span>${isAr?'نقداً':'Cash'}</span>
                         </button>
                         <button type="button" data-method="instapay"
                             onclick="document.querySelectorAll('.pay-method-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');window._selectedPayMethod='instapay';"
-                            class="pay-method-btn"
-                            style="padding:14px 6px;border:2px solid #e2e8f0;border-radius:14px;background:#f8fafc;color:#475569;font-weight:900;font-size:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            class="pay-method-btn">
                             <span style="font-size:20px;">📱</span>
                             <span>InstaPay</span>
                         </button>
                         <button type="button" data-method="credit"
                             onclick="document.querySelectorAll('.pay-method-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');window._selectedPayMethod='credit';"
-                            class="pay-method-btn"
-                            style="padding:14px 6px;border:2px solid #e2e8f0;border-radius:14px;background:#f8fafc;color:#475569;font-weight:900;font-size:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            class="pay-method-btn">
                             <span style="font-size:20px;">📋</span>
                             <span>${isAr?'آجل':'Credit'}</span>
                         </button>
                     </div>
                 </div>`;
 
-            // فورم بيانات عميل التوصيل
+            // فورم بيانات عميل التوصيل مع الداتا ليست
             const deliveryHtml = orderType === 'DELIVERY' ? `
                 <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:16px;margin-top:16px;${isAr?'direction:rtl;text-align:right':''}">
                     <div style="font-size:12px;color:#c2410c;font-weight:900;margin-bottom:12px;">🚚 ${isAr?'بيانات التوصيل (مطلوبة)':'Delivery Info (Required)'}</div>
-                    <input id="del-name" placeholder="${isAr?'اسم العميل *':'Customer Name *'}" value="${this.posDeliveryCustomer.name || ''}"
+                    <input id="del-name" list="customer-list" placeholder="${isAr?'اسم العميل *':'Customer Name *'}" value="${this.posDeliveryCustomer.name || ''}"
                         style="width:100%;padding:10px 12px;border:1.5px solid #fed7aa;border-radius:10px;font-size:13px;margin-bottom:8px;box-sizing:border-box;${isAr?'direction:rtl;text-align:right':''}">
-                    <input id="del-phone" placeholder="${isAr?'رقم التليفون *':'Phone Number *'}" value="${this.posDeliveryCustomer.phone || ''}" type="tel"
+                    <datalist id="customer-list"></datalist>
+                    
+                    <input id="del-phone" list="customer-phone-list" placeholder="${isAr?'رقم التليفون *':'Phone Number *'}" value="${this.posDeliveryCustomer.phone || ''}" type="tel"
                         style="width:100%;padding:10px 12px;border:1.5px solid #fed7aa;border-radius:10px;font-size:13px;margin-bottom:8px;box-sizing:border-box;${isAr?'direction:rtl;text-align:right':''}">
+                    <datalist id="customer-phone-list"></datalist>
+                    
                     <input id="del-address" placeholder="${isAr?'العنوان *':'Address *'}" value="${this.posDeliveryCustomer.address || ''}"
                         style="width:100%;padding:10px 12px;border:1.5px solid #fed7aa;border-radius:10px;font-size:13px;margin-bottom:8px;box-sizing:border-box;${isAr?'direction:rtl;text-align:right':''}">
+                    
                     <input id="del-notes" placeholder="${isAr?'ملاحظات (اختياري)':'Notes (optional)'}" value="${this.posDeliveryCustomer.notes || ''}"
                         style="width:100%;padding:10px 12px;border:1.5px solid #fed7aa;border-radius:10px;font-size:13px;box-sizing:border-box;${isAr?'direction:rtl;text-align:right':''}">
                 </div>` : '';
@@ -1784,7 +1826,7 @@ createApp({
 
             const result = await Swal.fire({
                 title: `<span style="font-size:16px;font-weight:900;">${title}</span>`,
-                html: summaryHtml + methodsHtml + deliveryHtml,
+                html: styleHtml + summaryHtml + methodsHtml + deliveryHtml,
                 showCancelButton: true,
                 confirmButtonText: `<i class="fas fa-check-circle"></i> ${isAr ? '✅ تأكيد الدفع' : '✅ Confirm Payment'}`,
                 cancelButtonText: isAr ? 'إلغاء' : 'Cancel',
@@ -1794,30 +1836,66 @@ createApp({
                 customClass: { popup: 'swal-payment-popup' },
                 didOpen: () => {
                     if (orderType === 'DELIVERY') {
+                        const nameInput = document.getElementById('del-name');
                         const phoneInput = document.getElementById('del-phone');
+                        const addrInput = document.getElementById('del-address');
+                        
+                        let currentMatches = [];
+                        
+                        const updateDatalists = async (query) => {
+                            if (query.trim().length < 3) return;
+                            try {
+                                const res = await fetch(`/api/customers/?opco=${this.activeOpcoId}&search=${encodeURIComponent(query)}`);
+                                if (res.ok) {
+                                    currentMatches = await res.json();
+                                    
+                                    // Update name datalist
+                                    const datalist = document.getElementById('customer-list');
+                                    if (datalist) {
+                                        datalist.innerHTML = currentMatches.map(c => {
+                                            const label = `${c.phone || ''} - ${c.address || ''}`.trim();
+                                            return `<option value="${c.name}">${label}</option>`;
+                                        }).join('');
+                                    }
+                                    
+                                    // Update phone datalist
+                                    const phoneDatalist = document.getElementById('customer-phone-list');
+                                    if (phoneDatalist) {
+                                        phoneDatalist.innerHTML = currentMatches.map(c => {
+                                            const label = `${c.name || ''} - ${c.address || ''}`.trim();
+                                            return `<option value="${c.phone}">${label}</option>`;
+                                        }).join('');
+                                    }
+                                }
+                            } catch (err) {
+                                console.error("Error fetching customer info:", err);
+                            }
+                        };
+                        
+                        if (nameInput) {
+                            nameInput.addEventListener('input', async (e) => {
+                                const val = e.target.value;
+                                await updateDatalists(val);
+                                
+                                // Auto-fill if exact match is selected
+                                const match = currentMatches.find(c => c.name === val.trim());
+                                if (match) {
+                                    if (phoneInput) phoneInput.value = match.phone || '';
+                                    if (addrInput) addrInput.value = match.address || '';
+                                }
+                            });
+                        }
+                        
                         if (phoneInput) {
                             phoneInput.addEventListener('input', async (e) => {
-                                const val = e.target.value.trim();
-                                if (val.length >= 6) {
-                                    try {
-                                        const res = await fetch(`/api/customers/?opco=${this.activeOpcoId}&phone=${encodeURIComponent(val)}`);
-                                        if (res.ok) {
-                                            const customers = await res.json();
-                                            if (customers && customers.length > 0) {
-                                                const match = customers[0];
-                                                const nameInput = document.getElementById('del-name');
-                                                const addrInput = document.getElementById('del-address');
-                                                if (nameInput && (!nameInput.value || nameInput.value === val)) {
-                                                    nameInput.value = match.name || '';
-                                                }
-                                                if (addrInput && !addrInput.value) {
-                                                    addrInput.value = match.address || '';
-                                                }
-                                            }
-                                        }
-                                    } catch (err) {
-                                        console.error("Error fetching customer info:", err);
-                                    }
+                                const val = e.target.value;
+                                await updateDatalists(val);
+                                
+                                // Auto-fill if exact match is selected
+                                const match = currentMatches.find(c => c.phone === val.trim());
+                                if (match) {
+                                    if (nameInput) nameInput.value = match.name || '';
+                                    if (addrInput) addrInput.value = match.address || '';
                                 }
                             });
                         }
