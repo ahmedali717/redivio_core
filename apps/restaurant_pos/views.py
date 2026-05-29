@@ -214,6 +214,12 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             if cu:
                 cashier_user = cu.user
                 
+        # Fallback: resolve cashier_user from cashier_name if cashier_id was None
+        if not cashier_user and cashier_name:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            cashier_user = User.objects.filter(email=cashier_name).first() or User.objects.filter(username=cashier_name).first()
+                
         # Write debug logs
         import os
         from django.conf import settings
