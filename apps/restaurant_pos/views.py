@@ -214,6 +214,36 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             if cu:
                 cashier_user = cu.user
                 
+        # Write debug logs
+        import os
+        from django.conf import settings
+        log_path = os.path.join(settings.BASE_DIR, 'scratch', 'debug_logs.txt')
+        if not os.path.exists(os.path.dirname(log_path)):
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        try:
+            terminal_to_log = POSTerminal.objects.filter(id=terminal_id).first() if terminal_id else None
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"\n--- start_session called at {timezone.now()} ---\n")
+                f.write(f"Request User: {request.user} (is_superuser: {request.user.is_superuser if request.user else 'N/A'})\n")
+                f.write(f"Cashier ID in request: {cashier_id}\n")
+                f.write(f"Cashier Name in request: {cashier_name}\n")
+                f.write(f"Terminal ID in request: {terminal_id}\n")
+                if terminal_to_log:
+                    f.write(f"Terminal Name: {terminal_to_log.name}\n")
+                    f.write(f"Terminal Allowed Users count: {terminal_to_log.allowed_users.count()}\n")
+                    f.write(f"Terminal Allowed Users IDs: {list(terminal_to_log.allowed_users.values_list('id', flat=True))}\n")
+                    f.write(f"Terminal Allowed Users usernames: {list(terminal_to_log.allowed_users.values_list('username', flat=True))}\n")
+                if cashier_user:
+                    f.write(f"Resolved Cashier User: {cashier_user.username} (id: {cashier_user.id}, is_superuser: {cashier_user.is_superuser})\n")
+                else:
+                    f.write("Resolved Cashier User: None\n")
+        except Exception as ex:
+            try:
+                with open(log_path, 'a', encoding='utf-8') as f:
+                    f.write(f"Logging failed: {str(ex)}\n")
+            except:
+                pass
+                
         # Enforce terminal access permission
         if terminal_id:
             terminal = POSTerminal.objects.filter(id=terminal_id).first()
