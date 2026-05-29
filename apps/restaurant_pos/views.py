@@ -205,11 +205,11 @@ class POSOrderViewSet(viewsets.ModelViewSet):
                             'error': err_msg
                         }, status=status.HTTP_403_FORBIDDEN)
         
-        # Check if there is already an active session for this terminal to prevent duplicate sessions
+        # Check if there is already an active session for this terminal and cashier to prevent duplicate sessions
         if terminal_id:
-            existing_session = POSSession.objects.filter(opco_id=opco_id, terminal_id=terminal_id, is_closed=False).first()
+            existing_session = POSSession.objects.filter(opco_id=opco_id, terminal_id=terminal_id, cashier_name=cashier_name, is_closed=False).first()
         else:
-            existing_session = POSSession.objects.filter(opco_id=opco_id, terminal_id__isnull=True, is_closed=False).first()
+            existing_session = POSSession.objects.filter(opco_id=opco_id, terminal_id__isnull=True, cashier_name=cashier_name, is_closed=False).first()
             
         if existing_session:
             from .serializers import POSSessionSerializer
