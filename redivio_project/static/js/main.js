@@ -3254,7 +3254,7 @@ createApp({
                         name: this.terminalForm.name,
                         terminal_type: this.terminalForm.terminal_type,
                         is_active: this.terminalForm.is_active,
-                        allowed_users: this.terminalForm.allowed_users || []
+                        allowed_users: (this.terminalForm.allowed_users || []).filter(u => u && u !== 'None')
                     })
                 });
                 if (res.ok) {
