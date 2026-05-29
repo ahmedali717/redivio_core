@@ -378,15 +378,20 @@ createApp({
             return items;
         },
         cartSubtotal() {
-            return this.posCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            // السعر المُدخل غير شامل الضرائب دائماً
+            return Math.round(this.posCart.reduce((sum, item) => sum + (item.price * item.qty), 0) * 100) / 100;
+        },
+        cartVAT() {
+            // ضريبة القيمة المضافة 15% على المجموع الفرعي
+            return Math.round(this.cartSubtotal * 0.15 * 100) / 100;
+        },
+        cartServiceCharge() {
+            // ضريبة الخدمة 12% على المجموع الفرعي
+            return Math.round(this.cartSubtotal * 0.12 * 100) / 100;
         },
         cartTax() {
-            let totalTax = 0;
-            this.posCart.forEach(item => {
-                const rate = (parseFloat(item.tax_rate) || 15) / 100;
-                totalTax += (parseFloat(item.price) * parseFloat(item.qty)) * rate;
-            });
-            return Math.round(totalTax * 100) / 100;
+            // إجمالي الضرائب = VAT 15% + خدمة 12%
+            return Math.round((this.cartVAT + this.cartServiceCharge) * 100) / 100;
         },
         groupedSessions() {
             const groups = {};
@@ -400,18 +405,19 @@ createApp({
             return groups;
         },
         cartDiscountAmount() {
-            const subtotalPlusTax = Math.round((this.cartSubtotal + this.cartTax) * 100) / 100;
+            // الخصم يُحسب على الإجمالي الكلي شامل الضرائب
+            const grossTotal = Math.round((this.cartSubtotal + this.cartVAT + this.cartServiceCharge) * 100) / 100;
             if (this.posDiscount.type === 'none' || !this.posDiscount.value) return 0;
             if (this.posDiscount.type === 'percentage') {
-                return Math.round(subtotalPlusTax * (this.posDiscount.value / 100) * 100) / 100;
+                return Math.round(grossTotal * (this.posDiscount.value / 100) * 100) / 100;
             } else if (this.posDiscount.type === 'fixed') {
-                return Math.min(this.posDiscount.value, subtotalPlusTax);
+                return Math.min(this.posDiscount.value, grossTotal);
             }
             return 0;
         },
         cartTotal() {
-            const subtotalPlusTax = Math.round((this.cartSubtotal + this.cartTax) * 100) / 100;
-            return Math.max(0, subtotalPlusTax - this.cartDiscountAmount);
+            const grossTotal = Math.round((this.cartSubtotal + this.cartVAT + this.cartServiceCharge) * 100) / 100;
+            return Math.max(0, grossTotal - this.cartDiscountAmount);
         },
         activeOpco() {
             if (!this.activeOpcoId || !this.allOpcos.length) return null;
@@ -1160,7 +1166,8 @@ createApp({
                 const payResult = await this.showPaymentDialog({
                     title: this.isArabic ? `طلب شيك — ترابيزة ${this.posTableNumber}` : `Bill — Table ${this.posTableNumber}`,
                     subtotal,
-                    tax,
+                    vatAmount: this.cartVAT,
+                    serviceCharge: this.cartServiceCharge,
                     discountAmount: discountAmt,
                     promoLabel: this.posDiscount.promoCodeText || '',
                     orderType: 'DINE_IN'
@@ -1670,21 +1677,28 @@ createApp({
         // ===================================================================
         // 💳 showPaymentDialog — شاشة دفع موحدة وجميلة لكل أنواع الطلبات
         // ===================================================================
-        async showPaymentDialog({ title, subtotal, tax, discountAmount = 0, promoLabel = '', orderType = 'TAKEAWAY' }) {
-            const netTotal = Math.max(0, subtotal + tax - discountAmount);
+        async showPaymentDialog({ title, subtotal, vatAmount, serviceCharge, tax, discountAmount = 0, promoLabel = '', orderType = 'TAKEAWAY' }) {
+            // دعم التوافق مع الاستدعاءات القديمة اللي بتبعت tax واحدة
+            const vat  = vatAmount  !== undefined ? vatAmount  : Math.round(subtotal * 0.15 * 100) / 100;
+            const sc   = serviceCharge !== undefined ? serviceCharge : Math.round(subtotal * 0.12 * 100) / 100;
+            const netTotal = Math.max(0, subtotal + vat + sc - discountAmount);
             const isAr = this.isArabic;
             const fc = (v) => this.formatCurrency(v);
 
             // HTML ملخص المبالغ
             const summaryHtml = `
                 <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:18px;padding:20px;margin-bottom:20px;text-align:${isAr?'right':'left'};direction:${isAr?'rtl':'ltr'}">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                        <span style="font-size:12px;color:#94a3b8;font-weight:700;">${isAr?'المجموع':'Subtotal'}</span>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:12px;color:#94a3b8;font-weight:700;">${isAr?'المجموع الفرعي':'Subtotal'}</span>
                         <span style="font-size:14px;color:#e2e8f0;font-family:monospace;font-weight:700;">${fc(subtotal)}</span>
                     </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${discountAmount > 0 ? '10px' : '14px'}">
-                        <span style="font-size:12px;color:#94a3b8;font-weight:700;">${isAr?'الضريبة (15%)':'Tax (15%)'}</span>
-                        <span style="font-size:14px;color:#e2e8f0;font-family:monospace;font-weight:700;">${fc(tax)}</span>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:12px;color:#94a3b8;font-weight:700;">${isAr?'ض.ق.م (15%)':'VAT (15%)'}</span>
+                        <span style="font-size:14px;color:#e2e8f0;font-family:monospace;font-weight:700;">${fc(vat)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${discountAmount > 0 ? '8px' : '14px'}">
+                        <span style="font-size:12px;color:#94a3b8;font-weight:700;">${isAr?'رسوم خدمة (12%)':'Service Charge (12%)'}</span>
+                        <span style="font-size:14px;color:#e2e8f0;font-family:monospace;font-weight:700;">${fc(sc)}</span>
                     </div>
                     ${discountAmount > 0 ? `
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -1692,7 +1706,7 @@ createApp({
                         <span style="font-size:14px;color:#fbbf24;font-family:monospace;font-weight:700;">- ${fc(discountAmount)}</span>
                     </div>` : ''}
                     <div style="border-top:1px solid #334155;padding-top:14px;display:flex;justify-content:space-between;align-items:center;">
-                        <span style="font-size:13px;color:#fff;font-weight:900;text-transform:uppercase;letter-spacing:2px;">${isAr?'الصافي المستحق':'NET TOTAL'}</span>
+                        <span style="font-size:13px;color:#fff;font-weight:900;text-transform:uppercase;letter-spacing:2px;">${isAr?'الإجمالي الصافي':'NET TOTAL'}</span>
                         <span style="font-size:32px;color:#10b981;font-family:monospace;font-weight:900;line-height:1;">${fc(netTotal)}</span>
                     </div>
                 </div>`;
@@ -1868,14 +1882,18 @@ createApp({
 
             const orderId = table.active_order_detail.id;
             const orderTotal = parseFloat(table.active_order_total || 0);
-            const discountAmt = parseFloat(table.active_order_detail.discount_amount || 0);
-            const subtotal = orderTotal - discountAmt; // approximate
-            const tax = 0; // already included in total from server
+            // للترابيزات: الـ total_amount المخزون يمثّل الإجمالي الكلي (subtotal+VAT+SC)
+            // نستخرج الـ subtotal بقسمة الإجمالي على (1 + 0.15 + 0.12)
+            const grossTotal = orderTotal;
+            const storedSubtotal = Math.round(grossTotal / 1.27 * 100) / 100;
+            const storedVAT = Math.round(storedSubtotal * 0.15 * 100) / 100;
+            const storedSC  = Math.round(storedSubtotal * 0.12 * 100) / 100;
 
             const payResult = await this.showPaymentDialog({
                 title: this.isArabic ? `شيك الحساب — ترابيزة ${table.number}` : `Bill — Table ${table.number}`,
-                subtotal: orderTotal, // gross
-                tax: 0,
+                subtotal: storedSubtotal,
+                vatAmount: storedVAT,
+                serviceCharge: storedSC,
                 discountAmount: discountAmt,
                 promoLabel: table.active_order_detail.promo_code_text || '',
                 orderType: 'DINE_IN'
@@ -1934,7 +1952,8 @@ createApp({
             const payResult = await this.showPaymentDialog({
                 title: this.isArabic ? `تأكيد الطلب — ${orderTypeLabel}` : `Confirm Order — ${orderTypeLabel}`,
                 subtotal: this.cartSubtotal,
-                tax: this.cartTax,
+                vatAmount: this.cartVAT,
+                serviceCharge: this.cartServiceCharge,
                 discountAmount: this.cartDiscountAmount,
                 promoLabel: this.posDiscount.promoCodeText || '',
                 orderType: this.posOrderType
@@ -2044,20 +2063,18 @@ createApp({
         },
         printReceipt(order, cart) {
             const date = new Date().toLocaleString();
-            const itemsHtml = cart.map(i => `
-                <div class="item-row">
-                    <div class="item-info">
-                        <div class="item-name">${i.name || i.material_name}</div>
-                        ${i.kitchen_notes ? `<div style="font-size:9px; color: #3b82f6; font-style:italic; font-weight:bold; margin: 2px 0;">* ${i.kitchen_notes}</div>` : ''}
-                        <div class="item-details">${i.qty} x ${Number(i.price || i.unit_price).toFixed(2)}</div>
-                    </div>
-                    <div class="item-price">${((i.price || i.unit_price) * i.qty).toFixed(2)}</div>
-                </div>
-            `).join('');
 
-            const total = Number(order.total_amount || this.cartTotal);
-            const vat = Number(this.cartTax);
-            const subtotal = total - vat;
+            // ===== حساب المبالغ بشكل صحيح =====
+            // السعر المُدخل دائماً غير شامل الضرائب
+            const subtotal = Math.round(
+                cart.reduce((s, i) => s + (Number(i.price || i.unit_price) * Number(i.qty)), 0) * 100
+            ) / 100;
+            const vatAmount      = Math.round(subtotal * 0.15 * 100) / 100;  // VAT 15%
+            const serviceCharge  = Math.round(subtotal * 0.12 * 100) / 100;  // خدمة 12%
+            const grossTotal     = Math.round((subtotal + vatAmount + serviceCharge) * 100) / 100;
+            const discountAmount = Math.round((Number(order.discount_amount) || this.cartDiscountAmount || 0) * 100) / 100;
+            const total          = Math.round(Math.max(0, grossTotal - discountAmount) * 100) / 100;
+
             const brandColor = this.activeOpco && this.activeOpco.brand_color ? this.activeOpco.brand_color : '#1e293b';
             const currency = this.activeOpco ? this.activeOpco.currency : 'EGP';
             const orderRef = order.order_ref || 'DRAFT-POS';
@@ -2190,11 +2207,21 @@ createApp({
                             <span>${subtotal.toFixed(2)}</span>
                         </div>
                         <div class="summary-line">
-                            <span>${this.isArabic ? 'الضريبة (15%)' : 'Tax (15%)'}</span>
-                            <span>${vat.toFixed(2)}</span>
+                            <span>${this.isArabic ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)'}</span>
+                            <span>${vatAmount.toFixed(2)}</span>
                         </div>
+                        <div class="summary-line">
+                            <span>${this.isArabic ? 'رسوم الخدمة (12%)' : 'Service Charge (12%)'}</span>
+                            <span>${serviceCharge.toFixed(2)}</span>
+                        </div>
+                        ${discountAmount > 0 ? `
+                        <div class="summary-line" style="color:#d97706;">
+                            <span>🏷️ ${this.isArabic ? 'خصم' : 'Discount'}${order.promo_code_text ? ' — ' + order.promo_code_text : ''}</span>
+                            <span>- ${discountAmount.toFixed(2)}</span>
+                        </div>` : ''}
+                        <div style="border-top: 1px dashed #cbd5e1; margin: 10px 0;"></div>
                         <div class="total-line">
-                            <span>${this.isArabic ? 'الإجمالي' : 'TOTAL'}</span>
+                            <span>${this.isArabic ? 'الإجمالي الصافي' : 'NET TOTAL'}</span>
                             <span>${total.toFixed(2)} <small style="font-size: 14px;">${currency}</small></span>
                         </div>
                     </div>

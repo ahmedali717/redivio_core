@@ -118,12 +118,16 @@
                 </div>
                 <div class="space-y-2">
                     <div class="flex justify-between text-xs text-slate-400">
-                        <span>[[ isArabic ? 'المجموع' : 'Subtotal' ]]</span>
+                        <span>[[ isArabic ? 'المجموع الفرعي' : 'Subtotal' ]]</span>
                         <span class="font-mono">[[ formatCurrency(cartSubtotal) ]]</span>
                     </div>
                     <div class="flex justify-between text-xs text-slate-400">
-                        <span>[[ isArabic ? 'الضريبة' : 'Tax' ]]</span>
-                        <span class="font-mono">[[ formatCurrency(cartTax) ]]</span>
+                        <span>[[ isArabic ? 'ض.ق.م (15%)' : 'VAT (15%)' ]]</span>
+                        <span class="font-mono">[[ formatCurrency(cartVAT) ]]</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>[[ isArabic ? 'رسوم خدمة (12%)' : 'Service (12%)' ]]</span>
+                        <span class="font-mono">[[ formatCurrency(cartServiceCharge) ]]</span>
                     </div>
                     <!-- 🏷️ صف الخصم — يظهر فقط لو في خصم نشط -->
                     <div v-if="posDiscount.type !== 'none' && cartDiscountAmount > 0" class="flex justify-between text-xs text-amber-400 animate-pulse">
@@ -136,7 +140,7 @@
                         <span class="font-mono text-amber-400">- [[ formatCurrency(cartDiscountAmount) ]]</span>
                     </div>
                     <div class="pt-2 border-t border-slate-700/30 flex justify-between items-end">
-                        <span class="text-xs font-black text-white uppercase">[[ isArabic ? 'الإجمالي' : 'Total' ]]</span>
+                        <span class="text-xs font-black text-white uppercase">[[ isArabic ? 'الإجمالي الصافي' : 'Net Total' ]]</span>
                         <span class="text-2xl font-black text-emerald-400 tech-font leading-none">[[ formatCurrency(cartTotal) ]]</span>
                     </div>
                 </div>
