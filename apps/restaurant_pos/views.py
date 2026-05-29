@@ -695,16 +695,26 @@ class POSOrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def last_session_balance(self, request):
         opco_id = request.query_params.get('opco')
+        terminal_id = request.query_params.get('terminal')  # الـ terminal المحدد
         if not opco_id or opco_id in ['null', 'undefined']:
             return Response({'last_balance': 0.0})
         try:
             opco_id = int(opco_id)
         except (ValueError, TypeError):
             return Response({'last_balance': 0.0})
-            
+
         from .models import POSSession
-        last_session = POSSession.objects.filter(opco_id=opco_id, is_closed=True).order_by('-end_time').first()
-        balance = last_session.actual_closing_balance if last_session else 0
+        qs = POSSession.objects.filter(opco_id=opco_id, is_closed=True)
+
+        # فلترة بالـ terminal لو اتبعت — كل POS يشوف وردياته هو بس
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            try:
+                qs = qs.filter(terminal_id=int(terminal_id))
+            except (ValueError, TypeError):
+                pass
+
+        last_session = qs.order_by('-end_time').first()
+        balance = float(last_session.actual_closing_balance) if last_session else 0.0
         return Response({'last_balance': balance})
 
     @action(detail=False, methods=['get'])

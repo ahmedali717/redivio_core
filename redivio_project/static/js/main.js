@@ -3030,9 +3030,10 @@ createApp({
                         if (term) {
                             this.posMode = term.terminal_type === 'DIRECT' ? 'direct' : 'restaurant';
                         }
-                        // 💰 Auto-fill opening balance from last closed session
+                        // 💰 Auto-fill opening balance from last closed session FOR THIS TERMINAL
                         try {
-                            const balRes = await fetch(`/api/pos/orders/last_session_balance/?opco=${this.activeOpcoId}`);
+                            const termParam = this.selectedTerminalId ? `&terminal=${this.selectedTerminalId}` : '';
+                            const balRes = await fetch(`/api/pos/orders/last_session_balance/?opco=${this.activeOpcoId}${termParam}`);
                             if (balRes.ok) {
                                 const balData = await balRes.json();
                                 if (balData.last_balance !== undefined) {
