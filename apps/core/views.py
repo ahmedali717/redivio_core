@@ -227,10 +227,16 @@ class CheckAuthAPI(APIView):
             current_role = company_user.role
 
         # Check for pending subscription requests
-        pending_req = SubscriptionRequest.objects.filter(opco=user_opco, status='pending').order_by('-created_at').first() if user_opco else None
-        pending_plan = pending_req.plan if pending_req else None
-        pending_status = pending_req.status if pending_req else None
-        pending_payment_method = pending_req.payment_method if pending_req else None
+        try:
+            pending_req = SubscriptionRequest.objects.filter(opco=user_opco, status='pending').order_by('-created_at').first() if user_opco else None
+            pending_plan = pending_req.plan if pending_req else None
+            pending_status = pending_req.status if pending_req else None
+            pending_payment_method = pending_req.payment_method if pending_req else None
+        except Exception:
+            pending_plan = None
+            pending_status = None
+            pending_payment_method = None
+
 
         return Response({
             "authenticated": True,
@@ -627,6 +633,25 @@ class PlantViewSet(viewsets.ModelViewSet):
         
         return Plant.objects.all()
 
+    def create(self, request, *args, **kwargs):
+        active_id = request.data.get('opco') or request.session.get('active_opco_id')
+        if active_id:
+            opco = OpCo.all_objects.filter(id=active_id).first()
+            if opco:
+                plan = opco.plan
+                plant_count = Plant.objects.filter(opco=opco).count()
+                if plan in ['starter', 'free'] and plant_count >= 1:
+                    is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                    return Response({
+                        "error": "خطة المبتدئ تسمح بإنشاء منشأة واحدة فقط." if is_arabic else "Starter plan supports only one facility."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                elif plan == 'business' and plant_count >= 3:
+                    is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                    return Response({
+                        "error": "خطة الأعمال تسمح بإنشاء 3 منشآت كحد أقصى." if is_arabic else "Business plan supports up to 3 facilities."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
@@ -718,6 +743,25 @@ class LocationViewSet(viewsets.ModelViewSet):
             ).distinct()
         
         return StorageLocation.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        active_id = request.session.get('active_opco_id')
+        if active_id:
+            opco = OpCo.all_objects.filter(id=active_id).first()
+            if opco:
+                plan = opco.plan
+                loc_count = StorageLocation.objects.filter(plant__opco=opco).count()
+                if plan in ['starter', 'free'] and loc_count >= 1:
+                    is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                    return Response({
+                        "error": "خطة المبتدئ تسمح بموقع تخزين واحد فقط." if is_arabic else "Starter plan supports only one storage location."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                elif plan == 'business' and loc_count >= 10:
+                    is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                    return Response({
+                        "error": "خطة الأعمال تسمح بـ 10 مواقع تخزين كحد أقصى." if is_arabic else "Business plan supports up to 10 storage locations."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -935,6 +979,22 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
         
         if not email or not company_id:
             return Response({"error": "Email and Company are required"}, status=400)
+
+        # Plan User Limit Checks
+        opco = OpCo.all_objects.filter(id=company_id).first()
+        if opco:
+            plan = opco.plan
+            user_count = CompanyUser.objects.filter(company=opco).count()
+            if plan in ['starter', 'free'] and user_count >= 2:
+                is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                return Response({
+                    "error": "خطة المبتدئ تسمح بمستخدمين إثنين كحد أقصى." if is_arabic else "Starter plan only supports up to 2 users."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            elif plan == 'business' and user_count >= 15:
+                is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+                return Response({
+                    "error": "خطة الأعمال تسمح بـ 15 مستخدم كحد أقصى." if is_arabic else "Business plan only supports up to 15 users."
+                }, status=status.HTTP_400_BAD_REQUEST)
             
         user, created = User.objects.get_or_create(
             username=email,

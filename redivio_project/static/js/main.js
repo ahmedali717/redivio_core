@@ -5378,6 +5378,20 @@ createApp({
         },
 
         setConfigMode(mode) {
+            const plan = this.license.plan;
+            if (mode === 'modular' && (plan === 'starter' || plan === 'free')) {
+                Swal.fire({
+                    title: this.isArabic ? 'ترقية المطلوبة' : 'Upgrade Required',
+                    text: this.isArabic 
+                        ? 'الخطة الحالية (Starter) تدعم فقط نمط موديول مستقل (Stand Alone). يرجى الترقية إلى باقة أعلى للتبديل للكامل.'
+                        : 'The current plan (Starter) only supports Stand Alone mode. Please upgrade to a higher plan to switch to Full Package.',
+                    icon: 'warning',
+                    background: '#0f172a',
+                    color: '#fff',
+                    confirmButtonColor: '#3b82f6'
+                });
+                return;
+            }
             this.config.system_mode = mode;
             if (mode === 'standalone' && this.config.purchased_modules && this.config.purchased_modules.length > 1) {
                 this.config.purchased_modules = [this.config.purchased_modules[0]];
@@ -5403,9 +5417,35 @@ createApp({
                     this.config.purchased_modules = this.config.purchased_modules.filter(m => m !== mappedId);
                 }
             } else {
+                const plan = this.license.plan;
                 if (this.config.system_mode === 'standalone') {
                     this.config.purchased_modules = [mappedId];
                 } else {
+                    if (plan === 'starter' || plan === 'free') {
+                        Swal.fire({
+                            title: this.isArabic ? 'ترقية المطلوبة' : 'Upgrade Required',
+                            text: this.isArabic 
+                                ? 'الخطة الحالية (Starter) تسمح بموديول واحد فقط في وضع التشغيل المستقل.'
+                                : 'Starter plan only supports one active module in Stand Alone mode.',
+                            icon: 'warning',
+                            background: '#0f172a',
+                            color: '#fff',
+                            confirmButtonColor: '#3b82f6'
+                        });
+                        return;
+                    } else if (plan === 'business' && this.config.purchased_modules.length >= 3) {
+                        Swal.fire({
+                            title: this.isArabic ? 'ترقية المطلوبة' : 'Upgrade Required',
+                            text: this.isArabic 
+                                ? 'خطة الأعمال (Business) تسمح بتفعيل 3 موديولات كحد أقصى. يرجى الترقية إلى الباقة الاحترافية لتفعيل المزيد.'
+                                : 'Business plan supports up to 3 active modules. Please upgrade to Professional to activate more.',
+                            icon: 'warning',
+                            background: '#0f172a',
+                            color: '#fff',
+                            confirmButtonColor: '#3b82f6'
+                        });
+                        return;
+                    }
                     this.config.purchased_modules.push(mappedId);
                 }
             }
@@ -5701,6 +5741,90 @@ createApp({
         },
 
         openModal(type, data = null) {
+            const plan = this.license.plan;
+            if (type === 'plant') {
+                const count = this.plants.length;
+                if ((plan === 'starter' || plan === 'free') && count >= 1) {
+                    Swal.fire({
+                        title: this.isArabic ? 'ترقية مطلوبة' : 'Upgrade Required',
+                        text: this.isArabic 
+                            ? 'خطة المبتدئ تسمح بإنشاء منشأة واحدة فقط. يرجى ترقية باقتك لإضافة المزيد.'
+                            : 'Starter plan only supports 1 facility. Please upgrade to add more.',
+                        icon: 'warning',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return;
+                } else if (plan === 'business' && count >= 3) {
+                    Swal.fire({
+                        title: this.isArabic ? 'ترقية مطلوبة' : 'Upgrade Required',
+                        text: this.isArabic 
+                            ? 'خطة الأعمال تسمح بإنشاء 3 منشآت كحد أقصى. يرجى ترقية باقتك لإضافة المزيد.'
+                            : 'Business plan supports up to 3 facilities. Please upgrade to add more.',
+                        icon: 'warning',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return;
+                }
+            } else if (type === 'location') {
+                const count = this.locations.length;
+                if ((plan === 'starter' || plan === 'free') && count >= 1) {
+                    Swal.fire({
+                        title: this.isArabic ? 'ترقية مطلوبة' : 'Upgrade Required',
+                        text: this.isArabic 
+                            ? 'خطة المبتدئ تسمح بموقع تخزين واحد فقط. يرجى ترقية باقتك لإضافة المزيد.'
+                            : 'Starter plan only supports 1 storage location. Please upgrade to add more.',
+                        icon: 'warning',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return;
+                } else if (plan === 'business' && count >= 10) {
+                    Swal.fire({
+                        title: this.isArabic ? 'ترقية مطلوبة' : 'Upgrade Required',
+                        text: this.isArabic 
+                            ? 'خطة الأعمال تسمح بـ 10 مواقع تخزين كحد أقصى. يرجى ترقية باقتك لإضافة المزيد.'
+                            : 'Business plan supports up to 10 storage locations. Please upgrade to add more.',
+                        icon: 'warning',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return;
+                }
+            } else if (type === 'user') {
+                const count = this.companyUsers.length;
+                if ((plan === 'starter' || plan === 'free') && count >= 2) {
+                    Swal.fire({
+                        title: this.isArabic ? 'ترقية مطلوبة' : 'Upgrade Required',
+                        text: this.isArabic 
+                            ? 'خطة المبتدئ تسمح بمستخدمين إثنين كحد أقصى. يرجى ترقية باقتك لإضافة المزيد.'
+                            : 'Starter plan only supports 2 users. Please upgrade to add more.',
+                        icon: 'warning',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return;
+                } else if (plan === 'business' && count >= 15) {
+                    Swal.fire({
+                        title: this.isArabic ? 'ترقية مطلوبة' : 'Upgrade Required',
+                        text: this.isArabic 
+                            ? 'خطة الأعمال تسمح بـ 15 مستخدم كحد أقصى. يرجى ترقية باقتك لإضافة المزيد.'
+                            : 'Business plan supports up to 15 users. Please upgrade to add more.',
+                        icon: 'warning',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return;
+                }
+            }
+
             this.isEditing = false;
             this.modalType = type;
             this.materialTab = 'general';

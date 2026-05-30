@@ -17,6 +17,31 @@ class OpCoSerializer(serializers.ModelSerializer):
         ]
 
 
+    def validate(self, attrs):
+        system_mode = attrs.get('system_mode', getattr(self.instance, 'system_mode', 'modular') if self.instance else 'modular')
+        purchased_modules = attrs.get('purchased_modules', getattr(self.instance, 'purchased_modules', []) if self.instance else [])
+        plan = getattr(self.instance, 'plan', 'starter') if self.instance else 'starter'
+        
+        request = self.context.get('request')
+        is_arabic = request and request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+
+        if plan in ['starter', 'free']:
+            if system_mode == 'modular':
+                raise serializers.ValidationError({
+                    "system_mode": "خطة المبتدئ تدعم فقط نمط موديول مستقل." if is_arabic else "Starter plan supports Stand Alone mode only."
+                })
+            if isinstance(purchased_modules, list) and len(purchased_modules) > 1:
+                raise serializers.ValidationError({
+                    "purchased_modules": "خطة المبتدئ تسمح بموديول واحد فقط." if is_arabic else "Starter plan supports only one active module."
+                })
+        elif plan == 'business':
+            if isinstance(purchased_modules, list) and len(purchased_modules) > 3:
+                raise serializers.ValidationError({
+                    "purchased_modules": "خطة الأعمال تسمح بحد أقصى 3 موديولات." if is_arabic else "Business plan supports up to 3 active modules."
+                })
+
+        return attrs
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.parent:
