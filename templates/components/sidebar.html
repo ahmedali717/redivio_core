@@ -75,184 +75,251 @@
 
         <!-- Inventory Context -->
         <template v-if="view === 'inventory_module'">
-            <div class="text-[10px] font-bold text-white/90 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
-                <span v-show="!sidebarCollapsed"
+            <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">
+                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]"
                     v-text="isArabic ? 'RIMS (إدارة المستودعات)' : 'RIMS Management'"></span>
-                <hr v-show="sidebarCollapsed" class="border-white/20">
+                <hr class="border-blue-500/20 flex-1">
             </div>
 
             <a href="#" v-if="canAccess('inventory_module')" @click.prevent="inventoryTab = 'levels'"
                 :class="inventoryTab === 'levels' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <div class="w-6 h-6 flex items-center justify-center shrink-0">
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
                     <img src="/static/brand/rims_icon.png"
-                        class="w-full h-full object-contain brightness-0 invert transition-all" :class="inventoryTab === 'levels' ? 'brightness-100 invert-0 sepia hue-rotate-[200deg] saturate-[5]' : ''"
+                        class="w-5 h-5 object-contain brightness-0 invert transition-all" :class="inventoryTab === 'levels' ? 'brightness-100 invert-0 sepia hue-rotate-[200deg] saturate-[5]' : ''"
                         alt="RIMS">
                 </div>
-                <span v-show="!sidebarCollapsed" class="text-sm whitespace-nowrap" :class="inventoryTab === 'levels' ? 'font-bold' : 'font-medium'"
-                    v-text="isArabic ? 'الأرصدة' : 'Stock Levels'"></span>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'الأرصدة' : 'Stock Levels' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'مراقبة المخزون الفعلي' : 'Real-time quantities' ]]</span>
+                </div>
             </a>
             
             <a href="#" v-if="canAccess('inventory_module') && (['admin', 'administrator', 'manager'].includes((user.role || '').toLowerCase()) || user.is_superuser)" @click.prevent="inventoryTab = 'opening_count'"
                 :class="inventoryTab === 'opening_count' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-clipboard-check w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="text-sm whitespace-nowrap font-medium"
-                    v-text="isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Count'"></span>
-            </a>
-            <a href="#" v-if="canAccess('inventory_module')" @click.prevent="inventoryTab = 'items'"
-                :class="inventoryTab === 'items' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-barcode w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="text-sm whitespace-nowrap" :class="inventoryTab === 'items' ? 'font-bold' : 'font-medium'"
-                    v-text="isArabic ? 'سجل الأصناف' : 'Item Master'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Count' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'ضبط الأرصدة الافتتاحية' : 'Initial stock setup' ]]</span>
+                </div>
             </a>
 
-            <!-- الخيار الثالث: يتغير حسب الاشتراك -->
+            <a href="#" v-if="canAccess('inventory_module')" @click.prevent="inventoryTab = 'items'"
+                :class="inventoryTab === 'items' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-barcode"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'سجل الأصناف' : 'Item Master' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'دليل الأصناف والترميز' : 'SKUs & catalog details' ]]</span>
+                </div>
+            </a>
+
             <!-- Full Package: العمليات المخزنية -->
             <a v-if="systemMode !== 'standalone'" href="#" @click.prevent="inventoryTab = 'item_ledger'"
                 :class="inventoryTab === 'item_ledger' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-exchange-alt w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'العمليات المخزنية' : 'Inventory Moves'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'العمليات المخزنية' : 'Inventory Moves' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'حركة التحويلات والاستلام' : 'Track stock movements' ]]</span>
+                </div>
             </a>
 
             <!-- Stand Alone: الحركة المباشرة -->
             <a v-if="systemMode === 'standalone'" href="#" @click.prevent="inventoryTab = 'direct_move'"
                 :class="inventoryTab === 'direct_move' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-plus-minus w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'الحركة المباشرة' : 'Direct Move'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-plus-minus"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'الحركة المباشرة' : 'Direct Move' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'حركات الجرد المباشرة' : 'Quick stock adjustments' ]]</span>
+                </div>
             </a>
 
             <a href="#" @click.prevent="inventoryTab = 'moves'"
                 :class="inventoryTab === 'moves' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-history w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'حركة صنف' : 'Item Ledger'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-history"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'حركة صنف' : 'Item Ledger' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'تتبع حركات الصنف التفصيلية' : 'Detailed transaction history' ]]</span>
+                </div>
             </a>
+
             <a href="#" @click.prevent="inventoryTab = 'reports'"
                 :class="inventoryTab === 'reports' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-chart-line w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'التقارير' : 'Reports'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'التقارير' : 'Reports' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'التقارير والتحليلات المخزنية' : 'Analytics & insights' ]]</span>
+                </div>
             </a>
         </template>
 
         <!-- Sales Context -->
         <template v-else-if="view === 'sales_module'">
-            <div class="text-[10px] font-bold text-rose-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
-                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'إدارة المبيعات' : 'Sales Management'"></span>
-                <hr v-show="sidebarCollapsed" class="border-rose-800">
+            <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">
+                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-rose-400 uppercase tracking-[0.2em]"
+                    v-text="isArabic ? 'إدارة المبيعات' : 'Sales Management'"></span>
+                <hr class="border-rose-500/20 flex-1">
             </div>
 
             <a href="#" v-if="canAccess('sales_module')" @click.prevent="salesTab = 'dashboard'"
                 :class="salesTab === 'dashboard' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-chart-line w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'نظرة عامة' : 'Overview'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'نظرة عامة' : 'Overview' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'مؤشرات أداء المبيعات' : 'Sales performance metrics' ]]</span>
+                </div>
             </a>
+
             <a href="#" v-if="canAccess('sales_module')" @click.prevent="salesTab = 'orders'"
                 :class="salesTab === 'orders' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-file-invoice-dollar w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'أوامر البيع' : 'Sales Orders'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'أوامر البيع' : 'Sales Orders' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'إدارة حجوزات العملاء' : 'Manage customer bookings' ]]</span>
+                </div>
             </a>
         </template>
 
         <!-- Accounting Context -->
         <template v-else-if="view === 'accounting_module'">
-            <div class="text-[10px] font-bold text-amber-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
-                <span v-show="!sidebarCollapsed"
+            <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">
+                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-amber-400 uppercase tracking-[0.2em]"
                     v-text="isArabic ? 'المحاسبة والمالية' : 'Accounting & Finance'"></span>
-                <hr v-show="sidebarCollapsed" class="border-amber-800">
+                <hr class="border-amber-500/20 flex-1">
             </div>
 
             <a href="#" v-if="canAccess('accounting_module')" @click.prevent="accountingTab = 'dashboard'"
                 :class="accountingTab === 'dashboard' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-chart-line w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'نظرة عامة' : 'Overview'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'نظرة عامة' : 'Overview' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'الملخصات المالية' : 'Financial summaries' ]]</span>
+                </div>
             </a>
+
             <a href="#" @click.prevent="accountingTab = 'customers'"
                 :class="accountingTab === 'customers' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-users w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'العملاء' : 'Customers'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'العملاء' : 'Customers' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'دليل وحسابات العملاء' : 'Directory & credit terms' ]]</span>
+                </div>
             </a>
+
             <a href="#" @click.prevent="accountingTab = 'invoices'"
                 :class="accountingTab === 'invoices' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-file-invoice w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'الفواتير' : 'Invoices'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'الفواتير' : 'Invoices' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'إصدار ومتابعة الفواتير' : 'Billing & tax reports' ]]</span>
+                </div>
             </a>
+
             <a href="#" @click.prevent="accountingTab = 'payments'"
                 :class="accountingTab === 'payments' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-money-bill-wave w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'المدفوعات' : 'Payments'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'المدفوعات' : 'Payments' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'حركات الخزينة والبنك' : 'Cash & bank transactions' ]]</span>
+                </div>
             </a>
         </template>
 
         <!-- Procurement Context -->
         <template v-else-if="['procurement_module', 'vendors_list', 'vendor_ledger'].includes(view) && vendorsListBackView !== 'restaurant_pos_module' && systemMode !== 'standalone'">
-            <div
-                class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
-                <span v-show="!sidebarCollapsed"
+            <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">
+                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]"
                     v-text="isArabic ? 'RPMS (إدارة المشتريات)' : 'RPMS Management'"></span>
-                <hr v-show="sidebarCollapsed" class="border-emerald-800">
+                <hr class="border-emerald-500/20 flex-1">
             </div>
 
             <a href="#" v-if="canAccess('procurement_module')" @click.prevent="view = 'procurement_module'"
                 :class="view === 'procurement_module' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <div class="w-6 h-6 flex items-center justify-center shrink-0">
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
                     <img src="/static/brand/rpms_icon.png"
-                        class="w-full h-full object-contain brightness-0 invert transition-all" :class="view === 'procurement_module' ? 'brightness-100 invert-0 sepia hue-rotate-[200deg] saturate-[5]' : ''"
+                        class="w-5 h-5 object-contain brightness-0 invert transition-all" :class="view === 'procurement_module' ? 'brightness-100 invert-0 sepia hue-rotate-[200deg] saturate-[5]' : ''"
                         alt="RPMS">
                 </div>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'أوامر الشراء' : 'Purchase Orders'"></span>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'أوامر الشراء' : 'Purchase Orders' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'طلب وتوريد المواد' : 'Procure materials' ]]</span>
+                </div>
             </a>
+
             <a href="#" @click.prevent="view = 'vendors_list'"
                 :class="view === 'vendors_list' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-building w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'سجل الموردين' : 'Vendors'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'سجل الموردين' : 'Vendors' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'دليل وبيانات الموردين' : 'Supplier directory' ]]</span>
+                </div>
             </a>
+
             <a href="#" v-if="view === 'vendor_ledger'"
-                class="sidebar-item-premium active flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-book w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'كشف حساب مورد' : 'Vendor Ledger'"></span>
+                class="sidebar-item-premium active flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'كشف حساب مورد' : 'Vendor Ledger' ]]</span>
+                    <span class="text-[10px] text-white/45 truncate text-subtitle">[[ isArabic ? 'كشف حساب الحركات والديون' : 'Supplier statement' ]]</span>
+                </div>
             </a>
         </template>
 
-
         <!-- Restaurant POS Context -->
         <template v-else-if="view === 'restaurant_pos_module' || (['vendors_list', 'vendor_ledger', 'opening_count'].includes(view) && (vendorsListBackView === 'restaurant_pos_module' || systemMode === 'standalone'))">
-            <div class="text-[10px] font-bold text-red-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
-                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'إدارة نقاط البيع (POS)' : 'POS Management'"></span>
-                <hr v-show="sidebarCollapsed" class="border-red-800">
+            <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">
+                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-red-400 uppercase tracking-[0.2em]"
+                    v-text="isArabic ? 'إدارة نقاط البيع (POS)' : 'POS Management'"></span>
+                <hr class="border-red-500/20 flex-1">
             </div>
 
             <!-- Active Terminal Status Badge -->
             <div v-show="!sidebarCollapsed" class="px-3 mb-4 animate-in fade-in duration-300">
-                <div class="bg-white/10 px-4 py-3 rounded-2xl border border-white/10 text-white/95">
-                    <div class="flex items-center justify-between text-[10px] font-bold text-white/50 uppercase tracking-wider mb-1">
+                <div class="bg-white/5 px-4 py-3 rounded-2xl border border-white/5 text-white/95 backdrop-blur-md">
+                    <div class="flex items-center justify-between text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1">
                         <span>[[ isArabic ? 'الجهاز النشط' : 'Active Register' ]]</span>
-                        <span class="bg-white/20 text-white px-2 py-0.5 rounded-md font-mono text-[9px] uppercase">[[ activePOSSession ? activePOSSession.terminal_type : '---' ]]</span>
+                        <span class="bg-white/10 text-white px-2 py-0.5 rounded-md font-mono text-[9px] uppercase">[[ activePOSSession ? activePOSSession.terminal_type : '---' ]]</span>
                     </div>
                     <p class="text-sm font-black truncate">[[ activePOSSession ? activePOSSession.terminal_name : (isArabic ? 'لم يتم فتح وردية' : 'No active shift') ]]</p>
                 </div>
@@ -260,136 +327,196 @@
 
             <a href="#" v-if="canAccess('pos_dashboard')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'dashboard'; fetchPOSDashboard()"
                 :class="(view === 'restaurant_pos_module' && posTab === 'dashboard') ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-chart-line w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? (posMode === 'direct' ? 'لوحة تحكم المبيعات' : 'لوحة تحكم المطعم') : (posMode === 'direct' ? 'POS Dashboard' : 'Restaurant Dashboard')"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">
+                        [[ isArabic ? (posMode === 'direct' ? 'لوحة تحكم المبيعات' : 'لوحة تحكم المطعم') : (posMode === 'direct' ? 'POS Dashboard' : 'Restaurant Dashboard') ]]
+                    </span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'مؤشرات الكاشير والمبيعات' : 'Sales & cashier insights' ]]</span>
+                </div>
             </a>
 
             <a href="#" v-if="posMode === 'restaurant' && canAccess('pos_cashier')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'floor_layout'; fetchFloorsAndTables()"
                 :class="(view === 'restaurant_pos_module' && posTab === 'floor_layout') ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-cubes w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'تخطيط الصالة والترابيزات' : 'Floor & Table Layout'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-cubes"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'تخطيط الصالة والترابيزات' : 'Floor & Table Layout' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'خريطة صالة الطعام التفاعلية' : 'Interactive floor map' ]]</span>
+                </div>
             </a>
 
             <a href="#" v-if="canAccess('pos_cashier')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'cashier'"
                 :class="(view === 'restaurant_pos_module' && posTab === 'cashier') ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-cash-register w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? (posMode === 'direct' ? 'كاشير مبيعات مباشرة' : 'كاشير المطعم') : (posMode === 'direct' ? 'Direct POS Terminal' : 'Restaurant POS Terminal')"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-cash-register"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">
+                        [[ isArabic ? (posMode === 'direct' ? 'كاشير مبيعات مباشرة' : 'كاشير المطعم') : (posMode === 'direct' ? 'Direct POS Terminal' : 'Restaurant POS Terminal') ]]
+                    </span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'واجهة البيع وإصدار الفواتير' : 'Billing terminal interface' ]]</span>
+                </div>
             </a>
 
             <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'direct_move'"
                 :class="(view === 'restaurant_pos_module' && posTab === 'direct_move') ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-exchange-alt w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'حركات مخزنية مباشرة' : 'Direct Stock Move'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'حركات مخزنية مباشرة' : 'Direct Stock Move' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'صرف وتسجيل فوري للمخازن' : 'Instant POS stock adjustments' ]]</span>
+                </div>
             </a>
 
             <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'recipes'"
                 :class="(view === 'restaurant_pos_module' && posTab === 'recipes') ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-layer-group w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'هندسة المكونات (BOM)' : 'Recipes & BOM'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'هندسة المكونات (BOM)' : 'Recipes & BOM' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'حساب التكاليف والمكونات' : 'Ingredient cost controls' ]]</span>
+                </div>
             </a>
             
             <a href="#" v-if="posMode === 'restaurant' && canAccess('pos_kitchen')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'kitchen'"
                 :class="(view === 'restaurant_pos_module' && posTab === 'kitchen') ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-fire-burner w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'شاشة المطبخ KDS' : 'Kitchen Display'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-fire-burner"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'شاشة المطبخ KDS' : 'Kitchen Display' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'شاشة تحضير الطلبات الفورية' : 'Live order prep station' ]]</span>
+                </div>
             </a>
             
-            <!-- POS Settings Link -->
             <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'settings'; fetchPOSTerminals()"
                 :class="(view === 'restaurant_pos_module' && posTab === 'settings') ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-sliders w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'إعدادات نقاط البيع' : 'POS Settings'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-sliders"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'إعدادات نقاط البيع' : 'POS Settings' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'إعدادات الأجهزة والموظفين' : 'Terminal configurations' ]]</span>
+                </div>
             </a>
 
             <a href="#" v-if="canAccess('pos_history')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'orders'; selectedSession = null; fetchSessionsHistory()"
                 :class="(view === 'restaurant_pos_module' && posTab === 'orders') ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-receipt w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'سجل الطلبات' : 'Orders History'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'سجل الطلبات' : 'Orders History' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'أرشيف ومراجعة فواتير البيع' : 'Review completed sales' ]]</span>
+                </div>
             </a>
 
-            <!-- Active Vendors Register Item (only shown when viewing vendors from POS) -->
+            <!-- Active Vendors Register Item -->
             <a href="#" v-if="['vendors_list', 'vendor_ledger'].includes(view)"
-                class="sidebar-item-premium active flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-truck w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'سجل الموردين' : 'Vendors Register'"></span>
+                class="sidebar-item-premium active flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'سجل الموردين' : 'Vendors Register' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'دليل وبيانات الموردين' : 'Supplier directory' ]]</span>
+                </div>
             </a>
 
-            <!-- Active Opening Count Item (only shown when viewing opening count from POS) -->
+            <!-- Active Opening Count Item -->
             <a href="#" v-if="view === 'opening_count'"
-                class="sidebar-item-premium active flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-clipboard-check w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Count'"></span>
+                class="sidebar-item-premium active flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Count' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'ضبط الأرصدة الافتتاحية' : 'Initial stock setup' ]]</span>
+                </div>
             </a>
         </template>
 
         <template v-else-if="view === 'dashboard'">
-            <div class="text-[10px] font-bold text-blue-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
-                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'الرئيسية' : 'Main Menu'"></span>
-                <hr v-show="sidebarCollapsed" class="border-blue-800">
+            <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">
+                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]"
+                    v-text="isArabic ? 'الرئيسية' : 'Main Menu'"></span>
+                <hr class="border-blue-500/20 flex-1">
             </div>
 
             <a href="#" @click.prevent="view = 'dashboard'"
                 :class="view === 'dashboard' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
-                <i class="fas fa-chart-pie w-6 text-center text-lg"></i>
-                <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
-                    v-text="isArabic ? 'لوحة التحكم' : 'Dashboard'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'لوحة التحكم' : 'Dashboard' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'مركز التحكم الرئيسي للنظام' : 'System command center' ]]</span>
+                </div>
             </a>
 
             <div class="mt-8 px-3 text-[10px] text-slate-500 text-center" v-show="!sidebarCollapsed">
-                <p v-text="isArabic ? 'استخدم قائمة REDIVIO بالاعلى للتنقل' : 'Use the top REDIVIO menu to navigate'">
-                </p>
+                <p v-text="isArabic ? 'استخدم قائمة REDIVIO بالاعلى للتنقل' : 'Use the top REDIVIO menu to navigate'"></p>
                 <i class="fas fa-arrow-up mt-4 text-xl animate-bounce text-slate-600"></i>
             </div>
         </template>
 
         <!-- Settings Context -->
         <template v-else-if="['global_config', 'org_builder', 'users'].includes(view)">
-            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-4 mt-2 overflow-hidden">
-                <span v-show="!sidebarCollapsed" v-text="isArabic ? 'الإعدادات والتهيئة' : 'Configuration'"></span>
-                <hr v-show="sidebarCollapsed" class="border-slate-800">
+            <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">
+                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"
+                    v-text="isArabic ? 'الإعدادات والتهيئة' : 'Configuration'"></span>
+                <hr class="border-slate-500/20 flex-1">
             </div>
             
             <a href="#" v-if="canAccess('org_builder')" @click.prevent="view = 'org_builder'"
                 :class="view === 'org_builder' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group">
-                <i class="fas fa-sitemap w-6 text-center text-sm shadow-sm"></i>
-                <span v-show="!sidebarCollapsed" class="font-bold text-[11px] whitespace-nowrap"
-                    v-text="isArabic ? 'هيكلة المنظمة' : 'Org Builder'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'هيكلة المنظمة' : 'Org Builder' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'بناء الهيكل التنظيمي والفروع' : 'Subsidiaries & locations' ]]</span>
+                </div>
             </a>
 
             <a href="#" v-if="canAccess('users')" @click.prevent="view = 'users'"
                 :class="view === 'users' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group">
-                <i class="fas fa-users-cog w-6 text-center text-sm shadow-sm"></i>
-                <span v-show="!sidebarCollapsed" class="font-bold text-[11px] whitespace-nowrap"
-                    v-text="isArabic ? 'إدارة المستخدمين' : 'User Management'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-users-cog"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'إدارة المستخدمين' : 'User Management' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'إعدادات الموظفين والصلاحيات' : 'Roles & permissions' ]]</span>
+                </div>
             </a>
 
             <a href="#" v-if="canAccess('global_config')" @click.prevent="view = 'global_config'"
                 :class="view === 'global_config' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group">
-                <i class="fas fa-cogs w-6 text-center text-sm shadow-sm"></i>
-                <span v-show="!sidebarCollapsed" class="font-bold text-[11px] whitespace-nowrap"
-                    v-text="isArabic ? 'إعدادات النظام' : 'Global Settings'"></span>
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'إعدادات النظام' : 'Global Settings' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'التهيئة والخيارات العامة' : 'System-wide preferences' ]]</span>
+                </div>
             </a>
         </template>
 

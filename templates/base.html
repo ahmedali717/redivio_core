@@ -56,11 +56,11 @@
         }
         .sidebar-premium-container {
             position: relative;
-            background: linear-gradient(165deg, #0e172a 0%, #030712 100%) !important;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            background: linear-gradient(165deg, #0d1424 0%, #03060f 100%) !important;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.05);
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            border: 1px solid rgba(255, 255, 255, 0.06) !important;
-            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.07) !important;
+            backdrop-filter: blur(25px);
         }
 
         /* Ambient glow effects */
@@ -92,22 +92,55 @@
             animation: float-orb-2 15s ease-in-out infinite alternate-reverse;
         }
 
-        /* Hover & active styling for premium items */
+        /* Premium Item Overhaul */
         .sidebar-item-premium {
             position: relative;
             z-index: 2;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            align-items: center;
+            padding: 0.55rem 0.75rem !important;
+            border-radius: 1.15rem !important;
+            transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
             border: 1px solid transparent !important;
+            margin-bottom: 0.4rem;
         }
 
+        .sidebar-item-premium .icon-wrapper {
+            width: 2.35rem;
+            height: 2.35rem;
+            border-radius: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .sidebar-item-premium .icon-wrapper i {
+            font-size: 1.1rem;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Hover state */
         .sidebar-item-premium.inactive:hover {
-            background: rgba(255, 255, 255, 0.04) !important;
+            background: rgba(255, 255, 255, 0.035) !important;
             border-color: rgba(255, 255, 255, 0.06) !important;
-            color: #ffffff !important;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
         }
 
-        /* Slide item micro-animations */
+        .sidebar-item-premium.inactive:hover .icon-wrapper {
+            background: rgba(59, 130, 246, 0.12) ;
+            border-color: rgba(59, 130, 246, 0.25) ;
+            color: #3b82f6 !important;
+        }
+
+        .sidebar-item-premium.inactive:hover .icon-wrapper i {
+            transform: scale(1.15) rotate(5deg);
+        }
+
         html[dir="ltr"] .sidebar-item-premium.inactive:hover {
             transform: translateX(4px);
         }
@@ -117,64 +150,40 @@
 
         /* Active State */
         .sidebar-item-premium.active {
-            color: #3b82f6 !important;
-            font-weight: 700 !important;
-            border: 1px solid rgba(59, 130, 246, 0.3) !important;
+            border: 1px solid rgba(59, 130, 246, 0.35) !important;
             box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 
-                        0 8px 25px rgba(59, 130, 246, 0.15),
-                        0 0 2px rgba(59, 130, 246, 0.2) !important;
-            text-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+                        0 10px 25px rgba(59, 130, 246, 0.16) !important;
             transform: translateY(-1px);
         }
+
         html[dir="ltr"] .sidebar-item-premium.active {
-            background: linear-gradient(90deg, rgba(44, 130, 240, 0.16) 0%, rgba(99, 102, 241, 0.03) 100%) !important;
-            padding-left: 1.25rem !important;
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.18) 0%, rgba(99, 102, 241, 0.03) 100%) !important;
         }
         html[dir="rtl"] .sidebar-item-premium.active {
-            background: linear-gradient(270deg, rgba(44, 130, 240, 0.16) 0%, rgba(99, 102, 241, 0.03) 100%) !important;
-            padding-right: 1.25rem !important;
+            background: linear-gradient(270deg, rgba(59, 130, 246, 0.18) 0%, rgba(99, 102, 241, 0.03) 100%) !important;
         }
 
-        .sidebar-item-premium.active::before {
-            content: '';
-            position: absolute;
-            top: 25%;
-            bottom: 25%;
-            width: 4px;
-            background: linear-gradient(to bottom, #3b82f6, #6366f1);
-            border-radius: 4px;
-            box-shadow: 0 0 12px #3b82f6, 0 0 4px rgba(59, 130, 246, 0.8);
-            transition: all 0.3s ease;
+        .sidebar-item-premium.active .icon-wrapper {
+            background: #3b82f6 !important;
+            border-color: #60a5fa !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.45);
         }
 
-        html[dir="ltr"] .sidebar-item-premium.active::before {
-            left: 8px;
-        }
-        html[dir="rtl"] .sidebar-item-premium.active::before {
-            right: 8px;
+        .sidebar-item-premium.active .text-title {
+            color: #ffffff !important;
+            font-weight: 700 !important;
         }
 
-        .sidebar-item-premium.active i {
-            color: #3b82f6 !important;
-            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
-        }
-        .sidebar-item-premium.active img {
-            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.8)) brightness(1.2);
-        }
-
-        /* Icon & text transitions inside items */
-        .sidebar-item-premium i, .sidebar-item-premium img {
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .sidebar-item-premium:hover i, .sidebar-item-premium:hover img {
-            transform: scale(1.15) rotate(5deg);
+        .sidebar-item-premium.active .text-subtitle {
+            color: rgba(255, 255, 255, 0.6) !important;
         }
 
         /* Collapse/Expand styling improvements */
         .sidebar-premium-container.w-20 {
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
         }
+
 
         /* Brand area logo anim */
         .brand-area-container {
