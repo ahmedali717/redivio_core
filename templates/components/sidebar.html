@@ -1,6 +1,139 @@
 <aside :class="sidebarCollapsed ? 'w-20' : 'w-64'"
-    class="bg-gradient-to-b from-brand to-brand-dark text-white flex flex-col h-[calc(100vh-1.5rem)] my-3 mx-3 rounded-[1.5rem] hidden md:flex shadow-[0_15px_40px_rgba(44,130,240,0.3)] border border-white/20 z-20 transition-all duration-300 relative overflow-hidden"
+    class="sidebar-premium-container text-white flex flex-col h-[calc(100vh-1.5rem)] my-3 mx-3 rounded-[1.5rem] hidden md:flex border border-white/20 z-20 relative overflow-hidden"
     v-cloak>
+
+    <style>
+    /* Premium Sidebar Custom CSS */
+    .sidebar-premium-container {
+        position: relative;
+        background: linear-gradient(135deg, #2c82f0 0%, #1660c1 100%);
+        box-shadow: 0 20px 50px rgba(44, 130, 240, 0.25);
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    /* Ambient glow effects */
+    .sidebar-premium-container::before {
+        content: '';
+        position: absolute;
+        top: -20%;
+        left: -20%;
+        width: 140%;
+        height: 140%;
+        background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 1;
+        transition: all 0.4s ease;
+    }
+
+    .sidebar-premium-container::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 120%;
+        height: 120%;
+        background: radial-gradient(circle at bottom left, rgba(93, 158, 245, 0.2) 0%, transparent 75%);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* Hover & active styling for premium items */
+    .sidebar-item-premium {
+        position: relative;
+        z-index: 2;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: 1px solid transparent;
+    }
+
+    .sidebar-item-premium.inactive:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Slide item micro-animations */
+    html[dir="ltr"] .sidebar-item-premium.inactive:hover {
+        padding-left: 1rem !important;
+    }
+    html[dir="rtl"] .sidebar-item-premium.inactive:hover {
+        padding-right: 1rem !important;
+    }
+
+    /* Active State */
+    .sidebar-item-premium.active {
+        background: #ffffff !important;
+        color: #2c82f0 !important;
+        font-weight: 700 !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(44, 130, 240, 0.2) !important;
+        transform: translateY(-1px);
+    }
+
+    .sidebar-item-premium.active::before {
+        content: '';
+        position: absolute;
+        top: 20%;
+        bottom: 20%;
+        width: 4px;
+        background: #2c82f0;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+    html[dir="ltr"] .sidebar-item-premium.active::before {
+        left: 8px;
+    }
+    html[dir="rtl"] .sidebar-item-premium.active::before {
+        right: 8px;
+    }
+
+    html[dir="ltr"] .sidebar-item-premium.active {
+        padding-left: 1.25rem !important;
+    }
+    html[dir="rtl"] .sidebar-item-premium.active {
+        padding-right: 1.25rem !important;
+    }
+
+    /* Icon & text transitions inside items */
+    .sidebar-item-premium i, .sidebar-item-premium img {
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .sidebar-item-premium:hover i, .sidebar-item-premium:hover img {
+        transform: scale(1.15) rotate(5deg);
+    }
+
+    /* Collapse/Expand styling improvements */
+    .sidebar-premium-container.w-20 {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Brand area logo anim */
+    .brand-area-container .group:hover img {
+        transform: scale(1.08) rotate(-8deg);
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Custom styles for language switcher button */
+    .lang-btn-premium {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    .lang-btn-premium:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(44, 130, 240, 0.5) !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 12px rgba(44, 130, 240, 0.3);
+    }
+
+    /* Plan details popover animations & styles */
+    .plan-popover-premium {
+        transform-origin: bottom center;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    </style>
 
     <button @click="sidebarCollapsed = !sidebarCollapsed" :class="isArabic ? '-left-3' : '-right-3'"
         class="absolute top-20 w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs text-brand shadow-lg hover:scale-110 transition-transform cursor-pointer border border-brand/20 z-50">
@@ -81,8 +214,8 @@
             </div>
 
             <a href="#" v-if="canAccess('inventory_module')" @click.prevent="inventoryTab = 'levels'"
-                :class="inventoryTab === 'levels' ? 'bg-white text-brand shadow-[0_5px_15px_rgba(0,0,0,0.1)] font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="inventoryTab === 'levels' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <div class="w-6 h-6 flex items-center justify-center shrink-0">
                     <img src="/static/brand/rims_icon.png"
                         class="w-full h-full object-contain brightness-0 invert transition-all" :class="inventoryTab === 'levels' ? 'brightness-100 invert-0 sepia hue-rotate-[200deg] saturate-[5]' : ''"
@@ -93,15 +226,15 @@
             </a>
             
             <a href="#" v-if="canAccess('inventory_module') && (['admin', 'administrator', 'manager'].includes((user.role || '').toLowerCase()) || user.is_superuser)" @click.prevent="inventoryTab = 'opening_count'"
-                :class="inventoryTab === 'opening_count' ? 'bg-white text-emerald-500 shadow-[0_5px_15px_rgba(0,0,0,0.1)] font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="inventoryTab === 'opening_count' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-clipboard-check w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="text-sm whitespace-nowrap font-medium"
                     v-text="isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Count'"></span>
             </a>
             <a href="#" v-if="canAccess('inventory_module')" @click.prevent="inventoryTab = 'items'"
-                :class="inventoryTab === 'items' ? 'bg-white text-brand shadow-[0_5px_15px_rgba(0,0,0,0.1)] font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="inventoryTab === 'items' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-barcode w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="text-sm whitespace-nowrap" :class="inventoryTab === 'items' ? 'font-bold' : 'font-medium'"
                     v-text="isArabic ? 'سجل الأصناف' : 'Item Master'"></span>
@@ -110,8 +243,8 @@
             <!-- الخيار الثالث: يتغير حسب الاشتراك -->
             <!-- Full Package: العمليات المخزنية -->
             <a v-if="systemMode !== 'standalone'" href="#" @click.prevent="inventoryTab = 'item_ledger'"
-                :class="inventoryTab === 'item_ledger' ? 'bg-white text-amber-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="inventoryTab === 'item_ledger' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-exchange-alt w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'العمليات المخزنية' : 'Inventory Moves'"></span>
@@ -119,23 +252,23 @@
 
             <!-- Stand Alone: الحركة المباشرة -->
             <a v-if="systemMode === 'standalone'" href="#" @click.prevent="inventoryTab = 'direct_move'"
-                :class="inventoryTab === 'direct_move' ? 'bg-white text-amber-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="inventoryTab === 'direct_move' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-plus-minus w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'الحركة المباشرة' : 'Direct Move'"></span>
             </a>
 
             <a href="#" @click.prevent="inventoryTab = 'moves'"
-                :class="inventoryTab === 'moves' ? 'bg-white text-amber-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="inventoryTab === 'moves' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-history w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'حركة صنف' : 'Item Ledger'"></span>
             </a>
             <a href="#" @click.prevent="inventoryTab = 'reports'"
-                :class="inventoryTab === 'reports' ? 'bg-white text-amber-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="inventoryTab === 'reports' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-chart-line w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'التقارير' : 'Reports'"></span>
@@ -150,15 +283,15 @@
             </div>
 
             <a href="#" v-if="canAccess('sales_module')" @click.prevent="salesTab = 'dashboard'"
-                :class="salesTab === 'dashboard' ? 'bg-white text-rose-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="salesTab === 'dashboard' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-chart-line w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'نظرة عامة' : 'Overview'"></span>
             </a>
             <a href="#" v-if="canAccess('sales_module')" @click.prevent="salesTab = 'orders'"
-                :class="salesTab === 'orders' ? 'bg-white text-rose-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="salesTab === 'orders' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-file-invoice-dollar w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'أوامر البيع' : 'Sales Orders'"></span>
@@ -174,29 +307,29 @@
             </div>
 
             <a href="#" v-if="canAccess('accounting_module')" @click.prevent="accountingTab = 'dashboard'"
-                :class="accountingTab === 'dashboard' ? 'bg-white text-amber-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="accountingTab === 'dashboard' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-chart-line w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'نظرة عامة' : 'Overview'"></span>
             </a>
             <a href="#" @click.prevent="accountingTab = 'customers'"
-                :class="accountingTab === 'customers' ? 'bg-white text-amber-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="accountingTab === 'customers' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-users w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'العملاء' : 'Customers'"></span>
             </a>
             <a href="#" @click.prevent="accountingTab = 'invoices'"
-                :class="accountingTab === 'invoices' ? 'bg-white text-amber-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="accountingTab === 'invoices' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-file-invoice w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'الفواتير' : 'Invoices'"></span>
             </a>
             <a href="#" @click.prevent="accountingTab = 'payments'"
-                :class="accountingTab === 'payments' ? 'bg-white text-amber-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="accountingTab === 'payments' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-money-bill-wave w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'المدفوعات' : 'Payments'"></span>
@@ -213,25 +346,25 @@
             </div>
 
             <a href="#" v-if="canAccess('procurement_module')" @click.prevent="view = 'procurement_module'"
-                :class="view === 'procurement_module' ? 'bg-white text-emerald-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="view === 'procurement_module' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <div class="w-6 h-6 flex items-center justify-center shrink-0">
                     <img src="/static/brand/rpms_icon.png"
-                        class="w-full h-full object-contain brightness-0 invert group-hover:brightness-100 group-hover:invert-0 transition-all"
+                        class="w-full h-full object-contain brightness-0 invert transition-all" :class="view === 'procurement_module' ? 'brightness-100 invert-0 sepia hue-rotate-[200deg] saturate-[5]' : ''"
                         alt="RPMS">
                 </div>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'أوامر الشراء' : 'Purchase Orders'"></span>
             </a>
             <a href="#" @click.prevent="view = 'vendors_list'"
-                :class="view === 'vendors_list' ? 'bg-white text-emerald-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="view === 'vendors_list' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-building w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'سجل الموردين' : 'Vendors'"></span>
             </a>
             <a href="#" v-if="view === 'vendor_ledger'"
-                class="bg-white text-emerald-500 shadow-md font-bold flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                class="sidebar-item-premium active flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-book w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'كشف حساب مورد' : 'Vendor Ledger'"></span>
@@ -258,48 +391,48 @@
             </div>
 
             <a href="#" v-if="canAccess('pos_dashboard')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'dashboard'; fetchPOSDashboard()"
-                :class="(view === 'restaurant_pos_module' && posTab === 'dashboard') ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="(view === 'restaurant_pos_module' && posTab === 'dashboard') ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-chart-line w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? (posMode === 'direct' ? 'لوحة تحكم المبيعات' : 'لوحة تحكم المطعم') : (posMode === 'direct' ? 'POS Dashboard' : 'Restaurant Dashboard')"></span>
             </a>
 
             <a href="#" v-if="posMode === 'restaurant' && canAccess('pos_cashier')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'floor_layout'; fetchFloorsAndTables()"
-                :class="(view === 'restaurant_pos_module' && posTab === 'floor_layout') ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="(view === 'restaurant_pos_module' && posTab === 'floor_layout') ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-cubes w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'تخطيط الصالة والترابيزات' : 'Floor & Table Layout'"></span>
             </a>
 
             <a href="#" v-if="canAccess('pos_cashier')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'cashier'"
-                :class="(view === 'restaurant_pos_module' && posTab === 'cashier') ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="(view === 'restaurant_pos_module' && posTab === 'cashier') ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-cash-register w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? (posMode === 'direct' ? 'كاشير مبيعات مباشرة' : 'كاشير المطعم') : (posMode === 'direct' ? 'Direct POS Terminal' : 'Restaurant POS Terminal')"></span>
             </a>
 
             <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'direct_move'"
-                :class="(view === 'restaurant_pos_module' && posTab === 'direct_move') ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="(view === 'restaurant_pos_module' && posTab === 'direct_move') ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-exchange-alt w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'حركات مخزنية مباشرة' : 'Direct Stock Move'"></span>
             </a>
 
             <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'recipes'"
-                :class="(view === 'restaurant_pos_module' && posTab === 'recipes') ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="(view === 'restaurant_pos_module' && posTab === 'recipes') ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-layer-group w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'هندسة المكونات (BOM)' : 'Recipes & BOM'"></span>
             </a>
             
             <a href="#" v-if="posMode === 'restaurant' && canAccess('pos_kitchen')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'kitchen'"
-                :class="(view === 'restaurant_pos_module' && posTab === 'kitchen') ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="(view === 'restaurant_pos_module' && posTab === 'kitchen') ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-fire-burner w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'شاشة المطبخ KDS' : 'Kitchen Display'"></span>
@@ -307,16 +440,16 @@
             
             <!-- POS Settings Link -->
             <a href="#" v-if="canAccess('pos_recipes')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'settings'; fetchPOSTerminals()"
-                :class="(view === 'restaurant_pos_module' && posTab === 'settings') ? 'bg-white text-red-500 shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="(view === 'restaurant_pos_module' && posTab === 'settings') ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-sliders w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'إعدادات نقاط البيع' : 'POS Settings'"></span>
             </a>
 
             <a href="#" v-if="canAccess('pos_history')" @click.prevent="view = 'restaurant_pos_module'; posTab = 'orders'; selectedSession = null; fetchSessionsHistory()"
-                :class="(view === 'restaurant_pos_module' && posTab === 'orders') ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="(view === 'restaurant_pos_module' && posTab === 'orders') ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-receipt w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'سجل الطلبات' : 'Orders History'"></span>
@@ -324,7 +457,7 @@
 
             <!-- Active Vendors Register Item (only shown when viewing vendors from POS) -->
             <a href="#" v-if="['vendors_list', 'vendor_ledger'].includes(view)"
-                class="bg-white text-emerald-500 shadow-md font-bold flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                class="sidebar-item-premium active flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-truck w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'سجل الموردين' : 'Vendors Register'"></span>
@@ -332,7 +465,7 @@
 
             <!-- Active Opening Count Item (only shown when viewing opening count from POS) -->
             <a href="#" v-if="view === 'opening_count'"
-                class="bg-white text-emerald-500 shadow-md font-bold flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                class="sidebar-item-premium active flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-clipboard-check w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'جرد الرصيد الافتتاحي' : 'Opening Count'"></span>
@@ -346,8 +479,8 @@
             </div>
 
             <a href="#" @click.prevent="view = 'dashboard'"
-                :class="view === 'dashboard' ? 'bg-white text-brand shadow-md font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group overflow-hidden">
+                :class="view === 'dashboard' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group overflow-hidden">
                 <i class="fas fa-chart-pie w-6 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" class="font-medium text-sm whitespace-nowrap"
                     v-text="isArabic ? 'لوحة التحكم' : 'Dashboard'"></span>
@@ -368,24 +501,24 @@
             </div>
             
             <a href="#" v-if="canAccess('org_builder')" @click.prevent="view = 'org_builder'"
-                :class="view === 'org_builder' ? 'bg-white/10 text-white shadow-lg border border-white/20' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group">
+                :class="view === 'org_builder' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group">
                 <i class="fas fa-sitemap w-6 text-center text-sm shadow-sm"></i>
                 <span v-show="!sidebarCollapsed" class="font-bold text-[11px] whitespace-nowrap"
                     v-text="isArabic ? 'هيكلة المنظمة' : 'Org Builder'"></span>
             </a>
 
             <a href="#" v-if="canAccess('users')" @click.prevent="view = 'users'"
-                :class="view === 'users' ? 'bg-white/10 text-white shadow-lg border border-white/20' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group">
+                :class="view === 'users' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group">
                 <i class="fas fa-users-cog w-6 text-center text-sm shadow-sm"></i>
                 <span v-show="!sidebarCollapsed" class="font-bold text-[11px] whitespace-nowrap"
                     v-text="isArabic ? 'إدارة المستخدمين' : 'User Management'"></span>
             </a>
 
             <a href="#" v-if="canAccess('global_config')" @click.prevent="view = 'global_config'"
-                :class="view === 'global_config' ? 'bg-white/10 text-white shadow-lg border border-white/20' : 'text-white/80 hover:text-white hover:bg-white/10'"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group">
+                :class="view === 'global_config' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 px-3 py-2.5 rounded-xl group">
                 <i class="fas fa-cogs w-6 text-center text-sm shadow-sm"></i>
                 <span v-show="!sidebarCollapsed" class="font-bold text-[11px] whitespace-nowrap"
                     v-text="isArabic ? 'إعدادات النظام' : 'Global Settings'"></span>
@@ -393,6 +526,144 @@
         </template>
 
     </nav>
+
+    <!-- 🚀 Subscription Plan Card/Badge -->
+    <div class="px-4 py-3 mb-2 mx-2 bg-white/5 rounded-2xl border border-white/5 relative group/plan cursor-pointer transition-all hover:bg-white/10 hover:border-white/10"
+         :class="sidebarCollapsed ? 'flex justify-center w-10 mx-auto' : ''">
+        <div class="flex items-center justify-between w-full">
+            <div class="flex items-center gap-2" :class="sidebarCollapsed ? 'justify-center w-full' : ''">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0"
+                     :class="{
+                        'bg-indigo-500/80 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]': license.plan === 'starter' || license.plan === 'free',
+                        'bg-emerald-500/80 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]': license.plan === 'business',
+                        'bg-purple-500/80 text-white shadow-[0_0_10px_rgba(168,85,247,0.3)]': license.plan === 'professional' || license.plan === 'pro',
+                        'bg-amber-500/80 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)]': license.plan === 'enterprise'
+                     }">
+                    <i class="fa-solid" :class="{
+                        'fa-seedling': license.plan === 'starter' || license.plan === 'free',
+                        'fa-briefcase': license.plan === 'business',
+                        'fa-award': license.plan === 'professional' || license.plan === 'pro',
+                        'fa-crown': license.plan === 'enterprise'
+                    }"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="text-left animate-in fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
+                    <p class="text-[9px] text-white/40 font-bold uppercase tracking-wider leading-none mb-1">[[ isArabic ? 'الخطة الحالية' : 'Current Plan' ]]</p>
+                    <p class="text-xs font-black tracking-wide leading-none capitalize text-white">
+                        [[ isArabic ? planLimits.nameAr : planLimits.nameEn ]]
+                    </p>
+                </div>
+            </div>
+            <i v-show="!sidebarCollapsed" class="fa-solid fa-circle-info text-white/30 hover:text-white transition-colors text-xs"></i>
+        </div>
+
+        <!-- 🚀 Hover Popover overlay -->
+        <div class="plan-popover-premium absolute bottom-0 w-72 bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-[0_25px_50px_rgba(0,0,0,0.5)] p-5 z-[9999] opacity-0 invisible group-hover/plan:opacity-100 group-hover/plan:visible transition-all duration-300 pointer-events-none group-hover/plan:pointer-events-auto"
+             :class="isArabic ? 'right-[calc(100%+0.75rem)] text-right' : 'left-[calc(100%+0.75rem)] text-left'"
+             :dir="isArabic ? 'rtl' : 'ltr'">
+            
+            <!-- Popover Title -->
+            <div class="flex items-center gap-3 mb-4 pb-3 border-b border-white/10" :class="isArabic ? 'flex-row-reverse' : ''">
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                     :class="{
+                        'bg-indigo-500 text-white': license.plan === 'starter' || license.plan === 'free',
+                        'bg-emerald-500 text-white': license.plan === 'business',
+                        'bg-purple-500 text-white': license.plan === 'professional' || license.plan === 'pro',
+                        'bg-amber-500 text-white': license.plan === 'enterprise'
+                     }">
+                    <i class="fa-solid" :class="{
+                        'fa-seedling': license.plan === 'starter' || license.plan === 'free',
+                        'fa-briefcase': license.plan === 'business',
+                        'fa-award': license.plan === 'professional' || license.plan === 'pro',
+                        'fa-crown': license.plan === 'enterprise'
+                    }"></i>
+                </div>
+                <div class="flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <h4 class="text-sm font-black text-white leading-tight capitalize">
+                        [[ isArabic ? planLimits.nameAr : planLimits.nameEn ]] [[ isArabic ? 'الخطة' : 'Plan' ]]
+                    </h4>
+                    <p class="text-[10px] text-white/50 leading-none mt-1">
+                        [[ isArabic ? 'حدود واستهلاك الاشتراك' : 'Subscription limits & details' ]]
+                    </p>
+                </div>
+            </div>
+
+            <!-- limits list -->
+            <div class="space-y-3 text-xs text-white/90">
+                <!-- SKUs -->
+                <div class="space-y-1">
+                    <div class="flex justify-between font-bold">
+                        <span class="text-white/60">[[ isArabic ? 'الأصناف (SKUs)' : 'SKUs' ]]</span>
+                        <span>[[ license.skuCount ]] / [[ planLimits.skus >= 99999 ? (isArabic ? 'بلا حدود' : 'Unlimited') : planLimits.skus ]]</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-500 transition-all duration-500" 
+                             :style="{ width: Math.min((license.skuCount / planLimits.skus) * 100, 100) + '%' }"></div>
+                    </div>
+                </div>
+
+                <!-- Users -->
+                <div class="space-y-1">
+                    <div class="flex justify-between font-bold">
+                        <span class="text-white/60">[[ isArabic ? 'المستخدمين' : 'Staff Users' ]]</span>
+                        <span>[[ companyUsers.length ]] / [[ planLimits.users >= 99999 ? (isArabic ? 'بلا حدود' : 'Unlimited') : planLimits.users ]]</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-emerald-500 transition-all duration-500" 
+                             :style="{ width: Math.min((companyUsers.length / planLimits.users) * 100, 100) + '%' }"></div>
+                    </div>
+                </div>
+
+                <!-- Plants -->
+                <div class="space-y-1">
+                    <div class="flex justify-between font-bold">
+                        <span class="text-white/60">[[ isArabic ? 'المنشآت / الفروع' : 'Branches / Plants' ]]</span>
+                        <span>[[ plants.length ]] / [[ planLimits.plants >= 99999 ? (isArabic ? 'بلا حدود' : 'Unlimited') : planLimits.plants ]]</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-amber-500 transition-all duration-500" 
+                             :style="{ width: Math.min((plants.length / planLimits.plants) * 100, 100) + '%' }"></div>
+                    </div>
+                </div>
+
+                <!-- Storage Locations -->
+                <div class="space-y-1">
+                    <div class="flex justify-between font-bold">
+                        <span class="text-white/60">[[ isArabic ? 'مواقع التخزين' : 'Storage Locations' ]]</span>
+                        <span>[[ locations.length ]] / [[ planLimits.locations >= 99999 ? (isArabic ? 'بلا حدود' : 'Unlimited') : planLimits.locations ]]</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-purple-500 transition-all duration-500" 
+                             :style="{ width: Math.min((locations.length / planLimits.locations) * 100, 100) + '%' }"></div>
+                    </div>
+                </div>
+
+                <!-- System Mode & Modules -->
+                <div class="pt-2 border-t border-white/5 space-y-1.5 text-[11px] text-white/70">
+                    <div class="flex justify-between">
+                        <span>[[ isArabic ? 'وضع التشغيل:' : 'System Mode:' ]]</span>
+                        <span class="font-bold text-white">[[ systemMode === 'standalone' ? (isArabic ? 'منفرد' : 'Stand Alone') : (isArabic ? 'متعدد' : 'Modular') ]]</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>[[ isArabic ? 'الموديولات النشطة:' : 'Active Modules:' ]]</span>
+                        <span class="font-bold text-white">[[ purchasedModules.length ]] / [[ planLimits.modules >= 99999 ? (isArabic ? 'الكل' : 'All') : planLimits.modules ]]</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>[[ isArabic ? 'الأيام المتبقية:' : 'Days Remaining:' ]]</span>
+                        <span class="font-bold text-white">[[ license.daysRemaining ]] [[ isArabic ? 'يوم' : 'Days' ]]</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action button -->
+            <div class="mt-4 pt-3 border-t border-white/10 flex justify-end">
+                <button @click.prevent="showSubscriptionModal = true" 
+                        class="w-full py-2 bg-brand hover:bg-brand-hover text-white font-bold text-xs rounded-xl transition-all shadow-[0_4px_12px_rgba(44,130,240,0.2)] flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span>[[ isArabic ? 'ترقية / إدارة الاشتراك' : 'Upgrade / Manage Plan' ]]</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div class="p-4 border-t border-white/5 bg-white/5 text-white">
         <div class="flex items-center gap-3 overflow-hidden">
@@ -416,7 +687,7 @@
             <input name="language" type="hidden"
                 value="{% if LANGUAGE_CODE|slice:':2' == 'ar' %}en{% else %}ar{% endif %}">
             <button type="submit"
-                class="w-full flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-white/10 hover:text-white rounded-lg transition-all text-[11px] font-bold border border-white/10 hover:border-brand/50 uppercase tracking-tighter shadow-sm">
+                class="lang-btn-premium w-full flex items-center gap-3 px-3 py-2 text-slate-400 rounded-lg transition-all text-[11px] font-bold border border-white/10 uppercase tracking-tighter shadow-sm">
                 <i class="fas fa-language w-5 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" v-text="isArabic ? 'Switch to English' : 'التحويل للعربية'"></span>
             </button>

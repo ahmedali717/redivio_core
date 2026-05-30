@@ -538,6 +538,55 @@ createApp({
             return this.license;
         },
 
+        planLimits() {
+            const plan = (this.license.plan || 'starter').toLowerCase();
+            if (plan === 'starter' || plan === 'free') {
+                return {
+                    nameAr: 'المبتدئ',
+                    nameEn: 'Starter',
+                    users: 2,
+                    plants: 1,
+                    locations: 1,
+                    modules: 1,
+                    skus: 50,
+                    mode: this.isArabic ? 'منفرد (Stand Alone)' : 'Stand Alone'
+                };
+            } else if (plan === 'business') {
+                return {
+                    nameAr: 'الأعمال',
+                    nameEn: 'Business',
+                    users: 15,
+                    plants: 3,
+                    locations: 10,
+                    modules: 3,
+                    skus: 5000,
+                    mode: this.isArabic ? 'كامل (Modular)' : 'Modular'
+                };
+            } else if (plan === 'professional' || plan === 'pro') {
+                return {
+                    nameAr: 'الاحترافي',
+                    nameEn: 'Professional',
+                    users: 99999,
+                    plants: 99999,
+                    locations: 99999,
+                    modules: 99999,
+                    skus: 99999,
+                    mode: this.isArabic ? 'كامل (Modular)' : 'Modular'
+                };
+            } else { // enterprise
+                return {
+                    nameAr: 'المؤسسات',
+                    nameEn: 'Enterprise',
+                    users: 99999,
+                    plants: 99999,
+                    locations: 99999,
+                    modules: 99999,
+                    skus: 999999,
+                    mode: this.isArabic ? 'كامل (Modular)' : 'Modular'
+                };
+            }
+        },
+
         // 🚀 حسابات أمر التوريد (الضرائب والإجماليات)
         poLineTotal() {
             if (!this.forms.po || !this.forms.po.lines) return 0;
