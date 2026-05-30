@@ -185,6 +185,14 @@ createApp({
             },
 
             showSubscriptionModal: false,
+            checkoutPlan: null,
+            paymentScreen: false,
+            paymentMethod: 'stripe',
+            cardNum: '',
+            cardName: '',
+            cardExpiry: '',
+            cardCvc: '',
+            walletPhone: '',
 
             license: {
                 daysRemaining: 15,
@@ -193,7 +201,10 @@ createApp({
                 plan: 'free',
                 skuLimit: 50,
                 daysLimit: 15,
-                skuCount: 0
+                skuCount: 0,
+                pendingPlan: null,
+                pendingStatus: null,
+                pendingPaymentMethod: null
             },
             topMaterials: [],
 
@@ -5419,7 +5430,10 @@ createApp({
                         plan: data.plan || 'free',
                         skuLimit: data.sku_limit || 50,
                         daysLimit: data.days_limit || 15,
-                        skuCount: data.sku_count || 0
+                        skuCount: data.sku_count || 0,
+                        pendingPlan: data.pending_plan,
+                        pendingStatus: data.pending_status,
+                        pendingPaymentMethod: data.pending_payment_method
                     };
                     
                     this.systemMode = data.system_mode || 'modular';
@@ -5441,7 +5455,71 @@ createApp({
             } catch (e) { console.error("Auth Error", e); }
         },
 
-        async changePlan(planType) {
+        changePlan(planType) {
+            if (this.license.plan === planType || (planType === 'starter' && this.license.plan === 'free')) {
+                return;
+            }
+            
+            this.checkoutPlan = planType;
+            if (planType === 'starter') {
+                Swal.fire({
+                    title: this.isArabic ? 'تأكيد تغيير الخطة' : 'Confirm Plan Switch',
+                    text: this.isArabic 
+                        ? 'هل أنت متأكد من تغيير الخطة إلى المبتدئ (Starter)؟ سيتطلب هذا تأكيد إدارة النظام.'
+                        : 'Are you sure you want to change to Starter plan? This will require admin confirmation.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    background: '#0f172a',
+                    color: '#fff',
+                    confirmButtonColor: '#3b82f6',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: this.isArabic ? 'نعم، أرسل الطلب' : 'Yes, send request',
+                    cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submitUpgradeRequest();
+                    }
+                });
+            } else {
+                this.paymentScreen = true;
+                this.paymentMethod = 'stripe';
+                this.cardNum = '';
+                this.cardName = '';
+                this.cardExpiry = '';
+                this.cardCvc = '';
+                this.walletPhone = '';
+            }
+        },
+
+        async submitUpgradeRequest() {
+            if (this.checkoutPlan !== 'starter' && this.checkoutPlan !== 'enterprise') {
+                if (this.paymentMethod === 'stripe') {
+                    if (!this.cardNum || !this.cardName || !this.cardExpiry || !this.cardCvc) {
+                        Swal.fire({
+                            title: this.isArabic ? 'بيانات ناقصة' : 'Missing Information',
+                            text: this.isArabic ? 'يرجى إدخال جميع بيانات بطاقة الدفع.' : 'Please enter all payment card details.',
+                            icon: 'error',
+                            background: '#0f172a',
+                            color: '#fff',
+                            confirmButtonColor: '#3b82f6'
+                        });
+                        return;
+                    }
+                } else if (this.paymentMethod === 'paymob') {
+                    if (!this.walletPhone) {
+                        Swal.fire({
+                            title: this.isArabic ? 'بيانات ناقصة' : 'Missing Information',
+                            text: this.isArabic ? 'يرجى إدخال رقم المحفظة الإلكترونية.' : 'Please enter your mobile wallet number.',
+                            icon: 'error',
+                            background: '#0f172a',
+                            color: '#fff',
+                            confirmButtonColor: '#3b82f6'
+                        });
+                        return;
+                    }
+                }
+            }
+
             try {
                 this.loading = true;
                 const response = await fetch('/api/change-plan/', {
@@ -5450,17 +5528,20 @@ createApp({
                         'Content-Type': 'application/json',
                         'X-CSRFToken': this.getCookie('csrftoken')
                     },
-                    body: JSON.stringify({ plan: planType })
+                    body: JSON.stringify({ 
+                        plan: this.checkoutPlan,
+                        payment_method: this.checkoutPlan === 'starter' ? 'free' : this.paymentMethod,
+                        lang: this.isArabic ? 'ar' : 'en'
+                    })
                 });
                 
                 const data = await response.json();
                 if (data.success) {
                     this.showSubscriptionModal = false;
+                    this.paymentScreen = false;
                     Swal.fire({
-                        title: this.isArabic ? 'تم تحديث الخطة بنجاح!' : 'Plan Updated Successfully!',
-                        text: this.isArabic 
-                            ? `تم تغيير خطتك الحالية إلى ${planType.toUpperCase()}`
-                            : `Your plan has been updated to ${planType.toUpperCase()}`,
+                        title: this.isArabic ? 'تم إرسال الطلب بنجاح!' : 'Request Sent Successfully!',
+                        text: data.message,
                         icon: 'success',
                         background: '#0f172a',
                         color: '#fff',
@@ -5470,7 +5551,7 @@ createApp({
                 } else {
                     Swal.fire({
                         title: this.isArabic ? 'حدث خطأ' : 'Error',
-                        text: data.error || (this.isArabic ? 'فشل تحديث الخطة.' : 'Failed to update plan.'),
+                        text: data.error || (this.isArabic ? 'فشل إرسال طلب الاشتراك.' : 'Failed to submit subscription request.'),
                         icon: 'error',
                         background: '#0f172a',
                         color: '#fff',
@@ -5478,10 +5559,10 @@ createApp({
                     });
                 }
             } catch (e) {
-                console.error("Error changing plan:", e);
+                console.error("Upgrade error", e);
                 Swal.fire({
                     title: this.isArabic ? 'خطأ في الاتصال' : 'Connection Error',
-                    text: this.isArabic ? 'يرجى التحقق من اتصالك بالشبكة.' : 'Please check your network connection.',
+                    text: this.isArabic ? 'تعذر الاتصال بالسيرفر. يرجى المحاولة لاحقاً.' : 'Unable to connect to server. Please try again later.',
                     icon: 'error',
                     background: '#0f172a',
                     color: '#fff',

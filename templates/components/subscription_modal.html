@@ -6,20 +6,24 @@
         <div class="px-8 py-6 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/50 sticky top-0 z-10">
             <div>
                 <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                    <i class="fas fa-gem text-blue-500"></i>
-                    [[ isArabic ? 'خطط الاشتراك والترقية' : 'Subscription Plans & Upgrade' ]]
+                    <i class="fas" :class="paymentScreen ? 'fa-credit-card text-blue-500' : 'fa-gem text-blue-500'"></i>
+                    [[ paymentScreen 
+                        ? (isArabic ? 'إتمام عملية الدفع والترقية' : 'Checkout & Upgrade') 
+                        : (isArabic ? 'خطط الاشتراك والترقية' : 'Subscription Plans & Upgrade') ]]
                 </h3>
                 <p class="text-xs text-slate-400 mt-1">
-                    [[ isArabic ? 'اختر الخطة المناسبة لحجم أعمالك للترقية أو تعديل الخطة الحالية' : 'Choose the best plan for your business scale to upgrade or modify' ]]
+                    [[ paymentScreen 
+                        ? (isArabic ? 'أدخل تفاصيل الدفع لتأكيد طلب ترقية الاشتراك' : 'Enter payment details to confirm subscription upgrade request') 
+                        : (isArabic ? 'اختر الخطة المناسبة لحجم أعمالك للترقية أو تعديل الخطة الحالية' : 'Choose the best plan for your business scale to upgrade or modify') ]]
                 </p>
             </div>
-            <button @click="showSubscriptionModal = false" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all">
+            <button @click="showSubscriptionModal = false; paymentScreen = false" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all">
                 <i class="fas fa-times"></i>
             </button>
         </div>
 
         <!-- Plans Cards Container -->
-        <div class="p-8 overflow-y-auto flex-1 grid grid-cols-1 xl:grid-cols-4 gap-6 bg-slate-950/20">
+        <div v-if="!paymentScreen" class="p-8 overflow-y-auto flex-1 grid grid-cols-1 xl:grid-cols-4 gap-6 bg-slate-950/20">
             
             <!-- Starter Plan Card -->
             <div class="bg-gradient-to-b from-blue-950/10 to-slate-900/80 border rounded-3xl p-6 flex flex-col justify-between transition-all group relative overflow-hidden"
@@ -62,7 +66,7 @@
 
                 <button 
                     @click="changePlan('starter')" 
-                    :disabled="licenseStatus.plan === 'starter' || licenseStatus.plan === 'free' || loading" 
+                    :disabled="licenseStatus.plan === 'starter' || licenseStatus.plan === 'free' || loading || licenseStatus.pendingStatus === 'pending'" 
                     class="w-full font-bold py-3 px-4 rounded-2xl text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
                     :class="(licenseStatus.plan === 'starter' || licenseStatus.plan === 'free')
                         ? 'bg-slate-800 text-slate-400 border border-slate-700/50 cursor-default' 
@@ -114,7 +118,7 @@
 
                 <button 
                     @click="changePlan('business')" 
-                    :disabled="licenseStatus.plan === 'business' || loading" 
+                    :disabled="licenseStatus.plan === 'business' || loading || licenseStatus.pendingStatus === 'pending'" 
                     class="w-full font-bold py-3 px-4 rounded-2xl text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
                     :class="licenseStatus.plan === 'business' 
                         ? 'bg-slate-800 text-slate-400 border border-slate-700/50 cursor-default' 
@@ -171,7 +175,7 @@
 
                 <button 
                     @click="changePlan('professional')" 
-                    :disabled="licenseStatus.plan === 'professional' || licenseStatus.plan === 'pro' || loading" 
+                    :disabled="licenseStatus.plan === 'professional' || licenseStatus.plan === 'pro' || loading || licenseStatus.pendingStatus === 'pending'" 
                     class="w-full font-bold py-3.5 px-4 rounded-2xl text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
                     :class="(licenseStatus.plan === 'professional' || licenseStatus.plan === 'pro')
                         ? 'bg-slate-800 text-slate-400 border border-slate-700/50 cursor-default' 
@@ -224,7 +228,7 @@
 
                 <button 
                     @click="changePlan('enterprise')" 
-                    :disabled="licenseStatus.plan === 'enterprise' || loading" 
+                    :disabled="licenseStatus.plan === 'enterprise' || loading || licenseStatus.pendingStatus === 'pending'" 
                     class="w-full font-bold py-3 px-4 rounded-2xl text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
                     :class="licenseStatus.plan === 'enterprise' 
                         ? 'bg-slate-800 text-slate-400 border border-slate-700/50 cursor-default' 
@@ -262,6 +266,150 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- Checkout / Payment Screen -->
+        <div v-else class="p-8 overflow-y-auto flex-1 bg-slate-950/20 flex flex-col lg:flex-row gap-8 items-stretch text-start">
+            
+            <!-- Left Side: Order Summary -->
+            <div class="flex-1 bg-gradient-to-b from-blue-950/20 to-slate-900/60 border border-slate-800/80 rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden backdrop-blur-md">
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">
+                        [[ isArabic ? 'تفاصيل الطلب' : 'Order Summary' ]]
+                    </h4>
+                    <h2 class="text-3xl font-black text-white mb-6 uppercase">
+                        [[ checkoutPlan ]] [[ isArabic ? 'الترقية إلى' : 'Upgrade' ]]
+                    </h2>
+                    
+                    <div class="bg-slate-950/40 border border-slate-800/50 rounded-2xl p-6 mb-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-slate-400 text-xs">[[ isArabic ? 'سعر الخطة' : 'Plan Price' ]]</span>
+                            <span class="text-white font-bold text-lg">
+                                [[ checkoutPlan === 'business' ? 'EGP 3,499' : (checkoutPlan === 'professional' ? 'EGP 6,999' : '$0') ]]
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center border-t border-slate-800/80 pt-3">
+                            <span class="text-slate-300 font-bold text-sm">[[ isArabic ? 'الإجمالي المستحق' : 'Total Due' ]]</span>
+                            <span class="text-blue-400 font-black text-2xl">
+                                [[ checkoutPlan === 'business' ? 'EGP 3,499' : (checkoutPlan === 'professional' ? 'EGP 6,999' : '$0') ]]
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-3.5 text-xs text-slate-300">
+                        <li class="flex items-center gap-2.5">
+                            <i class="fas fa-check-circle text-blue-500"></i>
+                            <span>[[ checkoutPlan === 'business' ? (isArabic ? 'الحد الأقصى: 5,000 صنف (SKU)' : 'Maximum 5,000 SKUs capacity') : (isArabic ? 'الحد الأقصى: 99,999 صنف (SKU)' : 'Maximum 99,999 SKUs capacity') ]]</span>
+                        </li>
+                        <li class="flex items-center gap-2.5">
+                            <i class="fas fa-check-circle text-blue-500"></i>
+                            <span>[[ isArabic ? 'أدوات تشغيلية ذكية وإدارة متطورة للمخازن' : 'Smart operational tools & advanced WMS' ]]</span>
+                        </li>
+                        <li class="flex items-center gap-2.5">
+                            <i class="fas fa-check-circle text-blue-500"></i>
+                            <span>[[ isArabic ? 'دعم فني ذو أولوية على مدار الساعة' : '24/7 priority support channel' ]]</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <button @click="paymentScreen = false" class="mt-8 text-slate-400 hover:text-white text-xs font-bold flex items-center gap-2 transition-all self-start">
+                    <i class="fas" :class="isArabic ? 'fa-arrow-right' : 'fa-arrow-left'"></i>
+                    <span>[[ isArabic ? 'العودة لاختيار الخطة' : 'Back to Plans Selection' ]]</span>
+                </button>
+            </div>
+            
+            <!-- Right Side: Payment Form -->
+            <div class="flex-[1.2] bg-gradient-to-b from-slate-900/60 to-slate-900/90 border border-slate-800/80 rounded-3xl p-8 backdrop-blur-md flex flex-col justify-between">
+                <div>
+                    <h4 class="text-sm font-bold text-white mb-6">
+                        [[ isArabic ? 'اختر طريقة الدفع الإلكتروني' : 'Select Payment Method' ]]
+                    </h4>
+                    
+                    <!-- Method Selectors -->
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <button 
+                            @click="paymentMethod = 'stripe'"
+                            class="py-4 px-6 rounded-2xl border flex flex-col items-center gap-2.5 transition-all text-xs font-bold relative overflow-hidden"
+                            :class="paymentMethod === 'stripe' ? 'border-blue-500 bg-blue-950/20 text-white' : 'border-slate-800 hover:border-slate-700 bg-slate-900/40 text-slate-400'"
+                        >
+                            <i class="fa-brands fa-stripe text-3xl" :class="paymentMethod === 'stripe' ? 'text-blue-400' : 'text-slate-500'"></i>
+                            <span>[[ isArabic ? 'بطاقة الائتمان (Stripe)' : 'Credit Card (Stripe)' ]]</span>
+                            <div v-if="paymentMethod === 'stripe'" class="absolute top-1 right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center border border-slate-900">
+                                <i class="fas fa-check text-[6px] text-white"></i>
+                            </div>
+                        </button>
+                        
+                        <button 
+                            @click="paymentMethod = 'paymob'"
+                            class="py-4 px-6 rounded-2xl border flex flex-col items-center gap-2.5 transition-all text-xs font-bold relative overflow-hidden"
+                            :class="paymentMethod === 'paymob' ? 'border-purple-500 bg-purple-950/20 text-white' : 'border-slate-800 hover:border-slate-700 bg-slate-900/40 text-slate-400'"
+                        >
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-wallet text-xl text-purple-400"></i>
+                                <span class="font-black text-purple-400 tracking-wider">Paymob</span>
+                            </div>
+                            <span>[[ isArabic ? 'محفظة إلكترونية / فوري' : 'Mobile Wallet / Fawry' ]]</span>
+                            <div v-if="paymentMethod === 'paymob'" class="absolute top-1 right-1 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center border border-slate-900">
+                                <i class="fas fa-check text-[6px] text-white"></i>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Stripe Credit Card Form -->
+                    <div v-if="paymentMethod === 'stripe'" class="space-y-4 animate-in fade-in duration-300">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">[[ isArabic ? 'اسم حامل البطاقة' : 'Cardholder Name' ]]</label>
+                            <input v-model="cardName" type="text" class="w-full bg-slate-950/50 border border-slate-800 focus:border-blue-500/80 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none transition-all" placeholder="John Doe">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">[[ isArabic ? 'رقم بطاقة الدفع' : 'Card Number' ]]</label>
+                            <div class="relative">
+                                <input v-model="cardNum" type="text" class="w-full bg-slate-950/50 border border-slate-800 focus:border-blue-500/80 rounded-xl pl-11 pr-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none transition-all" placeholder="4242 •••• •••• 4242">
+                                <i class="fas fa-credit-card absolute left-4 top-3.5 text-slate-500 text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">[[ isArabic ? 'تاريخ الانتهاء' : 'Expiry Date' ]]</label>
+                                <input v-model="cardExpiry" type="text" class="w-full bg-slate-950/50 border border-slate-800 focus:border-blue-500/80 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none transition-all" placeholder="MM/YY">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">CVC / CVV</label>
+                                <input v-model="cardCvc" type="password" class="w-full bg-slate-950/50 border border-slate-800 focus:border-blue-500/80 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none transition-all" placeholder="•••">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Paymob / Wallet Form -->
+                    <div v-else class="space-y-5 animate-in fade-in duration-300">
+                        <div class="bg-slate-950/40 border border-purple-500/10 rounded-2xl p-4 text-xs text-slate-400 leading-relaxed">
+                            <i class="fas fa-circle-nodes text-purple-400 mr-1.5"></i>
+                            [[ isArabic 
+                                ? 'سيتم إصدار طلب دفع فوري أو إرسال رابط تأكيد المعاملة إلى محفظتك الرقمية (فودافون كاش، اتصالات، إلخ).' 
+                                : 'A Fawry pay-code or digital wallet notification will be generated and linked directly to your subscription request.' ]]
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">[[ isArabic ? 'رقم الهاتف المحمول للمحفظة' : 'Wallet Mobile Number' ]]</label>
+                            <div class="relative">
+                                <input v-model="walletPhone" type="text" class="w-full bg-slate-950/50 border border-slate-800 focus:border-purple-500/80 rounded-xl pl-11 pr-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none transition-all" placeholder="010••••••••">
+                                <i class="fas fa-phone absolute left-4 top-3.5 text-slate-500 text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button 
+                    @click="submitUpgradeRequest" 
+                    :disabled="loading" 
+                    class="w-full font-bold py-4 px-6 rounded-2xl text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-8 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white shadow-xl shadow-blue-500/20"
+                >
+                    <i v-if="loading" class="fas fa-spinner fa-spin mr-1"></i>
+                    <i v-else class="fas fa-lock mr-1 text-white/80"></i>
+                    <span>[[ isArabic ? 'تأكيد الدفع وإرسال طلب الترقية' : 'Pay & Submit Upgrade Request' ]]</span>
+                </button>
+            </div>
+            
         </div>
         
         <!-- Footer -->

@@ -174,3 +174,51 @@ class PutawayRule(models.Model):
 
     def __str__(self):
         return f"{self.item.name} -> {self.default_bin.code}"
+
+class SubscriptionRequest(models.Model):
+    opco = models.ForeignKey(OpCo, on_delete=models.CASCADE, related_name='subscription_requests')
+    plan = models.CharField(
+        max_length=20,
+        choices=[
+            ("starter", "Starter"),
+            ("business", "Business"),
+            ("professional", "Professional"),
+            ("enterprise", "Enterprise")
+        ]
+    )
+    payment_method = models.CharField(
+        max_length=20,
+        choices=[
+            ("stripe", "Stripe (Credit Card)"),
+            ("paymob", "Paymob (Wallet/Fawry)")
+        ]
+    )
+    payment_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending"),
+            ("paid", "Paid"),
+            ("failed", "Failed")
+        ],
+        default="pending"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending"),
+            ("approved", "Approved"),
+            ("rejected", "Rejected")
+        ],
+        default="pending"
+    )
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    amount = models.FloatField(default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "طلب اشتراك"
+        verbose_name_plural = "طلبات الاشتراكات"
+
+    def __str__(self):
+        return f"Req for {self.opco.name} -> {self.plan} ({self.status})"

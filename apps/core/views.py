@@ -12,7 +12,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from apps.core.models import OpCo
+from apps.core.models import OpCo, SubscriptionRequest
 from apps.wms.models import Plant, StorageLocation, StockQuant, StorageBin
 from apps.item_master.models import Material
 from apps.procurement.models import Vendor, PurchaseOrder
@@ -226,6 +226,12 @@ class CheckAuthAPI(APIView):
         if company_user:
             current_role = company_user.role
 
+        # Check for pending subscription requests
+        pending_req = SubscriptionRequest.objects.filter(opco=user_opco, status='pending').order_by('-created_at').first() if user_opco else None
+        pending_plan = pending_req.plan if pending_req else None
+        pending_status = pending_req.status if pending_req else None
+        pending_payment_method = pending_req.payment_method if pending_req else None
+
         return Response({
             "authenticated": True,
             "user_id": request.user.id,
@@ -244,6 +250,9 @@ class CheckAuthAPI(APIView):
             "sku_limit": sku_limit,
             "days_limit": days_limit,
             "sku_count": sku_count,
+            "pending_plan": pending_plan,
+            "pending_status": pending_status,
+            "pending_payment_method": pending_payment_method,
         })
 
 
@@ -274,16 +283,57 @@ class ChangePlanAPI(APIView):
         if plan not in ['starter', 'business', 'professional', 'enterprise']:
             return Response({"error": f"Invalid plan choice: {plan}"}, status=status.HTTP_400_BAD_REQUEST)
             
-        from django.utils import timezone
-        opco.plan = plan
-        opco.created_at = timezone.now()
-        opco.save()
-        
+        # Check if there is already a pending request
+        existing_req = SubscriptionRequest.objects.filter(opco=opco, status='pending').first()
+        if existing_req:
+            is_arabic = request.data.get('lang', 'ar') == 'ar'
+            err_msg = (
+                f"لديك بالفعل طلب معلق للترقية إلى {existing_req.get_plan_display()} قيد المراجعة."
+                if is_arabic else
+                f"You already have a pending request to upgrade to {existing_req.get_plan_display()}."
+            )
+            return Response({"error": err_msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Calculate amount
+        amount = 0.0
+        if plan == 'business':
+            amount = 3499.0
+        elif plan == 'professional':
+            amount = 6999.0
+
+        payment_method = request.data.get('payment_method')
+        if amount > 0.0 and not payment_method:
+            return Response({"error": "Payment method is required for paid plans"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Simulate payment validation & processing
+        import random, string
+        txn_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=12))
+        txn_id = f"TXN-{payment_method.upper()}-{txn_id}" if payment_method else f"TXN-FREE-{txn_id}"
+
+        # Create Subscription Request
+        SubscriptionRequest.objects.create(
+            opco=opco,
+            plan=plan,
+            payment_method=payment_method or 'free',
+            payment_status='paid' if amount > 0.0 else 'paid',
+            status='pending',
+            transaction_id=txn_id,
+            amount=amount
+        )
+
+        is_arabic = request.data.get('lang', 'ar') == 'ar'
+        msg = (
+            "تم استلام الدفعة بنجاح! طلبك قيد الانتظار لمراجعة وتأكيد إدارة النظام."
+            if is_arabic else
+            "Payment received successfully! Your request is pending review and activation by system administration."
+        )
+
         return Response({
             "success": True,
-            "message": f"Plan updated successfully to {plan}",
-            "plan": plan
+            "message": msg,
+            "pending": True
         })
+
 
 class LoginAPI(APIView):
     permission_classes = [AllowAny]
