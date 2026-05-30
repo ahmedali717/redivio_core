@@ -158,6 +158,22 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         except (ValueError, TypeError):
             return Response([])
         sessions = POSSession.objects.filter(opco_id=opco_id).order_by('-start_time')
+        
+        terminal_id = request.query_params.get('terminal')
+        date_from = request.query_params.get('from')
+        date_to = request.query_params.get('to')
+        
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            try:
+                sessions = sessions.filter(terminal_id=int(terminal_id))
+            except (ValueError, TypeError):
+                pass
+                
+        if date_from:
+            sessions = sessions.filter(start_time__date__gte=date_from)
+        if date_to:
+            sessions = sessions.filter(start_time__date__lte=date_to)
+            
         data = []
         for s in sessions:
             data.append({

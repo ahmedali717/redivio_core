@@ -11,49 +11,149 @@
             </button>
         </div>
 
-        <div v-for="(sessions, date) in groupedSessions" :key="date" class="space-y-4">
-            <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <i class="fas fa-calendar-day"></i> [[ date ]]
-            </h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div v-for="session in sessions" :key="session.id" 
-                     @click="viewSessionDetails(session)"
-                     class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-1 cursor-pointer transition-all group">
-                    <div class="p-6 border-b border-slate-50 flex justify-between items-start bg-slate-50/50">
-                        <div>
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
-                                [[ isArabic ? 'كاشير:' : 'Cashier:' ]] [[ session.cashier ]]
-                            </span>
-                            <span v-if="session.terminal_name" class="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-1">
-                                [[ isArabic ? 'نقطة بيع:' : 'Terminal:' ]] [[ session.terminal_name ]]
-                            </span>
-                            <span class="font-bold text-slate-700">[[ formatTime(session.start_time) ]]</span>
-                        </div>
-                        <span :class="session.is_closed ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700'" class="px-3 py-1 rounded-full text-[10px] font-black uppercase">
-                            [[ session.is_closed ? (isArabic ? 'مغلقة' : 'Closed') : (isArabic ? 'مفتوحة' : 'Active') ]]
-                        </span>
-                    </div>
-                    
-                    <div class="p-6 space-y-4">
-                        <div class="flex justify-between items-end">
-                            <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase">[[ isArabic ? 'إجمالي المبيعات' : 'Total Sales' ]]</p>
-                                <p class="text-2xl font-black text-slate-800">[[ formatCurrency(session.total_sales) ]]</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[10px] font-black text-slate-400 uppercase">[[ isArabic ? 'عدد الطلبات' : 'Orders' ]]</p>
-                                <p class="text-lg font-bold text-slate-600">[[ session.order_count ]]</p>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Filters Bar -->
+        <div class="bg-white p-4 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="flex flex-wrap items-center gap-4 w-full md:w-auto text-right" dir="rtl">
+                <!-- Terminal Filter -->
+                <div class="flex flex-col">
+                    <label class="text-[10px] text-slate-400 font-bold mb-1">[[ isArabic ? 'نقطة البيع' : 'POS Terminal' ]]</label>
+                    <select v-model="posSessionsFilters.terminal" @change="fetchSessionsHistory" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-red-500 min-w-[150px]">
+                        <option value="">[[ isArabic ? 'جميع نقاط البيع' : 'All Terminals' ]]</option>
+                        <option v-for="t in posTerminals" :key="t.id" :value="t.id">[[ t.name ]]</option>
+                    </select>
+                </div>
 
-                    <div class="p-4 bg-slate-900 text-white flex justify-between items-center group-hover:bg-red-600 transition-all">
-                        <span class="text-xs font-bold">[[ isArabic ? 'عرض تفاصيل الطلبات' : 'View Orders' ]]</span>
-                        <i class="fas fa-chevron-right text-xs"></i>
+                <!-- From Date -->
+                <div class="flex flex-col">
+                    <label class="text-[10px] text-slate-400 font-bold mb-1">[[ isArabic ? 'من تاريخ' : 'From Date' ]]</label>
+                    <input type="date" v-model="posSessionsFilters.from" @change="fetchSessionsHistory" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-red-500">
+                </div>
+
+                <!-- To Date -->
+                <div class="flex flex-col">
+                    <label class="text-[10px] text-slate-400 font-bold mb-1">[[ isArabic ? 'إلى تاريخ' : 'To Date' ]]</label>
+                    <input type="date" v-model="posSessionsFilters.to" @change="fetchSessionsHistory" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-red-500">
+                </div>
+                
+                <!-- Reset Filters Button -->
+                <button v-if="posSessionsFilters.terminal || posSessionsFilters.from || posSessionsFilters.to" 
+                        @click="posSessionsFilters.terminal = ''; posSessionsFilters.from = ''; posSessionsFilters.to = ''; fetchSessionsHistory();" 
+                        class="mt-5 text-xs text-red-500 font-bold hover:underline">
+                    [[ isArabic ? 'تصفية الفلاتر' : 'Reset' ]]
+                </button>
+            </div>
+
+            <!-- View Switcher -->
+            <div class="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 self-end md:self-center">
+                <button @click="posSessionsFilters.viewMode = 'grid'" 
+                        :class="posSessionsFilters.viewMode === 'grid' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                        class="w-10 h-8 rounded-lg flex items-center justify-center transition-all">
+                    <i class="fas fa-th-large text-sm"></i>
+                </button>
+                <button @click="posSessionsFilters.viewMode = 'list'" 
+                        :class="posSessionsFilters.viewMode === 'list' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                        class="w-10 h-8 rounded-lg flex items-center justify-center transition-all">
+                    <i class="fas fa-list text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 🟢 Grid View (grouped by date) -->
+        <div v-if="posSessionsFilters.viewMode === 'grid' && posSessionsHistory.length > 0" class="space-y-6">
+            <div v-for="(sessions, date) in groupedSessions" :key="date" class="space-y-4">
+                <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fas fa-calendar-day"></i> [[ date ]]
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div v-for="session in sessions" :key="session.id" 
+                         @click="viewSessionDetails(session)"
+                         class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-1 cursor-pointer transition-all group">
+                        <div class="p-6 border-b border-slate-50 flex justify-between items-start bg-slate-50/50">
+                            <div>
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                                    [[ isArabic ? 'كاشير:' : 'Cashier:' ]] [[ session.cashier ]]
+                                </span>
+                                <span v-if="session.terminal_name" class="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-1">
+                                    [[ isArabic ? 'نقطة بيع:' : 'Terminal:' ]] [[ session.terminal_name ]]
+                                </span>
+                                <span class="font-bold text-slate-700">[[ formatTime(session.start_time) ]]</span>
+                            </div>
+                            <span :class="session.is_closed ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700'" class="px-3 py-1 rounded-full text-[10px] font-black uppercase">
+                                [[ session.is_closed ? (isArabic ? 'مغلقة' : 'Closed') : (isArabic ? 'مفتوحة' : 'Active') ]]
+                            </span>
+                        </div>
+                        
+                        <div class="p-6 space-y-4">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase">[[ isArabic ? 'إجمالي المبيعات' : 'Total Sales' ]]</p>
+                                    <p class="text-2xl font-black text-slate-800">[[ formatCurrency(session.total_sales) ]]</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase">[[ isArabic ? 'عدد الطلبات' : 'Orders' ]]</p>
+                                    <p class="text-lg font-bold text-slate-600">[[ session.order_count ]]</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-900 text-white flex justify-between items-center group-hover:bg-red-600 transition-all">
+                            <span class="text-xs font-bold">[[ isArabic ? 'عرض تفاصيل الطلبات' : 'View Orders' ]]</span>
+                            <i class="fas fa-chevron-right text-xs"></i>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- 🟢 List View (Table view) -->
+        <div v-if="posSessionsFilters.viewMode === 'list' && posSessionsHistory.length > 0" class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-300">
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 font-black border-b border-slate-100">
+                            <th class="p-4 rounded-r-xl">[[ isArabic ? 'الكاشير' : 'Cashier' ]]</th>
+                            <th class="p-4">[[ isArabic ? 'نقطة البيع' : 'POS Terminal' ]]</th>
+                            <th class="p-4">[[ isArabic ? 'تاريخ البدء' : 'Start Time' ]]</th>
+                            <th class="p-4">[[ isArabic ? 'تاريخ الانتهاء' : 'End Time' ]]</th>
+                            <th class="p-4 text-center">[[ isArabic ? 'عدد الطلبات' : 'Orders' ]]</th>
+                            <th class="p-4 text-left">[[ isArabic ? 'الرصيد الافتتاحي' : 'Opening Bal.' ]]</th>
+                            <th class="p-4 text-left">[[ isArabic ? 'الرصيد الفعلي' : 'Actual Bal.' ]]</th>
+                            <th class="p-4 text-left">[[ isArabic ? 'إجمالي المبيعات' : 'Total Sales' ]]</th>
+                            <th class="p-4 text-center">[[ isArabic ? 'الحالة' : 'Status' ]]</th>
+                            <th class="p-4 rounded-l-xl"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        <tr v-for="session in posSessionsHistory" :key="session.id" @click="viewSessionDetails(session)" class="hover:bg-slate-50/50 transition-colors cursor-pointer group">
+                            <td class="p-4 font-bold text-slate-800">[[ session.cashier ]]</td>
+                            <td class="p-4 font-semibold text-indigo-600">[[ session.terminal_name || (isArabic ? 'رئيسي' : 'Main') ]]</td>
+                            <td class="p-4 text-slate-500 font-mono">[[ formatTime(session.start_time) ]]</td>
+                            <td class="p-4 text-slate-500 font-mono">[[ session.is_closed ? formatTime(session.end_time) : '-' ]]</td>
+                            <td class="p-4 text-center font-bold text-slate-700">[[ session.order_count ]]</td>
+                            <td class="p-4 text-left font-mono text-slate-600">[[ formatCurrency(session.opening_balance) ]]</td>
+                            <td class="p-4 text-left font-mono text-slate-600">[[ session.is_closed ? formatCurrency(session.actual_balance) : '-' ]]</td>
+                            <td class="p-4 text-left font-black text-slate-900">[[ formatCurrency(session.total_sales) ]]</td>
+                            <td class="p-4 text-center">
+                                <span :class="session.is_closed ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700'" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase">
+                                    [[ session.is_closed ? (isArabic ? 'مغلقة' : 'Closed') : (isArabic ? 'مفتوحة' : 'Active') ]]
+                                </span>
+                            </td>
+                            <td class="p-4 text-center">
+                                <button class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:bg-red-600 transition-all">
+                                    <i class="fas fa-chevron-right text-[10px]"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Empty State for Sessions -->
+        <div v-if="posSessionsHistory.length === 0 && !loading" class="py-20 flex flex-col items-center justify-center text-slate-300 bg-white rounded-[2rem] border border-dashed border-slate-200">
+            <i class="fas fa-history text-6xl mb-4 opacity-20"></i>
+            <p class="font-bold">[[ isArabic ? 'لا توجد ورديات تطابق الفلتر' : 'No shifts match the filters' ]]</p>
         </div>
     </div>
 

@@ -96,9 +96,14 @@ createApp({
             showTableModal: false,
             showFloorModal: false,
             tableForm: { id: null, number: '', seats_limit: 4, shape: 'square', current_guests: 1, position_x: 50, position_y: 50 },
-            floorForm: { id: null, name: '', number: 1 },
             posActiveCashierId: null,
             posSessionsHistory: [],
+            posSessionsFilters: {
+                terminal: '',
+                from: '',
+                to: '',
+                viewMode: 'grid'
+            },
             selectedSession: null,
             posOrdersHistory: [],
             kdsOrders: [],
@@ -2988,7 +2993,12 @@ createApp({
         async fetchSessionsHistory() {
             try {
                 this.loading = true;
-                const res = await fetch('/api/pos/orders/session_history/?opco=' + this.activeOpcoId);
+                let url = '/api/pos/orders/session_history/?opco=' + this.activeOpcoId;
+                if (this.posSessionsFilters.terminal) url += '&terminal=' + this.posSessionsFilters.terminal;
+                if (this.posSessionsFilters.from) url += '&from=' + this.posSessionsFilters.from;
+                if (this.posSessionsFilters.to) url += '&to=' + this.posSessionsFilters.to;
+                
+                const res = await fetch(url);
                 if (res.ok) {
                     this.posSessionsHistory = await res.json();
                 }
