@@ -56,6 +56,16 @@
                    class="bg-transparent text-[11px] font-bold outline-none text-slate-600 w-28">
         </div>
 
+        <!-- POS Terminal Filter -->
+        <div class="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200/60">
+            <i class="fas fa-cash-register text-slate-400 text-xs"></i>
+            <select v-model="forms.stock_entry.terminal"
+                    class="bg-transparent text-[11px] font-bold outline-none text-slate-600 w-36 cursor-pointer">
+                <option value="">[[ isArabic ? 'كل نقاط البيع' : 'All POS Terminals' ]]</option>
+                <option v-for="t in posTerminals" :key="t.id" :value="t.id">[[ t.name ]]</option>
+            </select>
+        </div>
+
         <div class="flex-1 relative min-w-[200px]">
             <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
             <input type="text" v-model="forms.stock_entry.contact_search" 
@@ -63,7 +73,7 @@
                    class="w-full bg-slate-50 border border-slate-200/60 rounded-xl py-2.5 pl-10 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all">
         </div>
 
-        <button @click="forms.stock_entry.date_from = ''; forms.stock_entry.date_to = ''; forms.stock_entry.contact_search = ''"
+        <button @click="forms.stock_entry.date_from = ''; forms.stock_entry.date_to = ''; forms.stock_entry.contact_search = ''; forms.stock_entry.terminal = ''"
                 class="text-[10px] font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest px-2">
             [[ isArabic ? 'مسح الفلاتر' : 'Clear' ]]
         </button>
@@ -185,12 +195,17 @@
                               :class="move.move_type === 'IN' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'"
                               v-text="move.move_type"></span>
                     </div>
-                    <p class="text-[11px] text-slate-500 font-bold mt-1 flex items-center gap-1.5">
+                    <p class="text-[11px] text-slate-500 font-bold mt-1 flex items-center gap-1.5 flex-wrap">
                         <i class="fas fa-user-circle text-slate-300"></i>
                         <span v-text="move.vendor_name || move.customer_name || (isArabic ? 'بدون طرف' : 'No Contact')"></span>
                         <span class="text-slate-200 mx-1">|</span>
                         <i class="fas fa-file-invoice text-slate-300"></i>
                         <span v-text="move.reference || '---'"></span>
+                        <template v-if="move.pos_terminal_name">
+                            <span class="text-slate-200 mx-1">|</span>
+                            <i class="fas fa-cash-register text-indigo-400"></i>
+                            <span class="text-indigo-600 font-black" v-text="move.pos_terminal_name"></span>
+                        </template>
                     </p>
                 </div>
 

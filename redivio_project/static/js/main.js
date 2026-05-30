@@ -303,7 +303,8 @@ createApp({
                     tax_rate: 15,
                     date_from: '',
                     date_to: '',
-                    contact_search: ''
+                    contact_search: '',
+                    terminal: ''
                 },
                 customer: { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' },
                 salesorder: {
@@ -644,6 +645,11 @@ createApp({
             }
             if (filters.date_to) {
                 list = list.filter(m => m.created_at.split('T')[0] <= filters.date_to);
+            }
+
+            // 1.5 Filter by POS Terminal
+            if (filters.terminal) {
+                list = list.filter(m => m.pos_terminal_id === parseInt(filters.terminal));
             }
 
             // 2. Filter by Contact Search

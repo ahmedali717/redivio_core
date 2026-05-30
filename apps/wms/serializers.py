@@ -157,6 +157,8 @@ class StockMoveSerializer(serializers.ModelSerializer):
     receipt_type = serializers.CharField(required=False, allow_blank=True, write_only=True)
     receipt_id = serializers.SerializerMethodField()
     customer_name = serializers.CharField(source='customer.name', read_only=True)
+    pos_terminal_id = serializers.SerializerMethodField()
+    pos_terminal_name = serializers.SerializerMethodField()
 
     class Meta:
         model = StockMove
@@ -164,7 +166,7 @@ class StockMoveSerializer(serializers.ModelSerializer):
             'id', 'created_at', 'items', 'move_type', 'receipt_type', 'opco', 'reference', 
             'vendor_name', 'customer_name', 'payment_term', 'payment_method', 'dest_bin', 'source_bin',
             'material_name', 'source_loc', 'dest_loc', 'material', 'quantity', 'receipt_id',
-            'unit_cost', 'sales_price', 'vendor', 'customer'
+            'unit_cost', 'sales_price', 'vendor', 'customer', 'pos_terminal_id', 'pos_terminal_name'
         ]
         extra_kwargs = {
             'material': {'required': False, 'allow_null': True},
@@ -173,6 +175,28 @@ class StockMoveSerializer(serializers.ModelSerializer):
             'source_bin': {'required': False, 'allow_null': True},
             'opco': {'required': False, 'allow_null': True},
         }
+
+    def _get_terminal(self, obj):
+        if not hasattr(obj, '_resolved_terminal'):
+            obj._resolved_terminal = None
+            if obj.reference and obj.reference.startswith("POS Order "):
+                ref = obj.reference.replace("POS Order ", "")
+                if " (BOM)" in ref:
+                    ref = ref.replace(" (BOM)", "")
+                ref = ref.strip()
+                from apps.restaurant_pos.models import POSOrder
+                order = POSOrder.objects.filter(order_ref=ref).select_related('session__terminal').first()
+                if order and order.session and order.session.terminal:
+                    obj._resolved_terminal = order.session.terminal
+        return obj._resolved_terminal
+
+    def get_pos_terminal_id(self, obj):
+        t = self._get_terminal(obj)
+        return t.id if t else None
+
+    def get_pos_terminal_name(self, obj):
+        t = self._get_terminal(obj)
+        return t.name if t else None
 
     def get_source_loc(self, obj):
         return obj.source_bin.code if obj.source_bin else "External"
