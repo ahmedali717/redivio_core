@@ -1,13 +1,8 @@
 <aside :class="sidebarCollapsed ? 'w-20' : 'w-64'"
+    @mouseenter="sidebarCollapsed = false"
+    @mouseleave="sidebarCollapsed = true"
     class="sidebar-premium-container text-white flex flex-col h-[calc(100vh-1.5rem)] my-3 mx-3 rounded-[1.5rem] hidden md:flex border border-white/20 z-20 relative overflow-hidden"
     v-cloak>
-
-
-    <button @click="sidebarCollapsed = !sidebarCollapsed" :class="isArabic ? '-left-3' : '-right-3'"
-        class="sidebar-toggle-btn absolute top-20 w-6 h-6 rounded-full flex items-center justify-center text-xs cursor-pointer z-50">
-        <i
-            :class="sidebarCollapsed ? (isArabic ? 'fa-solid fa-chevron-left' : 'fa-solid fa-chevron-right') : (isArabic ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left')"></i>
-    </button>
 
     <div
         class="h-20 flex items-center gap-3 px-5 border-b border-white/20 overflow-visible text-white relative brand-area-container">

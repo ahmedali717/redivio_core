@@ -124,7 +124,7 @@ createApp({
                 date_to: ''
             },
             loading: false,
-            sidebarCollapsed: false,
+            sidebarCollapsed: true,
             isArabic: window.is_arabic,
             isEditing: false,
             isAdvancedMode: false,
