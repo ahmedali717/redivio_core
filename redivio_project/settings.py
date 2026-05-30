@@ -252,3 +252,15 @@ CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare
 # إيقاف الحماية الصارمة لنوع المحتوى مؤقتاً لضمان تحميل المكتبات
 SECURE_CONTENT_TYPE_NOSNIFF = False
 X_FRAME_OPTIONS = "SAMEORIGIN"
+
+# =========================================================
+# EMAIL / SMTP CONFIGURATION (إعدادات إرسال البريد الإلكتروني)
+# =========================================================
+# لتفعيل الإرسال الفعلي، قم بتهيئة البيانات التالية:
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # خادم البريد (مثال: Gmail SMTP)
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'  # بريدك الإلكتروني الذي سترسل منه
+EMAIL_HOST_PASSWORD = 'your-app-password'  # كلمة مرور التطبيق (وليس الباسورد العادي في حالة Gmail)
+DEFAULT_FROM_EMAIL = 'Redivio ERP <your-email@gmail.com>'
