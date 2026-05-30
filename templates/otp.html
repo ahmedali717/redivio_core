@@ -91,6 +91,11 @@
                 if (e.target.value.length === 1 && index < 3) {
                     document.getElementById('otp-' + (index + 1)).focus();
                 }
+                
+                // Automatically verify if code is complete
+                if (this.code.join('').length === 4) {
+                    this.verify();
+                }
             },
             
             handleKeyDown(e, index) {
