@@ -4,16 +4,16 @@
 
 
     <button @click="sidebarCollapsed = !sidebarCollapsed" :class="isArabic ? '-left-3' : '-right-3'"
-        class="absolute top-20 w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs text-brand shadow-lg hover:scale-110 transition-transform cursor-pointer border border-brand/20 z-50">
+        class="sidebar-toggle-btn absolute top-20 w-6 h-6 rounded-full flex items-center justify-center text-xs cursor-pointer z-50">
         <i
             :class="sidebarCollapsed ? (isArabic ? 'fa-solid fa-chevron-left' : 'fa-solid fa-chevron-right') : (isArabic ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left')"></i>
     </button>
 
     <div
-        class="h-20 flex items-center gap-3 px-5 border-b border-white/20 bg-white/10 overflow-visible text-white relative brand-area-container">
+        class="h-20 flex items-center gap-3 px-5 border-b border-white/20 overflow-visible text-white relative brand-area-container">
         <div class="flex items-center gap-3 cursor-pointer group" @click="showBrandDropdown = !showBrandDropdown">
-            <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-md">
-                <img src="/static/brand/logo_r.png" class="w-7 h-7 object-contain" alt="Redivio Logo">
+            <div class="w-9 h-9 bg-white/10 border border-white/15 rounded-xl flex items-center justify-center shrink-0 shadow-md transition-all duration-300 group-hover:bg-white/20 group-hover:border-white/30">
+                <img src="/static/brand/logo_r.png" class="w-6 h-6 object-contain filter brightness-0 invert" alt="Redivio Logo">
             </div>
             <span v-show="!sidebarCollapsed"
                 class="text-lg font-bold tracking-wider tech-font animate-in fade-in duration-300">REDIVIO</span>
@@ -24,14 +24,14 @@
 
         <!-- 🚀 القائمة المتداخلة الجديدة (Nested Fly-out Menu) -->
         <div v-if="showBrandDropdown" :class="isArabic ? 'right-4 left-auto' : 'left-4 right-auto'"
-            class="absolute top-16 w-56 bg-white border border-slate-100 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-[100] overflow-visible animate-in zoom-in-95 duration-200 text-slate-800">
+            class="brand-dropdown-premium absolute top-16 w-56 rounded-2xl z-[100] overflow-visible animate-in zoom-in-95 duration-200">
 
             <div class="p-2 space-y-1">
                 <!-- Dashboard / Command Center (Only in Modular Mode) -->
                 <button v-if="systemMode !== 'standalone' && canAccess('dashboard')" @click="view = 'dashboard'; showBrandDropdown = false"
-                    class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 text-slate-600 hover:text-brand text-left transition-all group/item">
+                    class="w-full flex items-center gap-3 p-2.5 rounded-xl text-slate-300 hover:text-blue-400 hover:bg-white/5 text-left transition-all group/item">
                     <i
-                        class="fas fa-chart-pie w-5 text-center text-slate-400 group-hover/item:text-brand transition-colors"></i>
+                        class="fas fa-chart-pie w-5 text-center text-slate-400 group-hover/item:text-blue-400 transition-colors"></i>
                     <span class="text-[11px] font-bold tracking-wider">[[ isArabic ? 'لوحة القيادة التنفيذية' : 'Command Center'
                         ]]</span>
                 </button>
@@ -40,22 +40,22 @@
                 <template v-for="mod in sidebarGroups.operations.filter(m => m.id !== 'org_builder')" :key="mod.id">
                     <button v-if="canAccess(mod.id) && isModulePurchased(mod.id)"
                         @click="view = mod.id; showBrandDropdown = false; if(mod.id === 'inventory_module') inventoryTab = 'levels';"
-                        class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 text-slate-600 hover:text-brand text-left transition-all group/item">
+                        class="w-full flex items-center gap-3 p-2.5 rounded-xl text-slate-300 hover:text-blue-400 hover:bg-white/5 text-left transition-all group/item">
 
                         <div v-if="mod.id === 'inventory_module'"
                             class="w-5 h-5 flex items-center justify-center shrink-0">
                             <img src="/static/brand/rims_icon.png"
-                                class="w-full h-full object-contain filter group-hover:brightness-0 group-hover:sepia group-hover:hue-rotate-[200deg] group-hover:saturate-500 transition-all"
+                                class="w-full h-full object-contain filter group-hover:brightness-0 group-hover:invert group-hover:sepia group-hover:hue-rotate-[200deg] group-hover:saturate-[5] transition-all"
                                 alt="RIMS">
                         </div>
                         <div v-else-if="mod.id === 'procurement_module'"
                             class="w-5 h-5 flex items-center justify-center shrink-0">
                             <img src="/static/brand/rpms_icon.png"
-                                class="w-full h-full object-contain filter group-hover:brightness-0 group-hover:sepia group-hover:hue-rotate-[200deg] group-hover:saturate-500 transition-all"
+                                class="w-full h-full object-contain filter group-hover:brightness-0 group-hover:invert group-hover:sepia group-hover:hue-rotate-[200deg] group-hover:saturate-[5] transition-all"
                                 alt="RPMS">
                         </div>
                         <i v-else :class="mod.icon"
-                            class="w-5 text-center text-slate-400 group-hover/item:text-brand transition-colors"></i>
+                            class="w-5 text-center text-slate-400 group-hover/item:text-blue-400 transition-colors"></i>
 
                         <span class="text-[11px] font-bold" v-text="isArabic ? mod.name.ar : mod.name.en"></span>
                     </button>
@@ -396,7 +396,8 @@
     </nav>
 
     <!-- 🚀 Subscription Plan Card/Badge -->
-    <div class="px-4 py-3 mb-2 mx-2 bg-white/5 rounded-2xl border border-white/5 relative group/plan cursor-pointer transition-all hover:bg-white/10 hover:border-white/10"
+    <div @click.prevent="showSubscriptionModal = true"
+         class="plan-card-premium px-4 py-3 mb-2 mx-2 rounded-2xl relative group/plan cursor-pointer transition-all"
          :class="sidebarCollapsed ? 'flex justify-center w-10 mx-auto' : ''">
         <div class="flex items-center justify-between w-full">
             <div class="flex items-center gap-2" :class="sidebarCollapsed ? 'justify-center w-full' : ''">
@@ -555,7 +556,7 @@
             <input name="language" type="hidden"
                 value="{% if LANGUAGE_CODE|slice:':2' == 'ar' %}en{% else %}ar{% endif %}">
             <button type="submit"
-                class="lang-btn-premium w-full flex items-center gap-3 px-3 py-2 text-slate-400 rounded-lg transition-all text-[11px] font-bold border border-white/10 uppercase tracking-tighter shadow-sm">
+                class="lang-btn-premium w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-[11px] font-bold uppercase tracking-tighter text-slate-400">
                 <i class="fas fa-language w-5 text-center text-lg"></i>
                 <span v-show="!sidebarCollapsed" v-text="isArabic ? 'Switch to English' : 'التحويل للعربية'"></span>
             </button>
