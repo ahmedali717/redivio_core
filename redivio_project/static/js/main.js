@@ -69,7 +69,8 @@ createApp({
             // 📅 فلاتر لوحة تحكم المطعم
             posDashboardFilters: {
                 from: '',
-                to: ''
+                to: '',
+                terminal: ''
             },
             posNumpadBuffer: '',
             posOrderType: 'DINE_IN',
@@ -2941,6 +2942,7 @@ createApp({
                 let url = `/api/pos/orders/dashboard_stats/?opco=${this.activeOpcoId}`;
                 if (this.posDashboardFilters.from) url += `&from=${this.posDashboardFilters.from}`;
                 if (this.posDashboardFilters.to) url += `&to=${this.posDashboardFilters.to}`;
+                if (this.posDashboardFilters.terminal) url += `&terminal=${this.posDashboardFilters.terminal}`;
                 
                 const res = await fetch(url);
                 if (res.ok) {
@@ -3306,8 +3308,11 @@ createApp({
         },
 
         getAllowedCashiers() {
-            // Return all cashiers so they are all selectable, access control is enforced on session start
-            return this.companyUsers.filter(u => ['cashier', 'administrator', 'admin', 'manager'].includes(u.role.toLowerCase()));
+            return this.companyUsers.filter(u => {
+                const isCurrentUser = this.user && u.user_details && u.user_details.id === this.user.id;
+                const isAdmin = ['administrator', 'admin'].includes(u.role.toLowerCase());
+                return isCurrentUser || isAdmin;
+            });
         },
 
         openTerminalModal(term = null) {

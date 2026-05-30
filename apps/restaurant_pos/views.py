@@ -163,6 +163,7 @@ class POSOrderViewSet(viewsets.ModelViewSet):
             data.append({
                 'id': s.id,
                 'cashier': s.cashier_name,
+                'terminal_name': s.terminal.name if s.terminal else None,
                 'start_time': s.start_time,
                 'end_time': s.end_time,
                 'is_closed': s.is_closed,
@@ -679,6 +680,13 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         valid_statuses = ['paid', 'inprogress', 'done']
         orders = POSOrder.objects.filter(opco_id=opco_id, status__in=valid_statuses)
         
+        terminal_id = request.query_params.get('terminal')
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            try:
+                orders = orders.filter(session__terminal_id=int(terminal_id))
+            except (ValueError, TypeError):
+                pass
+        
         if date_from:
             orders = orders.filter(created_at__date__gte=date_from)
         if date_to:
@@ -744,6 +752,19 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         from .models import POSCashTransaction
         expenses_qs = POSCashTransaction.objects.filter(session__opco_id=opco_id, type='OUT')
         inflow_qs = POSCashTransaction.objects.filter(session__opco_id=opco_id, type='IN')
+        trans_qs = POSCashTransaction.objects.filter(session__opco_id=opco_id)
+        first_session = POSSession.objects.filter(opco_id=opco_id)
+        
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            try:
+                term_id = int(terminal_id)
+                expenses_qs = expenses_qs.filter(session__terminal_id=term_id)
+                inflow_qs = inflow_qs.filter(session__terminal_id=term_id)
+                trans_qs = trans_qs.filter(session__terminal_id=term_id)
+                first_session = first_session.filter(terminal_id=term_id)
+            except (ValueError, TypeError):
+                pass
+                
         if date_from:
             expenses_qs = expenses_qs.filter(created_at__date__gte=date_from)
             inflow_qs = inflow_qs.filter(created_at__date__gte=date_from)
@@ -758,7 +779,6 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         total_inflow = inflow_qs.aggregate(Sum('amount'))['amount__sum'] or 0
         
         # Detailed Cash transactions list
-        trans_qs = POSCashTransaction.objects.filter(session__opco_id=opco_id)
         if date_from:
             trans_qs = trans_qs.filter(created_at__date__gte=date_from)
         if date_to:
@@ -776,7 +796,6 @@ class POSOrderViewSet(viewsets.ModelViewSet):
         } for t in trans_qs.order_by('-created_at')]
         
         # Get opening balance for the first session in the range
-        first_session = POSSession.objects.filter(opco_id=opco_id)
         if date_from:
             first_session = first_session.filter(start_time__date__gte=date_from)
         if date_to:
