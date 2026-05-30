@@ -34,6 +34,148 @@
         [v-cloak] { display: none !important; }
         .glass-sidebar { background: #0f172a; color: white; }
 
+        /* Hide scrollbars globally */
+        ::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        * {
+            scrollbar-width: none !important; /* Firefox */
+            -ms-overflow-style: none !important;  /* IE and Edge */
+        }
+
+        /* Premium Sidebar Custom CSS */
+        .sidebar-premium-container {
+            position: relative;
+            background: linear-gradient(135deg, #2c82f0 0%, #1660c1 100%) !important;
+            box-shadow: 0 20px 50px rgba(44, 130, 240, 0.25);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* Ambient glow effects */
+        .sidebar-premium-container::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: -20%;
+            width: 140%;
+            height: 140%;
+            background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 1;
+            transition: all 0.4s ease;
+        }
+
+        .sidebar-premium-container::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle at bottom left, rgba(93, 158, 245, 0.2) 0%, transparent 75%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Hover & active styling for premium items */
+        .sidebar-item-premium {
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid transparent;
+        }
+
+        .sidebar-item-premium.inactive:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.05);
+            color: #ffffff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Slide item micro-animations */
+        html[dir="ltr"] .sidebar-item-premium.inactive:hover {
+            padding-left: 1rem !important;
+        }
+        html[dir="rtl"] .sidebar-item-premium.inactive:hover {
+            padding-right: 1rem !important;
+        }
+
+        /* Active State */
+        .sidebar-item-premium.active {
+            background: #ffffff !important;
+            color: #2c82f0 !important;
+            font-weight: 700 !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(44, 130, 240, 0.2) !important;
+            transform: translateY(-1px);
+        }
+
+        .sidebar-item-premium.active::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            bottom: 20%;
+            width: 4px;
+            background: #2c82f0;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        html[dir="ltr"] .sidebar-item-premium.active::before {
+            left: 8px;
+        }
+        html[dir="rtl"] .sidebar-item-premium.active::before {
+            right: 8px;
+        }
+
+        html[dir="ltr"] .sidebar-item-premium.active {
+            padding-left: 1.25rem !important;
+        }
+        html[dir="rtl"] .sidebar-item-premium.active {
+            padding-right: 1.25rem !important;
+        }
+
+        /* Icon & text transitions inside items */
+        .sidebar-item-premium i, .sidebar-item-premium img {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .sidebar-item-premium:hover i, .sidebar-item-premium:hover img {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        /* Collapse/Expand styling improvements */
+        .sidebar-premium-container.w-20 {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Brand area logo anim */
+        .brand-area-container .group:hover img {
+            transform: scale(1.08) rotate(-8deg);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Custom styles for language switcher button */
+        .lang-btn-premium {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .lang-btn-premium:hover {
+            background: rgba(255, 255, 255, 0.12) !important;
+            border-color: rgba(44, 130, 240, 0.5) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 12px rgba(44, 130, 240, 0.3);
+        }
+
+        /* Plan details popover animations & styles */
+        .plan-popover-premium {
+            transform-origin: bottom center;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
         .ready-fade-enter-active, .ready-fade-leave-active { transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
         .ready-fade-enter-from, .ready-fade-leave-to { opacity: 0; transform: translate(-50%, 40px) scale(0.9); }
 
