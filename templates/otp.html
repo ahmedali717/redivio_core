@@ -1,29 +1,58 @@
 {% extends "auth_base.html" %}
 
 {% block content %}
-<div class="relative z-10 w-full max-w-lg p-8" x-data="otpSystem()" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
-    <div class="bg-brand/90 backdrop-blur-xl border border-brand-light/30 p-10 rounded-3xl shadow-2xl text-center">
-        <div class="w-20 h-20 mx-auto bg-brand-dark rounded-full flex items-center justify-center border border-brand-light/50 mb-6">
-            <i class="fas fa-shield-alt text-3xl text-blue-500"></i>
+<div class="relative z-10 w-full max-w-md p-6" x-data="otpSystem()" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
+    <div class="bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-10 text-center relative overflow-hidden border border-white/20 animate-in fade-in zoom-in-95 duration-500">
+        
+        <!-- Premium Logo Header -->
+        <div class="flex items-center justify-center gap-2 mb-8">
+            <span class="text-xl font-black text-slate-800 tracking-wider tech-font">REDIVIO <span class="text-blue-500">ERP</span></span>
         </div>
-        <h2 class="text-3xl font-bold text-white mb-2 tech-font" x-text="lang === 'ar' ? 'التحقق من الهوية' : 'Verify Access'"></h2>
-        <p class="text-slate-400 mb-8 text-sm">
-            <span x-text="lang === 'ar' ? 'أدخل الرمز المرسل إلى ' : 'Enter the code sent to '"></span>
-            <span class="text-white" x-text="email"></span>
+        
+        <!-- Key Icon Container -->
+        <div class="w-20 h-20 mx-auto bg-blue-50 rounded-3xl flex items-center justify-center border border-blue-100/50 mb-6 shadow-inner">
+            <i class="fas fa-key text-3xl text-blue-500"></i>
+        </div>
+        
+        <h2 class="text-2xl font-black text-slate-800 mb-2 tracking-tight" x-text="lang === 'ar' ? 'رمز تفعيل الاشتراك' : 'Activation Code'"></h2>
+        
+        <p class="text-slate-500 text-xs mt-2 mb-8 font-medium leading-relaxed">
+            <span x-text="lang === 'ar' ? 'لقد أرسلنا رمز التفعيل المكون من 4 أرقام إلى بريدك الإلكتروني:' : 'We sent a 4-digit activation code to your email:'"></span>
+            <br/>
+            <strong class="text-slate-800 mt-1 block font-bold" x-text="email"></strong>
         </p>
         
-        <div class="flex justify-center gap-4 mb-8 flex-row" dir="ltr">
+        <!-- Input fields with animation & premium styles -->
+        <div class="flex justify-center gap-3 mb-8 flex-row" dir="ltr">
             <template x-for="(digit, index) in code" :key="index">
-                <input type="text" maxlength="1" x-model="code[index]" @input="handleInput($event, index)" 
+                <input type="text" maxlength="1" x-model="code[index]" 
+                       @input="handleInput($event, index)" 
+                       @keydown="handleKeyDown($event, index)"
                        :id="'otp-' + index" 
-                       class="w-14 h-16 bg-slate-800 border-2 border-slate-600 rounded-xl text-center text-2xl text-white focus:border-blue-500 focus:outline-none transition-colors">
+                       class="w-14 h-16 bg-slate-50 border border-slate-200 rounded-2xl text-center text-2xl text-slate-800 font-bold focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15 focus:outline-none transition-all duration-200">
             </template>
         </div>
 
-        <button @click="verify()" :disabled="code.join('').length < 4 || loading" class="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-4 rounded-xl shadow-lg transition-all">
-            <span x-show="!loading" x-text="lang === 'ar' ? 'تأكيد الهوية' : 'CONFIRM IDENTITY'"></span>
-            <span x-show="loading"><i class="fas fa-circle-notch fa-spin"></i> <span x-text="lang === 'ar' ? 'جاري التحقق...' : 'VERIFYING...'"></span></span>
+        <!-- Feedback Messages -->
+        <div x-show="errorMessage" x-text="errorMessage" class="text-xs text-rose-500 font-bold mb-4 bg-rose-50 p-2.5 rounded-xl border border-rose-100" style="display: none;"></div>
+        <div x-show="successMessage" x-text="successMessage" class="text-xs text-emerald-600 font-bold mb-4 bg-emerald-50 p-2.5 rounded-xl border border-emerald-100" style="display: none;"></div>
+
+        <!-- Confirm Button -->
+        <button @click="verify()" :disabled="code.join('').length < 4 || loading" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-black py-4.5 rounded-2xl shadow-[0_10px_25px_rgba(37,99,235,0.3)] hover:shadow-[0_15px_35px_rgba(37,99,235,0.4)] disabled:opacity-50 transition-all duration-300 active:scale-98 cursor-pointer">
+            <span x-show="!loading" x-text="lang === 'ar' ? 'تفعيل الحساب' : 'ACTIVATE ACCOUNT'"></span>
+            <span x-show="loading" class="flex items-center justify-center gap-2" style="display: none;"><i class="fas fa-circle-notch fa-spin text-lg"></i> <span x-text="lang === 'ar' ? 'جاري التفعيل...' : 'ACTIVATING...'"></span></span>
         </button>
+
+        <!-- Resend Section -->
+        <div class="mt-8 border-t border-slate-100 pt-6 flex justify-between items-center text-xs">
+            <span class="text-slate-400 font-semibold" x-text="lang === 'ar' ? 'لم يصلك الرمز؟' : 'Didn\'t get the code?'"></span>
+            <button @click="resendOtp()" :disabled="resendLoading || resendTimer > 0" class="text-blue-500 hover:text-blue-600 font-black flex items-center gap-1 hover:underline cursor-pointer disabled:text-slate-400 disabled:no-underline disabled:cursor-not-allowed">
+                <i class="fas fa-rotate-right" :class="{'animate-spin': resendLoading}"></i>
+                <span x-show="resendTimer === 0" x-text="lang === 'ar' ? 'إعادة إرسال' : 'Resend Code'"></span>
+                <span x-show="resendTimer > 0" style="display: none;" x-text="lang === 'ar' ? `إرسال مجدداً خلال (${resendTimer}ث)` : `Resend in (${resendTimer}s)`"></span>
+            </button>
+        </div>
+
     </div>
 </div>
 
@@ -32,24 +61,110 @@
         return {
             code: ['', '', '', ''], 
             loading: false,
+            resendLoading: false,
+            resendTimer: 60,
             email: '',
+            errorMessage: '',
+            successMessage: '',
             lang: localStorage.getItem('signupLang') || 'ar',
+            
             init() { 
-                // قراءة الإيميل من البيانات المحفوظة في الخطوة السابقة
                 const savedData = JSON.parse(localStorage.getItem('signupData') || '{}');
                 this.email = savedData.email || 'your email';
                 this.$nextTick(() => document.getElementById('otp-0').focus()); 
+                this.startTimer();
             },
+            
+            startTimer() {
+                this.resendTimer = 60;
+                const interval = setInterval(() => {
+                    if (this.resendTimer > 0) {
+                        this.resendTimer--;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 1000);
+            },
+            
             handleInput(e, index) {
-                if (e.target.value.length === 1 && index < 3) document.getElementById('otp-' + (index + 1)).focus();
+                // Focus next input when a digit is typed
+                if (e.target.value.length === 1 && index < 3) {
+                    document.getElementById('otp-' + (index + 1)).focus();
+                }
             },
-            verify() {
+            
+            handleKeyDown(e, index) {
+                // Focus previous input on backspace if current is empty
+                if (e.key === 'Backspace' && !this.code[index] && index > 0) {
+                    this.code[index - 1] = '';
+                    document.getElementById('otp-' + (index - 1)).focus();
+                }
+            },
+            
+            async verify() {
                 this.loading = true;
-                setTimeout(() => {
+                this.errorMessage = '';
+                this.successMessage = '';
+                
+                try {
+                    const response = await fetch('/api/verify-otp/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ 
+                            code: this.code.join(''),
+                            lang: this.lang
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.successMessage = this.lang === 'ar' ? 'تم التحقق بنجاح! جاري المتابعة...' : 'Verified successfully! Proceeding...';
+                        setTimeout(() => {
+                            this.loading = false;
+                            window.location.href = "{% url 'modules_page' %}"; 
+                        }, 1000);
+                    } else {
+                        this.errorMessage = data.error || (this.lang === 'ar' ? 'الرمز غير صحيح' : 'Invalid code');
+                        this.loading = false;
+                        this.code = ['', '', '', ''];
+                        this.$nextTick(() => document.getElementById('otp-0').focus()); 
+                    }
+                } catch (e) {
+                    this.errorMessage = this.lang === 'ar' ? 'حدث خطأ في الاتصال بالخادم' : 'Server connection failed';
                     this.loading = false;
-                    // ✅ التوجيه للخطوة التالية: الموديولات (Puzzle)
-                    window.location.href = "{% url 'modules_page' %}"; 
-                }, 1500);
+                }
+            },
+            
+            async resendOtp() {
+                this.resendLoading = true;
+                this.errorMessage = '';
+                this.successMessage = '';
+                
+                try {
+                    const response = await fetch('/api/send-otp/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ email: this.email })
+                    });
+                    
+                    if (response.ok) {
+                        this.successMessage = this.lang === 'ar' ? 'تم إعادة إرسال رمز جديد إلى بريدك بنجاح' : 'A new code has been sent to your email';
+                        this.startTimer();
+                    } else {
+                        this.errorMessage = this.lang === 'ar' ? 'فشل إعادة الإرسال. يرجى المحاولة لاحقاً.' : 'Resend failed. Please try again later.';
+                    }
+                } catch (e) {
+                    this.errorMessage = this.lang === 'ar' ? 'خطأ في الاتصال' : 'Connection error';
+                } finally {
+                    this.resendLoading = false;
+                }
             }
         }
     }

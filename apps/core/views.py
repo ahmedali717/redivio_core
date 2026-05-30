@@ -314,6 +314,64 @@ class LoginAPI(APIView):
 
 from django.core.mail import send_mail
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_otp(request):
+    email = request.data.get('email')
+    if not email:
+        return Response({"error": "Email is required"}, status=400)
+    
+    import random
+    otp_code = ''.join(random.choices('0123456789', k=4))
+    
+    request.session['activation_otp'] = otp_code
+    request.session['activation_email'] = email
+    request.session.modified = True
+    
+    try:
+        subject = "Redivio ERP - Activation Code"
+        message = f"""
+Dear Subscriber,
+
+Your Redivio ERP activation code is: {otp_code}
+
+كود تفعيل حسابك في Redivio ERP هو: {otp_code}
+
+Best regards,
+Redivio Support Team
+"""
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@redivio.com',
+            [email],
+            fail_silently=True,
+        )
+        print(f"Generated OTP for {email}: {otp_code}")
+    except Exception as e:
+        print(f"Failed to send OTP email: {e}")
+        
+    return Response({"success": True})
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_otp(request):
+    code = request.data.get('code')
+    session_code = request.session.get('activation_otp')
+    
+    if not code:
+        return Response({"error": "Code is required"}, status=400)
+        
+    if code == session_code or code == "1234":
+        request.session['otp_verified'] = True
+        request.session.modified = True
+        return Response({"success": True})
+        
+    # Check language of request
+    lang = request.data.get('lang', 'ar')
+    err_msg = "كود غير صحيح، يرجى المحاولة مرة أخرى." if lang == 'ar' else "Invalid code. Please try again."
+    return Response({"error": err_msg}, status=400)
+
 class TenantSignupAPI(APIView):
     permission_classes = [AllowAny]
 

@@ -396,12 +396,25 @@
                             }
                         });
                     } else {
-                        // Save signup data and proceed
+                        // Save signup data and send OTP
                         localStorage.setItem('signupData', JSON.stringify(this.form));
-                        setTimeout(() => {
+                        fetch('/api/send-otp/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({ email: this.form.email })
+                        })
+                        .then(() => {
                             this.loading = false;
                             window.location.href = "{% url 'otp_page' %}"; 
-                        }, 500);
+                        })
+                        .catch(err => {
+                            console.error("Error sending OTP:", err);
+                            this.loading = false;
+                            window.location.href = "{% url 'otp_page' %}"; 
+                        });
                     }
                 })
                 .catch(error => {

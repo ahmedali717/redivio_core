@@ -36,6 +36,8 @@ urlpatterns = [
     # روابط المصادقة والتحكم (Custom API Views)
     path('api/login/', views.LoginAPI.as_view(), name='api_login'),
     path('api/signup/', views.TenantSignupAPI.as_view(), name='api_signup'),
+    path('api/send-otp/', views.send_otp, name='api_send_otp'),
+    path('api/verify-otp/', views.verify_otp, name='api_verify_otp'),
     path('api/check-auth/', views.CheckAuthAPI.as_view(), name='api_check_auth'),
     path('api/check-email/', views.check_email_status, name='api_check_email'),
     path('api/switch-company/', views.switch_active_company, name='api_switch_company'),
