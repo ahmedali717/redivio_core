@@ -3,13 +3,66 @@
 
     <div class="flex-1 overflow-auto p-10 relative bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
         
-        <div v-if="opcos.length === 0" class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60">
-            <i class="fas fa-sitemap text-6xl mb-4 text-slate-200"></i>
-            <p>[[ isArabic ? 'اسحب العناصر هنا لبناء الهيكل التنظيمي الخاص بك' : 'Drag elements here to build your hierarchy' ]]</p>
+        <!-- Toolbar for Switching Views and Summary Statistics -->
+        <div class="bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200/80 p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm z-30">
+            <!-- Left: View Mode Segmented Controls -->
+            <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200/50">
+                <button type="button" 
+                        @click="orgViewMode = 'tree'" 
+                        :class="orgViewMode === 'tree' ? 'bg-blue-600 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-200/50'" 
+                        class="px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-2 cursor-pointer border-0">
+                    <i class="fas fa-sitemap"></i> 
+                    <span>[[ isArabic ? 'المخطط الهيكلي' : 'Tree View' ]]</span>
+                </button>
+                <button type="button" 
+                        @click="orgViewMode = 'list'" 
+                        :class="orgViewMode === 'list' ? 'bg-blue-600 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-200/50'" 
+                        class="px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-2 cursor-pointer border-0">
+                    <i class="fas fa-list-ul"></i> 
+                    <span>[[ isArabic ? 'عرض الجدول' : 'List View' ]]</span>
+                </button>
+            </div>
+
+            <!-- Middle: Search Input (only in list view) -->
+            <div class="w-full md:w-80 relative" v-if="orgViewMode === 'list'">
+                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                    <i class="fas fa-search text-xs"></i>
+                </div>
+                <input type="text" 
+                       v-model="orgSearchQuery" 
+                       :placeholder="isArabic ? 'البحث بالشركة، البلانت، الموقع، الرف...' : 'Search by company, plant, location, bin...'" 
+                       class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-4 text-xs outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-700 font-semibold">
+            </div>
+
+            <!-- Right: Quick Summary Counts -->
+            <div class="flex items-center gap-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                    <i class="fas fa-building text-blue-500"></i>
+                    <span>[[ isArabic ? 'الشركات' : 'Companies' ]]: [[ opcos.length ]]</span>
+                </div>
+                <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                    <i class="fas fa-warehouse text-amber-500"></i>
+                    <span>[[ isArabic ? 'البلانت' : 'Plants' ]]: [[ plants.length ]]</span>
+                </div>
+                <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                    <i class="fas fa-map-marker-alt text-red-500"></i>
+                    <span>[[ isArabic ? 'المواقع' : 'Locations' ]]: [[ locations.length ]]</span>
+                </div>
+                <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                    <i class="fas fa-box text-purple-500"></i>
+                    <span>[[ isArabic ? 'الرفوف' : 'Bins' ]]: [[ bins.length ]]</span>
+                </div>
+            </div>
         </div>
 
-        <div class="flex flex-col items-center gap-16 pb-20">
-            <div v-for="opco in opcos" :key="opco.id" class="flex flex-col items-center relative group/tree">
+        <div v-if="orgViewMode === 'tree'" class="h-full">
+            <div v-if="opcos.length === 0" class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60">
+                <i class="fas fa-sitemap text-6xl mb-4 text-slate-200"></i>
+                <p>[[ isArabic ? 'اسحب العناصر هنا لبناء الهيكل التنظيمي الخاص بك' : 'Drag elements here to build your hierarchy' ]]</p>
+            </div>
+
+            <div class="flex flex-col items-center gap-16 pb-20">
+                <div v-for="opco in opcos" :key="opco.id" class="flex flex-col items-center relative group/tree">
                 
                 <div @dragover.prevent @drop="handleDrop('opco', opco.id)"
                      class="relative z-10 w-80 bg-slate-900 text-white rounded-xl shadow-2xl p-0 overflow-hidden ring-4 ring-slate-100 transition-all hover:-translate-y-1"
@@ -89,6 +142,159 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Flat List View -->
+        <div v-if="orgViewMode === 'list'" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-300">
+            <div class="overflow-x-auto">
+                <table class="w-full text-right" :dir="isArabic ? 'rtl' : 'ltr'">
+                    <thead class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase">
+                        <tr>
+                            <th class="px-6 py-4">[[ isArabic ? 'الشركة' : 'Company' ]]</th>
+                            <th class="px-6 py-4">[[ isArabic ? 'البلانت / المستودع' : 'Plant / Facility' ]]</th>
+                            <th class="px-6 py-4">[[ isArabic ? 'موقع التخزين' : 'Storage Location' ]]</th>
+                            <th class="px-6 py-4">[[ isArabic ? 'الرف / الـ Bin' : 'Storage Bin' ]]</th>
+                            <th class="px-6 py-4 text-left">[[ isArabic ? 'إجراءات سريعة' : 'Actions' ]]</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        <tr v-if="filteredFlatOrgList.length === 0">
+                            <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fas fa-search text-3xl mb-3 text-slate-300"></i>
+                                <p class="text-xs font-semibold">[[ isArabic ? 'لا توجد نتائج تطابق بحثك' : 'No matching elements found' ]]</p>
+                            </td>
+                        </tr>
+                        <tr v-for="item in filteredFlatOrgList" :key="item.id" class="hover:bg-slate-50/50 transition-colors group/row">
+                            <!-- Company -->
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200/50 shrink-0">
+                                        <img v-if="item.opco.logo" :src="fixImagePath(item.opco.logo)" class="w-full h-full object-contain">
+                                        <i v-else class="fas fa-building text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-700">[[ item.opco.name ]]</div>
+                                        <div class="text-[10px] text-slate-400 font-mono">[[ item.opco.code ]]</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Plant -->
+                            <td class="px-6 py-4">
+                                <div v-if="item.plant" class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100/50 shrink-0">
+                                        <i class="fas fa-warehouse text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-slate-700">[[ item.plant.name ]]</div>
+                                        <div class="text-[10px] text-slate-400 font-mono">[[ item.plant.code ]]</div>
+                                    </div>
+                                </div>
+                                <span v-else class="text-slate-400/60 font-semibold italic text-xs">—</span>
+                            </td>
+
+                            <!-- Location -->
+                            <td class="px-6 py-4">
+                                <div v-if="item.location" class="flex items-center gap-2">
+                                    <i class="fas fa-map-marker-alt text-red-500 text-[10px]"></i>
+                                    <span class="font-semibold text-slate-700">[[ item.location.name ]]</span>
+                                </div>
+                                <span v-else class="text-slate-400/60 font-semibold italic text-xs">—</span>
+                            </td>
+
+                            <!-- Bin -->
+                            <td class="px-6 py-4">
+                                <div v-if="item.bin" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 border border-purple-100 rounded text-xs font-bold text-purple-600">
+                                    <i class="fas fa-box text-[9px]"></i>
+                                    <span>[[ item.bin.code ]]</span>
+                                </div>
+                                <span v-else class="text-slate-400/60 font-semibold italic text-xs">—</span>
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="px-6 py-4 text-left">
+                                <div class="flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                                    <!-- Edit Actions based on the present elements -->
+                                    <span class="flex items-center gap-1.5 bg-slate-50 border border-slate-200/50 p-1 rounded-xl">
+                                        <!-- Edit Bin -->
+                                        <button v-if="item.bin" 
+                                                @click="editItem('bin', item.bin)" 
+                                                class="px-2 py-1 text-[10px] font-bold text-purple-600 hover:bg-purple-50 rounded-lg transition-all border-0 bg-transparent flex items-center gap-1"
+                                                :title="isArabic ? 'تعديل الرف' : 'Edit Bin'">
+                                            <i class="fas fa-pencil-alt text-[9px]"></i>
+                                            <span>[[ isArabic ? 'الرف' : 'Bin' ]]</span>
+                                        </button>
+                                        <!-- Delete Bin -->
+                                        <button v-if="item.bin" 
+                                                @click="deleteItem('bin', item.bin.id)" 
+                                                class="p-1 text-slate-400 hover:text-red-500 transition-all border-0 bg-transparent"
+                                                :title="isArabic ? 'حذف الرف' : 'Delete Bin'">
+                                            <i class="fas fa-trash text-[10px]"></i>
+                                        </button>
+
+                                        <span v-if="item.bin && item.location" class="w-px h-3 bg-slate-200"></span>
+
+                                        <!-- Edit Location -->
+                                        <button v-if="item.location" 
+                                                @click="editItem('location', item.location)" 
+                                                class="px-2 py-1 text-[10px] font-bold text-red-600 hover:bg-red-50 rounded-lg transition-all border-0 bg-transparent flex items-center gap-1"
+                                                :title="isArabic ? 'تعديل الموقع' : 'Edit Location'">
+                                            <i class="fas fa-pencil-alt text-[9px]"></i>
+                                            <span>[[ isArabic ? 'الموقع' : 'Loc' ]]</span>
+                                        </button>
+                                        <!-- Delete Location -->
+                                        <button v-if="item.location" 
+                                                @click="deleteItem('location', item.location.id)" 
+                                                class="p-1 text-slate-400 hover:text-red-500 transition-all border-0 bg-transparent"
+                                                :title="isArabic ? 'حذف الموقع' : 'Delete Location'">
+                                            <i class="fas fa-trash text-[10px]"></i>
+                                        </button>
+
+                                        <span v-if="item.location && item.plant" class="w-px h-3 bg-slate-200"></span>
+
+                                        <!-- Edit Plant -->
+                                        <button v-if="item.plant" 
+                                                @click="editItem('plant', item.plant)" 
+                                                class="px-2 py-1 text-[10px] font-bold text-amber-600 hover:bg-amber-50 rounded-lg transition-all border-0 bg-transparent flex items-center gap-1"
+                                                :title="isArabic ? 'تعديل البلانت' : 'Edit Plant'">
+                                            <i class="fas fa-pencil-alt text-[9px]"></i>
+                                            <span>[[ isArabic ? 'البلانت' : 'Plant' ]]</span>
+                                        </button>
+                                        <!-- Delete Plant -->
+                                        <button v-if="item.plant" 
+                                                @click="deleteItem('plant', item.plant.id)" 
+                                                class="p-1 text-slate-400 hover:text-red-500 transition-all border-0 bg-transparent"
+                                                :title="isArabic ? 'حذف البلانت' : 'Delete Plant'">
+                                            <i class="fas fa-trash text-[10px]"></i>
+                                        </button>
+
+                                        <span v-if="item.plant && item.opco" class="w-px h-3 bg-slate-200"></span>
+
+                                        <!-- Edit Company -->
+                                        <button @click="editItem('opco', item.opco)" 
+                                                class="px-2 py-1 text-[10px] font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-all border-0 bg-transparent flex items-center gap-1"
+                                                :title="isArabic ? 'تعديل الشركة' : 'Edit Company'">
+                                            <i class="fas fa-pencil-alt text-[9px]"></i>
+                                            <span>[[ isArabic ? 'الشركة' : 'OpCo' ]]</span>
+                                        </button>
+                                        <!-- Delete Company -->
+                                        <button @click="deleteItem('opco', item.opco.id)" 
+                                                class="p-1 text-slate-400 hover:text-red-500 transition-all border-0 bg-transparent"
+                                                :title="isArabic ? 'حذف الشركة' : 'Delete Company'">
+                                            <i class="fas fa-trash text-[10px]"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Total count footer -->
+            <div class="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center text-xs text-slate-400">
+                <span>[[ isArabic ? 'إجمالي مسارات الهيكل: ' + filteredFlatOrgList.length : 'Total hierarchy paths: ' + filteredFlatOrgList.length ]]</span>
             </div>
         </div>
     </div>

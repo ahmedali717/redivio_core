@@ -245,6 +245,8 @@ createApp({
             materialTab: 'general',
             modalType: '',
             draggedType: null,
+            orgViewMode: 'tree',
+            orgSearchQuery: '',
             activeOpcoId: null,
             parentOpcoId: null,
             activePlantId: null,
@@ -341,6 +343,85 @@ createApp({
     },
 
     computed: {
+        flatOrgList() {
+            let list = [];
+            if (!this.opcos || this.opcos.length === 0) return [];
+            
+            this.opcos.forEach(opco => {
+                const opcoPlants = (this.plants || []).filter(p => Number(p.opco) === Number(opco.id));
+                if (opcoPlants.length === 0) {
+                    list.push({
+                        opco: opco,
+                        plant: null,
+                        location: null,
+                        bin: null,
+                        id: `opco-${opco.id}`
+                    });
+                    return;
+                }
+                opcoPlants.forEach(plant => {
+                    const plantLocs = (this.locations || []).filter(l => Number(l.plant) === Number(plant.id));
+                    if (plantLocs.length === 0) {
+                        list.push({
+                            opco: opco,
+                            plant: plant,
+                            location: null,
+                            bin: null,
+                            id: `plant-${plant.id}`
+                        });
+                        return;
+                    }
+                    plantLocs.forEach(loc => {
+                        const locBins = (this.bins || []).filter(b => Number(b.storage_location) === Number(loc.id));
+                        if (locBins.length === 0) {
+                            list.push({
+                                opco: opco,
+                                plant: plant,
+                                location: loc,
+                                bin: null,
+                                id: `loc-${loc.id}`
+                            });
+                            return;
+                        }
+                        locBins.forEach(bin => {
+                            list.push({
+                                opco: opco,
+                                plant: plant,
+                                location: loc,
+                                bin: bin,
+                                id: `bin-${bin.id}`
+                            });
+                        });
+                    });
+                });
+            });
+            return list;
+        },
+
+        filteredFlatOrgList() {
+            const list = this.flatOrgList || [];
+            if (!this.orgSearchQuery) return list;
+            const query = this.orgSearchQuery.toLowerCase().trim();
+            return list.filter(item => {
+                const opcoMatch = item.opco && (
+                    (item.opco.name && item.opco.name.toLowerCase().includes(query)) ||
+                    (item.opco.code && item.opco.code.toLowerCase().includes(query))
+                );
+                const plantMatch = item.plant && (
+                    (item.plant.name && item.plant.name.toLowerCase().includes(query)) ||
+                    (item.plant.code && item.plant.code.toLowerCase().includes(query))
+                );
+                const locMatch = item.location && (
+                    (item.location.name && item.location.name.toLowerCase().includes(query)) ||
+                    (item.location.code && item.location.code.toLowerCase().includes(query))
+                );
+                const binMatch = item.bin && (
+                    (item.bin.code && item.bin.code.toLowerCase().includes(query))
+                );
+                return opcoMatch || plantMatch || locMatch || binMatch;
+            });
+        },
+
         availableRoles() {
             const roles = [
                 { value: 'admin', label: this.isArabic ? 'Admin (كل الصلاحيات)' : 'Admin' },
