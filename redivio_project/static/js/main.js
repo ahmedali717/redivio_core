@@ -317,7 +317,11 @@ createApp({
                     date_from: '',
                     date_to: '',
                     contact_search: '',
-                    terminal: ''
+                    terminal: '',
+                    transfer_material: '',
+                    transfer_source_bin: '',
+                    transfer_dest_bin: '',
+                    transfer_quantity: 1
                 },
                 customer: { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' },
                 salesorder: {
@@ -4866,6 +4870,7 @@ createApp({
         },
 
         async openItemCard(item) { await inventoryModule.methods.openItemCard(item, this); },
+        async submitInternalTransfer() { await inventoryModule.methods.submitInternalTransfer(this); },
         addItemRow() { inventoryModule.methods.addItemRow(this); },
         removeItemRow(index) { inventoryModule.methods.removeItemRow(index, this); },
         async fetchSODetails() { await inventoryModule.methods.fetchSODetails(this); },
@@ -5104,7 +5109,10 @@ createApp({
                         else if (type === 'material' && key === 'allowed_terminals') {
                             payload.append('allowed_terminals', JSON.stringify(data[key]));
                         }
-                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments', 'recipe_lines', 'combo_lines', 'allowed_terminals'].includes(key)) {
+                        else if (type === 'material' && key === 'variants') {
+                            payload.append('variants', JSON.stringify(data[key]));
+                        }
+                        else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments', 'recipe_lines', 'combo_lines', 'allowed_terminals', 'variants'].includes(key)) {
                             let val = data[key];
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             payload.append(key, val);
@@ -6124,7 +6132,19 @@ createApp({
 
         async fetchMaterialsList() {
             try {
-                const res = await fetch('/api/materials/');
+                let url = '/api/materials/';
+                let params = [];
+                if (this.activeOpcoId) {
+                    params.push(`opco=${this.activeOpcoId}`);
+                }
+                // If we are in POS module, fetch only balances for this terminal
+                if (this.view === 'restaurant_pos_module' && this.selectedTerminalId) {
+                    params.push(`terminal=${this.selectedTerminalId}`);
+                }
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+                const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
                     this.materials_list = Array.isArray(data) ? data : (data.results || []);

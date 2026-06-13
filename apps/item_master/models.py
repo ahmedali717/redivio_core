@@ -73,10 +73,17 @@ class Material(TenantBaseModel):
     # التزامن مع القابضة
     is_template = models.BooleanField(default=False) # هل هذا صنف مرجعي للقابضة؟
     
+    # --- 👕 Product Variants ---
+    has_variants = models.BooleanField(default=False, help_text="هل هذا الصنف له متغيرات (مثل الألوان أو المقاسات)؟")
+    parent_template = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='variants', help_text="إذا كان هذا متغيراً، فمن هو الصنف الأب؟")
+    variant_name = models.CharField(max_length=100, null=True, blank=True, help_text="اسم المتغير مثل (أحمر - كبير)")
+    
     class Meta:
         unique_together = ('opco', 'sku') # SKU فريد لكل شركة
 
     def __str__(self):
+        if self.parent_template and self.variant_name:
+            return f"[{self.sku}] {self.name} - {self.variant_name}"
         return f"[{self.sku}] {self.name}"
 
     @property

@@ -51,6 +51,12 @@
                     class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
                 <i class="fas fa-layer-group ml-1"></i> [[ isArabic ? 'عرض الـ Combo' : 'Combo Offer' ]]
             </button>
+            <button @click="materialTab = 'variants'" 
+                    v-if="forms.material.has_variants"
+                    :class="materialTab === 'variants' ? 'border-fuchsia-600 text-fuchsia-600' : 'border-transparent text-slate-500'"
+                    class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
+                <i class="fas fa-tags ml-1"></i> [[ isArabic ? 'المتغيرات (Variants)' : 'Variants' ]]
+            </button>
             <button @click="materialTab = 'balances'" 
                     v-if="isEditing"
                     :class="materialTab === 'balances' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'"
@@ -167,6 +173,14 @@
                                             <span class="text-[10px] font-bold">[[ isArabic ? 'عرض Combo' : 'Combo Item' ]]</span>
                                         </div>
                                         <input type="checkbox" v-model="forms.material.is_combo" class="w-3 h-3 text-amber-600 rounded focus:ring-amber-500">
+                                    </label>
+
+                                    <label class="flex items-center justify-between p-2 border-2 border-slate-100 rounded-xl cursor-pointer hover:border-fuchsia-200 transition-all" :class="forms.material.has_variants ? 'bg-fuchsia-50/30 border-fuchsia-100' : ''">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-tags text-[10px] text-fuchsia-600"></i>
+                                            <span class="text-[10px] font-bold">[[ isArabic ? 'يحتوي على متغيرات' : 'Has Variants' ]]</span>
+                                        </div>
+                                        <input type="checkbox" v-model="forms.material.has_variants" class="w-3 h-3 text-fuchsia-600 rounded focus:ring-fuchsia-500">
                                     </label>
 
                                     <div class="mt-1">
@@ -336,6 +350,62 @@
                         </table>
                         <div v-if="!forms.material.combo_lines || forms.material.combo_lines.length === 0" class="py-10 text-center text-slate-300 italic text-xs">
                             [[ isArabic ? 'لم يتم تحديد أي أصناف لهذا العرض بعد' : 'No items defined for this combo yet' ]]
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Variants Tab -->
+            <div v-show="materialTab === 'variants'" class="space-y-6 animate-in slide-in-from-right-4">
+                <div class="bg-fuchsia-50 p-6 rounded-[2rem] border border-fuchsia-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h4 class="text-sm font-black text-fuchsia-900 uppercase tracking-widest flex items-center gap-2">
+                                <i class="fas fa-tags"></i>
+                                [[ isArabic ? 'متغيرات الصنف' : 'Product Variants' ]]
+                            </h4>
+                            <p class="text-[10px] text-fuchsia-400 font-bold mt-1 uppercase">[[ isArabic ? 'إدارة الألوان، المقاسات، والأسعار المختلفة' : 'Manage colors, sizes, and different prices' ]]</p>
+                        </div>
+                        <button @click="addVariantLine" type="button" class="bg-fuchsia-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-fuchsia-700 shadow-lg shadow-fuchsia-200 transition-all flex items-center gap-2">
+                            <i class="fas fa-plus"></i> [[ isArabic ? 'إضافة متغير جديد' : 'Add Variant' ]]
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-fuchsia-100 overflow-hidden shadow-sm">
+                        <table class="w-full text-right" dir="rtl">
+                            <thead class="bg-fuchsia-50/50 text-[10px] font-black text-fuchsia-600 uppercase tracking-widest border-b border-fuchsia-100">
+                                <tr>
+                                    <th class="px-4 py-3">[[ isArabic ? 'كود الصنف (SKU)' : 'SKU' ]]</th>
+                                    <th class="px-4 py-3">[[ isArabic ? 'اسم المتغير' : 'Variant Name' ]]</th>
+                                    <th class="px-4 py-3 text-center">[[ isArabic ? 'الباركود' : 'Barcode' ]]</th>
+                                    <th class="px-4 py-3 text-center">[[ isArabic ? 'سعر البيع' : 'Sales Price' ]]</th>
+                                    <th class="px-4 py-3 text-center w-16">[[ isArabic ? 'حذف' : '' ]]</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-fuchsia-50">
+                                <tr v-for="(line, idx) in forms.material.variants" :key="idx" class="hover:bg-fuchsia-50/30 transition-colors">
+                                    <td class="px-4 py-2">
+                                        <input type="text" v-model="line.sku" class="w-full bg-slate-50 border border-slate-100 rounded p-1 text-xs font-black focus:border-fuchsia-300 outline-none">
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        <input type="text" v-model="line.variant_name" placeholder="مثال: أحمر - L" class="w-full bg-slate-50 border border-slate-100 rounded p-1 text-xs font-black focus:border-fuchsia-300 outline-none">
+                                    </td>
+                                    <td class="px-4 py-2 text-center">
+                                        <input type="text" v-model="line.barcode" class="w-full bg-slate-50 border border-slate-100 rounded p-1 text-xs font-black focus:border-fuchsia-300 outline-none text-center">
+                                    </td>
+                                    <td class="px-4 py-2 text-center">
+                                        <input type="number" step="0.01" v-model="line.sales_price" class="w-24 bg-slate-50 border border-slate-100 rounded p-1 text-center text-xs font-black focus:border-fuchsia-300 outline-none">
+                                    </td>
+                                    <td class="px-4 py-2 text-center">
+                                        <button @click="forms.material.variants.splice(idx, 1)" class="text-fuchsia-200 hover:text-fuchsia-600 transition-colors">
+                                            <i class="fas fa-minus-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!forms.material.variants || forms.material.variants.length === 0" class="py-10 text-center text-slate-300 italic text-xs">
+                            [[ isArabic ? 'لم يتم تحديد أي متغيرات لهذا الصنف بعد' : 'No variants defined for this material yet' ]]
                         </div>
                     </div>
                 </div>

@@ -36,7 +36,10 @@ export const itemMasterModule = {
                 expiry_date: null,
                 recipe_lines: [],
                 combo_lines: [],
-                allowed_terminals: []
+                allowed_terminals: [],
+                // 👕 Product Variants
+                has_variants: false,
+                variants: []
             }
         }
     },
@@ -61,6 +64,19 @@ export const itemMasterModule = {
                 item_id: '',
                 quantity: 1,
                 extra_price: 0
+            });
+        },
+
+        addVariantLine(instance) {
+            if (!instance.forms.material.variants) {
+                instance.forms.material.variants = [];
+            }
+            const count = instance.forms.material.variants.length + 1;
+            instance.forms.material.variants.push({
+                sku: `${instance.forms.material.sku}-V${count}`,
+                variant_name: '',
+                sales_price: instance.forms.material.sales_price,
+                barcode: ''
             });
         },
 
@@ -146,6 +162,10 @@ export const itemMasterModule = {
                 recipe_lines: material.recipe_lines || [],
                 combo_lines: material.combo_lines || [],
                 allowed_terminals: material.allowed_terminals ? [...material.allowed_terminals] : [],
+                
+                // 👕 Product Variants
+                has_variants: material.has_variants || false,
+                variants: material.variants ? JSON.parse(JSON.stringify(material.variants)) : [],
                 
                 // 🚀 البيانات الجديدة لعرض الأرصدة (Odoo 19 Modal)
                 on_hand: material.on_hand || 0,

@@ -16,11 +16,12 @@ class MaterialSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     sale_group_name = serializers.CharField(source='sale_group.name', read_only=True)
     company_assignments = serializers.SerializerMethodField()
-    on_hand = serializers.DecimalField(source='total_on_hand', max_digits=12, decimal_places=2, read_only=True)
+    on_hand = serializers.SerializerMethodField()
     recipe_lines = serializers.SerializerMethodField()
     combo_lines = serializers.SerializerMethodField()
     stock_details = serializers.SerializerMethodField()
     allowed_terminals = serializers.SerializerMethodField()
+    variants = serializers.SerializerMethodField()
     
     class Meta:
         model = Material
@@ -28,8 +29,18 @@ class MaterialSerializer(serializers.ModelSerializer):
             'id', 'sku', 'name', 'category', 'category_name', 'sale_group', 'sale_group_name',
             'base_uom', 'barcode', 'company_assignments','standard_price', 'sales_price', 'tax_rate',
             'image', 'tracking', 'reorder_level', 'max_level', 'on_hand', 'stock_details',
-            'is_pos_item', 'is_combo', 'expiry_date', 'recipe_lines', 'combo_lines', 'allowed_terminals'
+            'is_pos_item', 'is_combo', 'expiry_date', 'recipe_lines', 'combo_lines', 'allowed_terminals',
+            'has_variants', 'parent_template', 'variant_name', 'variants'
         ]
+
+    def get_variants(self, obj):
+        if obj.has_variants:
+            return MaterialSerializer(obj.variants.all(), many=True, context=self.context).data
+        return []
+
+    def get_on_hand(self, obj):
+        details = self.get_stock_details(obj)
+        return sum(item['quantity'] for item in details)
 
     def get_recipe_lines(self, obj):
         try:
@@ -54,7 +65,20 @@ class MaterialSerializer(serializers.ModelSerializer):
     def get_stock_details(self, obj):
         """إرجاع الأرصدة مقسمة بالأرفف للأودو 19 موديول"""
         from apps.wms.models import StockQuant
+        request = self.context.get('request')
+        terminal_id = request.query_params.get('terminal') if request else None
+        
         quants = StockQuant.objects.filter(material=obj, opco=obj.opco)
+        
+        if terminal_id and terminal_id not in ['null', 'undefined', '']:
+            try:
+                from apps.restaurant_pos.models import POSTerminal
+                term = POSTerminal.objects.filter(id=int(terminal_id)).first()
+                if term and term.plant:
+                    quants = quants.filter(storage_bin__plant=term.plant)
+            except (ValueError, TypeError):
+                pass
+                
         return [{
             'bin_id': q.storage_bin.id,
             'bin': q.storage_bin.code,
@@ -113,9 +137,38 @@ class MaterialSerializer(serializers.ModelSerializer):
                     'sales_price': validated_data.get('sales_price', 0),
                     'tax_rate': validated_data.get('tax_rate', 15),
                     'reorder_level': validated_data.get('reorder_level', 0),
-                    'max_level': validated_data.get('max_level', 0)
+                    'max_level': validated_data.get('max_level', 0),
+                    'has_variants': validated_data.get('has_variants', False)
                 }
             )
+            
+            # Handle variants
+            if mat.has_variants:
+                variants_data = request.data.get('variants', [])
+                if isinstance(variants_data, str):
+                    try: variants_data = json.loads(variants_data)
+                    except: variants_data = []
+                
+                # We need to create/update each variant
+                for v_data in variants_data:
+                    Material.objects.update_or_create(
+                        sku=v_data.get('sku'),
+                        opco_id=opco_id,
+                        defaults={
+                            'name': mat.name,
+                            'parent_template': mat,
+                            'variant_name': v_data.get('variant_name'),
+                            'category': mat.category,
+                            'sale_group': mat.sale_group,
+                            'base_uom': mat.base_uom,
+                            'barcode': v_data.get('barcode', ''),
+                            'sales_price': v_data.get('sales_price', mat.sales_price),
+                            'standard_price': mat.standard_price,
+                            'tax_rate': mat.tax_rate,
+                            'is_pos_item': mat.is_pos_item,
+                            'has_variants': False
+                        }
+                    )
             
             # Save Recipe if provided
             recipe_data = request.data.get('recipe_lines')
@@ -250,9 +303,39 @@ class MaterialSerializer(serializers.ModelSerializer):
                         'sales_price': instance.sales_price,
                         'tax_rate': instance.tax_rate,
                         'reorder_level': instance.reorder_level,
-                        'max_level': instance.max_level
+                        'max_level': instance.max_level,
+                        'has_variants': instance.has_variants
                     }
                 )
+
+                # Handle variants in update
+                if mat.has_variants:
+                    variants_data = request.data.get('variants', [])
+                    if isinstance(variants_data, str):
+                        try: variants_data = json.loads(variants_data)
+                        except: variants_data = []
+                    
+                    for v_data in variants_data:
+                        v_sku = v_data.get('sku')
+                        if v_sku:
+                            Material.objects.update_or_create(
+                                sku=v_sku,
+                                opco_id=opco_id,
+                                defaults={
+                                    'name': mat.name,
+                                    'parent_template': mat,
+                                    'variant_name': v_data.get('variant_name'),
+                                    'category': mat.category,
+                                    'sale_group': mat.sale_group,
+                                    'base_uom': mat.base_uom,
+                                    'barcode': v_data.get('barcode', ''),
+                                    'sales_price': v_data.get('sales_price', mat.sales_price),
+                                    'standard_price': mat.standard_price,
+                                    'tax_rate': mat.tax_rate,
+                                    'is_pos_item': mat.is_pos_item,
+                                    'has_variants': False
+                                }
+                            )
 
                 # Save Recipe
                 recipe_data = request.data.get('recipe_lines')

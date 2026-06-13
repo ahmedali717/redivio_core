@@ -466,6 +466,69 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
         return queryset
 
+    @action(detail=False, methods=['post'])
+    def internal_transfer(self, request):
+        """ حركة التحويل بين المخازن (Internal Transfer) """
+        active_opco_id = self._get_opco_id()
+        if not active_opco_id:
+            return Response({"error": "OpCo ID required"}, status=400)
+
+        opco = OpCo.objects.filter(id=active_opco_id).first()
+        if opco and opco.is_inventory_active:
+            is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+            err_msg = "لا يمكن إجراء تحويلات أثناء عملية الجرد النشطة." if is_arabic else "Cannot perform stock transfers during active inventory count."
+            return Response({"error": err_msg}, status=400)
+
+        material_id = request.data.get('material')
+        source_bin_id = request.data.get('source_bin')
+        dest_bin_id = request.data.get('dest_bin')
+        quantity_str = request.data.get('quantity')
+        reference = request.data.get('reference', '')
+
+        if not all([material_id, source_bin_id, dest_bin_id, quantity_str]):
+            return Response({"error": "Missing required fields: material, source_bin, dest_bin, quantity"}, status=400)
+
+        if str(source_bin_id) == str(dest_bin_id):
+            return Response({"error": "المخزن المصدر هو نفسه المخزن الوجهة!"}, status=400)
+
+        try:
+            quantity = Decimal(quantity_str)
+            if quantity <= 0:
+                raise ValueError
+        except:
+            return Response({"error": "كمية غير صالحة"}, status=400)
+
+        try:
+            with transaction.atomic():
+                Material = apps.get_model('item_master', 'Material')
+                material = Material.objects.get(id=material_id)
+                source_bin = StorageBin.objects.get(id=source_bin_id)
+                dest_bin = StorageBin.objects.get(id=dest_bin_id)
+
+                # Check available stock in source bin
+                source_quant = StockQuant.objects.filter(material=material, storage_bin=source_bin).first()
+                if not source_quant or source_quant.quantity < quantity:
+                    return Response({"error": f"الرصيد في المخزن المصدر لا يكفي للتحويل! متاح: {source_quant.quantity if source_quant else 0}"}, status=400)
+
+                # Create Move (which automatically adjusts stock quants on save)
+                move = StockMove.objects.create(
+                    opco_id=active_opco_id,
+                    material=material,
+                    move_type='INTERNAL',
+                    quantity=quantity,
+                    source_bin=source_bin,
+                    dest_bin=dest_bin,
+                    reference=reference or f"Transfer from {source_bin.code} to {dest_bin.code}"
+                )
+
+            return Response(StockMoveSerializer(move).data, status=201)
+        except Material.DoesNotExist:
+            return Response({"error": "الصنف غير موجود"}, status=400)
+        except StorageBin.DoesNotExist:
+            return Response({"error": "المخزن المحدد غير موجود"}, status=400)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
     @action(detail=False, methods=['get'])
     def by_contact(self, request):
         """ تجميع الحركات حسب العميل/المورد """

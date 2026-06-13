@@ -134,12 +134,40 @@ class POSTerminal(models.Model):
         related_name='allowed_pos_terminals',
         help_text='المستخدمون المسموح لهم بفتح نقطة البيع هذه'
     )
+    
+    # ربط نقطة البيع بمخزن (Plant) محدد
+    plant = models.ForeignKey('wms.Plant', on_delete=models.SET_NULL, null=True, blank=True, related_name='pos_terminals')
 
     class Meta:
         unique_together = ('opco', 'code')
 
     def __str__(self):
         return f"{self.name} ({self.code}) - {self.get_terminal_type_display()}"
+
+
+# Signal to automatically create Plant and StorageBin for new POSTerminal
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=POSTerminal)
+def create_pos_plant(sender, instance, created, **kwargs):
+    if created and not instance.plant:
+        from apps.wms.models import Plant, StorageBin
+        # Create a dedicated Plant for the POS
+        plant = Plant.objects.create(
+            opco=instance.opco,
+            code=f"POS-{instance.code}",
+            name=f"مخزن نقطة بيع - {instance.name}"
+        )
+        # Create a default bin for the plant
+        StorageBin.objects.create(
+            plant=plant,
+            code=f"BIN-{instance.code}-01",
+            name="الرف الرئيسي"
+        )
+        instance.plant = plant
+        instance.save()
+
 
 
 class POSSession(models.Model):
@@ -351,6 +379,11 @@ class POSOrder(models.Model):
         """
         from apps.item_master.models import MaterialLocation
         from apps.wms.models import StockQuant, StorageBin
+        
+        # 0. الرف الخاص بمستودع نقطة البيع (POS Plant)
+        if self.session and self.session.terminal and self.session.terminal.plant:
+            pos_bin = StorageBin.objects.filter(plant=self.session.terminal.plant, is_active=True).first()
+            if pos_bin: return pos_bin
         
         # 1. الرف الرئيسي
         loc = MaterialLocation.objects.filter(material=material, material__opco=self.opco, is_primary=True).first()
