@@ -653,7 +653,7 @@ createApp({
         },
 
         filteredMaterials() {
-            let list = this.materials_list || [];
+            let list = (this.materials_list || []).filter(item => !item.parent_template);
 
             // 1. فلترة بالشركة الحالية
             if (this.activeOpcoId) {

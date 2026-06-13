@@ -74,6 +74,15 @@
                                 <i class="fas fa-mortar-pestle"></i> BOM
                             </span>
                         </div>
+
+                        <!-- Variant Tags -->
+                        <div v-if="item.has_variants && item.variants && item.variants.length > 0" class="flex flex-wrap gap-1 justify-start mt-2" @click.stop>
+                            <span v-for="variant in item.variants" :key="variant.id" 
+                                  class="text-[8px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-full font-black border border-purple-100/50 flex items-center gap-0.5"
+                                  :title="variant.sku">
+                                <i class="fas fa-tag text-[7px] opacity-70"></i> [[ variant.variant_name || variant.sku ]]
+                            </span>
+                        </div>
                     </div>
                 </div>
 
