@@ -247,6 +247,7 @@ createApp({
             draggedType: null,
             orgViewMode: 'tree',
             orgSearchQuery: '',
+            orgExpandedItems: {},
             activeOpcoId: null,
             parentOpcoId: null,
             activePlantId: null,
@@ -433,6 +434,87 @@ createApp({
                 );
                 return opcoMatch || plantMatch || locMatch || binMatch;
             });
+        },
+
+        visiblePlants() {
+            const opcoIds = new Set((this.opcos || []).map(o => Number(o.id)));
+            return (this.plants || []).filter(p => opcoIds.has(Number(p.opco)));
+        },
+
+        visibleLocations() {
+            const plantIds = new Set(this.visiblePlants.map(p => Number(p.id)));
+            return (this.locations || []).filter(l => plantIds.has(Number(l.plant)));
+        },
+
+        visibleBins() {
+            const plantIds = new Set(this.visiblePlants.map(p => Number(p.id)));
+            return (this.bins || []).filter(b => plantIds.has(Number(b.plant)));
+        },
+
+        filteredOrgTree() {
+            const query = (this.orgSearchQuery || '').toLowerCase().trim();
+            
+            const tree = (this.opcos || []).map(opco => {
+                const opcoPlants = (this.plants || []).filter(p => Number(p.opco) === Number(opco.id));
+                
+                const plantsData = opcoPlants.map(plant => {
+                    const plantLocs = (this.locations || []).filter(l => Number(l.plant) === Number(plant.id));
+                    const plantBins = (this.bins || []).filter(b => Number(b.plant) === Number(plant.id));
+                    
+                    return {
+                        ...plant,
+                        locations: plantLocs,
+                        bins: plantBins
+                    };
+                });
+                
+                return {
+                    ...opco,
+                    plants: plantsData
+                };
+            });
+            
+            if (!query) {
+                return tree;
+            }
+            
+            return tree.map(opco => {
+                const opcoMatches = (opco.name && opco.name.toLowerCase().includes(query)) ||
+                                    (opco.code && opco.code.toLowerCase().includes(query));
+                
+                const filteredPlants = opco.plants.map(plant => {
+                    const plantMatches = (plant.name && plant.name.toLowerCase().includes(query)) ||
+                                         (plant.code && plant.code.toLowerCase().includes(query));
+                    
+                    const matchingLocs = (plantMatches || opcoMatches) 
+                        ? plant.locations 
+                        : plant.locations.filter(l => 
+                            (l.name && l.name.toLowerCase().includes(query)) ||
+                            (l.code && l.code.toLowerCase().includes(query))
+                        );
+                    
+                    const matchingBins = (plantMatches || opcoMatches)
+                        ? plant.bins
+                        : plant.bins.filter(b => 
+                            (b.code && b.code.toLowerCase().includes(query))
+                        );
+                    
+                    const hasMatchingChild = matchingLocs.length > 0 || matchingBins.length > 0;
+                    
+                    return {
+                        ...plant,
+                        locations: matchingLocs,
+                        bins: matchingBins,
+                        visible: plantMatches || hasMatchingChild
+                    };
+                }).filter(p => p.visible);
+                
+                return {
+                    ...opco,
+                    plants: filteredPlants,
+                    visible: opcoMatches || filteredPlants.length > 0
+                };
+            }).filter(o => o.visible);
         },
 
         availableRoles() {
@@ -4892,6 +4974,23 @@ createApp({
         handleDrop(targetType, parentId) { orgModule.methods.handleDrop(this, targetType, parentId); },
         onDragStart(type) { this.draggedType = type; },
         startDrag(type) { this.onDragStart(type); },
+
+        toggleOrgItem(type, id) {
+            const key = `${type}-${id}`;
+            this.orgExpandedItems[key] = !this.orgExpandedItems[key];
+            this.orgExpandedItems = { ...this.orgExpandedItems };
+        },
+
+        isOrgItemExpanded(type, id) {
+            const key = `${type}-${id}`;
+            if ((this.orgSearchQuery || '').trim() !== '') {
+                return true;
+            }
+            if (this.orgExpandedItems[key] !== undefined) {
+                return this.orgExpandedItems[key];
+            }
+            return type === 'opco';
+        },
 
         editMaterial(material) {
             itemMasterModule.methods.editMaterial(material, this);
