@@ -4873,7 +4873,7 @@ createApp({
 
         getPlantsForOpco(id) { return orgModule.methods.getPlantsForOpco(this, id); },
         getLocationsForPlant(id) { return orgModule.methods.getLocationsForPlant(this, id); },
-        getBinsForLocation(id) { return orgModule.methods.getBinsForLocation(this, id); },
+        getBinsForPlant(id) { return orgModule.methods.getBinsForPlant(this, id); },
         getBinsCount(id) { return orgModule.methods.getBinsCount(this, id); },
         handleDrop(targetType, parentId) { orgModule.methods.handleDrop(this, targetType, parentId); },
         onDragStart(type) { this.draggedType = type; },
