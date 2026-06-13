@@ -464,13 +464,15 @@ createApp({
                     return {
                         ...plant,
                         locations: plantLocs,
-                        bins: plantBins
+                        bins: plantBins,
+                        visible: true
                     };
                 });
                 
                 return {
                     ...opco,
-                    plants: plantsData
+                    plants: plantsData,
+                    visible: true
                 };
             });
             
