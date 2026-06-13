@@ -76,11 +76,21 @@
                         </div>
 
                         <!-- Variant Tags -->
-                        <div v-if="item.has_variants && item.variants && item.variants.length > 0" class="flex flex-wrap gap-1 justify-start mt-2" @click.stop>
+                        <div v-if="item.has_variants && item.variants && item.variants.length > 0" class="flex flex-wrap gap-1.5 justify-start mt-2" @click.stop>
                             <span v-for="variant in item.variants" :key="variant.id" 
-                                  class="text-[8px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-full font-black border border-purple-100/50 flex items-center gap-0.5"
+                                  class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full font-black border border-purple-100/30 hover:bg-purple-100 transition-all text-[8px]"
                                   :title="variant.sku">
-                                <i class="fas fa-tag text-[7px] opacity-70"></i> [[ variant.variant_name || variant.sku ]]
+                                <!-- Variant Thumbnail Image -->
+                                <img v-if="variant.image" :src="fixImagePath(variant.image)" class="w-3.5 h-3.5 rounded-full object-cover shrink-0 border border-purple-200">
+                                <i v-else class="fas fa-tag text-[7px] opacity-70"></i>
+                                
+                                <!-- Variant Name -->
+                                <span class="truncate max-w-[60px]">[[ variant.variant_name || variant.sku ]]</span>
+                                
+                                <!-- Variant Price -->
+                                <span class="bg-purple-200/50 px-1 py-0.2 rounded-full font-mono text-[8px] text-purple-700 font-black shrink-0">
+                                    [[ formatCurrency(variant.sales_price || 0) ]]
+                                </span>
                             </span>
                         </div>
                     </div>
