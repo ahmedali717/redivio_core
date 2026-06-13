@@ -69,7 +69,7 @@ class StockDeliverySerializer(serializers.ModelSerializer):
             if not bin_obj:
                 from apps.wms.models import StorageBin
                 # البحث عن أول رف متاح به كمية من هذا الصنف أو أي رف
-                bin_obj = StorageBin.objects.filter(storage_location__plant__opco=delivery.opco).first()
+                bin_obj = StorageBin.objects.filter(plant__opco=delivery.opco).first()
 
             StockMove.objects.create(
                 opco=delivery.opco,

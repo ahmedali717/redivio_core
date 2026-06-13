@@ -365,7 +365,7 @@ class POSOrder(models.Model):
         if quant: return quant.storage_bin
         
         # 4. الملاذ الأخير: أي رف متاح في الشركة
-        fallback_bin = StorageBin.objects.filter(storage_location__plant__opco=self.opco, is_active=True).first()
+        fallback_bin = StorageBin.objects.filter(plant__opco=self.opco, is_active=True).first()
         return fallback_bin
 
     def __str__(self):

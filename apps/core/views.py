@@ -766,7 +766,7 @@ class LocationViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
-        if StockQuant.objects.filter(storage_bin__storage_location=instance, quantity__gt=0).exists():
+        if StockQuant.objects.filter(storage_bin__plant__locations=instance, quantity__gt=0).exists():
             return Response(
                 {"error": "لا يمكن حذف موقع التخزين لوجود رصيد بضاعة به." if is_arabic else "Cannot delete storage location because it has stock balance."},
                 status=status.HTTP_400_BAD_REQUEST
@@ -842,8 +842,8 @@ class StorageBinViewSet(viewsets.ModelViewSet):
         
         if active_opco and active_opco.is_holding:
             return StorageBin.objects.filter(
-                Q(storage_location__plant__opco_id=active_id) | 
-                Q(storage_location__plant__opco__parent_id=active_id)
+                Q(plant__opco_id=active_id) | 
+                Q(plant__opco__parent_id=active_id)
             ).distinct()
             
         return StorageBin.objects.all()
@@ -906,11 +906,11 @@ class StorageBinViewSet(viewsets.ModelViewSet):
                         skipped_count += 1
                         continue
                         
-                    if StorageBin.objects.filter(storage_location=loc, code=code).exists():
+                    if StorageBin.objects.filter(plant=plant, code=code).exists():
                         skipped_count += 1
                         continue
                         
-                    StorageBin.objects.create(storage_location=loc, code=code[:20])
+                    StorageBin.objects.create(plant=plant, code=code[:20])
                     success_count += 1
                     
             return Response({"message": "Import successful", "success_count": success_count, "skipped_count": skipped_count})

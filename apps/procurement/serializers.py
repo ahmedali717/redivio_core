@@ -98,7 +98,7 @@ class StockReceiptSerializer(serializers.ModelSerializer):
             bin_obj = item.get('storage_bin')
             if not bin_obj:
                 from apps.wms.models import StorageBin
-                bin_obj = StorageBin.objects.filter(storage_location__plant__opco=receipt.opco).first()
+                bin_obj = StorageBin.objects.filter(plant__opco=receipt.opco).first()
 
             StockMove.objects.create(
                 opco=receipt.opco,

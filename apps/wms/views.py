@@ -109,7 +109,7 @@ def wms_stats(request):
     except Exception: total_value = 0
         
     # 4. حساب نسبة الإشغال (Capacity)
-    total_bins = StorageBin.objects.filter(storage_location__plant__opco_id=active_opco_id).count()
+    total_bins = StorageBin.objects.filter(plant__opco_id=active_opco_id).count()
     occupied_bins = quants.filter(quantity__gt=0).values('storage_bin').distinct().count()
     capacity_pct = int((occupied_bins / total_bins * 100)) if total_bins > 0 else 0
 
@@ -252,12 +252,6 @@ class StorageLocationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        is_arabic = request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
-        if StockQuant.objects.filter(storage_bin__storage_location=instance, quantity__gt=0).exists():
-            return Response(
-                {"error": "لا يمكن حذف موقع التخزين لوجود رصيد بضاعة به." if is_arabic else "Cannot delete storage location because it has stock balance."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
         return super().destroy(request, *args, **kwargs)
 
     @action(detail=False, methods=['post'], url_path='import')
@@ -361,29 +355,29 @@ class StorageBinViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
             success_count, skipped_count = 0, 0
             
-            lcode_col = 'كود الموقع' if 'كود الموقع' in headers else 'Location Code'
+            pcode_col = 'كود المنشأة' if 'كود المنشأة' in headers else 'Plant Code'
             code_col = 'كود الرف' if 'كود الرف' in headers else 'Bin Code'
             
-            if not all(col in headers for col in [lcode_col, code_col]):
-                return Response({"error": "Missing columns. Ensure Location Code and Bin Code exist."}, status=status.HTTP_400_BAD_REQUEST)
+            if not all(col in headers for col in [pcode_col, code_col]):
+                return Response({"error": "Missing columns. Ensure Plant Code and Bin Code exist."}, status=status.HTTP_400_BAD_REQUEST)
             
             with transaction.atomic():
                 for row in rows:
-                    lcode = str(row.get(lcode_col, '')).strip()
+                    pcode = str(row.get(pcode_col, '')).strip()
                     code = str(row.get(code_col, '')).strip()
                     
-                    if not lcode or not code or str(code).lower() == 'nan': continue
+                    if not pcode or not code or str(code).lower() == 'nan': continue
                         
-                    loc = StorageLocation.objects.filter(plant__opco=active_opco, code=lcode).first()
-                    if not loc:
+                    plant = Plant.objects.filter(opco=active_opco, code=pcode).first()
+                    if not plant:
                         skipped_count += 1
                         continue
                         
-                    if StorageBin.objects.filter(storage_location=loc, code=code).exists():
+                    if StorageBin.objects.filter(plant=plant, code=code).exists():
                         skipped_count += 1
                         continue
                         
-                    StorageBin.objects.create(storage_location=loc, code=code[:20])
+                    StorageBin.objects.create(plant=plant, code=code[:20])
                     success_count += 1
                     
             return Response({"message": "Import successful", "success_count": success_count, "skipped_count": skipped_count})
@@ -451,8 +445,8 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         location_id = self.request.query_params.get('location_id')
         if location_id and location_id.strip() and location_id != 'null':
             queryset = queryset.filter(
-                Q(source_bin__storage_location_id=location_id) | 
-                Q(dest_bin__storage_location_id=location_id)
+                Q(source_bin__plant__locations__id=location_id) | 
+                Q(dest_bin__plant__locations__id=location_id)
             )
             
         date_from = self.request.query_params.get('date_from')
@@ -636,7 +630,7 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 bin_id = item.get('bin_id')
                 dest_bin = None
                 if bin_id: dest_bin = StorageBin.objects.get(id=bin_id)
-                else: dest_bin = StorageBin.objects.filter(storage_location__plant__opco_id=opco_id).first()
+                else: dest_bin = StorageBin.objects.filter(plant__opco_id=opco_id).first()
                 if not dest_bin: return Response({"error": "No storage bin configured"}, status=400)
                 
                 # --- 📈 WAC Calculation ---
@@ -697,7 +691,7 @@ class StockMoveViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 if bin_id: source_bin = StorageBin.objects.get(id=bin_id)
                 else:
                     best_quant = StockQuant.objects.filter(opco_id=opco_id, material_id=material_id, quantity__gte=qty).order_by('-quantity').first()
-                    source_bin = best_quant.storage_bin if best_quant else StorageBin.objects.filter(storage_location__plant__opco_id=opco_id).first()
+                    source_bin = best_quant.storage_bin if best_quant else StorageBin.objects.filter(plant__opco_id=opco_id).first()
                 if not source_bin: return Response({"error": "No storage bin configured"}, status=400)
 
                 # Allow negative stock for manual moves to avoid blocking user setup
@@ -1040,7 +1034,7 @@ class OpeningInventoryAPIView(APIView):
                         has_recipe = material.recipe and material.recipe.ingredients.exists()
                     except ObjectDoesNotExist:
                         pass
-                    bin_obj = StorageBin.objects.filter(code=bin_val, storage_location__plant__opco=opco).first()
+                    bin_obj = StorageBin.objects.filter(code=bin_val, plant__opco=opco).first()
                     
                     system_qty = 0.0
                     if bin_obj:
@@ -1119,7 +1113,7 @@ class OpeningInventoryAPIView(APIView):
                         if not material:
                             continue
 
-                        bin_obj = StorageBin.objects.filter(code=bin_code, storage_location__plant__opco=opco).first()
+                        bin_obj = StorageBin.objects.filter(code=bin_code, plant__opco=opco).first()
                         if not bin_obj:
                             loc = StorageLocation.objects.filter(plant__opco=opco).first()
                             if not loc:
@@ -1127,7 +1121,7 @@ class OpeningInventoryAPIView(APIView):
                                 if not plant:
                                     plant = Plant.objects.create(opco=opco, code="MAIN", name=f"{opco.name} Warehouse")
                                 loc = StorageLocation.objects.create(plant=plant, code="IN-1", name="Receiving")
-                            bin_obj = StorageBin.objects.create(storage_location=loc, code=bin_code)
+                            bin_obj = StorageBin.objects.create(plant=loc.plant, code=bin_code)
 
                         quant = StockQuant.objects.filter(storage_bin=bin_obj, material=material, opco=opco).first()
                         system_qty = quant.quantity if quant else Decimal('0.0')

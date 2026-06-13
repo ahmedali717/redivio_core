@@ -286,7 +286,8 @@ class TenantSignupAPI(APIView):
                 opco, created = OpCo.objects.get_or_create(name=company_name, defaults={'code': random_code, 'owner': user})
                 if created:
                     plant = Plant.objects.create(opco=opco, code="MAIN", name=f"{company_name} HQ")
-                    StorageLocation.objects.create(plant=plant, code="IN-1", name="Receiving")
+                    loc = StorageLocation.objects.create(plant=plant, code="IN-1", name="Receiving")
+                    StorageBin.objects.create(storage_location=loc, code="BIN-001")
                 return Response({"message": "Workspace ready!", "redirect_url": "/dashboard/"}, status=status.HTTP_201_CREATED)
         except Exception as e: return Response({"error": str(e)}, status=500)
 

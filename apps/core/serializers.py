@@ -128,17 +128,17 @@ class StorageBinSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         code = attrs.get('code', getattr(self.instance, 'code', None))
-        storage_location = attrs.get('storage_location', getattr(self.instance, 'storage_location', None))
+        plant = attrs.get('plant', getattr(self.instance, 'plant', None))
 
         request = self.context.get('request')
         is_arabic = request and request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
         
-        if code and storage_location:
-            qs = StorageBin.objects.filter(storage_location=storage_location, code=code)
+        if code and plant:
+            qs = StorageBin.objects.filter(plant=plant, code=code)
             if self.instance:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
-                msg = f"الكود مكرر داخل هذا الموقع." if is_arabic else "Code is already used in this location."
+                msg = f"الكود مكرر داخل هذه المنشأة." if is_arabic else "Code is already used in this plant."
                 raise serializers.ValidationError({"code": msg})
 
         return attrs

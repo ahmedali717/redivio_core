@@ -86,33 +86,33 @@ class StorageBinSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         code = attrs.get('code', getattr(self.instance, 'code', None))
-        storage_location = attrs.get('storage_location', getattr(self.instance, 'storage_location', None))
+        plant = attrs.get('plant', getattr(self.instance, 'plant', None))
 
         request = self.context.get('request')
         is_arabic = request and request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
         
-        if code and storage_location:
-            qs = StorageBin.objects.filter(storage_location=storage_location, code=code)
+        if code and plant:
+            qs = StorageBin.objects.filter(plant=plant, code=code)
             if self.instance:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
-                msg = f"الكود مكرر داخل هذا الموقع." if is_arabic else "Code is already used in this location."
+                msg = f"الكود مكرر داخل هذه المنشأة." if is_arabic else "Code is already used in this plant."
                 raise serializers.ValidationError({"code": msg})
 
         return attrs
 
     def get_plant_name(self, obj):
         try:
-            return obj.storage_location.plant.name
+            return obj.plant.name
         except AttributeError:
             return "-"
 
     def get_location_name(self, obj):
-        return obj.storage_location.name if obj.storage_location else "-"
+        return "-"
 
     def get_plant_id(self, obj):
         try:
-            return obj.storage_location.plant.id
+            return obj.plant.id
         except AttributeError:
             return None
 
@@ -131,8 +131,6 @@ class StockQuantSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_location_name(self, obj):
-        if obj.storage_bin and obj.storage_bin.storage_location:
-            return obj.storage_bin.storage_location.name
         return "-"
 
 # --- معالجة حركات المخزون المتعددة ---

@@ -11,12 +11,12 @@ export const orgModule = {
             return (instance.locations || []).filter(l => Number(l.plant) === Number(id)); 
         },
 
-        getBinsForLocation(instance, id) { 
-            return (instance.bins || []).filter(b => Number(b.storage_location) === Number(id)); 
+        getBinsForPlant(instance, id) { 
+            return (instance.bins || []).filter(b => Number(b.plant) === Number(id)); 
         },
 
         getBinsCount(instance, id) { 
-            const bins = orgModule.methods.getBinsForLocation(instance, id);
+            const bins = orgModule.methods.getBinsForPlant(instance, id);
             return bins ? bins.length : 0; 
         },
         
@@ -59,9 +59,9 @@ export const orgModule = {
                 instance.openModal('location');
             }
             
-            // حالة إضافة رف (Bin) فوق موقع
-            else if (type === 'bin' && targetType === 'location') {
-                instance.activeLocationId = parentId;
+            // حالة إضافة رف (Bin) فوق مستودع (Plant)
+            else if (type === 'bin' && targetType === 'plant') {
+                instance.activePlantId = parentId;
                 instance.openModal('bin');
             }
 

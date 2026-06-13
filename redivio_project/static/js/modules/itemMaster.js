@@ -127,7 +127,7 @@ export const itemMasterModule = {
                 // 🚀 سحب مصفوفة الربط المجهزة من السيريالايزر (get_company_assignments)
                 company_assignments: material.company_assignments && material.company_assignments.length > 0 
                     ? JSON.parse(JSON.stringify(material.company_assignments))
-                    : [{ opco_id: material.opco, bins: material.storage_locations_ids || [], primary_bin: material.current_primary_bin || null }],
+                    : [{ opco_id: material.opco, bins: material.plants_ids || [], primary_bin: material.current_primary_bin || null }],
                 
                 tracking: material.tracking || 'none',
                 standard_price: material.standard_price || 0,

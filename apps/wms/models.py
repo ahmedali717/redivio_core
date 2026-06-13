@@ -27,8 +27,8 @@ class StorageLocation(models.Model):
         unique_together = (('plant', 'code'), ('plant', 'name'))
 
 class StorageBin(models.Model):
-    # ✅ تعديل 1: تغيير الاسم إلى storage_location ليتطابق مع الـ Serializer والـ Frontend
-    storage_location = models.ForeignKey(StorageLocation, on_delete=models.CASCADE, related_name='bins')
+    # ✅ تعديل 1: تغيير الاسم إلى plant ليتطابق مع الـ Serializer والـ Frontend
+    plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name='bins')
     
     # ✅ تعديل 2: استخدام code بسيط بدلاً من rack/shelf/cell (لأن المودال الحالي يرسل code فقط)
     code = models.CharField(max_length=20)
@@ -40,8 +40,7 @@ class StorageBin(models.Model):
 
     class Meta:
         # هذا السطر يضمن عدم تكرار الكود على مستوى قاعدة البيانات
-        # إذا كنت تريد التميز على مستوى الشركة، يفضل دمج كود الشركة مع كود الرف
-        unique_together = ('code', 'storage_location')
+        unique_together = ('code', 'plant')
 
 class StockQuant(models.Model):
     # ربطنا هنا بـ 'core.OpCo' نصياً
@@ -94,7 +93,7 @@ class StockMove(models.Model):
             if self.dest_bin: # removed extra checks for simplicity, assuming integrity
                 # ملاحظة: يجب التأكد أن dest_bin مرتبط بـ location و plant
                 # لكن للكود الحالي، سنبسطه:
-                 plant_obj = self.dest_bin.storage_location.plant
+                 plant_obj = self.dest_bin.plant
                  q, _ = StockQuant.objects.get_or_create(
                     opco=self.opco, plant=plant_obj, 
                     storage_bin=self.dest_bin, material=self.material
@@ -103,7 +102,7 @@ class StockMove(models.Model):
                  q.save()
             
             if self.source_bin:
-                plant_obj = self.source_bin.storage_location.plant
+                plant_obj = self.source_bin.plant
                 q, _ = StockQuant.objects.get_or_create(
                     opco=self.opco, plant=plant_obj, 
                     storage_bin=self.source_bin, material=self.material

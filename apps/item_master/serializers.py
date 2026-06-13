@@ -58,8 +58,8 @@ class MaterialSerializer(serializers.ModelSerializer):
         return [{
             'bin_id': q.storage_bin.id,
             'bin': q.storage_bin.code,
-            'location': q.storage_bin.storage_location.name,
-            'plant': q.storage_bin.storage_location.plant.name,
+            'location': "-",
+            'plant': q.storage_bin.plant.name,
             'quantity': q.quantity
         } for q in quants]
 

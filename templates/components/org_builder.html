@@ -111,32 +111,32 @@
                             <h4 class="font-bold text-slate-800 text-sm uppercase">[[ plant.name ]]</h4>
                         </div>
 
-                        <div v-if="getLocationsForPlant(plant.id).length > 0" class="w-0.5 h-8 bg-slate-200"></div>
+                        <div v-if="getLocationsForPlant(plant.id).length > 0 || getBinsForPlant(plant.id).length > 0" class="w-0.5 h-8 bg-slate-200"></div>
                         <div class="flex flex-col gap-4 items-center">
+                            <!-- Locations -->
                             <div v-for="loc in getLocationsForPlant(plant.id)" :key="loc.id" class="flex flex-col items-center">
                                 <div @dragover.prevent @drop="handleDrop('location', loc.id)"
-                                     class="w-56 bg-slate-50 border border-slate-200 rounded-lg p-3 flex justify-between items-center hover:bg-white hover:shadow-md transition-all group/loc"
-                                     :class="{'border-red-400': draggedType === 'bin'}">
+                                     class="w-56 bg-slate-50 border border-slate-200 rounded-lg p-3 flex justify-between items-center hover:bg-white hover:shadow-md transition-all group/loc">
                                     <div class="flex items-center gap-3">
                                         <i class="fas fa-map-marker-alt text-red-500 text-[10px]"></i>
                                         <p class="text-[11px] font-black text-slate-700 uppercase">[[ loc.name ]]</p>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-[9px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-500 font-bold">[[ getBinsCount(loc.id) ]]</span>
                                         <button @click="editItem('location', loc)" class="text-slate-300 hover:text-slate-600 transition-colors" :title="isArabic ? 'تعديل' : 'Edit'"><i class="fas fa-pencil-alt text-xs"></i></button>
                                         <button @click="deleteItem('location', loc.id)" class="text-slate-300 hover:text-red-500 transition-colors" :title="isArabic ? 'حذف' : 'Delete'"><i class="fas fa-trash text-xs"></i></button>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div class="flex flex-wrap justify-center gap-1 mt-2 w-48">
-                                    <div v-for="bin in getBinsForLocation(loc.id)" :key="bin.id"
-                                         class="px-2 py-1 bg-purple-50 border border-purple-100 rounded text-[9px] font-bold text-purple-600 flex items-center gap-2 group/bin">
-                                        <i class="fas fa-box text-[8px]"></i>
-                                        [[ bin.code ]]
-                                        <button @click="deleteItem('bin', bin.id)" class="opacity-0 group-hover/bin:opacity-100 text-purple-300 hover:text-red-500 transition-opacity">
-                                            <i class="fas fa-times text-[8px]"></i>
-                                        </button>
-                                    </div>
+                            <!-- Bins directly under Plant -->
+                            <div v-if="getBinsForPlant(plant.id).length > 0" class="flex flex-wrap justify-center gap-1 mt-2 max-w-sm">
+                                <div v-for="bin in getBinsForPlant(plant.id)" :key="bin.id"
+                                     class="px-2 py-1 bg-purple-50 border border-purple-100 rounded text-[9px] font-bold text-purple-600 flex items-center gap-2 group/bin">
+                                    <i class="fas fa-box text-[8px]"></i>
+                                    [[ bin.code ]]
+                                    <button @click="deleteItem('bin', bin.id)" class="opacity-0 group-hover/bin:opacity-100 text-purple-300 hover:text-red-500 transition-opacity">
+                                        <i class="fas fa-times text-[8px]"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>

@@ -115,7 +115,7 @@ class MaterialLocation(models.Model):
 
     def clean(self):
         """ منع ربط صنف برف يتبع شركة أخرى """
-        bin_opco = self.storage_bin.storage_location.plant.opco
+        bin_opco = self.storage_bin.plant.opco
         if self.material.opco != bin_opco:
             raise ValidationError(f"خطأ: الرف {self.storage_bin.code} يتبع شركة {bin_opco.name} وليس شركة الصنف!")
 

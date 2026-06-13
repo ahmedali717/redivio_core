@@ -65,10 +65,13 @@
             </div>
 
             <div v-if="modalType === 'bin'" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1" v-text="isArabic ? 'موقع التخزين' : 'Storage Location'"></label>
-                    <select v-model="forms.bin.storage_location" class="w-full border p-2.5 rounded-xl bg-slate-50" required>
-                        <option v-for="loc in locations" :value="loc.id" v-text="loc.name"></option>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-500 mb-1" :class="{'text-right': isArabic}">
+                        [[ isArabic ? 'المنشأة' : 'Plant' ]]
+                    </label>
+                    <select v-model="forms.bin.plant" class="w-full border p-2.5 rounded-xl bg-slate-50" required>
+                        <option :value="null">[[ isArabic ? 'اختر المنشأة' : 'Select Plant' ]]</option>
+                        <option v-for="l in plants" :key="l.id" :value="l.id">[[ l.name ]]</option>
                     </select>
                 </div>
                 <div>

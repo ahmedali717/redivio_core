@@ -279,7 +279,7 @@ createApp({
                 opco: { id: null, code: '', name: '', currency: 'USD', parent: null, is_holding: false },
                 plant: { id: null, opco: null, code: '', name: '' },
                 location: { id: null, plant: null, code: '', name: '' },
-                bin: { id: null, storage_location: null, code: '' },
+                bin: { id: null, plant: null, code: '' },
                 material: {
                     id: null,
                     sku: '',
@@ -361,7 +361,9 @@ createApp({
                 }
                 opcoPlants.forEach(plant => {
                     const plantLocs = (this.locations || []).filter(l => Number(l.plant) === Number(plant.id));
-                    if (plantLocs.length === 0) {
+                    const plantBins = (this.bins || []).filter(b => Number(b.plant) === Number(plant.id));
+                    
+                    if (plantLocs.length === 0 && plantBins.length === 0) {
                         list.push({
                             opco: opco,
                             plant: plant,
@@ -371,26 +373,24 @@ createApp({
                         });
                         return;
                     }
+                    
                     plantLocs.forEach(loc => {
-                        const locBins = (this.bins || []).filter(b => Number(b.storage_location) === Number(loc.id));
-                        if (locBins.length === 0) {
-                            list.push({
-                                opco: opco,
-                                plant: plant,
-                                location: loc,
-                                bin: null,
-                                id: `loc-${loc.id}`
-                            });
-                            return;
-                        }
-                        locBins.forEach(bin => {
-                            list.push({
-                                opco: opco,
-                                plant: plant,
-                                location: loc,
-                                bin: bin,
-                                id: `bin-${bin.id}`
-                            });
+                        list.push({
+                            opco: opco,
+                            plant: plant,
+                            location: loc,
+                            bin: null,
+                            id: `loc-${loc.id}`
+                        });
+                    });
+                    
+                    plantBins.forEach(bin => {
+                        list.push({
+                            opco: opco,
+                            plant: plant,
+                            location: null,
+                            bin: bin,
+                            id: `bin-${bin.id}`
                         });
                     });
                 });
@@ -585,9 +585,7 @@ createApp({
         availableBinsForMaterial() {
             if (!this.activeOpcoId) return this.bins;
             return this.bins.filter(bin => {
-                const location = this.locations.find(l => l.id === bin.storage_location);
-                if (!location) return false;
-                const plant = this.plants.find(p => p.id === location.plant);
+                const plant = this.plants.find(p => p.id === bin.plant);
                 return plant && parseInt(plant.opco) === parseInt(this.activeOpcoId);
             });
         },
@@ -4593,8 +4591,7 @@ createApp({
         getBinsByOpco(opcoId) {
             if (!opcoId) return [];
             return this.bins.filter(bin => {
-                const location = this.locations.find(l => l.id === bin.storage_location);
-                const plant = location ? this.plants.find(p => p.id === location.plant) : null;
+                const plant = this.plants.find(p => p.id === bin.plant);
                 return plant && parseInt(plant.opco) === parseInt(opcoId);
             });
         },
@@ -4675,9 +4672,7 @@ createApp({
         getPlantNameByBin(binId) {
             const bin = this.bins.find(b => b.id === binId);
             if (!bin) return '...';
-            const location = this.locations.find(l => l.id === bin.storage_location);
-            if (!location) return '...';
-            const plant = this.plants.find(p => p.id === location.plant);
+            const plant = this.plants.find(p => p.id === bin.plant);
             return plant ? plant.name : '...';
         },
 
@@ -4929,7 +4924,7 @@ createApp({
                     company_assignments: itemData.company_assignments || [
                         {
                             opco_id: itemData.opco,
-                            bins: itemData.storage_locations_ids || [],
+                            bins: itemData.plants_ids || [],
                             primary_bin: itemData.current_primary_bin || null
                         }
                     ]
@@ -5975,7 +5970,7 @@ createApp({
             } else if (type === 'location') {
                 this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
             } else if (type === 'bin') {
-                this.forms.bin = { id: null, storage_location: this.activeLocationId, code: '' };
+                this.forms.bin = { id: null, plant: this.activePlantId, code: '' };
             } else if (type === 'material') {
                 this.forms.material = {
                     id: null, sku: '', name: '', category: '', sale_group: '', base_uom: 'PCS', barcode: '',
@@ -6140,7 +6135,7 @@ createApp({
         getBinLocationName(binId) {
             const bin = this.bins.find(b => b.id === binId);
             if (!bin) return '...';
-            const loc = this.locations.find(l => l.id === bin.storage_location);
+            const loc = this.plants.find(l => l.id === bin.plant);
             return loc ? loc.name : '...';
         },
 
