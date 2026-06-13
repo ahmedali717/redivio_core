@@ -46,10 +46,11 @@ export const itemMasterModule = {
 
     methods: {
         addRecipeLine(instance) {
-            if (!instance.forms.material.recipe_lines) {
-                instance.forms.material.recipe_lines = [];
+            const self = (instance && instance.forms) ? instance : this;
+            if (!self.forms.material.recipe_lines) {
+                self.forms.material.recipe_lines = [];
             }
-            instance.forms.material.recipe_lines.push({
+            self.forms.material.recipe_lines.push({
                 ingredient_id: '',
                 quantity: 1,
                 uom: 'KG'
@@ -57,10 +58,11 @@ export const itemMasterModule = {
         },
 
         addComboLine(instance) {
-            if (!instance.forms.material.combo_lines) {
-                instance.forms.material.combo_lines = [];
+            const self = (instance && instance.forms) ? instance : this;
+            if (!self.forms.material.combo_lines) {
+                self.forms.material.combo_lines = [];
             }
-            instance.forms.material.combo_lines.push({
+            self.forms.material.combo_lines.push({
                 item_id: '',
                 quantity: 1,
                 extra_price: 0
@@ -68,14 +70,15 @@ export const itemMasterModule = {
         },
 
         addVariantLine(instance) {
-            if (!instance.forms.material.variants) {
-                instance.forms.material.variants = [];
+            const self = (instance && instance.forms) ? instance : this;
+            if (!self.forms.material.variants) {
+                self.forms.material.variants = [];
             }
-            const count = instance.forms.material.variants.length + 1;
-            instance.forms.material.variants.push({
-                sku: `${instance.forms.material.sku}-V${count}`,
+            const count = self.forms.material.variants.length + 1;
+            self.forms.material.variants.push({
+                sku: `${self.forms.material.sku}-V${count}`,
                 variant_name: '',
-                sales_price: instance.forms.material.sales_price,
+                sales_price: self.forms.material.sales_price,
                 barcode: ''
             });
         },

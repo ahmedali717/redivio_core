@@ -296,7 +296,16 @@ createApp({
                     ],
                     tracking: 'none',
                     reorder_level: 0,
-                    max_level: 0
+                    max_level: 0,
+                    is_pos_item: false,
+                    is_combo: false,
+                    sale_group: '',
+                    expiry_date: null,
+                    recipe_lines: [],
+                    combo_lines: [],
+                    allowed_terminals: [],
+                    has_variants: false,
+                    variants: []
                 },
                 po: {
                     id: null,
@@ -4892,6 +4901,14 @@ createApp({
             itemMasterModule.methods.addRecipeLine(this);
         },
 
+        addComboLine() {
+            itemMasterModule.methods.addComboLine(this);
+        },
+
+        addVariantLine() {
+            itemMasterModule.methods.addVariantLine(this);
+        },
+
         editItem(type, item) {
 
             if (type === 'po' && ['Received', 'Confirmed'].includes(item.status)) {
@@ -4924,6 +4941,14 @@ createApp({
                     tax_rate: itemData.tax_rate || 15,
                     is_pos_item: itemData.is_pos_item || false,
                     recipe_lines: itemData.recipe_lines || [],
+                    // 🚀 POS & Recipe & Combo & Variants
+                    is_combo: itemData.is_combo || false,
+                    sale_group: itemData.sale_group || '',
+                    expiry_date: itemData.expiry_date || null,
+                    combo_lines: itemData.combo_lines || [],
+                    allowed_terminals: itemData.allowed_terminals ? [...itemData.allowed_terminals] : [],
+                    has_variants: itemData.has_variants || false,
+                    variants: itemData.variants ? JSON.parse(JSON.stringify(itemData.variants)) : [],
                     // 🚀 التعديل الجوهري هنا لملء الجدول الديناميكي عند التعديل
                     // نحول البيانات المسطحة القادمة من السيرفر إلى مصفوفة الـ Assignments
                     company_assignments: itemData.company_assignments || [
