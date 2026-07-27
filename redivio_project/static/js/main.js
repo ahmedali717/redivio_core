@@ -54,6 +54,7 @@ createApp({
             posCart: [],
             showPosVariantModal: false,
             selectedPosItemForVariants: null,
+            showMassUploadMenu: false,
             // 🏷️ حقول الخصم الحالي على الفاتورة
             posDiscount: {
                 type: 'none',       // 'none' | 'percentage' | 'fixed'
@@ -6335,6 +6336,30 @@ createApp({
             if (!bin) return '...';
             const loc = this.plants.find(l => l.id === bin.plant);
             return loc ? loc.name : '...';
+        },
+
+        downloadCSVTemplate(filename, headers, sampleRow) {
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), sampleRow.join(',')].join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            this.showToast(this.isArabic ? `تم تحميل نموذج ${filename} بنجاح` : `${filename} downloaded successfully`, 'success');
+        },
+        downloadOpCoTemplate() {
+            this.downloadCSVTemplate("opco_template.csv", ["name", "code", "currency", "is_holding"], ["KYRMA", "KYR01", "EGP", "false"]);
+        },
+        downloadPlantTemplate() {
+            this.downloadCSVTemplate("plant_template.csv", ["code", "name", "opco_code"], ["PL01", "KYRMA HQ Plant", "KYR01"]);
+        },
+        downloadLocationTemplate() {
+            this.downloadCSVTemplate("location_template.csv", ["code", "name", "plant_code"], ["RECEIVING", "Main Receiving Area", "PL01"]);
+        },
+        downloadBinTemplate() {
+            this.downloadCSVTemplate("bin_template.csv", ["code", "name", "plant_code", "is_active"], ["a-101", "Rack A Shelf 101", "PL01", "true"]);
         },
 
         async fetchSaleGroups() {
