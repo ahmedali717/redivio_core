@@ -188,6 +188,9 @@ createApp({
 
             ...(utils.state || {}),
             ...(inventoryModule.state || {}),
+            ...(itemMasterModule.state || {}),
+            categories: [],
+            sale_groups: [],
 
             user: { name: '...', role: '...', is_superuser: false },
 
@@ -5649,6 +5652,8 @@ createApp({
                     this.getListData(),
                     this.fetchWMSStats(),
                     this.fetchMaterialsList(),
+                    this.fetchCategories(),
+                    this.fetchSaleGroups(),
                     this.fetchPurchaseOrders(),
                     this.fetchInventoryMoves(),
                     this.fetchCustomers(),
@@ -6597,6 +6602,28 @@ createApp({
                 console.error(err);
             } finally {
                 this.loading = false;
+            }
+        },
+        async fetchCategories() {
+            try {
+                const res = await fetch('/api/categories/');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.categories = Array.isArray(data) ? data : (data.results || []);
+                }
+            } catch (e) {
+                console.error("fetchCategories error:", e);
+            }
+        },
+        async fetchSaleGroups() {
+            try {
+                const res = await fetch('/api/sale-groups/');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.sale_groups = Array.isArray(data) ? data : (data.results || []);
+                }
+            } catch (e) {
+                console.error("fetchSaleGroups error:", e);
             }
         },
         downloadCSVTemplate(filename, headers, sampleRow) {
