@@ -23,6 +23,10 @@ class MaterialSerializer(serializers.ModelSerializer):
     allowed_terminals = serializers.SerializerMethodField()
     plant_prices = serializers.SerializerMethodField()
     
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=False, allow_null=True)
+    sale_group = serializers.PrimaryKeyRelatedField(queryset=SaleGroup.objects.all(), required=False, allow_null=True)
+    parent_template = serializers.PrimaryKeyRelatedField(queryset=Material.objects.all(), required=False, allow_null=True)
+
     class Meta:
         model = Material
         fields = [
@@ -33,6 +37,19 @@ class MaterialSerializer(serializers.ModelSerializer):
             'is_pos_item', 'is_combo', 'expiry_date', 'recipe_lines', 'combo_lines', 'allowed_terminals',
             'has_variants', 'parent_template', 'variant_name', 'variants'
         ]
+
+    def to_internal_value(self, data):
+        if hasattr(data, '_mutable'):
+            data = data.copy()
+        elif isinstance(data, dict):
+            data = data.copy()
+        else:
+            data = data.dict() if hasattr(data, 'dict') else dict(data)
+            
+        for fk_field in ['category', 'sale_group', 'parent_template']:
+            if fk_field in data and data[fk_field] in ['', 'null', 'undefined', None]:
+                data[fk_field] = None
+        return super().to_internal_value(data)
 
     def get_plant_prices(self, obj):
         return [{
