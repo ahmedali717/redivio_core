@@ -52,6 +52,8 @@ createApp({
             showTerminalFormModal: false,
             terminalForm: { id: null, code: '', name: '', terminal_type: 'DIRECT', is_active: true, allowed_users: [] },
             posCart: [],
+            showPosVariantModal: false,
+            selectedPosItemForVariants: null,
             // 🏷️ حقول الخصم الحالي على الفاتورة
             posDiscount: {
                 type: 'none',       // 'none' | 'percentage' | 'fixed'
@@ -549,8 +551,8 @@ createApp({
             return this.sale_groups || [];
         },
         filteredPosItems() {
-            // فلترة الأصناف التي تحمل علامة POS Item فقط
-            let items = (this.materials_list || []).filter(i => i.is_pos_item);
+            // 🚀 فلترة الأصناف الرئيسية فقط التي تحمل علامة POS Item واستبعاد المتغيرات الفرعية
+            let items = (this.materials_list || []).filter(i => i.is_pos_item && !i.parent_template);
             
             // فلترة الأصناف بناءً على نقطة البيع النشطة المحددة (إذا تم تقييد الصنف)
             if (this.selectedTerminalId) {
@@ -1696,6 +1698,13 @@ createApp({
         },
 
         addToCart(item) {
+            // 🚀 إذا كان الصنف رئيساً وله متغيرات، افتح النافذة المنبثقة لاختيار المتغير بدلاً من إضافته مباشرة
+            if (item.has_variants || (item.variants && item.variants.length > 0)) {
+                this.selectedPosItemForVariants = item;
+                this.showPosVariantModal = true;
+                return;
+            }
+
             // Check BOM ingredients stock availability
             let autoNotes = '';
             if (item.recipe_lines && item.recipe_lines.length > 0) {
@@ -1734,10 +1743,13 @@ createApp({
                     this.showToast(this.isArabic ? "عفواً، الصنف غير متوفر في المخزن" : "Sorry, item is out of stock", "error");
                     return;
                 }
+                const displayName = item.variant_name 
+                    ? `${this.selectedPosItemForVariants ? this.selectedPosItemForVariants.name : item.name} (${item.variant_name})`
+                    : item.name;
                 this.posCart.push({
                     id: item.id,
                     sku: item.sku,
-                    name: item.name,
+                    name: displayName,
                     price: price,
                     tax_rate: item.tax_rate || 15,
                     qty: 1,

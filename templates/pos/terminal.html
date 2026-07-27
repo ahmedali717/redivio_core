@@ -74,8 +74,12 @@
                             <i class="fas fa-triangle-exclamation"></i> [[ isArabic ? 'مكون ناقص' : 'Mod' ]]
                         </div>
 
-                        <!-- 🚀 Stock Level Display (Direct Sales Items) -->
-                        <div v-if="(!item.recipe_lines || item.recipe_lines.length === 0) && !isItemOutofStock(item) && !isDeliveryService(item)" 
+                        <!-- 🚀 Stock Level or Variants Badge Display -->
+                        <div v-if="item.has_variants || (item.variants && item.variants.length > 0)" 
+                             class="absolute top-2 right-2 bg-fuchsia-600/90 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-lg border border-fuchsia-400/50 shadow-lg flex items-center gap-1">
+                             <i class="fas fa-tags"></i> [[ item.variants ? item.variants.length : 0 ]] [[ isArabic ? 'خيارات' : 'Variants' ]]
+                        </div>
+                        <div v-else-if="(!item.recipe_lines || item.recipe_lines.length === 0) && !isItemOutofStock(item) && !isDeliveryService(item)" 
                              class="absolute top-2 right-2 bg-slate-900/60 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-lg border border-white/20 shadow-lg">
                              <i class="fas fa-box ml-1"></i> [[ isArabic ? 'متاح: ' : 'Stock: ' ]] [[ parseFloat(item.on_hand || 0).toLocaleString() ]]
                         </div>
@@ -84,7 +88,10 @@
                         <h4 class="text-sm font-bold text-slate-800 leading-tight mb-2 line-clamp-2" v-text="item.name"></h4>
                         <div class="flex items-center justify-between mt-auto">
                             <span class="text-xs text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded truncate max-w-[50%]" v-text="item.sale_group_name || (isArabic ? 'عام' : 'General')"></span>
-                            <span class="font-black text-red-600 text-sm shrink-0">[[ formatCurrency(item.sales_price || item.standard_price) ]]</span>
+                            <div class="flex flex-col items-end">
+                                <span v-if="item.has_variants || (item.variants && item.variants.length > 0)" class="text-[8px] text-fuchsia-600 font-bold uppercase tracking-wider">[[ isArabic ? 'خيارات متعددة' : 'Multiple' ]]</span>
+                                <span class="font-black text-red-600 text-sm shrink-0">[[ formatCurrency(item.sales_price || item.standard_price) ]]</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -383,6 +390,71 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🚀 Variant Selector Modal -->
+    <div v-if="showPosVariantModal" class="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div class="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+            <!-- Header -->
+            <div class="px-6 py-5 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex justify-between items-center shadow-md">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-fuchsia-600/30 border border-fuchsia-400/40 flex items-center justify-center text-fuchsia-300">
+                        <i class="fas fa-tags text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black leading-snug" v-text="selectedPosItemForVariants ? selectedPosItemForVariants.name : ''"></h3>
+                        <p class="text-[11px] text-fuchsia-200 font-bold opacity-80">[[ isArabic ? 'اختر التنوع / المقاس المطلوب إضافته للسلة' : 'Select desired variant to add to cart' ]]</p>
+                    </div>
+                </div>
+                <button @click="showPosVariantModal = false" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Variants List -->
+            <div class="p-6 overflow-y-auto flex-1 space-y-3 custom-scrollbar bg-slate-50/50">
+                <div v-for="variant in (selectedPosItemForVariants ? selectedPosItemForVariants.variants : [])" 
+                     :key="variant.id"
+                     @click="addToCart(variant); showPosVariantModal = false;"
+                     class="p-4 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-500 hover:shadow-lg transition-all duration-200 flex items-center justify-between cursor-pointer group">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center text-indigo-600 font-black shrink-0 group-hover:bg-indigo-50 group-hover:text-indigo-700 transition-colors">
+                            <i class="fas fa-cubes text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-black text-slate-800 text-sm group-hover:text-indigo-600 transition-colors" v-text="variant.variant_name || variant.name"></h4>
+                            <div class="flex items-center gap-3 mt-1">
+                                <span class="text-[10px] text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded" v-text="variant.sku"></span>
+                                <span v-if="variant.barcode" class="text-[10px] text-slate-400 font-mono" v-text="variant.barcode"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 text-right" dir="rtl">
+                        <div class="flex flex-col items-end">
+                            <span class="font-black text-red-600 text-base">[[ formatCurrency(variant.sales_price || variant.standard_price) ]]</span>
+                            <span class="text-[10px] font-bold" :class="parseFloat(variant.on_hand || 0) > 0 ? 'text-emerald-600' : 'text-rose-500'">
+                                <i class="fas fa-box text-[9px] ml-1"></i>
+                                [[ isArabic ? 'الرصيد: ' : 'Stock: ' ]] [[ parseFloat(variant.on_hand || 0).toLocaleString() ]]
+                            </span>
+                        </div>
+                        <button class="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white text-slate-600 flex items-center justify-center transition-all shadow-sm">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div v-if="!selectedPosItemForVariants || !selectedPosItemForVariants.variants || selectedPosItemForVariants.variants.length === 0" class="py-12 text-center text-slate-400 font-bold text-xs">
+                    [[ isArabic ? 'لا توجد متغيرات مسجلة لهذا الصنف' : 'No variants available for this material' ]]
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 bg-slate-100 border-t border-slate-200/60 flex justify-end">
+                <button @click="showPosVariantModal = false" class="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+                    [[ isArabic ? 'إلغاء' : 'Close' ]]
+                </button>
             </div>
         </div>
     </div>
