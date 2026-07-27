@@ -56,6 +56,7 @@ createApp({
             selectedPosItemForVariants: null,
             showMassUploadMenu: false,
             expandedItemRows: [],
+            materialViewMode: 'cards',
             // 🏷️ حقول الخصم الحالي على الفاتورة
             posDiscount: {
                 type: 'none',       // 'none' | 'percentage' | 'fixed'
@@ -6372,10 +6373,14 @@ createApp({
                 if (res.ok) {
                     bin.is_active = newStatus;
                     this.showToast(this.isArabic ? (newStatus ? "تم تفعيل الرف بنجاح" : "تم تعطيل الرف بنجاح") : "Bin status updated", 'success');
-                    await this.fetchInitialData();
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    const msg = err.error || err.detail || (this.isArabic ? "فشل تحديث حالة الرف" : "Failed to update bin status");
+                    this.showToast(msg, 'error');
                 }
             } catch (e) {
-                this.showToast("Error updating bin status", 'error');
+                console.error("toggleBinActive error:", e);
+                this.showToast(this.isArabic ? "خطأ في الشبكة" : "Network Error", 'error');
             } finally {
                 this.loading = false;
             }

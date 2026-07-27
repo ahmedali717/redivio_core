@@ -75,6 +75,8 @@ class StorageLocationSerializer(serializers.ModelSerializer):
         return attrs
 
 class StorageBinSerializer(serializers.ModelSerializer):
+    plant = serializers.PrimaryKeyRelatedField(queryset=Plant.objects.all(), required=False, allow_null=True)
+    code = serializers.CharField(required=False)
     plant_name = serializers.SerializerMethodField()
     location_name = serializers.SerializerMethodField()
     plant_id = serializers.SerializerMethodField()

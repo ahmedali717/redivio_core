@@ -121,6 +121,9 @@ class StorageLocationSerializer(serializers.ModelSerializer):
         return attrs
 
 class StorageBinSerializer(serializers.ModelSerializer):
+    plant = serializers.PrimaryKeyRelatedField(queryset=Plant.objects.all(), required=False, allow_null=True)
+    code = serializers.CharField(required=False)
+
     class Meta:
         model = StorageBin
         fields = '__all__'
