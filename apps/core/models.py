@@ -112,6 +112,14 @@ class OpCo(models.Model):
     def delete(self, *args, **kwargs):
         if self.is_system_root:
             raise ValidationError("أمان: لا يمكن حذف الشركة الأساسية المسجلة للنظام.")
+        
+        # 🚀 Item 02 & 06: فحص الأرصدة والحركات قبل حذف الشركة
+        from apps.wms.models import StockQuant, StockMove
+        if StockQuant.objects.filter(opco=self, quantity__gt=0).exists():
+            raise ValidationError("لا يمكن حذف الشركة نظراً لوجود أرصدة مخزنية قائمة للمواد في مصانع الشركة.")
+        if StockMove.objects.filter(opco=self).exists():
+            raise ValidationError("لا يمكن حذف الشركة نظراً لوجود حركات وسجلات تكاليف مرتبطة بها.")
+        
         super().delete(*args, **kwargs)
 
     def __str__(self):
@@ -159,6 +167,27 @@ class CompanyUser(models.Model):
     class Meta:
         unique_together = ('user', 'company')
         verbose_name = "موظف في شركة"
+
+    def clean(self):
+        # 🚀 Item 03: ضمان وجود مسؤول واحد على الأقل عند تعديل الأدوار
+        if self.pk:
+            original = CompanyUser.objects.filter(pk=self.pk).first()
+            if original and original.role == 'admin' and self.role != 'admin':
+                other_admins = CompanyUser.objects.filter(company=self.company, role='admin').exclude(pk=self.pk).count()
+                if other_admins == 0:
+                    raise ValidationError("لا يمكن تغيير دور المسؤول الوحيد. يجب إنشاء مسؤول آخر أولاً.")
+
+    def delete(self, *args, **kwargs):
+        # 🚀 Item 04: حظر حذف الأدمن الوحيد
+        if self.role == 'admin':
+            other_admins = CompanyUser.objects.filter(company=self.company, role='admin').exclude(pk=self.pk).count()
+            if other_admins == 0:
+                raise ValidationError("غير مسموح بحذف المسؤول الوحيد للنظام. يجب إنشاء وتعيين مسؤول (Admin) آخر أولاً قبل الحذف.")
+        super().delete(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 class PutawayRule(models.Model):
     # نربط بـ item_master.Material بدلاً من Item

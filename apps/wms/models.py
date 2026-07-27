@@ -10,6 +10,14 @@ class Plant(models.Model):
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=3, default='WH')
     
+    def delete(self, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if StockQuant.objects.filter(plant=self, quantity__gt=0).exists():
+            raise ValidationError("لا يمكن حذف المصنع نظراً لوجود رصيد مخزني متبقي فيه.")
+        if StockMove.objects.filter(models.Q(source_bin__plant=self) | models.Q(dest_bin__plant=self)).exists():
+            raise ValidationError("لا يمكن حذف المصنع نظراً لوجود حركات مخزنية وتكاليف مرتبطة به.")
+        super().delete(*args, **kwargs)
+
     def __str__(self): return self.name
 
     class Meta:
@@ -36,7 +44,7 @@ class StorageBin(models.Model):
     # يمكنك إعادة rack/shelf لاحقاً إذا طورت الواجهة الأمامية لتدعمها
     is_active = models.BooleanField(default=True)
     
-    def __str__(self): return self.code
+    def __str__(self): return f"{self.plant.code} - {self.code}"
 
     class Meta:
         # هذا السطر يضمن عدم تكرار الكود على مستوى قاعدة البيانات
@@ -81,10 +89,20 @@ class StockMove(models.Model):
     receipt_type = models.CharField(max_length=50, null=True, blank=True)
 
     def save(self, *args, **kwargs):
+        from django.core.exceptions import ValidationError
         is_new = self.pk is None
         if is_new and self.opco.is_inventory_active:
-            from django.core.exceptions import ValidationError
             raise ValidationError("لا يمكن إجراء حركات مخزنية أثناء عملية الجرد النشطة.")
+        
+        # 🚀 Item 10: حظر الحركة للأصناف غير النشطة
+        if self.material and not getattr(self.material, 'is_active', True):
+            raise ValidationError(f"الصنف [{self.material.sku}] معطل وغير متاح للتعاملات المخزنية.")
+            
+        # 🚀 Item 14: حظر الحركة للرفوف غير النشطة
+        if self.source_bin and not self.source_bin.is_active:
+            raise ValidationError(f"الرف المصدر ({self.source_bin.code}) معطل وغير متاح للحركة.")
+        if self.dest_bin and not self.dest_bin.is_active:
+            raise ValidationError(f"الرف الهدف ({self.dest_bin.code}) معطل وغير متاح للحركة.")
             
         super().save(*args, **kwargs)
         

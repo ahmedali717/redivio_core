@@ -4831,6 +4831,42 @@ createApp({
             }
         },
 
+        getMaterialAssignedBins(material) {
+            if (!material) return [];
+            let binIds = [];
+            if (material.company_assignments && material.company_assignments.length > 0) {
+                material.company_assignments.forEach(ca => {
+                    if (ca.bins && Array.isArray(ca.bins)) {
+                        binIds.push(...ca.bins);
+                    }
+                });
+            }
+            if (material.stock_details && Array.isArray(material.stock_details)) {
+                material.stock_details.forEach(st => {
+                    if (st.bin_id) binIds.push(st.bin_id);
+                });
+            }
+            const uniqueIds = [...new Set(binIds)];
+            const allBins = (this.bins || []).filter(b => b.is_active !== false);
+            if (uniqueIds.length === 0) return allBins;
+            return allBins.filter(b => uniqueIds.includes(b.id)).map(b => {
+                const plant = (this.allPlants || []).find(p => p.id === b.plant);
+                return {
+                    ...b,
+                    plant_code: plant ? plant.code : '',
+                    plant_name: plant ? plant.name : ''
+                };
+            });
+        },
+
+        getBinPlantName(binId) {
+            if (!binId) return '-';
+            const bin = (this.bins || []).find(b => b.id === binId);
+            if (!bin) return '-';
+            const plant = (this.allPlants || []).find(p => p.id === bin.plant);
+            return plant ? `${plant.name} (${plant.code})` : '-';
+        },
+
         openStockAdjustment(st = null) {
             if (st) {
                 this.stockAdjustForm = {
@@ -6484,6 +6520,25 @@ createApp({
         },
 
         async deleteCompanyUser(id) {
+            const targetUser = (this.companyUsers || []).find(u => u.id === id);
+            
+            // 🚀 Item 04: فحص إذا كان المستخدم أدمن والأدمن الوحيد
+            if (targetUser && targetUser.role === 'admin') {
+                const adminCount = (this.companyUsers || []).filter(u => u.role === 'admin').length;
+                if (adminCount <= 1) {
+                    await Swal.fire({
+                        title: this.isArabic ? 'تنبيه: تعذر حذف المسؤول' : 'Cannot Delete Administrator',
+                        html: this.isArabic 
+                            ? '<strong>لا يمكن حذف المسؤول (Administrator) الوحيد للنظام.</strong><br/><br/>يجب إنشاء وتعيين مسؤول آخر أولاً قبل حذف الحساب الحالي.'
+                            : '<strong>It is not possible to delete the only administrator.</strong><br/><br/>Another administrator should be created before deleting the original administrator.',
+                        icon: 'error',
+                        confirmButtonText: this.isArabic ? 'فهمت ذلك' : 'Understood',
+                        confirmButtonColor: '#4f46e5'
+                    });
+                    return;
+                }
+            }
+
             const { isConfirmed } = await Swal.fire({
                 title: this.isArabic ? 'تأكيد الحذف' : 'Confirm Delete',
                 text: this.isArabic ? "هل أنت متأكد من حذف هذا المستخدم؟" : "Are you sure you want to delete this user?",
@@ -6503,6 +6558,14 @@ createApp({
                 if (res.ok) {
                     this.showToast(this.isArabic ? "تم الحذف" : "Deleted successfully", "success");
                     await this.fetchCompanyUsers();
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    await Swal.fire({
+                        title: this.isArabic ? 'تعذر الحذف' : 'Deletion Failed',
+                        text: errData.detail || errData.error || (this.isArabic ? 'حدث خطأ أثناء عملية الحذف' : 'Error deleting user'),
+                        icon: 'error',
+                        confirmButtonText: this.isArabic ? 'موافق' : 'OK'
+                    });
                 }
             } catch (e) { console.error("Delete User Error", e); }
         },

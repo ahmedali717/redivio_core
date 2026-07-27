@@ -9,13 +9,18 @@ export const itemMasterModule = {
         materials_list: [],
         imagePreview: null,
         selectedFile: null,
+        materialViewMode: 'cards', // 🚀 Item 16: List vs Cards
         forms: {
             material: { 
                 id: null, 
                 sku: '', 
                 name: '', 
+                description: '',
+                is_active: true,
                 category: '', 
                 base_uom: 'PCS', 
+                alternate_uom: '',
+                uom_conversion_factor: 1.0,
                 barcode: '', 
                 // 🚀 الهيكل الجديد والموحد
                 company_assignments: [
@@ -29,6 +34,7 @@ export const itemMasterModule = {
                 standard_price: 0,
                 sales_price: 0,
                 tax_rate: 15,
+                plant_prices: [],
                 // 🚀 POS & Recipe extensions
                 is_pos_item: false,
                 is_combo: false,
@@ -139,8 +145,12 @@ export const itemMasterModule = {
                 id: material.id,
                 sku: material.sku,
                 name: material.name,
+                description: material.description || '',
+                is_active: material.is_active !== undefined ? material.is_active : true,
                 category: material.category,
                 base_uom: material.base_uom,
+                alternate_uom: material.alternate_uom || '',
+                uom_conversion_factor: material.uom_conversion_factor || 1.0,
                 barcode: material.barcode || '',
                 
                 // 🚀 سحب مصفوفة الربط المجهزة من السيريالايزر (get_company_assignments)
@@ -152,6 +162,7 @@ export const itemMasterModule = {
                 standard_price: material.standard_price || 0,
                 sales_price: material.sales_price || 0,
                 tax_rate: material.tax_rate || 15,
+                plant_prices: material.plant_prices || [],
                 weight: material.weight || 0,
                 volume: material.volume || 0,
                 reorder_level: material.reorder_level || 0,

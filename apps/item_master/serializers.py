@@ -21,17 +21,26 @@ class MaterialSerializer(serializers.ModelSerializer):
     combo_lines = serializers.SerializerMethodField()
     stock_details = serializers.SerializerMethodField()
     allowed_terminals = serializers.SerializerMethodField()
-    variants = serializers.SerializerMethodField()
+    plant_prices = serializers.SerializerMethodField()
     
     class Meta:
         model = Material
         fields = [
-            'id', 'sku', 'name', 'category', 'category_name', 'sale_group', 'sale_group_name',
-            'base_uom', 'barcode', 'company_assignments','standard_price', 'sales_price', 'tax_rate',
+            'id', 'sku', 'name', 'description', 'category', 'category_name', 'sale_group', 'sale_group_name',
+            'base_uom', 'alternate_uom', 'uom_conversion_factor', 'is_active', 'barcode', 'company_assignments',
+            'standard_price', 'sales_price', 'tax_rate', 'plant_prices',
             'image', 'tracking', 'reorder_level', 'max_level', 'on_hand', 'stock_details',
             'is_pos_item', 'is_combo', 'expiry_date', 'recipe_lines', 'combo_lines', 'allowed_terminals',
             'has_variants', 'parent_template', 'variant_name', 'variants'
         ]
+
+    def get_plant_prices(self, obj):
+        return [{
+            'plant_id': p.plant_id,
+            'plant_name': p.plant.name,
+            'standard_price': float(p.standard_price),
+            'sales_price': float(p.sales_price)
+        } for p in obj.plant_prices.all()]
 
     def get_variants(self, obj):
         if obj.has_variants:

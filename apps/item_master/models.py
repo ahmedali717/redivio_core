@@ -33,9 +33,18 @@ class Material(TenantBaseModel):
     # البيانات الأساسية
     sku = models.CharField(max_length=50)
     name = models.CharField(max_length=200)
+    # 🚀 Item 11: إضافة حقل الوصف
+    description = models.TextField(blank=True, null=True, verbose_name="وصف الصنف")
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     sale_group = models.ForeignKey(SaleGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name='materials')
     base_uom = models.CharField(max_length=50, default='PCS')
+    # 🚀 Item 09: إضافة وحدة القياس البديلة ونسبة التحويل (AUOM & Transformation Ratio)
+    alternate_uom = models.CharField(max_length=50, blank=True, null=True, verbose_name="وحدة القياس البديلة")
+    uom_conversion_factor = models.DecimalField(max_digits=12, decimal_places=4, default=1.0, verbose_name="نسبة التحويل (معكوس أو معامل الضرب)")
+    
+    # 🚀 Item 10: حقل التفعيل والتعطيل للصنف
+    is_active = models.BooleanField(default=True, verbose_name="نشط؟", help_text="تعطيل الصنف يمنع أي معاملات مخزنية أو بيعية عليه")
+    
     barcode = models.CharField(max_length=100, null=True, blank=True)
     image = models.ImageField(upload_to='materials/', null=True, blank=True)
     
@@ -94,6 +103,19 @@ class Material(TenantBaseModel):
         total = StockQuant.objects.filter(material=self, opco=self.opco).aggregate(Sum('quantity'))['quantity__sum']
         return total or 0
 
+# 🚀 Item 17: أسعار الصنف المحددة لكل مصنع على حدة (Plant-level Pricing)
+class MaterialPlantPrice(models.Model):
+    material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name='plant_prices')
+    plant = models.ForeignKey('wms.Plant', on_delete=models.CASCADE, related_name='material_prices')
+    standard_price = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="تلفة المصنع")
+    sales_price = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="سعر بيع المصنع")
+
+    class Meta:
+        unique_together = ('material', 'plant')
+
+    def __str__(self):
+        return f"{self.material.name} @ {self.plant.name}: {self.sales_price}"
+
 # 2.5. مكونات الـ Combo (Combo Items)
 class ComboItem(models.Model):
     parent_material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name='combo_items')
@@ -121,10 +143,20 @@ class MaterialLocation(models.Model):
         unique_together = ('material', 'storage_bin')
 
     def clean(self):
-        """ منع ربط صنف برف يتبع شركة أخرى """
+        """ منع ربط صنف برف يتبع شركة أخرى أو أكثر من رف لنفس المصنع """
         bin_opco = self.storage_bin.plant.opco
         if self.material.opco != bin_opco:
             raise ValidationError(f"خطأ: الرف {self.storage_bin.code} يتبع شركة {bin_opco.name} وليس شركة الصنف!")
+        
+        # 🚀 Item 13: حظر ربط الصنف بأكثر من رف في نفس المصنع
+        existing_in_plant = MaterialLocation.objects.filter(
+            material=self.material, 
+            storage_bin__plant=self.storage_bin.plant
+        )
+        if self.pk:
+            existing_in_plant = existing_in_plant.exclude(pk=self.pk)
+        if existing_in_plant.exists():
+            raise ValidationError(f"خطأ: الصنف مرتبط بالفعل براد/رف آخر في المصنع ({self.storage_bin.plant.name}). لا يمكن تعيين أكثر من رف لنفس الصنف داخل نفس المصنع.")
 
     def save(self, *args, **kwargs):
         self.full_clean()

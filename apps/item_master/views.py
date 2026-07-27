@@ -124,14 +124,28 @@ class MaterialViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 uom_val = row[3].strip() if len(row) > 3 else 'PCS'
                 barcode_val = row[4].strip() if len(row) > 4 else ''
                 tracking_val = row[5].strip() if len(row) > 5 else 'none'
+                
+                # 🚀 Item 09, 10, 11: قراءة الحقول التجميلية والتفصيلية الجديدة
+                description_val = row[6].strip() if len(row) > 6 else ''
+                alt_uom_val = row[7].strip() if len(row) > 7 else ''
+                conv_ratio_val = row[8].strip() if len(row) > 8 else '1.0'
+                is_active_val = row[9].strip().lower() not in ['0', 'false', 'no', 'إيقاف', 'معطل'] if len(row) > 9 else True
+
+                try:
+                    conv_ratio = float(conv_ratio_val)
+                except ValueError:
+                    conv_ratio = 1.0
 
                 # تجهيز البيانات
                 defaults = {
                     'name': name_val,
-                    # 'category': category_val, # لاحظ: لو category في الموديل Foreign Key هتحتاج تعمل Category.objects.get_or_create هنا الأول
                     'base_uom': uom_val,
                     'barcode': barcode_val,
                     'tracking': tracking_val,
+                    'description': description_val,
+                    'alternate_uom': alt_uom_val,
+                    'uom_conversion_factor': conv_ratio,
+                    'is_active': is_active_val,
                 }
                 
                 # ربط الصنف بالشركة إذا كانت مبعوثة
@@ -146,7 +160,7 @@ class MaterialViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 
                 count += 1
 
-            return Response({'success': True, 'count': count})
+            return Response({'success': True, 'count': count, 'message': f'تم استيراد/تحديث {count} صنف بنجاح'})
             
         except Exception as e:
             return Response({'error': f'حدث خطأ أثناء معالجة الملف: {str(e)}'}, status=500)
