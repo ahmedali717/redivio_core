@@ -22,6 +22,7 @@ class MaterialSerializer(serializers.ModelSerializer):
     stock_details = serializers.SerializerMethodField()
     allowed_terminals = serializers.SerializerMethodField()
     plant_prices = serializers.SerializerMethodField()
+    variants = serializers.SerializerMethodField()
     
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=False, allow_null=True)
     sale_group = serializers.PrimaryKeyRelatedField(queryset=SaleGroup.objects.all(), required=False, allow_null=True)
@@ -46,6 +47,10 @@ class MaterialSerializer(serializers.ModelSerializer):
             raw_data = data.copy()
         else:
             raw_data = dict(data)
+
+        # 🚀 استبعاد القوائم المخصصة المعالجة يدوياً من الفحص التلقائي لـ DRF
+        for custom_field in ['company_assignments', 'recipe_lines', 'combo_lines', 'allowed_terminals', 'variants', 'plant_prices', 'stock_details', 'on_hand']:
+            raw_data.pop(custom_field, None)
 
         # 🚀 تنظيف الحقول المرتبطة (Foreign Keys)
         for fk_field in ['category', 'sale_group', 'parent_template']:
