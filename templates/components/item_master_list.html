@@ -68,7 +68,9 @@
                     </span>
                     
                     <span v-if="item.has_variants || (item.variants && item.variants.length > 0)" 
-                          class="text-[8px] bg-fuchsia-50 text-fuchsia-600 px-2 py-0.5 rounded-full font-black border border-fuchsia-200">
+                          @click.stop="openVariantsManagerModal(item)"
+                          class="text-[8px] bg-fuchsia-50 text-fuchsia-600 hover:bg-fuchsia-600 hover:text-white transition-all cursor-pointer shadow-sm px-2 py-0.5 rounded-full font-black border border-fuchsia-200"
+                          :title="isArabic ? 'إدارة التنوعات والألوان والمقاسات والصور' : 'Manage variants, sizes, colors and photos'">
                         <i class="fas fa-tags"></i> [[ item.variants ? item.variants.length : 0 ]] [[ isArabic ? 'متغيرات' : 'Variants' ]]
                     </span>
                 </div>
@@ -164,10 +166,15 @@
                         <td class="p-3 font-mono text-slate-600">[[ item.sku ]]</td>
                         <td class="p-3 text-slate-500 max-w-[180px] truncate">[[ item.description || '-' ]]</td>
                         <td class="p-3">
-                            <span v-if="item.variants && item.variants.length > 0" class="bg-fuchsia-50 text-fuchsia-700 px-2 py-0.5 rounded border border-fuchsia-200 text-[10px] font-bold">
+                            <span v-if="item.variants && item.variants.length > 0" 
+                                  @click.stop="openVariantsManagerModal(item)"
+                                  class="bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-600 hover:text-white transition-all cursor-pointer shadow-sm px-2 py-0.5 rounded border border-fuchsia-200 text-[10px] font-bold"
+                                  :title="isArabic ? 'إدارة التنوعات والصور' : 'Manage Variants'">
                                 [[ item.variants.length ]] [[ isArabic ? 'متغيرات' : 'Variants' ]]
                             </span>
-                            <span v-else class="text-slate-400 text-[10px]">-</span>
+                            <span v-else @click.stop="openVariantsManagerModal(item)" class="text-slate-400 text-[10px] hover:text-fuchsia-600 cursor-pointer underline underline-offset-2">
+                                + [[ isArabic ? 'إضافة متغيرات' : 'Add Variants' ]]
+                            </span>
                         </td>
                         <td class="p-3 text-slate-600">[[ item.base_uom ]]</td>
                         <td class="p-3">

@@ -57,6 +57,14 @@ createApp({
             showMassUploadMenu: false,
             expandedItemRows: [],
             materialViewMode: 'cards',
+            showMasterVariantManagerModal: false,
+            selectedMasterItemForVariants: null,
+            showVariantFormPanel: false,
+            isEditingVariant: false,
+            savingVariant: false,
+            variantForm: { id: null, variant_name: '', sku: '', barcode: '', sales_price: 0 },
+            variantImagePreview: null,
+            variantFileToUpload: null,
             // 🏷️ حقول الخصم الحالي على الفاتورة
             posDiscount: {
                 type: 'none',       // 'none' | 'percentage' | 'fixed'
@@ -6381,6 +6389,176 @@ createApp({
             } catch (e) {
                 console.error("toggleBinActive error:", e);
                 this.showToast(this.isArabic ? "خطأ في الشبكة" : "Network Error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+        openVariantsManagerModal(item) {
+            this.selectedMasterItemForVariants = item;
+            this.showVariantFormPanel = false;
+            this.showMasterVariantManagerModal = true;
+        },
+        closeVariantsManagerModal() {
+            this.showMasterVariantManagerModal = false;
+            this.selectedMasterItemForVariants = null;
+            this.showVariantFormPanel = false;
+        },
+        openAddVariantForm() {
+            if (!this.selectedMasterItemForVariants) return;
+            const existingCount = (this.selectedMasterItemForVariants.variants || []).length + 1;
+            const parentSku = this.selectedMasterItemForVariants.sku || 'ITEM';
+            this.isEditingVariant = false;
+            this.variantForm = {
+                id: null,
+                variant_name: '',
+                sku: `${parentSku}-V${existingCount}`,
+                barcode: '',
+                sales_price: parseFloat(this.selectedMasterItemForVariants.sales_price || 0)
+            };
+            this.variantImagePreview = null;
+            this.variantFileToUpload = null;
+            this.showVariantFormPanel = true;
+        },
+        editVariantItem(variant) {
+            this.isEditingVariant = true;
+            this.variantForm = {
+                id: variant.id,
+                variant_name: variant.variant_name || '',
+                sku: variant.sku || '',
+                barcode: variant.barcode || '',
+                sales_price: parseFloat(variant.sales_price || this.selectedMasterItemForVariants.sales_price || 0)
+            };
+            this.variantImagePreview = variant.image ? this.fixImagePath(variant.image) : null;
+            this.variantFileToUpload = null;
+            this.showVariantFormPanel = true;
+        },
+        handleVariantImageChange(e) {
+            const file = e.target.files && e.target.files[0];
+            if (file) {
+                this.variantFileToUpload = file;
+                this.variantImagePreview = URL.createObjectURL(file);
+            }
+        },
+        async saveVariantItem() {
+            if (!this.selectedMasterItemForVariants || !this.variantForm.variant_name || !this.variantForm.sku) {
+                this.showToast(this.isArabic ? "برجاء إدخال كود المتغير واسم التدرج" : "Please fill required fields", 'error');
+                return;
+            }
+            try {
+                this.savingVariant = true;
+                const parent = this.selectedMasterItemForVariants;
+                const formData = new FormData();
+
+                formData.append('parent_template', parent.id);
+                formData.append('variant_name', this.variantForm.variant_name);
+                formData.append('name', `${parent.name} (${this.variantForm.variant_name})`);
+                formData.append('sku', this.variantForm.sku);
+                formData.append('barcode', this.variantForm.barcode || '');
+                formData.append('sales_price', this.variantForm.sales_price || parent.sales_price || 0);
+                formData.append('base_uom', parent.base_uom || 'PCS');
+                if (parent.category) formData.append('category', parent.category);
+                if (parent.sale_group) formData.append('sale_group', parent.sale_group);
+                formData.append('is_pos_item', parent.is_pos_item ? 'true' : 'false');
+                if (this.activeOpcoId) formData.append('opco', this.activeOpcoId);
+
+                if (this.variantFileToUpload) {
+                    formData.append('image', this.variantFileToUpload);
+                }
+
+                const isEdit = this.isEditingVariant && this.variantForm.id;
+                const url = isEdit ? `/api/materials/${this.variantForm.id}/` : '/api/materials/';
+                const method = isEdit ? 'PATCH' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    if (!parent.has_variants) {
+                        await fetch(`/api/materials/${parent.id}/`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({ has_variants: true })
+                        });
+                    }
+
+                    this.showToast(this.isArabic ? "تم حفظ بيانات المتغير بنجاح" : "Variant saved successfully", 'success');
+                    this.showVariantFormPanel = false;
+                    await this.fetchMaterials();
+                    
+                    if (this.materials_list) {
+                        const updatedParent = this.materials_list.find(m => m.id === parent.id);
+                        if (updatedParent) {
+                            this.selectedMasterItemForVariants = updatedParent;
+                        }
+                    }
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    const msg = errData.error || errData.detail || (this.isArabic ? "فشل حفظ المتغير" : "Failed to save variant");
+                    this.showToast(msg, 'error');
+                }
+            } catch (e) {
+                console.error("saveVariantItem error:", e);
+                this.showToast(this.isArabic ? "خطأ أثناء حفظ المتغير" : "Error saving variant", 'error');
+            } finally {
+                this.savingVariant = false;
+            }
+        },
+        async uploadVariantImageDirect(e, variant) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            try {
+                this.loading = true;
+                const formData = new FormData();
+                formData.append('image', file);
+                const res = await fetch(`/api/materials/${variant.id}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تحديث صورة المتغير بنجاح" : "Variant photo updated", 'success');
+                    await this.fetchMaterials();
+                    if (this.selectedMasterItemForVariants && this.materials_list) {
+                        const updatedParent = this.materials_list.find(m => m.id === this.selectedMasterItemForVariants.id);
+                        if (updatedParent) this.selectedMasterItemForVariants = updatedParent;
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async deleteVariantItem(variantId) {
+            if (!confirm(this.isArabic ? "هل أنت متأكد من حذف هذا المتغير؟" : "Are you sure you want to delete this variant?")) return;
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/materials/${variantId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    }
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم حذف المتغير بنجاح" : "Variant deleted", 'success');
+                    await this.fetchMaterials();
+                    if (this.selectedMasterItemForVariants && this.materials_list) {
+                        const updatedParent = this.materials_list.find(m => m.id === this.selectedMasterItemForVariants.id);
+                        if (updatedParent) this.selectedMasterItemForVariants = updatedParent;
+                    }
+                }
+            } catch (err) {
+                console.error(err);
             } finally {
                 this.loading = false;
             }
