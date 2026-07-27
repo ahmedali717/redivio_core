@@ -47,6 +47,7 @@ class Material(TenantBaseModel):
     
     barcode = models.CharField(max_length=100, null=True, blank=True)
     image = models.ImageField(upload_to='materials/', null=True, blank=True)
+    extra_images = models.JSONField(default=list, blank=True, help_text="معرض صور إضافية للصنف")
     
     # --- 🚀 حقول الـ Advanced Mode (Odoo 19 Style) ---
     TRACKING_CHOICES = [

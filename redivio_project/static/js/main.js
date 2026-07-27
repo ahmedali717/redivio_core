@@ -65,6 +65,9 @@ createApp({
             variantForm: { id: null, variant_name: '', sku: '', barcode: '', sales_price: 0 },
             variantImagePreview: null,
             variantFileToUpload: null,
+            showImageLightboxModal: false,
+            lightboxImageUrl: '',
+            lightboxTitle: '',
             // 🏷️ حقول الخصم الحالي على الفاتورة
             posDiscount: {
                 type: 'none',       // 'none' | 'percentage' | 'fixed'
@@ -6554,6 +6557,40 @@ createApp({
                     if (this.selectedMasterItemForVariants && this.materials_list) {
                         const updatedParent = this.materials_list.find(m => m.id === this.selectedMasterItemForVariants.id);
                         if (updatedParent) this.selectedMasterItemForVariants = updatedParent;
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.loading = false;
+            }
+        },
+        openLightbox(imageUrl, title = '') {
+            if (!imageUrl) return;
+            this.lightboxImageUrl = imageUrl;
+            this.lightboxTitle = title;
+            this.showImageLightboxModal = true;
+        },
+        async addGalleryImage(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            try {
+                this.loading = true;
+                const formData = new FormData();
+                formData.append('image', file);
+                const res = await fetch('/api/materials/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: formData
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (!this.forms.material.extra_images) {
+                        this.forms.material.extra_images = [];
+                    }
+                    if (data.image) {
+                        this.forms.material.extra_images.push(data.image);
+                        this.showToast(this.isArabic ? "تم إضافة الصورة للمعرض" : "Photo added to gallery", 'success');
                     }
                 }
             } catch (err) {

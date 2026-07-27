@@ -71,22 +71,62 @@
             <!-- General Info Tab -->
             <div v-show="materialTab === 'general'">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <!-- Image Upload -->
-                    <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-4 bg-slate-50 hover:bg-slate-100 transition-colors">
-                        <div v-if="imagePreview" class="relative group">
-                            <img :src="imagePreview" class="w-40 h-40 object-cover rounded-lg shadow-md mb-2">
-                            <div @click="imagePreview = null; selectedFile = null" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                    <!-- Image Upload & Multi-Image Gallery -->
+                    <div class="flex flex-col items-center justify-start border-2 border-dashed border-slate-200 rounded-xl p-4 bg-slate-50 hover:bg-slate-100/80 transition-colors">
+                        <label class="block text-xs font-bold text-slate-700 mb-2">[[ isArabic ? 'الصورة الرئيسية' : 'Main Image' ]]</label>
+                        <div v-if="imagePreview" class="relative group cursor-pointer" @click="openLightbox(imagePreview, forms.material.name)">
+                            <img :src="imagePreview" class="w-40 h-40 object-cover rounded-lg shadow-md mb-2 hover:opacity-90 transition-opacity">
+                            <div class="absolute inset-0 bg-black/30 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                <i class="fas fa-expand text-xl"></i>
+                            </div>
+                            <div @click.stop="imagePreview = null; selectedFile = null" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
                                 <i class="fas fa-times text-xs"></i>
                             </div>
                         </div>
-                        <div v-else class="text-center py-8 flex flex-col items-center">
+                        <div v-else class="text-center py-6 flex flex-col items-center">
                             <i class="fas fa-box text-5xl text-slate-300 mb-2"></i>
                             <p class="text-xs font-bold text-slate-400">[[ isArabic ? 'اضغط لرفع صورة للصنف' : 'Upload Item Photo' ]]</p>
                         </div>
-                        <input type="file" @change="handleImageUpload($event, $this)" class="hidden" id="matImage">
-                        <label for="matImage" class="mt-2 px-4 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold cursor-pointer hover:shadow-sm">
-                            [[ isArabic ? 'اختيار ملف' : 'Select File' ]]
-                        </label>
+                        
+                        <div class="flex items-center gap-2 mt-2">
+                            <input type="file" @change="handleImageUpload($event, $this)" class="hidden" id="matImage">
+                            <label for="matImage" class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold cursor-pointer hover:shadow-sm">
+                                <i class="fas fa-camera ml-1 text-indigo-600"></i>
+                                [[ isArabic ? 'اختيار صورة رئيسية' : 'Main Photo' ]]
+                            </label>
+                        </div>
+
+                        <!-- 🚀 Multi-Image Gallery Bar -->
+                        <div class="mt-6 w-full pt-4 border-t border-slate-200/80" dir="rtl">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                                    <i class="fas fa-images text-indigo-500"></i>
+                                    [[ isArabic ? 'معرض صور المنتجات' : 'Photo Gallery' ]]
+                                </span>
+                                <label class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer flex items-center gap-1">
+                                    <i class="fas fa-plus"></i> [[ isArabic ? 'إضافة صورة' : 'Add Photo' ]]
+                                    <input type="file" @change="addGalleryImage" accept="image/*" class="hidden">
+                                </label>
+                            </div>
+
+                            <div class="flex flex-wrap gap-2">
+                                <div v-for="(imgUrl, gIdx) in (forms.material.extra_images || [])" :key="gIdx" 
+                                     class="relative group/gal w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white shrink-0 shadow-sm cursor-pointer"
+                                     @click="openLightbox(fixImagePath(imgUrl), forms.material.name + ' - Photo ' + (gIdx+1))">
+                                    <img :src="fixImagePath(imgUrl)" class="w-full h-full object-cover">
+                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/gal:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                        <i class="fas fa-expand text-xs"></i>
+                                    </div>
+                                    <button @click.stop="forms.material.extra_images.splice(gIdx, 1)" 
+                                            class="absolute top-0 right-0 bg-red-500 text-white w-4 h-4 rounded-bl flex items-center justify-center opacity-0 group-hover/gal:opacity-100 transition-opacity">
+                                        <i class="fas fa-times text-[8px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <p v-if="!forms.material.extra_images || forms.material.extra_images.length === 0" class="text-[9px] text-slate-400 italic text-center mt-1">
+                                [[ isArabic ? 'لا توجد صور إضافية بعد' : 'No extra gallery photos' ]]
+                            </p>
+                        </div>
                     </div>
 
                     <!-- Main Fields -->

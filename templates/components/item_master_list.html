@@ -77,10 +77,14 @@
 
                 <div class="flex gap-4 mt-2">
                     <!-- Image -->
-                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border border-slate-100 overflow-hidden bg-slate-50 shrink-0 group-hover:scale-110 transition-transform duration-500">
+                    <div @click.stop="item.image ? openLightbox(fixImagePath(item.image), item.name) : editMaterial(item, $root)" 
+                         class="relative group/img w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border border-slate-100 overflow-hidden bg-slate-50 shrink-0 group-hover:scale-105 transition-transform duration-500 cursor-pointer shadow-sm">
                         <img v-if="item.image" :src="fixImagePath(item.image)" class="w-full h-full object-cover">
                         <div v-else class="w-full h-full flex items-center justify-center text-slate-200">
                             <i class="fas fa-box text-3xl"></i>
+                        </div>
+                        <div v-if="item.image" class="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
+                            <i class="fas fa-expand text-xs"></i>
                         </div>
                     </div>
 

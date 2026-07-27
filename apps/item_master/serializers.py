@@ -34,7 +34,7 @@ class MaterialSerializer(serializers.ModelSerializer):
             'id', 'sku', 'name', 'description', 'category', 'category_name', 'sale_group', 'sale_group_name',
             'base_uom', 'alternate_uom', 'uom_conversion_factor', 'is_active', 'barcode', 'company_assignments',
             'standard_price', 'sales_price', 'tax_rate', 'plant_prices',
-            'image', 'tracking', 'reorder_level', 'max_level', 'on_hand', 'stock_details',
+            'image', 'extra_images', 'tracking', 'reorder_level', 'max_level', 'on_hand', 'stock_details',
             'is_pos_item', 'is_combo', 'expiry_date', 'recipe_lines', 'combo_lines', 'allowed_terminals',
             'has_variants', 'parent_template', 'variant_name', 'variants'
         ]
@@ -47,6 +47,14 @@ class MaterialSerializer(serializers.ModelSerializer):
             raw_data = data.copy()
         else:
             raw_data = dict(data)
+
+        # 🚀 معالجة معرض الصور الإضافية extra_images
+        extra_imgs = raw_data.get('extra_images')
+        if isinstance(extra_imgs, str):
+            try:
+                raw_data['extra_images'] = json.loads(extra_imgs)
+            except Exception:
+                raw_data['extra_images'] = []
 
         # 🚀 استبعاد القوائم المخصصة المعالجة يدوياً من الفحص التلقائي لـ DRF
         for custom_field in ['company_assignments', 'recipe_lines', 'combo_lines', 'allowed_terminals', 'variants', 'plant_prices', 'stock_details', 'on_hand']:

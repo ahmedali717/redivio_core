@@ -478,9 +478,27 @@
     {% include "components/subscription_modal.html" %}
     {% include "components/modal.html" %}
     {% include "components/item_variants_modal.html" %}
+    {% include "components/lightbox_modal.html" %}
     <style>
         .ready-fade-enter-active, .ready-fade-leave-active { transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
         .ready-fade-enter-from, .ready-fade-leave-to { opacity: 0; transform: translate(-50%, 40px) scale(0.9); }
+        
+        /* 🚀 Custom Visible Scrollbar for Modals */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6366f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #4338ca;
+        }
     </style>
 {% endblock %}
 

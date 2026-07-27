@@ -1,0 +1,42 @@
+<!-- 🚀 Full Screen Lightbox Image Viewer Modal -->
+<div v-if="showImageLightboxModal" 
+     @click="showImageLightboxModal = false"
+     @keydown.escape.window="showImageLightboxModal = false"
+     class="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-2xl flex flex-col items-center justify-between p-6 animate-in fade-in duration-200 select-none">
+    
+    <!-- Top Action Bar -->
+    <div class="w-full max-w-6xl flex justify-between items-center z-10 text-white" @click.stop>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-indigo-400 border border-white/10">
+                <i class="fas fa-expand text-lg"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-black tracking-tight" v-text="lightboxTitle || (isArabic ? 'معاينة الصورة بالشاشة الكاملة' : 'Full Screen Image Viewer')"></h3>
+                <p class="text-[10px] text-slate-400 font-bold">[[ isArabic ? 'اضغط ESC أو زر الإغلاق للخروج' : 'Press ESC or close button to exit' ]]</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <a :href="lightboxImageUrl" target="_blank" download 
+               class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all border border-white/10 flex items-center gap-2 text-decoration-none">
+                <i class="fas fa-download"></i>
+                <span>[[ isArabic ? 'تحميل الصورة' : 'Download' ]]</span>
+            </a>
+            <button @click="showImageLightboxModal = false" class="w-10 h-10 rounded-xl bg-rose-500/20 hover:bg-rose-600 text-rose-200 hover:text-white flex items-center justify-center transition-all border border-rose-500/30 cursor-pointer">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Centered Full Resolution Image -->
+    <div class="flex-1 flex items-center justify-center p-4 w-full h-full overflow-hidden" @click.stop>
+        <img :src="lightboxImageUrl" 
+             class="max-h-[82vh] max-w-[92vw] object-contain rounded-2xl shadow-2xl ring-1 ring-white/10 transform hover:scale-[1.02] transition-transform duration-300">
+    </div>
+
+    <!-- Bottom Caption Bar -->
+    <div class="w-full text-center text-xs text-slate-400 font-bold z-10">
+        [[ isArabic ? 'انقر في أي مكان للخروج' : 'Click anywhere outside to close' ]]
+    </div>
+
+</div>
