@@ -58,17 +58,22 @@
             <div v-for="item in filteredMaterials" :key="item.id" @click="editMaterial(item, $root)"
                  class="group bg-white rounded-[1.8rem] border border-slate-200 p-4 hover:border-indigo-400 hover:shadow-2xl hover:shadow-indigo-100 transition-all cursor-pointer relative overflow-hidden flex flex-col h-full active:scale-95 duration-300">
                 
-                <!-- Active/Inactive Status Badge (Item 10) -->
-                <div class="absolute top-3 left-3 z-10">
+                <!-- Active/Inactive & Variants Status Badge -->
+                <div class="absolute top-3 left-3 z-10 flex items-center gap-1">
                     <span v-if="item.is_active !== false" class="text-[8px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-200">
                         <i class="fas fa-check-circle"></i> [[ isArabic ? 'نشط' : 'Active' ]]
                     </span>
                     <span v-else class="text-[8px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-black border border-rose-200">
                         <i class="fas fa-ban"></i> [[ isArabic ? 'معطل' : 'Deactivated' ]]
                     </span>
+                    
+                    <span v-if="item.has_variants || (item.variants && item.variants.length > 0)" 
+                          class="text-[8px] bg-fuchsia-50 text-fuchsia-600 px-2 py-0.5 rounded-full font-black border border-fuchsia-200">
+                        <i class="fas fa-tags"></i> [[ item.variants ? item.variants.length : 0 ]] [[ isArabic ? 'متغيرات' : 'Variants' ]]
+                    </span>
                 </div>
 
-                <div class="flex gap-4">
+                <div class="flex gap-4 mt-2">
                     <!-- Image -->
                     <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border border-slate-100 overflow-hidden bg-slate-50 shrink-0 group-hover:scale-110 transition-transform duration-500">
                         <img v-if="item.image" :src="fixImagePath(item.image)" class="w-full h-full object-cover">
@@ -101,13 +106,16 @@
                 <!-- Footer Stats -->
                 <div class="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between gap-4">
                     <div class="flex flex-col text-right flex-1" dir="rtl">
-                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">[[ isArabic ? 'الرصيد' : 'Stock' ]]</span>
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">[[ isArabic ? 'إجمالي الرصيد' : 'Total Stock' ]]</span>
                         <div class="flex items-center gap-1.5">
-                            <span :class="parseFloat(item.on_hand) > 0 ? 'text-emerald-700' : 'text-rose-400'" class="text-sm font-black font-mono">
-                                [[ parseFloat(item.on_hand).toLocaleString() ]]
+                            <span :class="getItemTotalStock(item) > 0 ? 'text-emerald-700' : 'text-rose-400'" class="text-sm font-black font-mono">
+                                [[ getItemTotalStock(item).toLocaleString() ]]
                             </span>
                             <span class="text-[8px] font-bold text-slate-400">[[ item.base_uom ]]</span>
                         </div>
+                        <span v-if="item.variants && item.variants.length > 0" class="text-[8px] font-bold text-fuchsia-600 mt-0.5">
+                            ([[ isArabic ? 'شامل كود المتغيرات' : 'All Variants Stock' ]])
+                        </span>
                     </div>
 
                     <div class="flex flex-col text-right flex-1" dir="rtl">
@@ -128,43 +136,85 @@
         <table class="w-full text-right border-collapse text-xs" dir="rtl">
             <thead>
                 <tr class="border-b border-slate-200 bg-slate-100/50 text-slate-500 font-black text-[10px] uppercase">
+                    <th class="p-3 w-8"></th>
                     <th class="p-3">[[ isArabic ? 'الصنف' : 'Item' ]]</th>
                     <th class="p-3">SKU</th>
                     <th class="p-3">[[ isArabic ? 'الوصف' : 'Description' ]]</th>
+                    <th class="p-3">[[ isArabic ? 'المتغيرات' : 'Variants' ]]</th>
                     <th class="p-3">[[ isArabic ? 'الوحدة' : 'UOM' ]]</th>
-                    <th class="p-3">[[ isArabic ? 'الوحدة البديلة' : 'Alt UOM' ]]</th>
                     <th class="p-3">[[ isArabic ? 'الحالة' : 'Status' ]]</th>
                     <th class="p-3">[[ isArabic ? 'السعر' : 'Price' ]]</th>
-                    <th class="p-3">[[ isArabic ? 'الرصيد' : 'Stock' ]]</th>
+                    <th class="p-3">[[ isArabic ? 'إجمالي الرصيد' : 'Total Stock' ]]</th>
                     <th class="p-3 text-center">[[ isArabic ? 'إجراءات' : 'Actions' ]]</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="item in filteredMaterials" :key="item.id" @click="editMaterial(item, $root)" class="border-b border-slate-100 hover:bg-indigo-50/30 transition-all cursor-pointer">
-                    <td class="p-3 font-bold text-slate-800 flex items-center gap-2">
-                        <img v-if="item.image" :src="fixImagePath(item.image)" class="w-7 h-7 rounded-lg object-cover">
-                        <span>[[ item.name ]]</span>
-                    </td>
-                    <td class="p-3 font-mono text-slate-600">[[ item.sku ]]</td>
-                    <td class="p-3 text-slate-500 max-w-[200px] truncate">[[ item.description || '-' ]]</td>
-                    <td class="p-3 text-slate-600">[[ item.base_uom ]]</td>
-                    <td class="p-3 text-slate-600">[[ item.alternate_uom ? (item.alternate_uom + ' (1:' + item.uom_conversion_factor + ')') : '-' ]]</td>
-                    <td class="p-3">
-                        <span v-if="item.is_active !== false" class="text-[9px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
-                            [[ isArabic ? 'نشط' : 'Active' ]]
-                        </span>
-                        <span v-else class="text-[9px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-bold border border-rose-200">
-                            [[ isArabic ? 'معطل' : 'Deactivated' ]]
-                        </span>
-                    </td>
-                    <td class="p-3 font-mono font-bold text-rose-600">[[ formatCurrency(item.sales_price || 0) ]]</td>
-                    <td class="p-3 font-mono font-bold text-emerald-600">[[ parseFloat(item.on_hand).toLocaleString() ]]</td>
-                    <td class="p-3 text-center">
-                        <button @click.stop="deleteItem('material', item.id)" class="text-rose-400 hover:text-rose-600 p-1">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </td>
-                </tr>
+                <template v-for="item in filteredMaterials" :key="item.id">
+                    <!-- Parent Row -->
+                    <tr @click="editMaterial(item, $root)" class="border-b border-slate-100 hover:bg-indigo-50/30 transition-all cursor-pointer">
+                        <td class="p-3 text-center" @click.stop="toggleItemExpand(item.id)">
+                            <button v-if="item.variants && item.variants.length > 0" class="w-6 h-6 rounded-lg bg-fuchsia-50 text-fuchsia-600 hover:bg-fuchsia-600 hover:text-white transition-all flex items-center justify-center text-[10px]">
+                                <i :class="isItemExpanded(item.id) ? 'fas fa-chevron-down' : 'fas fa-chevron-left'"></i>
+                            </button>
+                        </td>
+                        <td class="p-3 font-bold text-slate-800 flex items-center gap-2">
+                            <img v-if="item.image" :src="fixImagePath(item.image)" class="w-7 h-7 rounded-lg object-cover">
+                            <span>[[ item.name ]]</span>
+                        </td>
+                        <td class="p-3 font-mono text-slate-600">[[ item.sku ]]</td>
+                        <td class="p-3 text-slate-500 max-w-[180px] truncate">[[ item.description || '-' ]]</td>
+                        <td class="p-3">
+                            <span v-if="item.variants && item.variants.length > 0" class="bg-fuchsia-50 text-fuchsia-700 px-2 py-0.5 rounded border border-fuchsia-200 text-[10px] font-bold">
+                                [[ item.variants.length ]] [[ isArabic ? 'متغيرات' : 'Variants' ]]
+                            </span>
+                            <span v-else class="text-slate-400 text-[10px]">-</span>
+                        </td>
+                        <td class="p-3 text-slate-600">[[ item.base_uom ]]</td>
+                        <td class="p-3">
+                            <span v-if="item.is_active !== false" class="text-[9px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                                [[ isArabic ? 'نشط' : 'Active' ]]
+                            </span>
+                            <span v-else class="text-[9px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-bold border border-rose-200">
+                                [[ isArabic ? 'معطل' : 'Deactivated' ]]
+                            </span>
+                        </td>
+                        <td class="p-3 font-mono font-bold text-rose-600">[[ formatCurrency(item.sales_price || 0) ]]</td>
+                        <td class="p-3 font-mono font-bold text-emerald-600">
+                            [[ getItemTotalStock(item).toLocaleString() ]]
+                        </td>
+                        <td class="p-3 text-center">
+                            <button @click.stop="deleteItem('material', item.id)" class="text-rose-400 hover:text-rose-600 p-1">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Expanded Variants Rows -->
+                    <tr v-if="isItemExpanded(item.id) && item.variants && item.variants.length > 0" 
+                        v-for="variant in item.variants" :key="'var-' + variant.id"
+                        @click="editMaterial(variant, $root)"
+                        class="bg-fuchsia-50/30 border-b border-fuchsia-100 hover:bg-fuchsia-100/50 transition-colors cursor-pointer">
+                        <td class="p-3"></td>
+                        <td class="p-3 pr-8 font-bold text-fuchsia-900 flex items-center gap-2">
+                            <i class="fas fa-level-down-alt text-fuchsia-400 rotate-90"></i>
+                            <span>[[ variant.variant_name || variant.name ]]</span>
+                        </td>
+                        <td class="p-3 font-mono text-fuchsia-800">[[ variant.sku ]]</td>
+                        <td class="p-3 text-slate-400 italic text-[10px]">[[ isArabic ? 'متغير فرعي' : 'Variant Item' ]]</td>
+                        <td class="p-3 text-fuchsia-600 font-mono text-[10px]">[[ variant.barcode || '-' ]]</td>
+                        <td class="p-3 text-slate-600">[[ variant.base_uom || item.base_uom ]]</td>
+                        <td class="p-3">
+                            <span class="text-[8px] bg-fuchsia-100 text-fuchsia-800 px-1.5 py-0.5 rounded font-bold">Variant</span>
+                        </td>
+                        <td class="p-3 font-mono font-bold text-rose-600">[[ formatCurrency(variant.sales_price || item.sales_price) ]]</td>
+                        <td class="p-3 font-mono font-black text-emerald-700">[[ parseFloat(variant.on_hand || 0).toLocaleString() ]]</td>
+                        <td class="p-3 text-center">
+                            <button @click.stop="deleteItem('material', variant.id)" class="text-rose-400 hover:text-rose-600 p-1">
+                                <i class="fas fa-trash-alt text-[10px]"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </template>
             </tbody>
         </table>
     </div>

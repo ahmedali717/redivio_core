@@ -55,6 +55,7 @@ createApp({
             showPosVariantModal: false,
             selectedPosItemForVariants: null,
             showMassUploadMenu: false,
+            expandedItemRows: [],
             // 🏷️ حقول الخصم الحالي على الفاتورة
             posDiscount: {
                 type: 'none',       // 'none' | 'percentage' | 'fixed'
@@ -6338,6 +6339,24 @@ createApp({
             return loc ? loc.name : '...';
         },
 
+        getItemTotalStock(item) {
+            if (!item) return 0;
+            if (item.variants && item.variants.length > 0) {
+                return item.variants.reduce((sum, v) => sum + parseFloat(v.on_hand || 0), 0);
+            }
+            return parseFloat(item.on_hand || 0);
+        },
+        toggleItemExpand(itemId) {
+            const idx = this.expandedItemRows.indexOf(itemId);
+            if (idx > -1) {
+                this.expandedItemRows.splice(idx, 1);
+            } else {
+                this.expandedItemRows.push(itemId);
+            }
+        },
+        isItemExpanded(itemId) {
+            return this.expandedItemRows.includes(itemId);
+        },
         downloadCSVTemplate(filename, headers, sampleRow) {
             const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), sampleRow.join(',')].join('\n');
             const encodedUri = encodeURI(csvContent);
