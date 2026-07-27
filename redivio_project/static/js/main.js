@@ -5277,8 +5277,8 @@ createApp({
                         else if (data[key] !== null && !['logo', 'image', 'assigned_bins', 'primary_bin', 'company_assignments', 'recipe_lines', 'combo_lines', 'allowed_terminals', 'variants'].includes(key)) {
                             let val = data[key];
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
-                            // 🚀 حظر إرسال السلاسل الفارغة للحقول المرتبطة (Foreign Keys)
-                            if (['category', 'sale_group', 'parent_template'].includes(key) && (val === '' || val === 'null' || val === 'undefined' || val === null || val === undefined)) {
+                            // 🚀 حظر إرسال السلاسل الفارغة للحقول المرتبطة وتواريخ الانتهاء
+                            if (['category', 'sale_group', 'parent_template', 'expiry_date'].includes(key) && (val === '' || val === 'null' || val === 'undefined' || val === null || val === undefined)) {
                                 return;
                             }
                             payload.append(key, val);

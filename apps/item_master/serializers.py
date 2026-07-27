@@ -39,17 +39,39 @@ class MaterialSerializer(serializers.ModelSerializer):
         ]
 
     def to_internal_value(self, data):
-        if hasattr(data, '_mutable'):
-            data = data.copy()
+        raw_data = {}
+        if hasattr(data, 'dict'):
+            raw_data = data.dict()
         elif isinstance(data, dict):
-            data = data.copy()
+            raw_data = data.copy()
         else:
-            data = data.dict() if hasattr(data, 'dict') else dict(data)
-            
+            raw_data = dict(data)
+
+        # 🚀 تنظيف الحقول المرتبطة (Foreign Keys)
         for fk_field in ['category', 'sale_group', 'parent_template']:
-            if fk_field in data and data[fk_field] in ['', 'null', 'undefined', None]:
-                data[fk_field] = None
-        return super().to_internal_value(data)
+            val = raw_data.get(fk_field)
+            if isinstance(val, list):
+                val = val[0] if len(val) > 0 else None
+            if val in ['', 'null', 'undefined', 'None', None]:
+                raw_data[fk_field] = None
+
+        # 🚀 تنظيف حقل التواريخ
+        for date_field in ['expiry_date']:
+            val = raw_data.get(date_field)
+            if isinstance(val, list):
+                val = val[0] if len(val) > 0 else None
+            if val in ['', 'null', 'undefined', 'None', None]:
+                raw_data[date_field] = None
+
+        # 🚀 تنظيف حقول الأرقام والمبالغ
+        for num_field in ['reorder_level', 'max_level', 'standard_price', 'sales_price', 'tax_rate', 'weight', 'volume', 'uom_conversion_factor']:
+            val = raw_data.get(num_field)
+            if isinstance(val, list):
+                val = val[0] if len(val) > 0 else None
+            if val in ['', 'null', 'undefined', 'None', None]:
+                raw_data[num_field] = 0
+
+        return super().to_internal_value(raw_data)
 
     def get_plant_prices(self, obj):
         return [{
