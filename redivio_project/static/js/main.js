@@ -6158,7 +6158,7 @@ createApp({
             } else if (type === 'location') {
                 this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
             } else if (type === 'bin') {
-                this.forms.bin = { id: null, plant: this.activePlantId, code: '' };
+                this.forms.bin = { id: null, plant: this.activePlantId, code: '', is_active: true };
             } else if (type === 'material') {
                 this.forms.material = {
                     id: null, sku: '', name: '', category: '', sale_group: '', base_uom: 'PCS', barcode: '',
@@ -6356,6 +6356,29 @@ createApp({
         },
         isItemExpanded(itemId) {
             return this.expandedItemRows.includes(itemId);
+        },
+        async toggleBinActive(bin) {
+            try {
+                this.loading = true;
+                const newStatus = !(bin.is_active !== false);
+                const res = await fetch(`/api/bins/${bin.id}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ is_active: newStatus })
+                });
+                if (res.ok) {
+                    bin.is_active = newStatus;
+                    this.showToast(this.isArabic ? (newStatus ? "تم تفعيل الرف بنجاح" : "تم تعطيل الرف بنجاح") : "Bin status updated", 'success');
+                    await this.fetchInitialData();
+                }
+            } catch (e) {
+                this.showToast("Error updating bin status", 'error');
+            } finally {
+                this.loading = false;
+            }
         },
         downloadCSVTemplate(filename, headers, sampleRow) {
             const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), sampleRow.join(',')].join('\n');

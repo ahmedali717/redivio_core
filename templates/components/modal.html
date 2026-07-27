@@ -78,6 +78,14 @@
                     <label class="block text-xs font-bold text-slate-500 mb-1" v-text="isArabic ? 'كود الرف' : 'Bin Code'"></label>
                     <input v-model="forms.bin.code" type="text" class="w-full border-2 border-emerald-100 p-2.5 rounded-xl font-mono uppercase focus:border-emerald-500 outline-none" placeholder="A-101" required>
                 </div>
+                <!-- 🚀 Bin Active/Inactive Status Switcher -->
+                <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl mt-3" dir="rtl">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800">[[ isArabic ? 'حالة الرف (نشط / معطل)' : 'Bin Active Status' ]]</label>
+                        <p class="text-[9px] text-slate-400">[[ isArabic ? 'تعطيل الرف يمنع استخدامه في أي حركة مخزنية جديدة' : 'Deactivating disables new stock moves' ]]</p>
+                    </div>
+                    <input type="checkbox" v-model="forms.bin.is_active" class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
+                </div>
             </div>
 
             <div v-if="modalType === 'stock_entry'" class="space-y-6">
