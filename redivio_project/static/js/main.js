@@ -4850,7 +4850,6 @@ createApp({
                     system_mode: active.system_mode || 'modular',
                     purchased_modules: active.purchased_modules || []
                 };
-                this.imagePreview = finalLogo;
             }
         },
 
