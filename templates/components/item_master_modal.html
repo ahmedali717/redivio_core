@@ -13,17 +13,23 @@
                 <p class="text-xs text-slate-500 mt-1">[[ forms.material.sku || '---' ]] | [[ forms.material.name || '...' ]]</p>
             </div>
             
-            <div class="flex items-center bg-white border rounded-lg p-1 shadow-sm">
-                <button @click="isAdvancedMode = false" 
-                        :class="!isAdvancedMode ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400'"
-                        class="px-3 py-1 text-xs font-bold rounded-md transition-all">
-                    Plug & Play
+            <div class="flex items-center gap-3">
+                <button type="button" @click.prevent="saveMaterial" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                    <i class="fas fa-save"></i>
+                    <span>[[ isArabic ? 'حفظ البيانات' : 'Save Data' ]]</span>
                 </button>
-                <button @click="isAdvancedMode = true" 
-                        :class="isAdvancedMode ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'"
-                        class="px-3 py-1 text-xs font-bold rounded-md transition-all">
-                    Advanced
-                </button>
+                <div class="flex items-center bg-white border rounded-lg p-1 shadow-sm">
+                    <button @click="isAdvancedMode = false" 
+                            :class="!isAdvancedMode ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400'"
+                            class="px-3 py-1 text-xs font-bold rounded-md transition-all">
+                        Plug & Play
+                    </button>
+                    <button @click="isAdvancedMode = true" 
+                            :class="isAdvancedMode ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'"
+                            class="px-3 py-1 text-xs font-bold rounded-md transition-all">
+                        Advanced
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -343,8 +349,8 @@
                                     <td class="px-4 py-2">
                                         <select v-model="line.ingredient_id" class="w-full bg-transparent border-none focus:ring-0 text-xs font-bold text-slate-700">
                                             <option value="">[[ isArabic ? '-- اختر مادة خام --' : '-- Select Material --' ]]</option>
-                                            <option v-for="m in materials_list.filter(x => x.id !== forms.material.id)" :key="m.id" :value="m.id">
-                                                [[ getMaterialDisplayName(m) ]] ([[ m.sku ]])
+                                            <option v-for="m in selectableMaterials.filter(x => x.id !== forms.material.id)" :key="m.id" :value="m.id">
+                                                [[ getMaterialDisplayName(m) ]]
                                             </option>
                                         </select>
                                     </td>
@@ -405,8 +411,8 @@
                                     <td class="px-4 py-2">
                                         <select v-model="line.item_id" class="w-full bg-transparent border-none focus:ring-0 text-xs font-bold text-slate-700">
                                             <option value="">[[ isArabic ? '-- اختر صنف --' : '-- Select Item --' ]]</option>
-                                            <option v-for="m in materials_list.filter(x => x.id !== forms.material.id && !x.is_combo)" :key="m.id" :value="m.id">
-                                                [[ getMaterialDisplayName(m) ]] ([[ m.sku ]])
+                                            <option v-for="m in selectableMaterials.filter(x => x.id !== forms.material.id && !x.is_combo)" :key="m.id" :value="m.id">
+                                                [[ getMaterialDisplayName(m) ]]
                                             </option>
                                         </select>
                                     </td>

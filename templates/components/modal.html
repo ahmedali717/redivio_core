@@ -11,9 +11,16 @@
                 <i :class="modalType === 'stock_entry' ? 'fas fa-exchange-alt text-emerald-500' : 'fas fa-plus-circle text-indigo-500'"></i>
                 <span v-text="isArabic ? modalTitles[modalType]?.ar : modalTitles[modalType]?.en"></span>
             </h3>
-            <button @click="showModal = false" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50">
-                <i class="fas fa-times"></i>
-            </button>
+            <div class="flex items-center gap-3">
+                <button type="button" @click.prevent="modalType === 'user' ? saveCompanyUser() : (modalType === 'stock_entry' && forms.stock_entry.receipt_type === 'TRANSFER' ? submitInternalTransfer() : submitForm())" 
+                        class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                    <i class="fas fa-save"></i>
+                    <span v-text="isArabic ? 'حفظ البيانات' : 'Save Data'"></span>
+                </button>
+                <button @click="showModal = false" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         </div>
 
         <form @submit.prevent="submitForm" class="space-y-5">
@@ -150,7 +157,7 @@
                             </label>
                             <select v-model="forms.stock_entry.transfer_material" class="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 p-3 rounded-xl font-bold text-slate-700 outline-none transition-all">
                                 <option value="" v-text="isArabic ? '-- اختر الصنف --' : '-- Select Material --'"></option>
-                                <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
+                                <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                             </select>
                         </div>
 
@@ -216,7 +223,7 @@
                                 <td class="p-3">
                                     <select v-model="item.material_id" @change="fetchLastPrice(item)" class="w-full bg-white border border-slate-100 focus:border-emerald-200 p-2.5 rounded-xl font-bold text-slate-800 outline-none transition-all">
                                         <option value="">-- اختر الصنف --</option>
-                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
+                                        <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                                     </select>
                                 </td>
                                 <td class="p-3 text-center">
@@ -326,7 +333,7 @@
                                 <td class="p-3">
                                     <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-xs font-bold transition-all">
                                         <option value="">اختر الصنف...</option>
-                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
+                                        <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                                     </select>
                                 </td>
                                 <td class="p-3">
@@ -446,7 +453,7 @@
                                 <td class="p-3">
                                     <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-xs font-bold transition-all" required>
                                         <option value="">اختر الصنف...</option>
-                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
+                                        <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                                     </select>
                                 </td>
                                 <td class="p-3">

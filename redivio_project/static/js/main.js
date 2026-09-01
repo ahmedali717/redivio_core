@@ -719,6 +719,10 @@ createApp({
             return this.materials_list || [];
         },
 
+        selectableMaterials() {
+            return (this.materials_list || []).filter(m => !m.has_variants);
+        },
+
         filteredInventory() {
             if (!this.activeOpcoId) return this.inventoryList;
             return this.inventoryList.filter(item => item.opco_id === parseInt(this.activeOpcoId));
@@ -4861,12 +4865,21 @@ createApp({
 
         getMaterialDisplayName(m) {
             if (!m) return '';
-            const baseName = m.name || '';
-            if (m.variant_name) {
-                if (baseName.includes(m.variant_name)) return baseName;
-                return `${baseName} (${m.variant_name})`;
+            let name = m.name || '';
+            if (m.variant_name && !name.includes(m.variant_name)) {
+                name = `${name} (${m.variant_name})`;
             }
-            return baseName;
+            
+            let details = [];
+            if (m.sku) details.push(`كود: ${m.sku}`);
+            if (m.barcode) details.push(`باركود: ${m.barcode}`);
+            if (m.category_name) details.push(`فئة: ${m.category_name}`);
+            else if (m.sale_group_name) details.push(`مجموعة: ${m.sale_group_name}`);
+            
+            if (details.length > 0) {
+                return `${name}  |  [ ${details.join(' - ')} ]`;
+            }
+            return name;
         },
 
         getMaterialAssignedBins(material) {
