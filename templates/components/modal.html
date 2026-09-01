@@ -150,7 +150,7 @@
                             </label>
                             <select v-model="forms.stock_entry.transfer_material" class="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 p-3 rounded-xl font-bold text-slate-700 outline-none transition-all">
                                 <option value="" v-text="isArabic ? '-- اختر الصنف --' : '-- Select Material --'"></option>
-                                <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="m.name"></option>
+                                <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                             </select>
                         </div>
 
@@ -216,7 +216,7 @@
                                 <td class="p-3">
                                     <select v-model="item.material_id" @change="fetchLastPrice(item)" class="w-full bg-white border border-slate-100 focus:border-emerald-200 p-2.5 rounded-xl font-bold text-slate-800 outline-none transition-all">
                                         <option value="">-- اختر الصنف --</option>
-                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="m.name"></option>
+                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                                     </select>
                                 </td>
                                 <td class="p-3 text-center">
@@ -326,7 +326,7 @@
                                 <td class="p-3">
                                     <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-xs font-bold transition-all">
                                         <option value="">اختر الصنف...</option>
-                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="m.name"></option>
+                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                                     </select>
                                 </td>
                                 <td class="p-3">
@@ -446,7 +446,7 @@
                                 <td class="p-3">
                                     <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-xs font-bold transition-all" required>
                                         <option value="">اختر الصنف...</option>
-                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="m.name"></option>
+                                        <option v-for="m in materials_list" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                                     </select>
                                 </td>
                                 <td class="p-3">

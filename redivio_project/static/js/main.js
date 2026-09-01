@@ -4859,6 +4859,16 @@ createApp({
             }
         },
 
+        getMaterialDisplayName(m) {
+            if (!m) return '';
+            const baseName = m.name || '';
+            if (m.variant_name) {
+                if (baseName.includes(m.variant_name)) return baseName;
+                return `${baseName} (${m.variant_name})`;
+            }
+            return baseName;
+        },
+
         getMaterialAssignedBins(material) {
             if (!material) return [];
             let binIds = [];

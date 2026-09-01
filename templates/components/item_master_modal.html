@@ -344,7 +344,7 @@
                                         <select v-model="line.ingredient_id" class="w-full bg-transparent border-none focus:ring-0 text-xs font-bold text-slate-700">
                                             <option value="">[[ isArabic ? '-- اختر مادة خام --' : '-- Select Material --' ]]</option>
                                             <option v-for="m in materials_list.filter(x => x.id !== forms.material.id)" :key="m.id" :value="m.id">
-                                                [[ m.name ]] ([[ m.sku ]])
+                                                [[ getMaterialDisplayName(m) ]] ([[ m.sku ]])
                                             </option>
                                         </select>
                                     </td>
@@ -406,7 +406,7 @@
                                         <select v-model="line.item_id" class="w-full bg-transparent border-none focus:ring-0 text-xs font-bold text-slate-700">
                                             <option value="">[[ isArabic ? '-- اختر صنف --' : '-- Select Item --' ]]</option>
                                             <option v-for="m in materials_list.filter(x => x.id !== forms.material.id && !x.is_combo)" :key="m.id" :value="m.id">
-                                                [[ m.name ]] ([[ m.sku ]])
+                                                [[ getMaterialDisplayName(m) ]] ([[ m.sku ]])
                                             </option>
                                         </select>
                                     </td>
