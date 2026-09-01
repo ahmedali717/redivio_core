@@ -225,6 +225,17 @@
                                         <option value="">-- اختر الصنف --</option>
                                         <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                                     </select>
+                                    <div v-if="getSelectedMaterial(item.material_id)" class="mt-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200/60 rounded-lg text-[10px] font-semibold text-slate-500 flex flex-wrap items-center gap-2">
+                                        <span v-if="getSelectedMaterial(item.material_id).category_name || getSelectedMaterial(item.material_id).sale_group_name" class="text-indigo-600 font-bold">
+                                            <i class="fas fa-folder text-[9px] mr-1"></i>[[ getSelectedMaterial(item.material_id).category_name || getSelectedMaterial(item.material_id).sale_group_name ]]
+                                        </span>
+                                        <span v-if="getSelectedMaterial(item.material_id).barcode" class="text-slate-700 font-mono">
+                                            <i class="fas fa-barcode text-[9px] mr-1"></i>[[ getSelectedMaterial(item.material_id).barcode ]]
+                                        </span>
+                                        <span v-if="getSelectedMaterial(item.material_id).description" class="text-slate-500 italic line-clamp-1">
+                                            <i class="fas fa-align-left text-[9px] mr-1"></i>[[ getSelectedMaterial(item.material_id).description ]]
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="p-3 text-center">
                                     <input type="number" v-model.number="item.quantity" class="w-full bg-white border border-slate-100 focus:border-emerald-200 p-2.5 rounded-xl font-black text-center text-slate-800 outline-none transition-all" step="0.01">
@@ -335,6 +346,17 @@
                                         <option value="">اختر الصنف...</option>
                                         <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                                     </select>
+                                    <div v-if="getSelectedMaterial(line.material)" class="mt-1.5 px-2 py-0.5 bg-slate-50 border border-slate-200/60 rounded-lg text-[10px] font-medium text-slate-500 flex flex-wrap items-center gap-2">
+                                        <span v-if="getSelectedMaterial(line.material).category_name || getSelectedMaterial(line.material).sale_group_name" class="text-indigo-600 font-bold">
+                                            <i class="fas fa-folder text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).category_name || getSelectedMaterial(line.material).sale_group_name ]]
+                                        </span>
+                                        <span v-if="getSelectedMaterial(line.material).barcode" class="text-slate-700 font-mono">
+                                            <i class="fas fa-barcode text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).barcode ]]
+                                        </span>
+                                        <span v-if="getSelectedMaterial(line.material).description" class="text-slate-500 italic line-clamp-1">
+                                            <i class="fas fa-align-left text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).description ]]
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="p-3">
                                     <input type="number" v-model="line.quantity" class="w-20 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-center font-bold text-xs outline-none" step="any">
@@ -455,6 +477,17 @@
                                         <option value="">اختر الصنف...</option>
                                         <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                                     </select>
+                                    <div v-if="getSelectedMaterial(line.material)" class="mt-1.5 px-2 py-0.5 bg-slate-50 border border-slate-200/60 rounded-lg text-[10px] font-medium text-slate-500 flex flex-wrap items-center gap-2">
+                                        <span v-if="getSelectedMaterial(line.material).category_name || getSelectedMaterial(line.material).sale_group_name" class="text-rose-600 font-bold">
+                                            <i class="fas fa-folder text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).category_name || getSelectedMaterial(line.material).sale_group_name ]]
+                                        </span>
+                                        <span v-if="getSelectedMaterial(line.material).barcode" class="text-slate-700 font-mono">
+                                            <i class="fas fa-barcode text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).barcode ]]
+                                        </span>
+                                        <span v-if="getSelectedMaterial(line.material).description" class="text-slate-500 italic line-clamp-1">
+                                            <i class="fas fa-align-left text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).description ]]
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="p-3">
                                     <input type="number" v-model="line.quantity" class="w-20 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-center font-bold text-xs outline-none" step="any">
@@ -505,11 +538,6 @@
                     </select>
                 </div>
             </div>
-
-            <button type="submit" @click.prevent="modalType === 'user' ? saveCompanyUser() : (modalType === 'stock_entry' && forms.stock_entry.receipt_type === 'TRANSFER' ? submitInternalTransfer() : submitForm())" class="w-full bg-slate-900 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl mt-6 transition-all shadow-lg flex items-center justify-center gap-2">
-                <i class="fas fa-save"></i>
-                <span v-text="isArabic ? 'حفظ البيانات' : 'Save Data'"></span>
-            </button>
         </form>
     </div>
 </div>

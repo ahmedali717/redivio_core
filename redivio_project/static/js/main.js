@@ -4869,17 +4869,15 @@ createApp({
             if (m.variant_name && !name.includes(m.variant_name)) {
                 name = `${name} (${m.variant_name})`;
             }
-            
-            let details = [];
-            if (m.sku) details.push(`كود: ${m.sku}`);
-            if (m.barcode) details.push(`باركود: ${m.barcode}`);
-            if (m.category_name) details.push(`فئة: ${m.category_name}`);
-            else if (m.sale_group_name) details.push(`مجموعة: ${m.sale_group_name}`);
-            
-            if (details.length > 0) {
-                return `${name}  |  [ ${details.join(' - ')} ]`;
+            if (m.sku) {
+                name = `${name} — [ كود: ${m.sku} ]`;
             }
             return name;
+        },
+
+        getSelectedMaterial(id) {
+            if (!id) return null;
+            return (this.materials_list || []).find(m => Number(m.id) === Number(id)) || null;
         },
 
         getMaterialAssignedBins(material) {
