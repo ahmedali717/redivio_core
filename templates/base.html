@@ -412,7 +412,32 @@
             0%, 100% { transform: scale(1); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(59, 130, 246, 0.15); }
             50% { transform: scale(1.05); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 50px rgba(59, 130, 246, 0.25); }
         }
+
+        /* Custom Visible Scrollbar for Modals */
+        .custom-scrollbar {
+            scrollbar-width: auto !important;
+            scrollbar-color: #6366f1 #f1f5f9 !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 10px !important;
+            height: 10px !important;
+            display: block !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9 !important;
+            border-radius: 10px !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6366f1 !important;
+            border-radius: 10px !important;
+            border: 2px solid #f1f5f9 !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #4338ca !important;
+        }
     </style>
+    {% block styles %}{% endblock %}
 </head>
 <body class="h-screen flex flex-col text-slate-800">
 
