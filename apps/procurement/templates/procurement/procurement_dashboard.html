@@ -144,24 +144,102 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="po in purchase_orders" :key="po.id" class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
-                            <td class="py-4">
-                                <span class="font-black text-slate-700 font-mono">[[ po.po_number ]]</span>
-                                <p v-if="po.status === 'draft'" class="text-[10px] text-rose-500 font-bold"><i class="fas fa-lock"></i> Needs Approval</p>
-                                <p v-else-if="po.status === 'confirmed'" class="text-[10px] text-amber-500 font-bold"><i class="fas fa-truck"></i> On the way</p>
-                                <p v-else class="text-[10px] text-emerald-500 font-bold">[[ po.status ]]</p>
-                            </td>
-                            <td class="py-4 font-bold text-sm text-slate-600">[[ po.vendor_name ]]</td>
-                            <td class="py-4 text-xs font-bold text-slate-500">[[ po.date ]]</td>
-                            <td class="py-4 font-black" :class="po.status === 'draft' ? 'text-slate-400' : 'text-slate-800'">
-                                [[ formatCurrency ? formatCurrency(po.total_amount) : po.total_amount || 0 ]]
-                            </td>
-                            <td class="py-4 text-center flex justify-center gap-2">
-                                <button v-if="po.status === 'draft'" class="opacity-0 group-hover:opacity-100 bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md hover:bg-rose-700 transition-all uppercase tracking-wider" v-text="isArabic ? 'اعتماد الطلب' : 'Validate'"></button>
-                                <button v-else-if="po.status === 'confirmed'" class="opacity-0 group-hover:opacity-100 bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md hover:bg-emerald-700 transition-all uppercase tracking-wider" v-text="isArabic ? 'استلام' : 'Receive'"></button>
-                                <button class="opacity-0 group-hover:opacity-100 bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md hover:bg-slate-200 transition-all uppercase tracking-wider" v-text="isArabic ? 'توسيع' : 'Expand'" @click="po.showDetails = !po.showDetails"></button>
-                            </td>
-                        </tr>
+                        <template v-for="po in purchase_orders" :key="po.id">
+                            <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition-colors group cursor-pointer" @click="po.showDetails = !po.showDetails">
+                                <td class="py-4 px-2">
+                                    <div class="flex items-center gap-2">
+                                        <button @click.stop="po.showDetails = !po.showDetails" class="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 flex items-center justify-center text-xs transition-colors">
+                                            <i class="fas" :class="po.showDetails ? 'fa-chevron-down' : (isArabic ? 'fa-chevron-left' : 'fa-chevron-right')"></i>
+                                        </button>
+                                        <div>
+                                            <span @click.stop="viewPODetails(po)" class="font-black text-slate-800 font-mono hover:text-indigo-600 hover:underline cursor-pointer">[[ po.po_number ]]</span>
+                                            <p v-if="po.status === 'draft' || po.status === 'DRAFT'" class="text-[10px] text-rose-500 font-bold"><i class="fas fa-lock"></i> Needs Approval</p>
+                                            <p v-else-if="po.status === 'confirmed' || po.status === 'CONFIRMED'" class="text-[10px] text-amber-500 font-bold"><i class="fas fa-truck"></i> On the way</p>
+                                            <p v-else class="text-[10px] text-emerald-500 font-bold"><i class="fas fa-check-circle"></i> [[ po.status ]]</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 font-bold text-sm text-slate-700">[[ po.vendor_name || '-' ]]</td>
+                                <td class="py-4 text-xs font-bold text-slate-500">[[ po.date ]]</td>
+                                <td class="py-4 font-black" :class="(po.status === 'draft' || po.status === 'DRAFT') ? 'text-slate-400' : 'text-slate-900'">
+                                    [[ formatCurrency ? formatCurrency(po.total_amount) : (po.total_amount || 0) ]]
+                                </td>
+                                <td class="py-4 text-center flex justify-center items-center gap-2" @click.stop>
+                                    <button v-if="po.status === 'draft' || po.status === 'DRAFT'" @click="updatePOStatus(po.id, 'CONFIRMED')" class="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-rose-700 transition-all uppercase tracking-wider flex items-center gap-1" v-text="isArabic ? 'اعتماد الطلب' : 'Validate'"></button>
+                                    <button v-else-if="po.status === 'confirmed' || po.status === 'CONFIRMED'" @click="viewPODetails(po)" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-emerald-700 transition-all uppercase tracking-wider flex items-center gap-1" v-text="isArabic ? 'استلام' : 'Receive'"></button>
+                                    <button @click="viewPODetails(po)" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition-all uppercase tracking-wider flex items-center gap-1">
+                                        <i class="fas fa-eye"></i>
+                                        <span v-text="isArabic ? 'تفاصيل' : 'Details'"></span>
+                                    </button>
+                                    <button @click="po.showDetails = !po.showDetails" class="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-slate-200 transition-all uppercase tracking-wider">
+                                        <span v-text="po.showDetails ? (isArabic ? 'إغلاق' : 'Collapse') : (isArabic ? 'توسيع' : 'Expand')"></span>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- Expanded PO Detail Row -->
+                            <tr v-if="po.showDetails" :key="'detail-' + po.id" class="bg-slate-50/90 border-b border-slate-200">
+                                <td colspan="5" class="p-4">
+                                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                                        <div class="flex justify-between items-center border-b pb-3">
+                                            <div class="flex items-center gap-3">
+                                                <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                                                    <i class="fas fa-file-invoice-dollar"></i>
+                                                </span>
+                                                <div>
+                                                    <h4 class="font-black text-slate-800 text-sm">[[ po.po_number ]] — [[ po.vendor_name || 'Vendor' ]]</h4>
+                                                    <p class="text-[10px] text-slate-400 font-bold">[[ isArabic ? 'تاريخ الإنشـاء:' : 'Created Date:' ]] [[ po.date ]]</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <button v-if="po.status === 'draft' || po.status === 'DRAFT'" @click="updatePOStatus(po.id, 'CONFIRMED')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-sm transition-all flex items-center gap-1">
+                                                    <i class="fas fa-check-circle"></i>
+                                                    <span v-text="isArabic ? 'اعتماد الطلب' : 'Validate PO'"></span>
+                                                </button>
+                                                <button v-else-if="po.status === 'confirmed' || po.status === 'CONFIRMED'" @click="viewPODetails(po)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-sm transition-all flex items-center gap-1">
+                                                    <i class="fas fa-box-open"></i>
+                                                    <span v-text="isArabic ? 'استلام البضاعة' : 'Receive Goods'"></span>
+                                                </button>
+                                                <button @click="viewPODetails(po)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-sm transition-all flex items-center gap-1">
+                                                    <i class="fas fa-window-maximize"></i>
+                                                    <span v-text="isArabic ? 'عرض بطاقة الأمر كاملة' : 'Open PO Card'"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Lines Table -->
+                                        <div v-if="po.lines && po.lines.length > 0" class="overflow-x-auto">
+                                            <table class="w-full text-xs text-slate-700 border border-slate-100 rounded-xl overflow-hidden">
+                                                <thead class="bg-slate-100 text-slate-500 font-black uppercase text-[9px]">
+                                                    <tr>
+                                                        <th class="p-2.5 text-right">[[ isArabic ? 'الصنف' : 'Material / Item' ]]</th>
+                                                        <th class="p-2.5 text-center">[[ isArabic ? 'الكود (SKU)' : 'SKU' ]]</th>
+                                                        <th class="p-2.5 text-center">[[ isArabic ? 'الكمية المطلوبة' : 'Ordered Qty' ]]</th>
+                                                        <th class="p-2.5 text-center">[[ isArabic ? 'الكمية المستلمة' : 'Received Qty' ]]</th>
+                                                        <th class="p-2.5 text-center">[[ isArabic ? 'سعر الوحدة' : 'Unit Cost' ]]</th>
+                                                        <th class="p-2.5 text-center">[[ isArabic ? 'الإجمالي' : 'Subtotal' ]]</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100">
+                                                    <tr v-for="line in po.lines" :key="line.id" class="hover:bg-slate-50/80">
+                                                        <td class="p-2.5 font-bold text-slate-800">[[ line.material_name || line.material ]]</td>
+                                                        <td class="p-2.5 text-center font-mono text-slate-500">[[ line.material_sku || '-' ]]</td>
+                                                        <td class="p-2.5 text-center font-black">[[ line.quantity ]]</td>
+                                                        <td class="p-2.5 text-center font-bold text-emerald-600">[[ line.received_qty || 0 ]]</td>
+                                                        <td class="p-2.5 text-center font-bold">[[ formatCurrency ? formatCurrency(line.unit_price) : line.unit_price ]]</td>
+                                                        <td class="p-2.5 text-center font-black text-slate-900">[[ formatCurrency ? formatCurrency(line.quantity * line.unit_price) : (line.quantity * line.unit_price) ]]</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div v-else class="text-center py-4 bg-slate-50 rounded-xl border border-dashed text-xs font-bold text-slate-400">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            [[ isArabic ? 'لا توجد بنود أصناف مسجلة في هذا الأمر' : 'No line items recorded in this purchase order' ]]
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
                 <div class="mt-4 text-center">

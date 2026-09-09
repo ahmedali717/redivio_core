@@ -412,6 +412,76 @@
                 </div>
             </div>
 
+            <div v-if="modalType === 'view_po'" class="space-y-6 animate-in zoom-in-95 duration-300">
+                <div class="bg-gradient-to-r from-slate-900 to-indigo-950 p-6 rounded-3xl text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl font-black text-emerald-400 font-mono">[[ forms.po.po_number ]]</span>
+                            <span :class="{'bg-rose-500/20 text-rose-300 border-rose-500/30': forms.po.status === 'draft' || forms.po.status === 'DRAFT', 'bg-amber-500/20 text-amber-300 border-amber-500/30': forms.po.status === 'CONFIRMED' || forms.po.status === 'confirmed', 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30': forms.po.status === 'RECEIVED' || forms.po.status === 'received'}" class="px-3 py-1 rounded-full text-xs font-bold uppercase border">
+                                [[ forms.po.status ]]
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-300 font-bold mt-2">
+                            <i class="fas fa-building text-indigo-400 mr-1"></i> [[ isArabic ? 'المورد:' : 'Vendor:' ]] [[ forms.po.vendor_name || 'N/A' ]]
+                            <span class="mx-2">•</span>
+                            <i class="fas fa-calendar text-indigo-400 mr-1"></i> [[ forms.po.date ]]
+                        </p>
+                    </div>
+                    <div class="text-left bg-white/5 p-4 rounded-2xl border border-white/10">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">[[ isArabic ? 'إجمالي أمر الشراء' : 'Total PO Amount' ]]</span>
+                        <span class="text-2xl font-black text-emerald-400 font-mono">[[ formatCurrency ? formatCurrency(forms.po.total_amount) : (forms.po.total_amount || 0) ]]</span>
+                    </div>
+                </div>
+
+                <!-- Lines Table -->
+                <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
+                            <tr>
+                                <th class="p-4 text-right">[[ isArabic ? 'الصنف' : 'Item' ]]</th>
+                                <th class="p-4 text-center">[[ isArabic ? 'كود الصنف' : 'SKU' ]]</th>
+                                <th class="p-4 text-center">[[ isArabic ? 'الكمية المطلوبة' : 'Ordered Qty' ]]</th>
+                                <th class="p-4 text-center">[[ isArabic ? 'الكمية المستلمة' : 'Received Qty' ]]</th>
+                                <th class="p-4 text-center">[[ isArabic ? 'سعر الوحدة' : 'Unit Cost' ]]</th>
+                                <th class="p-4 text-left">[[ isArabic ? 'الإجمالي' : 'Subtotal' ]]</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="line in (forms.po.lines || [])" :key="line.id" class="hover:bg-slate-50">
+                                <td class="p-3 font-bold text-slate-800">[[ line.material_name || line.material ]]</td>
+                                <td class="p-3 text-center font-mono text-slate-500 text-xs">[[ line.material_sku || '-' ]]</td>
+                                <td class="p-3 text-center font-black">[[ line.quantity ]]</td>
+                                <td class="p-3 text-center font-bold text-emerald-600">[[ line.received_qty || 0 ]]</td>
+                                <td class="p-3 text-center font-bold">[[ formatCurrency ? formatCurrency(line.unit_price) : line.unit_price ]]</td>
+                                <td class="p-3 text-left font-black text-slate-900">[[ formatCurrency ? formatCurrency(line.quantity * line.unit_price) : (line.quantity * line.unit_price) ]]</td>
+                            </tr>
+                            <tr v-if="!forms.po.lines || forms.po.lines.length === 0">
+                                <td colspan="6" class="p-6 text-center text-slate-400 font-bold text-xs">
+                                    [[ isArabic ? 'لا توجد أصناف مسجلة في أمر الشراء هذا' : 'No line items recorded for this PO' ]]
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Actions Footer -->
+                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <button type="button" @click="showModal = false" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-xs transition-all">
+                        [[ isArabic ? 'إغلاق' : 'Close' ]]
+                    </button>
+                    <div class="flex gap-2">
+                        <button type="button" v-if="forms.po.status === 'draft' || forms.po.status === 'DRAFT'" @click="updatePOStatus(forms.po.id, 'CONFIRMED'); showModal = false;" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black text-xs shadow-md transition-all flex items-center gap-2">
+                            <i class="fas fa-check-circle"></i>
+                            <span>[[ isArabic ? 'اعتماد الطلب' : 'Validate PO' ]]</span>
+                        </button>
+                        <button type="button" v-if="forms.po.status === 'CONFIRMED' || forms.po.status === 'confirmed'" @click="showModal = false; openModal('stock_entry', { receipt_type: 'PURCHASE', po: forms.po.id });" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs shadow-md transition-all flex items-center gap-2">
+                            <i class="fas fa-box-open"></i>
+                            <span>[[ isArabic ? 'إنشاء إذن استلام' : 'Receive Goods' ]]</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div v-if="modalType === 'customer'" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
