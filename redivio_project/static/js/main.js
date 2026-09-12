@@ -4135,20 +4135,21 @@ createApp({
 
         // 🚀 3. الدالة الذكية للبحث في قاعدة البيانات ثم أمر التوريد
         processScannedBarcode(barcode) {
-            if (!this.forms.stock_entry.items || this.forms.stock_entry.items.length === 0) {
-                this.showToast(this.isArabic ? "برجاء اختيار أمر التوريد أولاً" : "Select PO first", 'error');
-                if (this.scannerInstance && this.isScanning) this.scannerInstance.resume();
-                return;
+            if (!barcode) return;
+            const cleanCode = barcode.toString().trim();
+
+            if (!this.forms.stock_entry.items) {
+                this.forms.stock_entry.items = [];
             }
 
-            const matchedMaterial = this.materials_list.find(
-                m => (m.barcode && m.barcode.toString() === barcode.toString()) ||
-                    (m.sku && m.sku.toLowerCase() === barcode.toLowerCase()) ||
-                    (m.id && m.id.toString() === barcode.toString())
+            const matchedMaterial = (this.materials_list || []).find(
+                m => (m.barcode && m.barcode.toString().trim() === cleanCode) ||
+                    (m.sku && m.sku.toString().trim().toLowerCase() === cleanCode.toLowerCase()) ||
+                    (m.id && m.id.toString() === cleanCode)
             );
 
             if (!matchedMaterial) {
-                this.showToast(this.isArabic ? `الباركود (${barcode}) غير مسجل في بيانات الأصناف!` : `Barcode not registered!`, 'error');
+                this.showToast(this.isArabic ? `الباركود (${cleanCode}) غير مسجل في بيانات الأصناف!` : `Barcode (${cleanCode}) not registered!`, 'error');
                 this.barcodeQuery = '';
                 if (this.scannerInstance && this.isScanning) {
                     setTimeout(() => this.scannerInstance.resume(), 1500);
@@ -4157,15 +4158,15 @@ createApp({
             }
 
             const foundItemInPO = this.forms.stock_entry.items.find(
-                item => item.material_id === matchedMaterial.id || item.sku === matchedMaterial.sku
+                item => item.material_id === matchedMaterial.id || item.sku === matchedMaterial.sku || (item.material && Number(item.material) === Number(matchedMaterial.id))
             );
 
             if (foundItemInPO) {
                 this.scannedItemData = {
-                    material_id: foundItemInPO.material_id,
-                    material_name: foundItemInPO.material_name,
-                    sku: foundItemInPO.sku,
-                    ordered_qty: foundItemInPO.ordered_qty,
+                    material_id: foundItemInPO.material_id || matchedMaterial.id,
+                    material_name: foundItemInPO.material_name || matchedMaterial.name,
+                    sku: foundItemInPO.sku || matchedMaterial.sku,
+                    ordered_qty: foundItemInPO.ordered_qty || 999,
                     scan_qty: 1
                 };
                 this.showQtyModal = true;
@@ -4179,10 +4180,19 @@ createApp({
                 }, 400);
 
             } else {
-                this.showToast(this.isArabic ? `الصنف (${matchedMaterial.name}) غير مطلوب في أمر التوريد الحالي!` : `Item not in this PO!`, 'error');
+                this.forms.stock_entry.items.push({
+                    material_id: matchedMaterial.id,
+                    material: matchedMaterial.id,
+                    material_name: matchedMaterial.name,
+                    sku: matchedMaterial.sku,
+                    ordered_qty: 1,
+                    received_qty: 1,
+                    unit_cost: matchedMaterial.standard_price || 0
+                });
+                this.showToast(this.isArabic ? `تم إضافة الصنف: ${matchedMaterial.name}` : `Added item: ${matchedMaterial.name}`, 'success');
                 this.barcodeQuery = '';
                 if (this.scannerInstance && this.isScanning) {
-                    setTimeout(() => this.scannerInstance.resume(), 1500);
+                    setTimeout(() => this.scannerInstance.resume(), 1000);
                 }
             }
         },
