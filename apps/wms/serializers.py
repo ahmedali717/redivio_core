@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
+from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove, WarehouseTransfer, WarehouseTransferLine, StockScrap
+
 
 # --- السيريالايزرز الأساسية ---
 

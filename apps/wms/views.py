@@ -16,11 +16,13 @@ from django.apps import apps
 # Mixin & Models
 from apps.core.mixins import OpcoAwareMixin 
 from apps.core.models import OpCo
-from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove
+from .models import Plant, StorageLocation, StorageBin, StockQuant, StockMove, WarehouseTransfer, StockScrap
 from .serializers import (
     PlantSerializer, StorageLocationSerializer, 
-    StorageBinSerializer, StockQuantSerializer, StockMoveSerializer
+    StorageBinSerializer, StockQuantSerializer, StockMoveSerializer,
+    WarehouseTransferSerializer, StockScrapSerializer
 )
+
 
 def parse_csv_file(file):
     import csv
@@ -1226,9 +1228,6 @@ class OpeningInventoryAPIView(APIView):
 
 class WarehouseTransferViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     """ إدارة طلبات وأوامر التحويل بين المخازن (TO) """
-    from .models import WarehouseTransfer
-    from .serializers import WarehouseTransferSerializer
-    
     queryset = WarehouseTransfer.objects.all().order_by('-id')
     serializer_class = WarehouseTransferSerializer
 
@@ -1244,8 +1243,6 @@ class WarehouseTransferViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
 class StockScrapViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     """ إدارة تسويات وتكاليف الهالك والتالف (Stock Scrap / Write-off) """
-    from .models import StockScrap
-    from .serializers import StockScrapSerializer
-
     queryset = StockScrap.objects.all().order_by('-id')
-    serializer_class = StockScrapSerializer
+    serializer_class = StockScrapSerializer
+
