@@ -218,11 +218,13 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
     lines = PurchaseOrderLineSerializer(many=True) 
     extra_data = serializers.JSONField(required=False)
     receipts = StockReceiptSerializer(many=True, read_only=True)
+    total_amount = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True)
 
     class Meta:
         model = PurchaseOrder
-        fields = ['id', 'opco', 'vendor', 'vendor_name', 'pr', 'rfq', 'comparison', 'po_number', 'date', 'status', 'extra_data', 'lines', 'receipts']
-        read_only_fields = ['id', 'po_number', 'date']
+        fields = ['id', 'opco', 'vendor', 'vendor_name', 'pr', 'rfq', 'comparison', 'po_number', 'date', 'status', 'total_amount', 'extra_data', 'lines', 'receipts']
+        read_only_fields = ['id', 'po_number', 'date', 'total_amount']
+
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines', [])

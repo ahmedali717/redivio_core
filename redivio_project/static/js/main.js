@@ -296,12 +296,18 @@ createApp({
                 salesorder: { ar: 'أمر بيع جديد', en: 'New Sales Order' },
                 customer: { ar: 'بيانات عميل جديد', en: 'Customer Information' },
 
-                // 🚀 السطور اللي كانت ناقصة وعاملة المشكلة تم إضافتها هنا:
                 view_po: { ar: 'تفاصيل أمر التوريد', en: 'Purchase Order Details' },
                 payment: { ar: 'تحصيل دفعة مالية', en: 'Record Payment' },
                 delivery: { ar: 'صرف بضاعة', en: 'Order Delivery' },
                 so_delivery: { ar: 'صرف بضاعة من أمر بيع', en: 'WMS Sales Delivery' },
-                user: { ar: 'إدارة حساب مستخدم', en: 'User Account Management' }
+                user: { ar: 'إدارة حساب مستخدم', en: 'User Account Management' },
+                pr: { ar: 'طلب شراء جديد (PR)', en: 'New Purchase Requisition (PR)' },
+                rfq: { ar: 'طلب عرض سعر (RFQ)', en: 'Request For Quotation (RFQ)' },
+                sq: { ar: 'تسجيل عرض سعر مورد (Supplier Quote)', en: 'Record Supplier Quotation' },
+                matrix: { ar: 'مقارنة عروض الأسعار (Matrix)', en: 'Quotation Comparison Matrix' },
+                rtv: { ar: 'مرتجع مشتريات (RTV)', en: 'Purchase Return (RTV)' },
+                transfer: { ar: 'تحويل بين المخازن (Transfer)', en: 'Warehouse Transfer' },
+                scrap: { ar: 'إذن تخريد / هالك (Scrap)', en: 'Stock Scrap' }
             },
 
             forms: {
@@ -380,7 +386,14 @@ createApp({
                     method: 'CASH',
                     reference: ''
                 },
-                user: { id: null, email: '', role: 'cashier', company: null, password: '' }
+                user: { id: null, email: '', role: 'cashier', company: null, password: '' },
+                pr: { pr_number: '', title: '', requesting_department: '', notes: '', lines: [{ material: '', quantity: 1 }] },
+                rfq: { rfq_number: '', pr: '', title: '', deadline: '', notes: '' },
+                sq: { rfq: '', vendor: '', total_amount: 0, notes: '', lines: [{ material: '', quantity: 1, unit_price: 0 }] },
+                matrix: { rfq: '', title: '', notes: '', winning_vendor: '' },
+                rtv: { return_number: '', po: '', vendor: '', notes: '', lines: [{ material: '', quantity: 1, return_reason: 'Defective' }] },
+                transfer: { transfer_number: '', source_plant: '', target_plant: '', notes: '', lines: [{ material: '', quantity: 1 }] },
+                scrap: { scrap_number: '', plant: '', notes: '', lines: [{ material: '', quantity: 1, reason: 'Expired' }] }
             }
         };
     },
@@ -5296,6 +5309,13 @@ createApp({
             else if (type === 'salesorder') url = isEdit ? `/api/sales-orders/${id}/` : `/api/sales-orders/`;
             else if (type === 'customer') url = isEdit ? `/api/customers/${id}/` : `/api/customers/`;
             else if (type === 'delivery') url = '/api/stock-deliveries/';
+            else if (type === 'pr') url = isEdit ? `/api/purchase-requisitions/${id}/` : `/api/purchase-requisitions/`;
+            else if (type === 'rfq') url = isEdit ? `/api/rfqs/${id}/` : `/api/rfqs/`;
+            else if (type === 'sq') url = isEdit ? `/api/supplier-quotations/${id}/` : `/api/supplier-quotations/`;
+            else if (type === 'matrix') url = isEdit ? `/api/quotation-comparisons/${id}/` : `/api/quotation-comparisons/`;
+            else if (type === 'rtv') url = isEdit ? `/api/purchase-returns/${id}/` : `/api/purchase-returns/`;
+            else if (type === 'transfer') url = isEdit ? `/api/transfers/${id}/` : `/api/transfers/`;
+            else if (type === 'scrap') url = isEdit ? `/api/scraps/${id}/` : `/api/scraps/`;
             else if (type === 'stock_entry') {
                 url = '/api/wms/moves/';
             }
@@ -6260,6 +6280,20 @@ createApp({
                     company: this.activeOpcoId || null,
                     password: ''
                 };
+            } else if (type === 'pr') {
+                this.forms.pr = { pr_number: `PR-${Date.now()}`, title: '', requesting_department: '', notes: '', lines: data && data.items ? data.items : [{ material: '', quantity: 1 }] };
+            } else if (type === 'rfq') {
+                this.forms.rfq = { rfq_number: `RFQ-${Date.now()}`, pr: data && data.pr_id ? data.pr_id : '', title: '', deadline: '', notes: '' };
+            } else if (type === 'sq') {
+                this.forms.sq = { rfq: data && data.rfq_id ? data.rfq_id : '', vendor: '', total_amount: 0, notes: '', lines: [{ material: '', quantity: 1, unit_price: 0 }] };
+            } else if (type === 'matrix') {
+                this.forms.matrix = { rfq: data && data.rfq_id ? data.rfq_id : '', title: '', notes: '', winning_vendor: '' };
+            } else if (type === 'rtv') {
+                this.forms.rtv = { return_number: `RTV-${Date.now()}`, po: data && data.po_id ? data.po_id : '', vendor: '', notes: '', lines: [{ material: '', quantity: 1, return_reason: 'Defective' }] };
+            } else if (type === 'transfer') {
+                this.forms.transfer = { transfer_number: `TR-${Date.now()}`, source_plant: '', target_plant: '', notes: '', lines: [{ material: '', quantity: 1 }] };
+            } else if (type === 'scrap') {
+                this.forms.scrap = { scrap_number: `SCR-${Date.now()}`, plant: '', notes: '', lines: [{ material: '', quantity: 1, reason: 'Expired' }] };
             }
         },
 
@@ -6344,13 +6378,87 @@ createApp({
             }
         },
 
-        // ضيف دي جوه الـ methods
-        viewPODetails(po) {
-            this.modalType = 'view_po'; // هنحتاج نجهز Modal يعرض البيانات
-            this.forms.po = JSON.parse(JSON.stringify(po)); // نسخ بيانات الأمر للفورم
-            this.showModal = true;
-            this.showToast(this.isArabic ? "جاري عرض تفاصيل الأمر" : "Viewing PO Details", 'success');
+        getPOTotalAmount(po) {
+            if (!po) return 0;
+            if (po.lines && po.lines.length > 0) {
+                return po.lines.reduce((sum, l) => sum + (parseFloat(l.quantity || 0) * parseFloat(l.unit_price || 0)), 0);
+            }
+            return parseFloat(po.total_amount || 0);
         },
+
+        viewPODetails(po) {
+            this.modalType = 'view_po';
+            this.forms.po = JSON.parse(JSON.stringify(po));
+            if (!this.forms.po.total_amount || parseFloat(this.forms.po.total_amount) === 0) {
+                this.forms.po.total_amount = this.getPOTotalAmount(this.forms.po);
+            }
+            this.showModal = true;
+        },
+
+        async approvePR(prId) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/purchase-requisitions/${prId}/approve/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم اعتماد طلب الشراء بنجاح" : "PR Approved", 'success');
+                    await this.fetchEnterpriseProcurementData();
+                }
+            } catch (e) {
+                this.showToast("Network Error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async convertPRToRFQ(prId) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/purchase-requisitions/${prId}/convert_to_rfq/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تحويل طلب الشراء إلى طلب أسعار (RFQ)" : "Converted to RFQ", 'success');
+                    this.procTab = 'rfqs';
+                    await this.fetchEnterpriseProcurementData();
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Failed to convert PR", 'error');
+                }
+            } catch (e) {
+                this.showToast("Network Error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async approveComparisonAndGeneratePO(compId, winningSqId) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/quotation-comparisons/${compId}/approve_and_generate_po/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCookie('csrftoken') },
+                    body: JSON.stringify({ winning_quotation_id: winningSqId })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.showToast(this.isArabic ? `تم اعتماد العرض وإنشاء أمر التوريد ${data.po_number}` : `Generated PO ${data.po_number}`, 'success');
+                    this.procTab = 'pos';
+                    await this.fetchPurchaseOrders();
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || "Failed to generate PO", 'error');
+                }
+            } catch (e) {
+                this.showToast("Network Error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
 
         // دالة لبدء عملية الصرف بناءً على أمر البيع
         startDelivery(so) {

@@ -235,8 +235,13 @@ class PurchaseOrder(models.Model):
             self.po_number = f"PO-{year}-{new_no:04d}"
         super().save(*args, **kwargs)
 
+    @property
+    def total_amount(self):
+        return sum(line.quantity * line.unit_price for line in self.lines.all())
+
     def __str__(self):
         return self.po_number
+
 
     def receive_items(self, target_bin, items_data=None):
         """ 

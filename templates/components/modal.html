@@ -4,7 +4,7 @@
         {% include "components/item_master_modal.html" %}
     </template>
 
-    <div v-else :class="['bg-white w-full rounded-2xl shadow-2xl transform transition-all scale-100 max-h-[90vh] overflow-y-auto', modalType === 'stock_entry' ? 'max-w-6xl p-6' : 'max-w-2xl p-8']">
+    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]']">
         
         <div class="flex justify-between items-center mb-6 border-b pb-4">
             <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -410,6 +410,91 @@
                         </div>
                     </div>
                 </div>
+            <div v-if="modalType === 'pr'" class="space-y-6 animate-in zoom-in-95 duration-300">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">رقم طلب الشراء</label>
+                        <input type="text" v-model="forms.pr.pr_number" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-mono font-bold text-blue-700 outline-none" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">عنوان الطلب</label>
+                        <input type="text" v-model="forms.pr.title" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="مثال: طلب شراء أصناف للمخزن الرئيسي" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">القسم الطالب</label>
+                        <input type="text" v-model="forms.pr.requesting_department" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="مثال: قسم المشتريات / المخازن">
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
+                            <tr>
+                                <th class="p-4">الصنف المطلوب (Item)</th>
+                                <th class="p-4 text-center w-36">الكمية المطلوبة</th>
+                                <th class="p-4 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="(line, index) in forms.pr.lines" :key="index" class="group">
+                                <td class="p-3">
+                                    <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-blue-200 rounded-lg p-2.5 text-xs font-bold transition-all" required>
+                                        <option value="">اختر الصنف...</option>
+                                        <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
+                                    </select>
+                                </td>
+                                <td class="p-3">
+                                    <input type="number" v-model="line.quantity" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-blue-200 rounded-lg p-2.5 text-center font-bold text-xs outline-none" step="any" required>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <button @click.prevent="forms.pr.lines.splice(index, 1)" class="text-slate-300 hover:text-red-500 transition-colors">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button @click.prevent="forms.pr.lines.push({ material: '', quantity: 1 })" class="w-full py-3 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-blue-600 transition-all border-t border-dashed border-slate-200">
+                        <i class="fas fa-plus-circle mr-1"></i> إضافة صنف جديد إلى طلب الشراء
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="modalType === 'rfq'" class="space-y-6 animate-in zoom-in-95 duration-300">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">رقم RFQ</label>
+                        <input type="text" v-model="forms.rfq.rfq_number" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-mono font-bold text-purple-700 outline-none" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">العنوان</label>
+                        <input type="text" v-model="forms.rfq.title" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="طلب تقديم عروض أسعار" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">آخر موعد للتقديم</label>
+                        <input type="date" v-model="forms.rfq.deadline" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="modalType === 'rtv'" class="space-y-6 animate-in zoom-in-95 duration-300">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">رقم إذن المرتجع (RTV)</label>
+                        <input type="text" v-model="forms.rtv.return_number" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-mono font-bold text-rose-700 outline-none" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">المورد</label>
+                        <select v-model="forms.rtv.vendor" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-rose-500 outline-none">
+                            <option value="">اختر المورد...</option>
+                            <option v-for="v in vendors" :key="v.id" :value="v.id" v-text="v.name"></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">سبب الإرجاع</label>
+                        <input type="text" v-model="forms.rtv.notes" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-rose-500 outline-none" placeholder="تالف / غير مطابق للمواصفات">
+                    </div>
+                </div>
             </div>
 
             <div v-if="modalType === 'view_po'" class="space-y-6 animate-in zoom-in-95 duration-300">
@@ -429,7 +514,7 @@
                     </div>
                     <div class="text-left bg-white/5 p-4 rounded-2xl border border-white/10">
                         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">[[ isArabic ? 'إجمالي أمر الشراء' : 'Total PO Amount' ]]</span>
-                        <span class="text-2xl font-black text-emerald-400 font-mono">[[ formatCurrency ? formatCurrency(forms.po.total_amount) : (forms.po.total_amount || 0) ]]</span>
+                        <span class="text-2xl font-black text-emerald-400 font-mono">[[ formatCurrency ? formatCurrency(getPOTotalAmount(forms.po)) : getPOTotalAmount(forms.po) ]]</span>
                     </div>
                 </div>
 
