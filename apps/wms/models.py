@@ -127,3 +127,113 @@ class StockMove(models.Model):
                 )
                 q.quantity -= self.quantity
                 q.save()
+
+import datetime
+from django.conf import settings
+
+class WarehouseTransfer(models.Model):
+    """ أمر نقل / تحويل مخزني بين الفروع والرفوف (TO - Warehouse Transfer) """
+    STATUS_CHOICES = [
+        ('DRAFT', 'مسودة'),
+        ('APPROVED', 'معتمد'),
+        ('DISPATCHED', 'تم الصرف من المصدر (قيد النقل)'),
+        ('RECEIVED', 'تم الاستلام في الهدف'),
+        ('CANCELLED', 'ملغى')
+    ]
+
+    opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
+    transfer_number = models.CharField(max_length=50, unique=True, blank=True)
+    source_bin = models.ForeignKey(StorageBin, related_name='outgoing_transfers', on_delete=models.CASCADE)
+    dest_bin = models.ForeignKey(StorageBin, related_name='incoming_transfers', on_delete=models.CASCADE)
+    date = models.DateField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
+    notes = models.TextField(blank=True, null=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_transfers')
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_transfers')
+
+    def save(self, *args, **kwargs):
+        if not self.transfer_number:
+            year = datetime.date.today().year
+            last_tr = WarehouseTransfer.objects.filter(transfer_number__contains=f'TO-{year}').order_by('id').last()
+            new_no = (int(last_tr.transfer_number.split('-')[-1]) + 1) if last_tr else 1
+            self.transfer_number = f"TO-{year}-{new_no:04d}"
+        super().save(*args, **kwargs)
+
+    def execute_transfer(self):
+        """ تنفذ حركتي الصرف والاستلام تلقائياً """
+        if self.status == 'RECEIVED':
+            return
+        
+        for line in self.lines.all():
+            StockMove.objects.create(
+                opco=self.opco,
+                material=line.material,
+                source_bin=self.source_bin,
+                dest_bin=self.dest_bin,
+                quantity=line.quantity,
+                move_type='OUT',
+                reference=f"TRANSFER: {self.transfer_number}"
+            )
+            
+        self.status = 'RECEIVED'
+        self.save()
+
+    def __str__(self):
+        return f"{self.transfer_number}: {self.source_bin.code} -> {self.dest_bin.code}"
+
+
+class WarehouseTransferLine(models.Model):
+    transfer = models.ForeignKey(WarehouseTransfer, related_name='lines', on_delete=models.CASCADE)
+    material = models.ForeignKey('item_master.Material', on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=12, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.transfer.transfer_number} - {self.material.name}"
+
+
+class StockScrap(models.Model):
+    """ إتلاف مخزني وتصفية أصناف تالفة/مفقودة (Scrap / Inventory Write-off) """
+    REASON_CHOICES = [
+        ('EXPIRED', 'منتهي الصلاحية'),
+        ('DAMAGED', 'تالف / كسر'),
+        ('LOST', 'عجز / مفقود'),
+        ('SCRAP', 'هالك عام'),
+    ]
+
+    opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
+    scrap_number = models.CharField(max_length=50, unique=True, blank=True)
+    storage_bin = models.ForeignKey(StorageBin, on_delete=models.CASCADE, related_name='scraps')
+    material = models.ForeignKey('item_master.Material', on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=12, decimal_places=2)
+    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_cost = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES, default='DAMAGED')
+    notes = models.TextField(blank=True, null=True)
+    date = models.DateTimeField(auto_now_add=True)
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not self.scrap_number:
+            year = datetime.date.today().year
+            last_sc = StockScrap.objects.filter(scrap_number__contains=f'SCRAP-{year}').order_by('id').last()
+            new_no = (int(last_sc.scrap_number.split('-')[-1]) + 1) if last_sc else 1
+            self.scrap_number = f"SCRAP-{year}-{new_no:04d}"
+        
+        self.total_cost = self.quantity * self.unit_cost
+        super().save(*args, **kwargs)
+
+        if is_new:
+            StockMove.objects.create(
+                opco=self.opco,
+                material=self.material,
+                source_bin=self.storage_bin,
+                dest_bin=None,
+                quantity=self.quantity,
+                move_type='OUT',
+                unit_cost=self.unit_cost,
+                reference=f"SCRAP: {self.scrap_number} ({self.get_reason_display()})"
+            )
+
+    def __str__(self):
+        return f"{self.scrap_number} - {self.material.name}"

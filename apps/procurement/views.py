@@ -3,32 +3,31 @@ from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
-
-# PDF Generation Imports
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
 from django.shortcuts import render, get_object_or_404
+
 from redivio_project.utils.pdf import render_to_pdf
 
-# Models & Serializers
-# الاستيراد النسبي (.) صحيح لأننا داخل نفس التطبيق
-from .models import Vendor, PurchaseOrder, PurchaseOrderLine , StockReceipt
-from .serializers import VendorSerializer, PurchaseOrderSerializer, PurchaseOrderLineSerializer , StockReceiptSerializer
+from .models import (
+    Vendor, PurchaseOrder, PurchaseOrderLine, StockReceipt,
+    PurchaseRequisition, RequestForQuotation, SupplierQuotation,
+    QuotationComparison, PurchaseReturn
+)
+from .serializers import (
+    VendorSerializer, PurchaseOrderSerializer, PurchaseOrderLineSerializer, StockReceiptSerializer,
+    PurchaseRequisitionSerializer, RequestForQuotationSerializer, SupplierQuotationSerializer,
+    QuotationComparisonSerializer, PurchaseReturnSerializer
+)
 
-# ✅ التصحيح: يجب استخدام apps.wms بدلاً من wms مباشرة
 from apps.wms.models import StorageBin
 
-# =========================================================
-#  1. Helper Mixin
-# =========================================================
+
 class OpcoAwareMixin:
     """
-    يقوم تلقائياً بربط السجل بالشركة (OpCo) بناءً على الجلسة الحالية
-    أو البيانات المرسلة، وتصفية السجلات للشركة النشطة فقط.
+    ربط وتصفية السجلات للشركة النشطة فقط
     """
     def _get_opco_id(self):
         return (self.request.query_params.get('opco') or 
-                self.request.data.get('opco') or 
+                (self.request.data.get('opco') if hasattr(self.request, 'data') and isinstance(self.request.data, dict) else None) or 
                 self.request.session.get('active_opco_id'))
 
     def get_queryset(self):
@@ -48,9 +47,6 @@ class OpcoAwareMixin:
         else:
             serializer.save()
 
-# =========================================================
-#  2. Procurement ViewSets
-# =========================================================
 
 class VendorViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     """ إدارة الموردين (Suppliers) """
@@ -62,21 +58,17 @@ class VendorViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
         vendor = self.get_object()
         pos = PurchaseOrder.objects.filter(vendor=vendor).order_by('-date')
         
-        # تجميع الحركات (Orders & Receipts)
         history = []
         for po in pos:
-            # إضافة أمر التوريد نفسه كحركة
             history.append({
                 'id': po.id,
                 'date': po.date,
                 'type': 'PURCHASE_ORDER',
                 'number': po.po_number,
                 'status': po.status,
-                'amount': po.extra_data.get('grand_total', 0) if po.extra_data else 0,
+                'amount': float(sum(line.quantity * line.unit_price for line in po.lines.all())),
                 'doc_type': 'PO'
             })
-            
-            # إضافة أذون الاستلام المرتبطة بهذا الـ PO
             for receipt in po.receipts.all():
                 history.append({
                     'id': receipt.id,
@@ -84,11 +76,10 @@ class VendorViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     'type': 'STOCK_RECEIPT',
                     'number': receipt.receipt_number,
                     'status': 'RECEIVED',
-                    'amount': 0, # الاستلام ليس له قيمة مالية مباشرة هنا
+                    'amount': 0,
                     'doc_type': 'GRN'
                 })
 
-        # إضافة الحركات المخزنية المباشرة (مثل الاستلام المباشر من نقاط البيع)
         from apps.wms.models import StockMove
         import datetime
         moves = StockMove.objects.filter(vendor=vendor).order_by('-created_at')
@@ -104,12 +95,12 @@ class VendorViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 'doc_type': 'DIRECT_GRN' if move.move_type == 'IN' else 'DIRECT_GDN'
             })
         
-        # ترتيب التاريخ من الأحدث للأقدم
         history.sort(key=lambda x: x['date'] if x['date'] is not None else datetime.date.min, reverse=True)
         
         return Response({
             'vendor_name': vendor.name,
             'vendor_code': vendor.code,
+            'balance': float(vendor.balance),
             'summary': {
                 'total_pos': pos.count() + moves.count(),
                 'received_pos': pos.filter(status='RECEIVED').count() + moves.filter(move_type='IN').count(),
@@ -117,67 +108,136 @@ class VendorViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             'transactions': history
         })
 
+
+class PurchaseRequisitionViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    """ طلبات الشراء الداخلية (PR) """
+    queryset = PurchaseRequisition.objects.all().order_by('-created_at')
+    serializer_class = PurchaseRequisitionSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(requested_by=self.request.user if self.request.user.is_authenticated else None)
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        pr = self.get_object()
+        pr.status = 'APPROVED'
+        pr.save()
+        return Response({'status': 'Approved', 'requisition_number': pr.requisition_number})
+
+    @action(detail=True, methods=['post'])
+    def convert_to_rfq(self, request, pk=None):
+        pr = self.get_object()
+        if pr.status not in ['APPROVED', 'SUBMITTED']:
+            return Response({'error': 'يجب اعتماد طلب الشراء قبل التحويل لطلب أسعار'}, status=400)
+        
+        rfq = RequestForQuotation.objects.create(
+            opco=pr.opco,
+            pr=pr,
+            notes=f"تم إنشاؤه بناءً على طلب الشراء {pr.requisition_number}"
+        )
+        for line in pr.lines.all():
+            rfq.lines.create(material=line.material, quantity=line.quantity)
+
+        pr.status = 'CONVERTED'
+        pr.save()
+        return Response({'status': 'Converted to RFQ', 'rfq_number': rfq.rfq_number, 'rfq_id': rfq.id})
+
+
+class RequestForQuotationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    """ طلبات عروض الأسعار للموردين (RFQ) """
+    queryset = RequestForQuotation.objects.all().order_by('-created_at')
+    serializer_class = RequestForQuotationSerializer
+
+
+class SupplierQuotationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    """ عروض أسعار الموردين (Supplier Quotations) """
+    queryset = SupplierQuotation.objects.all().order_by('-id')
+    serializer_class = SupplierQuotationSerializer
+
+
+class QuotationComparisonViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    """ مصفوفة مقارنة عروض الأسعار (Evaluation Matrix) """
+    queryset = QuotationComparison.objects.all().order_by('-id')
+    serializer_class = QuotationComparisonSerializer
+
+    @action(detail=True, methods=['post'])
+    def approve_and_generate_po(self, request, pk=None):
+        comp = self.get_object()
+        winning_sq_id = request.data.get('winning_quotation_id')
+        if winning_sq_id:
+            try:
+                sq = SupplierQuotation.objects.get(id=winning_sq_id)
+                comp.winning_quotation = sq
+                comp.winning_vendor = sq.vendor
+                comp.status = 'APPROVED'
+                comp.save()
+            except SupplierQuotation.DoesNotExist:
+                return Response({'error': 'عرض السعر غير موجود'}, status=404)
+
+        po = comp.generate_purchase_order()
+        if po:
+            return Response({
+                'status': 'PO Generated Successfully',
+                'po_id': po.id,
+                'po_number': po.po_number
+            })
+        return Response({'error': 'لم يتم العثور على عرض سعر فائز معتمد'}, status=400)
+
+
 class PurchaseOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    """ إدارة أوامر الشراء (PO) """
+    """ إدارة أوامر الشراء والتوريد (PO) """
     queryset = PurchaseOrder.objects.all().order_by('-created_at')
     serializer_class = PurchaseOrderSerializer
 
-    # --- Custom Action: Receive Goods (GR) ---
-    # يقوم بتحويل حالة الطلب إلى RECEIVED وزيادة المخزون
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        po = self.get_object()
+        po.status = 'APPROVED'
+        po.save()
+        return Response({'status': 'Approved', 'po_number': po.po_number})
+
     @action(detail=True, methods=['post'])
     def receive(self, request, pk=None):
         po = self.get_object()
-        
-        # 1. التحقق من وجود رقم الصندوق (Bin ID) المستهدف
         bin_id = request.data.get('bin_id')
+        items_data = request.data.get('items', None)
+
         if not bin_id:
-            return Response({'error': 'Target Bin ID is required for receiving goods.'}, status=400)
+            return Response({'error': 'معرف الرف (Storage Bin ID) مطلوب لإتمام الاستلام.'}, status=400)
         
         try:
             target_bin = StorageBin.objects.get(id=bin_id)
-            
-            # 2. استدعاء دالة الاستلام الموجودة داخل الموديل
-            if hasattr(po, 'receive_items'):
-                po.receive_items(target_bin)
-            else:
-                # Fallback logic
-                po.status = 'RECEIVED'
-                po.save()
-            
-            return Response({'status': 'Received', 'po_number': po.po_number})
-            
+            po.receive_items(target_bin, items_data)
+            return Response({
+                'status': 'Success',
+                'po_status': po.status,
+                'po_number': po.po_number
+            })
         except StorageBin.DoesNotExist:
-            return Response({'error': 'Invalid Bin ID'}, status=404)
+            return Response({'error': 'الرف المحدد غير موجود'}, status=404)
         except Exception as e:
             return Response({'error': str(e)}, status=400)
-        
+
+
 class StockReceiptViewSet(viewsets.ModelViewSet):
     queryset = StockReceipt.objects.all().order_by('-date')
     serializer_class = StockReceiptSerializer
 
     def create(self, request, *args, **kwargs):
-        # 1. استلام معرف أمر البيع (لو موجود)
         so_id = request.data.get('so_id')
-        po_id = request.data.get('po') # للمشتريات
-        
-        # 2. تحديد نوع الحركة: لو فيه SO تبقى OUT (صرف)، لو فيه PO تبقى IN (إضافة)
         move_type = 'OUT' if so_id else 'IN'
         request.data['move_type'] = move_type
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             with transaction.atomic():
-                # حفظ حركة المخزن (الـ Receipt والـ Moves)
-                receipt = serializer.save(created_by=request.user)
-                
-                # ✅ حالة المشتريات: تحديث الـ PO لـ RECEIVED
+                receipt = serializer.save(created_by=request.user if request.user.is_authenticated else None)
                 if receipt.po:
                     po = receipt.po
                     if all(line.received_quantity >= line.quantity for line in po.lines.all()):
                         po.status = 'RECEIVED'
                         po.save()
 
-                # ✅ حالة المبيعات (الربط الجديد): تحديث الـ SO لـ DELIVERED
                 if so_id:
                     from apps.sales.models import SalesOrder
                     try:
@@ -187,28 +247,50 @@ class StockReceiptViewSet(viewsets.ModelViewSet):
                     except SalesOrder.DoesNotExist:
                         pass
 
-                # الرد للـ Vue ببيانات النجاح والطباعة
                 return Response({
                     'id': receipt.id,
                     'receipt_no': receipt.receipt_number,
                     'move_type': move_type,
                     'status': 'success',
-                    'print_url': f'/print/grn/{receipt.id}/' # أو رابط مستند الصرف
+                    'print_url': f'/print/grn/{receipt.id}/'
                 }, status=status.HTTP_201_CREATED)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
+class PurchaseReturnViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    """ مردودات المشتريات (RTV) """
+    queryset = PurchaseReturn.objects.all().order_by('-id')
+    serializer_class = PurchaseReturnSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
+
+    @action(detail=True, methods=['post'])
+    def process_return(self, request, pk=None):
+        rtv = self.get_object()
+        bin_id = request.data.get('bin_id')
+        if not bin_id:
+            return Response({'error': 'معرف الرف المصدر مطلوب لإتمام المرتجع'}, status=400)
+
+        try:
+            source_bin = StorageBin.objects.get(id=bin_id)
+            rtv.process_return(source_bin)
+            return Response({
+                'status': 'Completed',
+                'return_number': rtv.return_number,
+                'total_amount': float(rtv.total_amount)
+            })
+        except StorageBin.DoesNotExist:
+            return Response({'error': 'الرف المصدر غير موجود'}, status=404)
+
 
 class PurchaseOrderLineViewSet(viewsets.ModelViewSet):
     queryset = PurchaseOrderLine.objects.all()
     serializer_class = PurchaseOrderLineSerializer
 
-# =========================================================
-#  3. PDF Generation View
-# =========================================================
 
 def print_po_pdf(request, pk):
-    """ دالة محسنة لطباعة أمر الشراء بتنسيق HTML شيك """
     try:
         po = PurchaseOrder.objects.get(pk=pk)
         return render_to_pdf('procurement/print_po.html', {'po': po})
@@ -216,6 +298,6 @@ def print_po_pdf(request, pk):
         return HttpResponse("أمر التوريد غير موجود", status=404)
     
 def print_grn_pdf(request, pk):
-    """ دالة عرض صفحة طباعة مستند الاستلام (GRN) """
     receipt = get_object_or_404(StockReceipt, pk=pk)
-    return render_to_pdf('procurement/print_grn.html', {'receipt': receipt})
+    return render_to_pdf('procurement/print_grn.html', {'receipt': receipt})
+

@@ -191,10 +191,41 @@ class StockDeliveryViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     serializer_class = StockDeliverySerializer
 
     def create(self, request, *args, **kwargs):
-        # Implementation similar to StockReceipt but for OUT
         response = super().create(request, *args, **kwargs)
-        # Additional logic if needed (e.g. auto-invoice is already handled by deliver_items)
         return response
+
+
+class SalesReturnViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    """ مرتجعات مبيعات العملاء (RFC) """
+    from .models import SalesReturn
+    from .serializers import SalesReturnSerializer
+    from apps.wms.models import StorageBin
+
+    queryset = SalesReturn.objects.all().order_by('-id')
+    serializer_class = SalesReturnSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
+
+    @action(detail=True, methods=['post'])
+    def process_return(self, request, pk=None):
+        rfc = self.get_object()
+        bin_id = request.data.get('bin_id')
+        if not bin_id:
+            return Response({'error': 'معرف الرف الهدف مطلوب لاستلام المرتجع'}, status=400)
+
+        try:
+            from apps.wms.models import StorageBin
+            target_bin = StorageBin.objects.get(id=bin_id)
+            rfc.process_return(target_bin)
+            return Response({
+                'status': 'Completed',
+                'return_number': rfc.return_number,
+                'total_amount': float(rfc.total_amount)
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
 
 # =========================================================
 #  3. Print Views
@@ -230,7 +261,6 @@ def print_invoice_pdf(request, pk):
     """ دالة عرض صفحة طباعة الفاتورة (Invoice) """
     invoice = get_object_or_404(SalesInvoice, pk=pk)
     
-    # جلب سطور أمر البيع المرتبط
     lines = []
     if invoice.sales_order:
         lines = invoice.sales_order.lines.all()

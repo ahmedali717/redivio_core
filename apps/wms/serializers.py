@@ -247,3 +247,42 @@ class StockMoveSerializer(serializers.ModelSerializer):
             )
         
         return last_move
+
+
+# --- السيريالايزرز الجديدة: التحويلات المخزنية والهالك ---
+
+class WarehouseTransferLineSerializer(serializers.ModelSerializer):
+    material_name = serializers.CharField(source='material.name', read_only=True)
+    material_sku = serializers.CharField(source='material.sku', read_only=True)
+
+    class Meta:
+        model = WarehouseTransferLine
+        fields = ['id', 'material', 'material_name', 'material_sku', 'quantity']
+
+
+class WarehouseTransferSerializer(serializers.ModelSerializer):
+    lines = WarehouseTransferLineSerializer(many=True)
+    source_bin_code = serializers.CharField(source='source_bin.code', read_only=True)
+    dest_bin_code = serializers.CharField(source='dest_bin.code', read_only=True)
+
+    class Meta:
+        model = WarehouseTransfer
+        fields = ['id', 'opco', 'transfer_number', 'source_bin', 'source_bin_code', 'dest_bin', 'dest_bin_code', 'date', 'status', 'notes', 'lines']
+        read_only_fields = ['id', 'transfer_number', 'date']
+
+    def create(self, validated_data):
+        lines_data = validated_data.pop('lines', [])
+        transfer = WarehouseTransfer.objects.create(**validated_data)
+        for line in lines_data:
+            WarehouseTransferLine.objects.create(transfer=transfer, **line)
+        return transfer
+
+
+class StockScrapSerializer(serializers.ModelSerializer):
+    material_name = serializers.CharField(source='material.name', read_only=True)
+    storage_bin_code = serializers.CharField(source='storage_bin.code', read_only=True)
+
+    class Meta:
+        model = StockScrap
+        fields = ['id', 'opco', 'scrap_number', 'storage_bin', 'storage_bin_code', 'material', 'material_name', 'quantity', 'unit_cost', 'total_cost', 'reason', 'notes', 'date']
+        read_only_fields = ['id', 'scrap_number', 'total_cost', 'date']

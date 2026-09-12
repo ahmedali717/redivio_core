@@ -248,3 +248,75 @@ class StockDeliveryLine(models.Model):
     storage_bin = models.ForeignKey('wms.StorageBin', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self): return f"{self.delivery.delivery_number} - {self.material.name}"
+
+from django.conf import settings
+
+class SalesReturn(models.Model):
+    """ مرتجعات مبيعات (Return From Customer - RFC) """
+    STATUS_CHOICES = [
+        ('DRAFT', 'مسودة'),
+        ('APPROVED', 'معتمد للمرتجع'),
+        ('COMPLETED', 'تم استلام البضاعة وإضافة المخزون'),
+        ('CANCELLED', 'ملغى')
+    ]
+
+    opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
+    return_number = models.CharField(max_length=50, unique=True, blank=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='returns')
+    sales_order = models.ForeignKey(SalesOrder, on_delete=models.SET_NULL, null=True, blank=True, related_name='returns')
+    invoice = models.ForeignKey(SalesInvoice, on_delete=models.SET_NULL, null=True, blank=True, related_name='returns')
+    date = models.DateField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
+    reason = models.TextField(blank=True, null=True)
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.return_number:
+            year = datetime.date.today().year
+            last_ret = SalesReturn.objects.filter(return_number__contains=f'RFC-{year}').order_by('id').last()
+            new_no = (int(last_ret.return_number.split('-')[-1]) + 1) if last_ret else 1
+            self.return_number = f"RFC-{year}-{new_no:04d}"
+        super().save(*args, **kwargs)
+
+    def process_return(self, target_bin):
+        """ تنفذ حركة الدخول المخزنية وتخصم مديونية العميل """
+        if self.status == 'COMPLETED':
+            return
+        
+        StockMove = apps.get_model('wms', 'StockMove')
+        total_ret = 0
+
+        for line in self.lines.all():
+            StockMove.objects.create(
+                opco=self.opco,
+                material=line.material,
+                quantity=line.quantity,
+                move_type='IN',
+                dest_bin=target_bin,
+                source_bin=None,
+                customer=self.customer,
+                sales_price=line.unit_price,
+                reference=f"RFC: {self.return_number}"
+            )
+            total_ret += line.quantity * line.unit_price
+
+        self.total_amount = total_ret
+        self.status = 'COMPLETED'
+        self.save()
+        
+        self.customer.balance -= total_ret
+        self.customer.save()
+
+    def __str__(self):
+        return self.return_number
+
+
+class SalesReturnLine(models.Model):
+    return_doc = models.ForeignKey(SalesReturn, related_name='lines', on_delete=models.CASCADE)
+    material = models.ForeignKey('item_master.Material', on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=12, decimal_places=2)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.return_doc.return_number} - {self.material.name}"

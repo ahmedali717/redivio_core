@@ -24,11 +24,34 @@
             <button @click="openModal('po')" class="group bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white px-5 py-3 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold tracking-wide">
                 <i class="fas fa-file-signature group-hover:scale-110 transition-transform"></i> <span v-text="isArabic ? 'إنشاء أمر توريد' : 'New Purchase Order'"></span>
             </button>
+            <button @click="openModal('pr')" class="group bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white px-5 py-3 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold tracking-wide">
+                <i class="fas fa-file-alt group-hover:scale-110 transition-transform"></i> <span v-text="isArabic ? 'طلب شراء جديد (PR)' : 'New PR'"></span>
+            </button>
             <button @click="view = 'vendors_list'" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl shadow-lg transition-all flex items-center gap-2 font-bold tracking-wide">
                 <i class="fas fa-handshake"></i> <span v-text="isArabic ? 'قائمة الموردين' : 'Vendors List'"></span>
             </button>
         </div>
     </div>
+
+    <!-- Enterprise Workflow Tab Switcher -->
+    <div class="bg-slate-900 p-2 rounded-2xl flex flex-wrap gap-2 text-sm font-bold text-slate-400 border border-slate-800">
+        <button @click="procTab = 'pos'" :class="procTab === 'pos' ? 'bg-emerald-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-slate-200'" class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-file-invoice-dollar"></i> <span v-text="isArabic ? 'أوامر التوريد (POs)' : 'Purchase Orders'"></span>
+        </button>
+        <button @click="procTab = 'prs'" :class="procTab === 'prs' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-slate-200'" class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-clipboard-list"></i> <span v-text="isArabic ? 'طلبات الشراء (PR)' : 'Requisitions (PR)'"></span>
+        </button>
+        <button @click="procTab = 'rfqs'" :class="procTab === 'rfqs' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-slate-200'" class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-tags"></i> <span v-text="isArabic ? 'عروض الأسعار (RFQ)' : 'RFQs & Quotes'"></span>
+        </button>
+        <button @click="procTab = 'matrix'" :class="procTab === 'matrix' ? 'bg-amber-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-slate-200'" class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-balance-scale"></i> <span v-text="isArabic ? 'مقارنة الأسعار (Matrix)' : 'Comparison Matrix'"></span>
+        </button>
+        <button @click="procTab = 'rtv'" :class="procTab === 'rtv' ? 'bg-rose-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-slate-200'" class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-undo"></i> <span v-text="isArabic ? 'مردودات المشتريات (RTV)' : 'Purchase Returns'"></span>
+        </button>
+    </div>
+
     
     <!-- Actionable Alerts (Bottlenecks & Critical KPIs) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -1,5 +1,9 @@
 from rest_framework import serializers
-from .models import Vendor, PurchaseOrder, PurchaseOrderLine, StockReceipt, StockReceiptLine
+from .models import (
+    Vendor, PurchaseOrder, PurchaseOrderLine, StockReceipt, StockReceiptLine,
+    PurchaseRequisition, PurchaseRequisitionLine, RequestForQuotation, RFQLine,
+    SupplierQuotation, SupplierQuotationLine, QuotationComparison, PurchaseReturn, PurchaseReturnLine
+)
 
 class VendorSerializer(serializers.ModelSerializer):
     extra_data = serializers.JSONField(required=False)
@@ -7,29 +11,132 @@ class VendorSerializer(serializers.ModelSerializer):
         model = Vendor
         fields = '__all__'
 
+
+# --- 1. Purchase Requisition Serializers (PR) ---
+class PurchaseRequisitionLineSerializer(serializers.ModelSerializer):
+    material_name = serializers.CharField(source='material.name', read_only=True)
+    material_sku = serializers.CharField(source='material.sku', read_only=True)
+
+    class Meta:
+        model = PurchaseRequisitionLine
+        fields = ['id', 'material', 'material_name', 'material_sku', 'quantity', 'notes']
+
+
+class PurchaseRequisitionSerializer(serializers.ModelSerializer):
+    lines = PurchaseRequisitionLineSerializer(many=True)
+    requested_by_name = serializers.CharField(source='requested_by.username', read_only=True)
+    plant_name = serializers.CharField(source='plant.name', read_only=True)
+
+    class Meta:
+        model = PurchaseRequisition
+        fields = ['id', 'opco', 'requisition_number', 'plant', 'plant_name', 'requested_by', 'requested_by_name', 'date', 'required_date', 'status', 'notes', 'lines']
+        read_only_fields = ['id', 'requisition_number', 'date']
+
+    def create(self, validated_data):
+        lines_data = validated_data.pop('lines', [])
+        pr = PurchaseRequisition.objects.create(**validated_data)
+        for line in lines_data:
+            PurchaseRequisitionLine.objects.create(requisition=pr, **line)
+        return pr
+
+
+# --- 2. RFQ & Supplier Quotation Serializers ---
+class RFQLineSerializer(serializers.ModelSerializer):
+    material_name = serializers.CharField(source='material.name', read_only=True)
+
+    class Meta:
+        model = RFQLine
+        fields = ['id', 'material', 'material_name', 'quantity', 'target_price']
+
+
+class RequestForQuotationSerializer(serializers.ModelSerializer):
+    lines = RFQLineSerializer(many=True)
+    vendor_names = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RequestForQuotation
+        fields = ['id', 'opco', 'rfq_number', 'pr', 'date', 'deadline', 'status', 'notes', 'vendors', 'vendor_names', 'lines']
+        read_only_fields = ['id', 'rfq_number', 'date']
+
+    def get_vendor_names(self, obj):
+        return [v.name for v in obj.vendors.all()]
+
+    def create(self, validated_data):
+        lines_data = validated_data.pop('lines', [])
+        vendors = validated_data.pop('vendors', [])
+        rfq = RequestForQuotation.objects.create(**validated_data)
+        rfq.vendors.set(vendors)
+        for line in lines_data:
+            RFQLine.objects.create(rfq=rfq, **line)
+        return rfq
+
+
+class SupplierQuotationLineSerializer(serializers.ModelSerializer):
+    material_name = serializers.CharField(source='material.name', read_only=True)
+
+    class Meta:
+        model = SupplierQuotationLine
+        fields = ['id', 'material', 'material_name', 'quantity', 'unit_price', 'discount_rate', 'tax_rate', 'line_total']
+        read_only_fields = ['line_total']
+
+
+class SupplierQuotationSerializer(serializers.ModelSerializer):
+    lines = SupplierQuotationLineSerializer(many=True)
+    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
+
+    class Meta:
+        model = SupplierQuotation
+        fields = ['id', 'opco', 'quotation_number', 'rfq', 'vendor', 'vendor_name', 'date', 'valid_until', 'delivery_lead_time_days', 'payment_terms', 'total_amount', 'notes', 'lines']
+        read_only_fields = ['id', 'quotation_number', 'date']
+
+    def create(self, validated_data):
+        lines_data = validated_data.pop('lines', [])
+        sq = SupplierQuotation.objects.create(**validated_data)
+        total = 0
+        for line in lines_data:
+            l_obj = SupplierQuotationLine.objects.create(quotation=sq, **line)
+            total += l_obj.line_total
+        sq.total_amount = total
+        sq.save()
+        return sq
+
+
+# --- 3. Quotation Comparison Serializer ---
+class QuotationComparisonSerializer(serializers.ModelSerializer):
+    rfq_number = serializers.CharField(source='rfq.rfq_number', read_only=True)
+    winning_vendor_name = serializers.CharField(source='winning_vendor.name', read_only=True)
+    quotations = SupplierQuotationSerializer(source='rfq.supplier_quotations', many=True, read_only=True)
+
+    class Meta:
+        model = QuotationComparison
+        fields = ['id', 'opco', 'comparison_number', 'rfq', 'rfq_number', 'date', 'winning_vendor', 'winning_vendor_name', 'winning_quotation', 'status', 'notes', 'quotations']
+        read_only_fields = ['id', 'comparison_number', 'date']
+
+
+# --- 4. Purchase Order & Lines Serializers ---
 class PurchaseOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.CharField(source='material.name', read_only=True)
     material_sku = serializers.CharField(source='material.sku', read_only=True)
-    # 🚀 التعديل: إضافة الحقل الجديد عشان الـ Vue يعرف إحنا استلمنا كام قبل كدة
-    received_qty = serializers.DecimalField(source='received_quantity', max_digits=10, decimal_places=2, read_only=True)
+    received_qty = serializers.DecimalField(source='received_quantity', max_digits=12, decimal_places=2, read_only=True)
     
     class Meta:
         model = PurchaseOrderLine
         fields = ['id', 'material', 'material_name', 'material_sku', 'quantity', 'received_qty', 'unit_price', 'po']
         read_only_fields = ['id', 'material_name', 'material_sku', 'po', 'received_qty']
 
-# --- 🚀 سيريالايزر الـ GRN الجديد ---
 
 class StockReceiptLineSerializer(serializers.ModelSerializer):
     material_id = serializers.IntegerField(required=False)
+    material_name = serializers.CharField(source='material.name', read_only=True)
     
     class Meta:
         model = StockReceiptLine
-        fields = ['material', 'material_id', 'quantity', 'storage_bin']
+        fields = ['material', 'material_id', 'material_name', 'quantity', 'storage_bin']
         extra_kwargs = {
             'material': {'required': False, 'allow_null': True},
             'storage_bin': {'required': False, 'allow_null': True},
         }
+
 
 class StockReceiptSerializer(serializers.ModelSerializer):
     items = StockReceiptLineSerializer(many=True)
@@ -44,12 +151,9 @@ class StockReceiptSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
-        """
-        تعديل: التحقق من PO فقط إذا كان موجوداً (Modular Mode)
-        """
         po = data.get('po')
         if not po:
-            return data # تخطي التحقق في حالة الـ Standalone
+            return data
             
         items = data['items']
         for item in items:
@@ -84,17 +188,13 @@ class StockReceiptSerializer(serializers.ModelSerializer):
                 material = Material.objects.get(id=material_id)
                 item['material'] = material
 
-            # 1. إنشاء سطر الاستلام
             StockReceiptLine.objects.create(receipt=receipt, **item)
             
-            # 2. تحديث PO Line فقط لو فيه PO
             if receipt.po:
                 po_line = PurchaseOrderLine.objects.get(po=receipt.po, material=item['material'])
                 po_line.received_quantity += item['quantity']
                 po_line.save()
             
-            # 3. تسجيل حركة مخزنية
-            # البحث عن أول رف متاح لو مفيش رف محدد (للوضع اليدوي)
             bin_obj = item.get('storage_bin')
             if not bin_obj:
                 from apps.wms.models import StorageBin
@@ -112,18 +212,17 @@ class StockReceiptSerializer(serializers.ModelSerializer):
             
         return receipt
 
-# --- 🚀 نهاية سيريالايزر الـ GRN ---
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
     lines = PurchaseOrderLineSerializer(many=True) 
     extra_data = serializers.JSONField(required=False)
-    # لعرض حركات الاستلام المرتبطة بهذا الـ PO
     receipts = StockReceiptSerializer(many=True, read_only=True)
 
     class Meta:
         model = PurchaseOrder
-        fields = ['id', 'opco', 'vendor', 'vendor_name', 'po_number', 'date', 'status', 'extra_data', 'lines', 'receipts']
+        fields = ['id', 'opco', 'vendor', 'vendor_name', 'pr', 'rfq', 'comparison', 'po_number', 'date', 'status', 'extra_data', 'lines', 'receipts']
+        read_only_fields = ['id', 'po_number', 'date']
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines', [])
@@ -131,3 +230,29 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         for line_data in lines_data:
             PurchaseOrderLine.objects.create(po=purchase_order, **line_data)
         return purchase_order
+
+
+# --- 5. Purchase Return (RTV) Serializers ---
+class PurchaseReturnLineSerializer(serializers.ModelSerializer):
+    material_name = serializers.CharField(source='material.name', read_only=True)
+
+    class Meta:
+        model = PurchaseReturnLine
+        fields = ['id', 'material', 'material_name', 'quantity', 'unit_price']
+
+
+class PurchaseReturnSerializer(serializers.ModelSerializer):
+    lines = PurchaseReturnLineSerializer(many=True)
+    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
+
+    class Meta:
+        model = PurchaseReturn
+        fields = ['id', 'opco', 'return_number', 'vendor', 'vendor_name', 'po', 'grn', 'date', 'status', 'reason', 'total_amount', 'lines']
+        read_only_fields = ['id', 'return_number', 'date']
+
+    def create(self, validated_data):
+        lines_data = validated_data.pop('lines', [])
+        rtv = PurchaseReturn.objects.create(**validated_data)
+        for line in lines_data:
+            PurchaseReturnLine.objects.create(return_doc=rtv, **line)
+        return rtv

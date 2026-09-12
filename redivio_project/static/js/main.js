@@ -258,7 +258,17 @@ createApp({
             selectedVendor: null,
             vendorLedger: null,
             purchase_orders: [],
+            procTab: 'pos',
+            purchase_requisitions: [],
+            rfqs: [],
+            supplier_quotations: [],
+            quotation_comparisons: [],
+            purchase_returns: [],
+            warehouse_transfers: [],
+            stock_scraps: [],
+            sales_returns: [],
             pending_pos: [],
+
 
             showModal: false,
             materialTab: 'general',
@@ -6272,7 +6282,6 @@ createApp({
         },
         async fetchPurchaseOrders() {
             try {
-                // هنجيب كل أوامر التوريد الخاصة بالشركة الحالية
                 const url = this.activeOpcoId
                     ? `/api/orders/?opco=${this.activeOpcoId}`
                     : '/api/orders/';
@@ -6281,10 +6290,36 @@ createApp({
                     const data = await res.json();
                     this.purchase_orders = Array.isArray(data) ? data : (data.results || []);
                 }
+                await this.fetchEnterpriseProcurementData();
             } catch (e) {
                 console.error("Error fetching POs:", e);
             }
         },
+
+        async fetchEnterpriseProcurementData() {
+            try {
+                const opcoParam = this.activeOpcoId ? `?opco=${this.activeOpcoId}` : '';
+                const [prs, rfqs, comps, rtvs, transfers, scraps, salesRet] = await Promise.all([
+                    fetch(`/api/purchase-requisitions/${opcoParam}`).then(r => r.ok ? r.json() : []),
+                    fetch(`/api/rfqs/${opcoParam}`).then(r => r.ok ? r.json() : []),
+                    fetch(`/api/quotation-comparisons/${opcoParam}`).then(r => r.ok ? r.json() : []),
+                    fetch(`/api/purchase-returns/${opcoParam}`).then(r => r.ok ? r.json() : []),
+                    fetch(`/api/transfers/${opcoParam}`).then(r => r.ok ? r.json() : []),
+                    fetch(`/api/scraps/${opcoParam}`).then(r => r.ok ? r.json() : []),
+                    fetch(`/api/sales-returns/${opcoParam}`).then(r => r.ok ? r.json() : []),
+                ]);
+                this.purchase_requisitions = Array.isArray(prs) ? prs : (prs.results || []);
+                this.rfqs = Array.isArray(rfqs) ? rfqs : (rfqs.results || []);
+                this.quotation_comparisons = Array.isArray(comps) ? comps : (comps.results || []);
+                this.purchase_returns = Array.isArray(rtvs) ? rtvs : (rtvs.results || []);
+                this.warehouse_transfers = Array.isArray(transfers) ? transfers : (transfers.results || []);
+                this.stock_scraps = Array.isArray(scraps) ? scraps : (scraps.results || []);
+                this.sales_returns = Array.isArray(salesRet) ? salesRet : (salesRet.results || []);
+            } catch (e) {
+                console.error("Error fetching Enterprise procurement data:", e);
+            }
+        },
+
 
         async updatePOStatus(poId, newStatus) {
             try {

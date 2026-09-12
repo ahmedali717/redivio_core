@@ -18,13 +18,20 @@ from apps.core.views import (
 from apps.item_master.views import MaterialViewSet, CategoryViewSet, SaleGroupViewSet
 from apps.wms.views import StockQuantViewSet, StockMoveViewSet
 # عدل السطر ده ليتضمن الدالة الجديدة
-from apps.procurement.views import VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, print_po_pdf, print_grn_pdf, StockReceiptViewSet
-from apps.sales.views import CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet, SalesInvoiceViewSet, CustomerPaymentViewSet, StockDeliveryViewSet, print_so_pdf, print_delivery_pdf, print_invoice_pdf
+from apps.procurement.views import (
+    VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, StockReceiptViewSet,
+    PurchaseRequisitionViewSet, RequestForQuotationViewSet, SupplierQuotationViewSet,
+    QuotationComparisonViewSet, PurchaseReturnViewSet, print_po_pdf, print_grn_pdf
+)
+from apps.sales.views import (
+    CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet, SalesInvoiceViewSet,
+    CustomerPaymentViewSet, StockDeliveryViewSet, SalesReturnViewSet, print_so_pdf, print_delivery_pdf, print_invoice_pdf
+)
+from apps.wms.views import StockQuantViewSet, StockMoveViewSet, WarehouseTransferViewSet, StockScrapViewSet
 
 # 2. إعداد الراوتر
 router = DefaultRouter()
 
-# ✅✅✅ الإصلاح الأساسي: إضافة basename="..." لكل سطر هنا
 router.register(r'dashboard-data', DashboardDataViewSet, basename='dashboard-data')
 router.register(r'opcos', OpCoViewSet, basename='opco')
 router.register(r'plants', PlantViewSet, basename='plant')
@@ -35,15 +42,21 @@ router.register(r'company-users', CompanyUserViewSet, basename='companyuser')
 router.register(r'materials', MaterialViewSet, basename='material')
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'sale-groups', SaleGroupViewSet, basename='salegroup')
-# 👈 مسحنا سطر تسجيل الـ fields من هنا
 
 router.register(r'inventory', StockQuantViewSet, basename='stockquant')
 router.register(r'moves', StockMoveViewSet, basename='stockmove')
+router.register(r'transfers', WarehouseTransferViewSet, basename='warehousetransfer')
+router.register(r'scraps', StockScrapViewSet, basename='stockscrap')
 
 router.register(r'vendors', VendorViewSet, basename='vendor')
+router.register(r'purchase-requisitions', PurchaseRequisitionViewSet, basename='purchaserequisition')
+router.register(r'rfqs', RequestForQuotationViewSet, basename='requestforquotation')
+router.register(r'supplier-quotations', SupplierQuotationViewSet, basename='supplierquotation')
+router.register(r'quotation-comparisons', QuotationComparisonViewSet, basename='quotationcomparison')
 router.register(r'stock-receipts', StockReceiptViewSet, basename='stockreceipt')
 router.register(r'orders', PurchaseOrderViewSet, basename='purchaseorder')
 router.register(r'order-lines', PurchaseOrderLineViewSet, basename='purchaseorderline')
+router.register(r'purchase-returns', PurchaseReturnViewSet, basename='purchasereturn')
 
 router.register(r'customers', CustomerViewSet, basename='customer')
 router.register(r'sales-orders', SalesOrderViewSet, basename='salesorder')
@@ -51,6 +64,8 @@ router.register(r'sales-lines', SalesOrderLineViewSet, basename='salesorderline'
 router.register(r'sales-invoices', SalesInvoiceViewSet, basename='salesinvoice')
 router.register(r'customer-payments', CustomerPaymentViewSet, basename='customerpayment')
 router.register(r'stock-deliveries', StockDeliveryViewSet, basename='stockdelivery')
+router.register(r'sales-returns', SalesReturnViewSet, basename='salesreturn')
+
 
 # 3. الروابط
 urlpatterns = [

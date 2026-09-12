@@ -1220,3 +1220,32 @@ class OpeningInventoryAPIView(APIView):
                 return Response({"error": f"Failed to commit inventory count: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# --- ViewSets الجديدة للتحويلات بين المخازن والهالك ---
+
+class WarehouseTransferViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    """ إدارة طلبات وأوامر التحويل بين المخازن (TO) """
+    from .models import WarehouseTransfer
+    from .serializers import WarehouseTransferSerializer
+    
+    queryset = WarehouseTransfer.objects.all().order_by('-id')
+    serializer_class = WarehouseTransferSerializer
+
+    @action(detail=True, methods=['post'])
+    def execute_transfer(self, request, pk=None):
+        transfer = self.get_object()
+        transfer.execute_transfer()
+        return Response({
+            'status': 'Executed',
+            'transfer_number': transfer.transfer_number
+        })
+
+
+class StockScrapViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    """ إدارة تسويات وتكاليف الهالك والتالف (Stock Scrap / Write-off) """
+    from .models import StockScrap
+    from .serializers import StockScrapSerializer
+
+    queryset = StockScrap.objects.all().order_by('-id')
+    serializer_class = StockScrapSerializer

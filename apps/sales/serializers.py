@@ -105,3 +105,31 @@ class CustomerPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerPayment
         fields = '__all__'
+
+
+# --- Sales Return Serializers ---
+from .models import SalesReturn, SalesReturnLine
+
+class SalesReturnLineSerializer(serializers.ModelSerializer):
+    material_name = serializers.ReadOnlyField(source='material.name')
+
+    class Meta:
+        model = SalesReturnLine
+        fields = ['id', 'material', 'material_name', 'quantity', 'unit_price']
+
+
+class SalesReturnSerializer(serializers.ModelSerializer):
+    lines = SalesReturnLineSerializer(many=True)
+    customer_name = serializers.ReadOnlyField(source='customer.name')
+
+    class Meta:
+        model = SalesReturn
+        fields = ['id', 'opco', 'return_number', 'customer', 'customer_name', 'sales_order', 'invoice', 'date', 'status', 'reason', 'total_amount', 'lines']
+        read_only_fields = ['id', 'return_number', 'date']
+
+    def create(self, validated_data):
+        lines_data = validated_data.pop('lines', [])
+        rfc = SalesReturn.objects.create(**validated_data)
+        for line in lines_data:
+            SalesReturnLine.objects.create(return_doc=rfc, **line)
+        return rfc

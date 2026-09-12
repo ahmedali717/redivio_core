@@ -8,6 +8,9 @@ router.register(r'locations', views.StorageLocationViewSet)
 router.register(r'bins', views.StorageBinViewSet)
 router.register(r'inventory', views.StockQuantViewSet, basename='inventory')
 router.register(r'moves', views.StockMoveViewSet)
+router.register(r'transfers', views.WarehouseTransferViewSet, basename='warehousetransfer')
+router.register(r'scraps', views.StockScrapViewSet, basename='stockscrap')
+
 
 urlpatterns = [
     # الروابط هتكون مباشرة: /api/wms/plants/
