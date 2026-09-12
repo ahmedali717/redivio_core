@@ -122,6 +122,14 @@
                 </div>
             </div>
 
+            <div v-show="isScanning" class="relative group animate-in zoom-in-95 duration-300 my-4">
+                <button @click="stopScanner" 
+                        class="absolute top-4 right-4 z-[100] bg-red-500 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center border-2 border-white">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div id="reader" class="w-full max-w-sm mx-auto rounded-3xl overflow-hidden border-4 border-emerald-500/20 bg-black shadow-2xl min-h-[300px]"></div>
+            </div>
+
             <div class="rounded-3xl border border-slate-200 overflow-hidden shadow-sm bg-white">
                 <table class="w-full text-right">
                     <thead class="bg-slate-50 border-b border-slate-200">

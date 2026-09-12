@@ -4099,37 +4099,53 @@ createApp({
 
         // 🚀 2. دالة تشغيل الكاميرا (النسخة الذكية لـ EAN-13)
         startCameraScan() {
+            if (typeof Html5Qrcode === 'undefined') {
+                this.showToast(this.isArabic ? "مكتبة قارئ الباركود غير محملة" : "Barcode scanner library not available", 'error');
+                return;
+            }
             this.isScanning = true;
             this.$nextTick(() => {
+                const readerElem = document.getElementById("reader");
+                if (!readerElem) {
+                    this.showToast(this.isArabic ? "عنصر الكاميرا غير متوفر في هذه الشاشة" : "Camera element not found", 'error');
+                    this.isScanning = false;
+                    return;
+                }
+
                 if (this.scannerInstance) {
                     try { this.scannerInstance.clear(); } catch (e) { }
                 }
 
-                this.scannerInstance = new Html5Qrcode("reader", {
-                    formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13]
-                });
+                try {
+                    const formats = typeof Html5QrcodeSupportedFormats !== 'undefined' ? [Html5QrcodeSupportedFormats.EAN_13] : undefined;
+                    this.scannerInstance = new Html5Qrcode("reader", formats ? { formatsToSupport: formats } : undefined);
 
-                const config = {
-                    fps: 10,
-                    qrbox: { width: 300, height: 120 },
-                    experimentalFeatures: {
-                        useBarCodeDetectorIfSupported: true
-                    }
-                };
-
-                this.scannerInstance.start(
-                    { facingMode: "environment" },
-                    config,
-                    (decodedText) => {
-                        if (this.scannerInstance && this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
-                            this.scannerInstance.pause();
+                    const config = {
+                        fps: 10,
+                        qrbox: { width: 300, height: 120 },
+                        experimentalFeatures: {
+                            useBarCodeDetectorIfSupported: true
                         }
-                        this.processScannedBarcode(decodedText);
-                    }
-                ).catch(err => {
-                    console.error("Camera Error:", err);
+                    };
+
+                    this.scannerInstance.start(
+                        { facingMode: "environment" },
+                        config,
+                        (decodedText) => {
+                            if (this.scannerInstance && typeof Html5QrcodeScannerState !== 'undefined' && this.scannerInstance.getState() === Html5QrcodeScannerState.SCANNING) {
+                                this.scannerInstance.pause();
+                            }
+                            this.processScannedBarcode(decodedText);
+                        }
+                    ).catch(err => {
+                        console.error("Camera Error:", err);
+                        this.showToast(this.isArabic ? "تعذر تشغيل الكاميرا" : "Could not start camera", 'error');
+                        this.isScanning = false;
+                    });
+                } catch (err) {
+                    console.error("Scanner Initialization Error:", err);
                     this.isScanning = false;
-                });
+                }
             });
         },
 
