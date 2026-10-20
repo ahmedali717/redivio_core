@@ -158,3 +158,43 @@ class CompanyUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyUser
         fields = ['id', 'user', 'user_details', 'company', 'company_name', 'role', 'is_active_session']
+
+
+# --- Odoo Chatter & Activities Serializers ---
+from apps.core.models import ChatterMessage, ActivitySchedule
+from django.contrib.contenttypes.models import ContentType
+
+class ChatterMessageSerializer(serializers.ModelSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    created_at_formatted = serializers.DateTimeField(source='created_at', format="%Y-%m-%d %H:%M", read_only=True)
+
+    class Meta:
+        model = ChatterMessage
+        fields = [
+            'id', 'opco', 'author', 'author_name', 'author_username', 
+            'content_type', 'object_id', 'message_type', 'body', 
+            'metadata', 'created_at', 'created_at_formatted'
+        ]
+        read_only_fields = ['id', 'created_at']
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['author'] = request.user
+            if not validated_data.get('author_name'):
+                validated_data['author_name'] = request.user.get_full_name() or request.user.username
+        return super().create(validated_data)
+
+
+class ActivityScheduleSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    assigned_to_name = serializers.CharField(source='assigned_to.username', read_only=True)
+
+    class Meta:
+        model = ActivitySchedule
+        fields = [
+            'id', 'opco', 'created_by', 'created_by_name', 'assigned_to', 'assigned_to_name',
+            'content_type', 'object_id', 'activity_type', 'summary', 'note', 
+            'due_date', 'status', 'created_at', 'completed_at'
+        ]
+        read_only_fields = ['id', 'created_at']

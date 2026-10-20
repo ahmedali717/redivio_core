@@ -10,7 +10,12 @@ class SalesOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.ReadOnlyField(source='material.name')
     class Meta:
         model = SalesOrderLine
-        fields = ['id', 'so', 'material', 'material_name', 'quantity', 'unit_price', 'total', 'shipped_quantity', 'billed_quantity', 'remaining_quantity', 'unbilled_quantity']
+        fields = [
+            'id', 'so', 'material', 'material_name', 'uom', 'quantity', 'unit_price',
+            'discount_rate', 'discount_amount', 'gross_total', 'total', 'tax_rate', 'tax_amount',
+            'shipped_quantity', 'billed_quantity', 'remaining_quantity', 'unbilled_quantity',
+            'storage_bin', 'notes', 'extra_data'
+        ]
 
 class StockDeliveryLineSerializer(serializers.ModelSerializer):
     material_id = serializers.IntegerField(required=False)
@@ -30,7 +35,11 @@ class StockDeliverySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = StockDelivery
-        fields = ['id', 'opco', 'delivery_number', 'so', 'date', 'created_by', 'items', 'manual_contact_name']
+        fields = [
+            'id', 'opco', 'delivery_number', 'so', 'date', 'created_by', 
+            'tracking_number', 'driver_name', 'vehicle_plate', 'delivery_address', 
+            'notes', 'extra_data', 'items', 'manual_contact_name'
+        ]
         read_only_fields = ['id', 'delivery_number', 'date', 'created_by']
         extra_kwargs = {
             'so': {'required': False, 'allow_null': True},
@@ -88,11 +97,27 @@ class StockDeliverySerializer(serializers.ModelSerializer):
 class SalesOrderSerializer(serializers.ModelSerializer):
     lines = SalesOrderLineSerializer(many=True, read_only=True)
     customer_name = serializers.ReadOnlyField(source='customer.name')
-    deliveries = StockDeliverySerializer(many=True, read_only=True) # تم تعريفه الآن في الأعلى
+    deliveries = StockDeliverySerializer(many=True, read_only=True)
+    deliveries_count = serializers.SerializerMethodField()
+    invoices_count = serializers.SerializerMethodField()
     
     class Meta:
         model = SalesOrder
-        fields = ['id', 'opco', 'so_number', 'customer', 'customer_name', 'date', 'status', 'total_amount', 'tax_amount', 'grand_total', 'notes', 'lines', 'deliveries']
+        fields = [
+            'id', 'opco', 'so_number', 'customer', 'customer_name', 'date', 
+            'delivery_date', 'customer_po_reference', 'customer_po_date',
+            'currency', 'exchange_rate', 'payment_terms', 'shipping_terms',
+            'shipping_address', 'billing_address', 'status',
+            'subtotal', 'discount_rate', 'discount_amount', 'total_amount', 'tax_amount', 'grand_total',
+            'terms_and_conditions', 'notes', 'extra_data',
+            'lines', 'deliveries', 'deliveries_count', 'invoices_count'
+        ]
+
+    def get_deliveries_count(self, obj):
+        return obj.deliveries.count()
+
+    def get_invoices_count(self, obj):
+        return obj.invoices.count()
 
 class SalesInvoiceSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')

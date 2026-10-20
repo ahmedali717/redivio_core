@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 from .context import get_current_tenant_id  # تأكد من إنشاء ملف context.py في نفس المجلد
 
 # --- 1. الـ Manager المسؤول عن الفلترة التلقائية (Odoo Style) ---
@@ -250,4 +252,74 @@ class SubscriptionRequest(models.Model):
         verbose_name_plural = "طلبات الاشتراكات"
 
     def __str__(self):
-        return f"Req for {self.opco.name} -> {self.plan} ({self.status})"
+        return f"Req for {self.opco.name} -> {self.plan} ({self.status})"
+
+
+# --- 5. Odoo-Style Chatter & Collaboration System (سجل المحادثات، الملاحظات الداخلية، التدقيق، والأنشطة) ---
+class ChatterMessage(models.Model):
+    MESSAGE_TYPES = [
+        ('comment', 'Comment / تعليق أو ملاحظة داخلية'),
+        ('log', 'System Audit Log / سجل تدقيق آلي'),
+        ('notification', 'Notification / إشعار'),
+    ]
+    opco = models.ForeignKey(OpCo, on_delete=models.CASCADE, null=True, blank=True, related_name='chatter_messages')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    author_name = models.CharField(max_length=150, blank=True, null=True)
+
+    # Generic Relation لربط المحادثة بأي مستند (SalesOrder, PurchaseOrder, Customer, إلخ)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default='comment')
+    body = models.TextField()
+    metadata = models.JSONField(default=dict, blank=True)  # لحفظ الفروقات diffs والتعديلات على الحقول
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['content_type', 'object_id']),
+        ]
+
+    def __str__(self):
+        return f"Chatter on {self.content_type.model} #{self.object_id} by {self.author_name or 'System'}"
+
+
+class ActivitySchedule(models.Model):
+    ACTIVITY_TYPES = [
+        ('call', 'Call / مكالمة هاتفية'),
+        ('meeting', 'Meeting / اجتماع عمل'),
+        ('email', 'Email / بريد إلكتروني'),
+        ('todo', 'To-Do / مهمة متابعة'),
+        ('reminder', 'Reminder / تذكير'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pending / قيد الانتظار'),
+        ('done', 'Done / تم الإنجاز'),
+        ('cancelled', 'Cancelled / ملغى'),
+    ]
+    opco = models.ForeignKey(OpCo, on_delete=models.CASCADE, null=True, blank=True, related_name='activities')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_activities')
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_activities')
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    activity_type = models.CharField(max_length=20, choices=ACTIVITY_TYPES, default='todo')
+    summary = models.CharField(max_length=255)
+    note = models.TextField(blank=True, null=True)
+    due_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['due_date', '-created_at']
+        indexes = [
+            models.Index(fields=['content_type', 'object_id']),
+        ]
+
+    def __str__(self):
+        return f"{self.activity_type}: {self.summary} (Due: {self.due_date})"

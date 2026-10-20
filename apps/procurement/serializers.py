@@ -121,8 +121,13 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = PurchaseOrderLine
-        fields = ['id', 'material', 'material_name', 'material_sku', 'quantity', 'received_qty', 'unit_price', 'po']
-        read_only_fields = ['id', 'material_name', 'material_sku', 'po', 'received_qty']
+        fields = [
+            'id', 'po', 'material', 'material_name', 'material_sku', 'uom', 
+            'quantity', 'unit_price', 'discount_rate', 'discount_amount', 
+            'tax_rate', 'tax_amount', 'line_total', 'received_qty', 'remaining_quantity', 
+            'notes', 'extra_data'
+        ]
+        read_only_fields = ['id', 'material_name', 'material_sku', 'po', 'received_qty', 'remaining_quantity', 'line_total']
 
 
 class StockReceiptLineSerializer(serializers.ModelSerializer):
@@ -215,16 +220,25 @@ class StockReceiptSerializer(serializers.ModelSerializer):
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
-    lines = PurchaseOrderLineSerializer(many=True) 
+    lines = PurchaseOrderLineSerializer(many=True, required=False) 
     extra_data = serializers.JSONField(required=False)
     receipts = StockReceiptSerializer(many=True, read_only=True)
+    receipts_count = serializers.SerializerMethodField()
     total_amount = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True)
 
     class Meta:
         model = PurchaseOrder
-        fields = ['id', 'opco', 'vendor', 'vendor_name', 'pr', 'rfq', 'comparison', 'po_number', 'date', 'status', 'total_amount', 'extra_data', 'lines', 'receipts']
+        fields = [
+            'id', 'opco', 'vendor', 'vendor_name', 'pr', 'rfq', 'comparison', 'po_number', 'date', 
+            'expected_delivery_date', 'currency', 'exchange_rate', 'payment_terms', 'shipping_terms', 
+            'shipping_address', 'billing_address', 'status',
+            'subtotal', 'discount_rate', 'discount_amount', 'tax_rate', 'tax_amount', 'grand_total', 'total_amount',
+            'terms_and_conditions', 'notes', 'extra_data', 'lines', 'receipts', 'receipts_count'
+        ]
         read_only_fields = ['id', 'po_number', 'date', 'total_amount']
 
+    def get_receipts_count(self, obj):
+        return obj.receipts.count()
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines', [])

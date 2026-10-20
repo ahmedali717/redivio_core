@@ -1083,3 +1083,58 @@ def get_debug_logs(request):
             return Response({"logs": "".join(lines)})
     except Exception as e:
         return Response({"error": str(e)})
+
+
+# --- Odoo Chatter & Activities ViewSets ---
+from apps.core.models import ChatterMessage, ActivitySchedule
+from apps.core.serializers import ChatterMessageSerializer, ActivityScheduleSerializer
+from django.contrib.contenttypes.models import ContentType
+
+class ChatterMessageViewSet(viewsets.ModelViewSet):
+    serializer_class = ChatterMessageSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = ChatterMessage.objects.all()
+        model_name = self.request.query_params.get('model')
+        object_id = self.request.query_params.get('object_id')
+        if model_name and object_id:
+            try:
+                ct = ContentType.objects.get(model=model_name.lower())
+                qs = qs.filter(content_type=ct, object_id=object_id)
+            except ContentType.DoesNotExist:
+                return qs.none()
+        return qs
+
+    def perform_create(self, serializer):
+        model_name = self.request.data.get('model')
+        if model_name:
+            ct = ContentType.objects.get(model=model_name.lower())
+            serializer.save(content_type=ct)
+        else:
+            serializer.save()
+
+
+class ActivityScheduleViewSet(viewsets.ModelViewSet):
+    serializer_class = ActivityScheduleSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = ActivitySchedule.objects.all()
+        model_name = self.request.query_params.get('model')
+        object_id = self.request.query_params.get('object_id')
+        if model_name and object_id:
+            try:
+                ct = ContentType.objects.get(model=model_name.lower())
+                qs = qs.filter(content_type=ct, object_id=object_id)
+            except ContentType.DoesNotExist:
+                return qs.none()
+        return qs
+
+    def perform_create(self, serializer):
+        model_name = self.request.data.get('model')
+        if model_name:
+            ct = ContentType.objects.get(model=model_name.lower())
+            serializer.save(content_type=ct, created_by=self.request.user)
+        else:
+            serializer.save(created_by=self.request.user)

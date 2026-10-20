@@ -9,6 +9,7 @@ class Plant(models.Model):
     code = models.CharField(max_length=5) 
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=3, default='WH')
+    extra_data = models.JSONField(default=dict, blank=True)
     
     def delete(self, *args, **kwargs):
         from django.core.exceptions import ValidationError
@@ -43,6 +44,7 @@ class StorageBin(models.Model):
     
     # يمكنك إعادة rack/shelf لاحقاً إذا طورت الواجهة الأمامية لتدعمها
     is_active = models.BooleanField(default=True)
+    extra_data = models.JSONField(default=dict, blank=True)
     
     def __str__(self): return f"{self.plant.code} - {self.code}"
 
@@ -87,6 +89,7 @@ class StockMove(models.Model):
     sales_price = models.DecimalField(max_digits=12, decimal_places=2, default=0) # سعر البيع
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15) # 🚀 معدل الضريبة
     receipt_type = models.CharField(max_length=50, null=True, blank=True)
+    extra_data = models.JSONField(default=dict, blank=True)
 
     def save(self, *args, **kwargs):
         from django.core.exceptions import ValidationError
@@ -150,6 +153,7 @@ class WarehouseTransfer(models.Model):
     notes = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_transfers')
     approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_transfers')
+    extra_data = models.JSONField(default=dict, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.transfer_number:
@@ -211,6 +215,7 @@ class StockScrap(models.Model):
     notes = models.TextField(blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
     approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    extra_data = models.JSONField(default=dict, blank=True)
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None

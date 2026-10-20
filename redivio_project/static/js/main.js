@@ -22,6 +22,15 @@ createApp({
             showActivityLog: false,
             showNotificationsDropdown: false,
             
+            // Odoo Chatter & Collaboration System
+            chatterMode: null,
+            newChatterNote: '',
+            activeChatterModel: '',
+            activeChatterId: null,
+            activeChatterMessages: [],
+            activeActivities: [],
+            newActivity: { type: 'todo', due_date: '', summary: '', note: '' },
+
             // SaaS Configurations
             systemMode: 'modular',
             purchasedModules: [],
@@ -128,6 +137,11 @@ createApp({
             draggedOrder: null,
             salesTab: 'dashboard',
             soSearch: '',
+            soViewMode: 'list',
+            soStatusFilter: 'ALL',
+            poViewMode: 'list',
+            poSearch: '',
+            poStatusFilter: 'ALL',
             accountingTab: 'dashboard',
             customers: [],
             salesOrders: [],
@@ -374,10 +388,26 @@ createApp({
                     customer: '',
                     so_number: `SO-${Date.now()}`,
                     status: 'DRAFT',
+                    delivery_date: '',
+                    customer_po_reference: '',
+                    customer_po_date: '',
+                    currency: 'SAR',
+                    exchange_rate: 1.0,
+                    payment_terms: 'IMMEDIATE',
+                    shipping_terms: '',
+                    shipping_address: '',
+                    billing_address: '',
+                    subtotal: 0,
+                    discount_rate: 0,
+                    discount_amount: 0,
                     total_amount: 0,
                     tax_amount: 0,
                     grand_total: 0,
-                    lines: [{ material: '', quantity: 1, unit_price: 0 }]
+                    terms_and_conditions: '',
+                    notes: '',
+                    extra_data: {},
+                    activeTab: 'items',
+                    lines: [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 }]
                 },
                 payment: {
                     invoice: null,
@@ -848,10 +878,108 @@ createApp({
             const q = this.customerSearch.toLowerCase();
             return this.customers.filter(c => c.name.toLowerCase().includes(q) || (c.code && c.code.toLowerCase().includes(q)));
         },
+        soStats() {
+            const orders = this.salesOrders || [];
+            const totalValue = orders.reduce((sum, o) => sum + parseFloat(o.grand_total || 0), 0);
+            const draftOrders = orders.filter(o => (o.status || '').toUpperCase() === 'DRAFT');
+            const draftValue = draftOrders.reduce((sum, o) => sum + parseFloat(o.grand_total || 0), 0);
+            const confirmedOrders = orders.filter(o => (o.status || '').toUpperCase() === 'CONFIRMED');
+            const confirmedValue = confirmedOrders.reduce((sum, o) => sum + parseFloat(o.grand_total || 0), 0);
+            const shippedOrders = orders.filter(o => (o.status || '').toUpperCase() === 'SHIPPED');
+            const shippedValue = shippedOrders.reduce((sum, o) => sum + parseFloat(o.grand_total || 0), 0);
+            return {
+                totalCount: orders.length,
+                totalValue,
+                draftCount: draftOrders.length,
+                draftValue,
+                confirmedCount: confirmedOrders.length,
+                confirmedValue,
+                shippedCount: shippedOrders.length,
+                shippedValue
+            };
+        },
         filteredSalesOrders() {
-            if (!this.soSearch) return this.salesOrders;
-            const q = this.soSearch.toLowerCase();
-            return this.salesOrders.filter(o => o.so_number.toLowerCase().includes(q) || (o.customer_name && o.customer_name.toLowerCase().includes(q)));
+            let list = this.salesOrders || [];
+            if (this.soStatusFilter && this.soStatusFilter !== 'ALL') {
+                list = list.filter(o => (o.status || '').toUpperCase() === this.soStatusFilter);
+            }
+            if (this.soSearch) {
+                const q = this.soSearch.toLowerCase();
+                list = list.filter(o => 
+                    (o.so_number && o.so_number.toLowerCase().includes(q)) || 
+                    (o.customer_name && o.customer_name.toLowerCase().includes(q))
+                );
+            }
+            return list;
+        },
+        soKanbanDraft() {
+            return (this.salesOrders || []).filter(o => {
+                if ((o.status || '').toUpperCase() !== 'DRAFT') return false;
+                if (!this.soSearch) return true;
+                const q = this.soSearch.toLowerCase();
+                return (o.so_number && o.so_number.toLowerCase().includes(q)) || 
+                       (o.customer_name && o.customer_name.toLowerCase().includes(q));
+            });
+        },
+        soKanbanConfirmed() {
+            return (this.salesOrders || []).filter(o => {
+                if ((o.status || '').toUpperCase() !== 'CONFIRMED') return false;
+                if (!this.soSearch) return true;
+                const q = this.soSearch.toLowerCase();
+                return (o.so_number && o.so_number.toLowerCase().includes(q)) || 
+                       (o.customer_name && o.customer_name.toLowerCase().includes(q));
+            });
+        },
+        soKanbanShipped() {
+            return (this.salesOrders || []).filter(o => {
+                if ((o.status || '').toUpperCase() !== 'SHIPPED') return false;
+                if (!this.soSearch) return true;
+                const q = this.soSearch.toLowerCase();
+                return (o.so_number && o.so_number.toLowerCase().includes(q)) || 
+                       (o.customer_name && o.customer_name.toLowerCase().includes(q));
+            });
+        },
+        filteredPurchaseOrders() {
+            let list = this.purchase_orders || [];
+            if (this.poStatusFilter && this.poStatusFilter !== 'ALL') {
+                list = list.filter(o => (o.status || '').toUpperCase() === this.poStatusFilter);
+            }
+            if (this.poSearch) {
+                const q = this.poSearch.toLowerCase();
+                list = list.filter(o => 
+                    (o.po_number && o.po_number.toLowerCase().includes(q)) || 
+                    (o.vendor_name && o.vendor_name.toLowerCase().includes(q))
+                );
+            }
+            return list;
+        },
+        poKanbanDraft() {
+            return (this.purchase_orders || []).filter(o => {
+                if ((o.status || '').toUpperCase() !== 'DRAFT') return false;
+                if (!this.poSearch) return true;
+                const q = this.poSearch.toLowerCase();
+                return (o.po_number && o.po_number.toLowerCase().includes(q)) || 
+                       (o.vendor_name && o.vendor_name.toLowerCase().includes(q));
+            });
+        },
+        poKanbanConfirmed() {
+            return (this.purchase_orders || []).filter(o => {
+                if ((o.status || '').toUpperCase() !== 'CONFIRMED') return false;
+                if (!this.poSearch) return true;
+                const q = this.poSearch.toLowerCase();
+                return (o.po_number && o.po_number.toLowerCase().includes(q)) || 
+                       (o.vendor_name && o.vendor_name.toLowerCase().includes(q));
+            });
+        },
+        poKanbanReceived() {
+            return (this.purchase_orders || []).filter(o => {
+                const s = (o.status || '').toUpperCase();
+                if (s !== 'RECEIVED' && s !== 'COMPLETED') return false;
+                if (!this.poSearch) return true;
+                const q = this.poSearch.toLowerCase();
+                return (o.po_number && o.po_number.toLowerCase().includes(q)) || 
+                       (o.vendor_name && o.vendor_name.toLowerCase().includes(q));
+            });
         },
         totalMonthlySales() {
             return this.salesInvoices.reduce((sum, inv) => sum + parseFloat(inv.total_amount || 0), 0);
@@ -4064,12 +4192,11 @@ createApp({
         // 🚀 إضافة دالة الطباعة (Print)
         printPO(poId) {
             this.showToast(this.isArabic ? "جاري تحضير ملف الطباعة..." : "Preparing document...", "success");
-            // الرابط ده المفروض يفتح صفحة الـ PDF اللي جانغو بيعملها
-            window.open(`/print/po/${poId}/`, '_blank');
+            window.open(`/api/print/po/${poId}/`, '_blank');
         },
 
         printSO(id) {
-            window.open(`/print/so/${id}/`, '_blank');
+            window.open(`/api/print/so/${id}/`, '_blank');
         },
 
         printGRN(receiptId) {
@@ -4293,25 +4420,256 @@ createApp({
 
         // 1. دوال التحكم في سطور أمر التوريد
         addPOLine() {
-            this.forms.po.lines.push({ material: '', quantity: 1, unit_price: 0 });
+            if (!this.forms.po.lines) this.forms.po.lines = [];
+            this.forms.po.lines.push({ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 });
         },
         removePOLine(index) {
-            if (this.forms.po.lines.length > 1) {
+            if (this.forms.po.lines && this.forms.po.lines.length > 1) {
                 this.forms.po.lines.splice(index, 1);
             } else {
                 this.showToast(this.isArabic ? "يجب أن يحتوي الأمر على صنف واحد على الأقل" : "PO must have at least one line", 'error');
             }
         },
+        calculatePOLineTotal(line) {
+            const qty = parseFloat(line.quantity) || 0;
+            const rate = parseFloat(line.unit_price) || 0;
+            const gross = qty * rate;
+            const discRate = parseFloat(line.discount_rate) || 0;
+            const discAmt = (gross * discRate) / 100;
+            const net = Math.max(0, gross - discAmt);
+            const taxRate = parseFloat(line.tax_rate !== undefined ? line.tax_rate : 15) || 0;
+            const tax = (net * taxRate) / 100;
+            return net + tax;
+        },
+        calculatePOSubtotal() {
+            const lines = this.forms.po.lines || [];
+            return lines.reduce((acc, l) => acc + ((parseFloat(l.quantity) || 0) * (parseFloat(l.unit_price) || 0)), 0);
+        },
+        calculatePODiscounts() {
+            const lines = this.forms.po.lines || [];
+            return lines.reduce((acc, l) => {
+                const gross = (parseFloat(l.quantity) || 0) * (parseFloat(l.unit_price) || 0);
+                const discRate = parseFloat(l.discount_rate) || 0;
+                return acc + ((gross * discRate) / 100);
+            }, 0);
+        },
+        calculatePOTax() {
+            const lines = this.forms.po.lines || [];
+            return lines.reduce((acc, l) => {
+                const gross = (parseFloat(l.quantity) || 0) * (parseFloat(l.unit_price) || 0);
+                const discRate = parseFloat(l.discount_rate) || 0;
+                const net = Math.max(0, gross - (gross * discRate) / 100);
+                const taxRate = parseFloat(l.tax_rate !== undefined ? l.tax_rate : 15) || 0;
+                return acc + ((net * taxRate) / 100);
+            }, 0);
+        },
+        calculatePOGrandTotal() {
+            return this.calculatePOSubtotal() - this.calculatePODiscounts() + this.calculatePOTax();
+        },
+        onPOMaterialChange(line) {
+            if (!line.material) return;
+            const mat = (this.materials || this.materials_list || []).find(m => m.id === line.material);
+            if (mat) {
+                line.unit_price = mat.standard_price || mat.sales_price || 0;
+                line.uom = mat.base_uom || 'Unit';
+                line.tax_rate = mat.tax_rate !== undefined ? mat.tax_rate : 15;
+            }
+        },
 
-        // --- Sales Order Line Management ---
+        // --- Sales Order Line Management & Odoo Calculations ---
         addSalesOrderLine() {
-            this.forms.salesorder.lines.push({ material: '', quantity: 1, unit_price: 0 });
+            this.forms.salesorder.lines.push({ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 });
         },
         removeSalesOrderLine(index) {
             if (this.forms.salesorder.lines.length > 1) {
                 this.forms.salesorder.lines.splice(index, 1);
             } else {
                 this.showToast(this.isArabic ? "يجب أن يحتوي الأمر على صنف واحد على الأقل" : "SO must have at least one line", 'error');
+            }
+        },
+        calculateLineTotal(line) {
+            const qty = parseFloat(line.quantity) || 0;
+            const rate = parseFloat(line.unit_price) || 0;
+            const gross = qty * rate;
+            const discRate = parseFloat(line.discount_rate) || 0;
+            const discAmt = (gross * discRate) / 100;
+            const net = Math.max(0, gross - discAmt);
+            const taxRate = parseFloat(line.tax_rate) || 0;
+            const tax = (net * taxRate) / 100;
+            return net + tax;
+        },
+        calculateOrderSubtotal() {
+            const lines = this.forms.salesorder.lines || [];
+            return lines.reduce((acc, l) => acc + ((parseFloat(l.quantity) || 0) * (parseFloat(l.unit_price) || 0)), 0);
+        },
+        calculateOrderDiscounts() {
+            const lines = this.forms.salesorder.lines || [];
+            return lines.reduce((acc, l) => {
+                const gross = (parseFloat(l.quantity) || 0) * (parseFloat(l.unit_price) || 0);
+                const discRate = parseFloat(l.discount_rate) || 0;
+                return acc + ((gross * discRate) / 100);
+            }, 0);
+        },
+        calculateOrderTax() {
+            const lines = this.forms.salesorder.lines || [];
+            return lines.reduce((acc, l) => {
+                const gross = (parseFloat(l.quantity) || 0) * (parseFloat(l.unit_price) || 0);
+                const discRate = parseFloat(l.discount_rate) || 0;
+                const net = Math.max(0, gross - (gross * discRate) / 100);
+                const taxRate = parseFloat(l.tax_rate) || 0;
+                return acc + ((net * taxRate) / 100);
+            }, 0);
+        },
+        calculateOrderGrandTotal() {
+            return this.calculateOrderSubtotal() - this.calculateOrderDiscounts() + this.calculateOrderTax();
+        },
+        onMaterialChange(line) {
+            if (!line.material) return;
+            const mat = (this.materials || []).find(m => m.id === line.material);
+            if (mat) {
+                line.unit_price = mat.sales_price || mat.standard_price || 0;
+                line.uom = mat.base_uom || 'Unit';
+                line.tax_rate = mat.tax_rate || 15;
+            }
+        },
+        async addCustomField(targetForm) {
+            if (!targetForm.extra_data) targetForm.extra_data = {};
+            if (typeof Swal !== 'undefined') {
+                const { value: formValues } = await Swal.fire({
+                    title: this.isArabic ? 'إضافة حقل مخصص جديد' : 'Add Custom Field',
+                    html:
+                        `<input id="swal-custom-key" class="swal2-input" placeholder="${this.isArabic ? 'اسم الحقل (مثال: مندوب المبيعات)' : 'Field Name (e.g. Sales Rep)'}">` +
+                        `<input id="swal-custom-val" class="swal2-input" placeholder="${this.isArabic ? 'القيمة الافتراضية' : 'Default Value'}">`,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    cancelButtonText: this.isArabic ? 'إلغاء' : 'Cancel',
+                    confirmButtonText: this.isArabic ? 'إضافة' : 'Add',
+                    preConfirm: () => {
+                        return [
+                            document.getElementById('swal-custom-key').value,
+                            document.getElementById('swal-custom-val').value
+                        ];
+                    }
+                });
+                if (formValues && formValues[0]) {
+                    const key = formValues[0].trim();
+                    const val = formValues[1] ? formValues[1].trim() : '';
+                    targetForm.extra_data[key] = val;
+                    this.showToast(this.isArabic ? `تمت إضافة الحقل: ${key}` : `Added field: ${key}`, 'success');
+                }
+            } else {
+                const key = prompt(this.isArabic ? 'اسم الحقل المخصص:' : 'Custom Field Name:');
+                if (key) {
+                    const val = prompt(this.isArabic ? 'القيمة:' : 'Value:') || '';
+                    targetForm.extra_data[key] = val;
+                }
+            }
+        },
+
+        // --- Odoo Chatter & Collaboration Methods ---
+        async fetchChatterMessages(model, objectId) {
+            try {
+                const res = await fetch(`/api/chatter/?model=${model}&object_id=${objectId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.activeChatterMessages = Array.isArray(data) ? data : (data.results || []);
+                }
+            } catch (e) {
+                console.error("Error fetching chatter messages:", e);
+            }
+        },
+        async postChatterMessage(model, objectId, messageType = 'comment') {
+            if (!this.newChatterNote || this.newChatterNote.trim() === '') return;
+            try {
+                const csrf = this.getCookie('csrftoken');
+                const res = await fetch('/api/chatter/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrf
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        object_id: objectId,
+                        message_type: messageType,
+                        body: this.newChatterNote,
+                        opco: this.activeOpcoId
+                    })
+                });
+                if (res.ok) {
+                    this.newChatterNote = '';
+                    this.showToast(this.isArabic ? "تم تسجيل الملاحظة في المحادثة بنجاح" : "Note logged successfully", 'success');
+                    await this.fetchChatterMessages(model, objectId);
+                }
+            } catch (e) {
+                console.error("Error posting chatter note:", e);
+            }
+        },
+        async fetchActivities(model, objectId) {
+            try {
+                const res = await fetch(`/api/activities/?model=${model}&object_id=${objectId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.activeActivities = (Array.isArray(data) ? data : (data.results || [])).filter(a => a.status === 'pending');
+                }
+            } catch (e) {
+                console.error("Error fetching activities:", e);
+            }
+        },
+        async scheduleActivity(model, objectId) {
+            if (!this.newActivity.summary || !this.newActivity.due_date) {
+                this.showToast(this.isArabic ? "يرجى تحديد الملخص وتاريخ الاستحقاق" : "Please provide summary and due date", 'error');
+                return;
+            }
+            try {
+                const csrf = this.getCookie('csrftoken');
+                const res = await fetch('/api/activities/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrf
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        object_id: objectId,
+                        activity_type: this.newActivity.type,
+                        due_date: this.newActivity.due_date,
+                        summary: this.newActivity.summary,
+                        opco: this.activeOpcoId
+                    })
+                });
+                if (res.ok) {
+                    this.chatterMode = null;
+                    this.newActivity = { type: 'todo', due_date: '', summary: '', note: '' };
+                    this.showToast(this.isArabic ? "تمت جدولة النشاط بنجاح" : "Activity scheduled", 'success');
+                    await this.fetchActivities(model, objectId);
+                }
+            } catch (e) {
+                console.error("Error scheduling activity:", e);
+            }
+        },
+        async markActivityDone(actId) {
+            try {
+                const csrf = this.getCookie('csrftoken');
+                const res = await fetch(`/api/activities/${actId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrf
+                    },
+                    body: JSON.stringify({
+                        status: 'done',
+                        completed_at: new Date().toISOString()
+                    })
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم إنجاز النشاط" : "Activity marked as done", 'success');
+                    if (this.activeChatterModel && this.activeChatterId) {
+                        await this.fetchActivities(this.activeChatterModel, this.activeChatterId);
+                    }
+                }
+            } catch (e) {
+                console.error("Error marking activity done:", e);
             }
         },
 
@@ -5200,6 +5558,30 @@ createApp({
                 } else {
                     this.imagePreview = null;
                 }
+            } else if (type === 'salesorder') {
+                const itemData = JSON.parse(JSON.stringify(item));
+                this.forms.salesorder = {
+                    ...itemData,
+                    activeTab: 'items',
+                    extra_data: itemData.extra_data || {},
+                    lines: (itemData.lines && itemData.lines.length > 0) ? itemData.lines : [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 }]
+                };
+                this.activeChatterModel = 'salesorder';
+                this.activeChatterId = itemData.id;
+                this.fetchChatterMessages('salesorder', itemData.id);
+                this.fetchActivities('salesorder', itemData.id);
+            } else if (type === 'po') {
+                const itemData = JSON.parse(JSON.stringify(item));
+                this.forms.po = {
+                    ...itemData,
+                    activeTab: 'items',
+                    extra_data: itemData.extra_data || {},
+                    lines: (itemData.lines && itemData.lines.length > 0) ? itemData.lines : [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 }]
+                };
+                this.activeChatterModel = 'purchaseorder';
+                this.activeChatterId = itemData.id;
+                this.fetchChatterMessages('purchaseorder', itemData.id);
+                this.fetchActivities('purchaseorder', itemData.id);
             } else {
                 this.forms[type] = JSON.parse(JSON.stringify(item));
             }
@@ -5404,6 +5786,20 @@ createApp({
                     // إذا كان الحقل opco فارغ، نستخدم الشركة النشطة حالياً
                     if (!finalData.opco && this.activeOpcoId) {
                         finalData.opco = this.activeOpcoId;
+                    }
+
+                    if (type === 'salesorder') {
+                        finalData.subtotal = this.calculateOrderSubtotal();
+                        finalData.discount_amount = this.calculateOrderDiscounts();
+                        finalData.tax_amount = this.calculateOrderTax();
+                        finalData.grand_total = this.calculateOrderGrandTotal();
+                        delete finalData.activeTab;
+                    } else if (type === 'po') {
+                        finalData.subtotal = this.calculatePOSubtotal();
+                        finalData.discount_amount = this.calculatePODiscounts();
+                        finalData.tax_amount = this.calculatePOTax();
+                        finalData.grand_total = this.calculatePOGrandTotal();
+                        delete finalData.activeTab;
                     }
 
                     payload = JSON.stringify(finalData);
@@ -6241,9 +6637,20 @@ createApp({
             if (type === 'salesorder') {
                 this.forms.salesorder = {
                     id: null, customer: '', so_number: `SO-${Date.now()}`,
-                    status: 'DRAFT', total_amount: 0, tax_amount: 0, grand_total: 0,
-                    lines: [{ material: '', quantity: 1, unit_price: 0 }]
+                    status: 'DRAFT', delivery_date: '', customer_po_reference: '',
+                    customer_po_date: '', currency: 'SAR', exchange_rate: 1.0,
+                    payment_terms: 'IMMEDIATE', shipping_terms: '',
+                    shipping_address: '', billing_address: '',
+                    subtotal: 0, discount_rate: 0, discount_amount: 0,
+                    total_amount: 0, tax_amount: 0, grand_total: 0,
+                    terms_and_conditions: '', notes: '', extra_data: {},
+                    activeTab: 'items',
+                    lines: [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 }]
                 };
+                this.activeChatterModel = 'salesorder';
+                this.activeChatterId = null;
+                this.activeChatterMessages = [];
+                this.activeActivities = [];
             } else if (type === 'customer') {
                 this.forms.customer = { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' };
             } else if (type === 'plant') {
@@ -6272,11 +6679,34 @@ createApp({
                 if (this.systemMode === 'modular' && hasProcurement) {
                     this.modalType = 'po';
                     this.forms.po = { 
+                        id: null,
                         vendor: '', 
                         po_number: `PO-${Date.now()}`, 
-                        lines: data && data.items ? data.items : [{ material: '', quantity: 1, unit_price: 0 }], 
-                        tax_rate: 15, is_tax_inclusive: false 
+                        status: 'DRAFT',
+                        expected_delivery_date: '',
+                        currency: 'SAR',
+                        exchange_rate: 1.0,
+                        payment_terms: 'IMMEDIATE',
+                        shipping_terms: '',
+                        shipping_address: '',
+                        billing_address: '',
+                        subtotal: 0,
+                        discount_rate: 0,
+                        discount_amount: 0,
+                        tax_rate: 15,
+                        tax_amount: 0,
+                        grand_total: 0,
+                        is_tax_inclusive: false,
+                        terms_and_conditions: '',
+                        notes: '',
+                        extra_data: {},
+                        activeTab: 'items',
+                        lines: data && data.items ? data.items : [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 }]
                     };
+                    this.activeChatterModel = 'purchaseorder';
+                    this.activeChatterId = null;
+                    this.activeChatterMessages = [];
+                    this.activeActivities = [];
                     this.fetchVendors();
                 } else {
                     this.modalType = 'stock_entry';
@@ -6413,12 +6843,7 @@ createApp({
         },
 
         viewPODetails(po) {
-            this.modalType = 'view_po';
-            this.forms.po = JSON.parse(JSON.stringify(po));
-            if (!this.forms.po.total_amount || parseFloat(this.forms.po.total_amount) === 0) {
-                this.forms.po.total_amount = this.getPOTotalAmount(this.forms.po);
-            }
-            this.showModal = true;
+            this.editItem('po', po);
         },
 
         async approvePR(prId) {

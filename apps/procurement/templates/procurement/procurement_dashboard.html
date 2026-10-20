@@ -148,17 +148,233 @@
             
             <!-- 1. Active Purchase Orders Tab -->
             <div v-if="procTab === 'pos'">
-                <div class="flex justify-between items-center mb-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                     <div>
                         <h3 class="font-black text-xl text-slate-800" v-text="isArabic ? 'أوامر التوريد النشطة (Active POs)' : 'Active Purchase Orders'"></h3>
-                        <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider" v-text="isArabic ? 'متابعة حالة الاستلام والاعتماد' : 'Track delivery and approval status'"></p>
+                        <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider" v-text="isArabic ? 'متابعة دورة الشراء، الاستلام والاعتماد' : 'Track procurement lifecycle, delivery and approval status'"></p>
                     </div>
-                    <button @click="openModal('po')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2">
-                        <i class="fas fa-plus"></i> <span v-text="isArabic ? 'أمر توريد جديد' : 'New PO'"></span>
-                    </button>
+
+                    <div class="flex items-center gap-3">
+                        <!-- View Switcher (Odoo Style) -->
+                        <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
+                            <button @click="poViewMode = 'list'" 
+                                :class="poViewMode === 'list' ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-800 font-semibold'"
+                                class="px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all">
+                                <i class="fas fa-list"></i>
+                                <span class="hidden sm:inline" v-text="isArabic ? 'قائمة' : 'List'"></span>
+                            </button>
+                            <button @click="poViewMode = 'kanban'" 
+                                :class="poViewMode === 'kanban' ? 'bg-white text-emerald-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-800 font-semibold'"
+                                class="px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all">
+                                <i class="fas fa-columns"></i>
+                                <span class="hidden sm:inline" v-text="isArabic ? 'كانبان' : 'Kanban'"></span>
+                            </button>
+                        </div>
+
+                        <button @click="openModal('po')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2">
+                            <i class="fas fa-plus"></i> <span v-text="isArabic ? 'أمر توريد جديد' : 'New PO'"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search & Filter Bar -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-6 shadow-2xs">
+                    <div class="relative flex-1">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" v-model="poSearch" 
+                            :placeholder="isArabic ? 'البحث برقم الأمر أو اسم المورد...' : 'Search by PO# or vendor name...'"
+                            class="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                        <button v-if="poSearch" @click="poSearch = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-1.5 overflow-x-auto">
+                        <button @click="poStatusFilter = 'ALL'" 
+                            :class="poStatusFilter === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                            <span v-text="isArabic ? 'الكل' : 'All'"></span> ([[ purchase_orders.length ]])
+                        </button>
+                        <button @click="poStatusFilter = 'DRAFT'" 
+                            :class="poStatusFilter === 'DRAFT' ? 'bg-amber-500 text-white shadow-sm' : 'bg-white text-amber-700 hover:bg-amber-50 border border-slate-200'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                            <span v-text="isArabic ? 'مسودة' : 'Draft'"></span> ([[ poKanbanDraft.length ]])
+                        </button>
+                        <button @click="poStatusFilter = 'CONFIRMED'" 
+                            :class="poStatusFilter === 'CONFIRMED' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 hover:bg-blue-50 border border-slate-200'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                            <span v-text="isArabic ? 'معتمد للتوريد' : 'Confirmed'"></span> ([[ poKanbanConfirmed.length ]])
+                        </button>
+                        <button @click="poStatusFilter = 'RECEIVED'" 
+                            :class="poStatusFilter === 'RECEIVED' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white text-emerald-700 hover:bg-emerald-50 border border-slate-200'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                            <span v-text="isArabic ? 'تم الاستلام' : 'Received'"></span> ([[ poKanbanReceived.length ]])
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 🌟 KANBAN VIEW FOR PURCHASE ORDERS -->
+                <div v-if="poViewMode === 'kanban'" class="animate-in fade-in duration-300 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                        
+                        <!-- STAGE 1: DRAFT POs -->
+                        <div class="bg-slate-100/70 rounded-2xl p-4 border border-slate-200 flex flex-col min-h-[450px]">
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+                                    <h4 class="font-black text-slate-800 text-sm">[[ isArabic ? "مسودات بانتظار الاعتماد" : "Draft & Pending" ]]</h4>
+                                    <span class="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">[[ poKanbanDraft.length ]]</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3 flex-1 overflow-y-auto max-h-[650px] pr-1">
+                                <div v-if="poKanbanDraft.length === 0" class="text-center py-12 text-slate-400 text-xs font-bold border-2 border-dashed border-slate-200 rounded-xl">
+                                    [[ isArabic ? "لا توجد أوامر توريد مسودة" : "No draft orders" ]]
+                                </div>
+                                <div v-for="po in poKanbanDraft" :key="po.id"
+                                    class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all cursor-pointer group"
+                                    @click="viewPODetails(po)">
+                                    <div class="flex items-start justify-between gap-2 mb-2">
+                                        <div>
+                                            <span class="font-black text-slate-800 text-sm font-mono group-hover:text-emerald-600 transition-colors">[[ po.po_number ]]</span>
+                                            <div class="text-[10px] font-semibold text-slate-400">[[ po.date ]]</div>
+                                        </div>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">Draft</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <div class="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">
+                                            <i class="fas fa-store"></i>
+                                        </div>
+                                        <span class="font-bold text-slate-700 text-xs truncate">[[ po.vendor_name || '-' ]]</span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                                        <div>
+                                            <div class="text-[9px] font-black uppercase text-slate-400">[[ isArabic ? "القيمة" : "Total" ]]</div>
+                                            <div class="font-black text-slate-900 text-sm">$[[ formatNumber(po.grand_total || getPOTotalAmount(po)) ]]</div>
+                                        </div>
+                                        <div class="flex items-center gap-1" @click.stop>
+                                            <button @click="updatePOStatus(po.id, 'CONFIRMED')" :title="isArabic ? 'اعتماد الطلب' : 'Validate'"
+                                                class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button @click="printPO(po.id)" :title="isArabic ? 'طباعة' : 'Print'"
+                                                class="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-xs transition-colors">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                            <button @click="viewPODetails(po)" :title="isArabic ? 'تفاصيل' : 'Details'"
+                                                class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STAGE 2: CONFIRMED POs -->
+                        <div class="bg-slate-100/70 rounded-2xl p-4 border border-slate-200 flex flex-col min-h-[450px]">
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+                                    <h4 class="font-black text-slate-800 text-sm">[[ isArabic ? "أوامر معتمدة قيد التوريد" : "Confirmed & In Transit" ]]</h4>
+                                    <span class="text-[10px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md">[[ poKanbanConfirmed.length ]]</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3 flex-1 overflow-y-auto max-h-[650px] pr-1">
+                                <div v-if="poKanbanConfirmed.length === 0" class="text-center py-12 text-slate-400 text-xs font-bold border-2 border-dashed border-slate-200 rounded-xl">
+                                    [[ isArabic ? "لا توجد أوامر قيد التوريد" : "No confirmed orders" ]]
+                                </div>
+                                <div v-for="po in poKanbanConfirmed" :key="po.id"
+                                    class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
+                                    @click="viewPODetails(po)">
+                                    <div class="flex items-start justify-between gap-2 mb-2">
+                                        <div>
+                                            <span class="font-black text-slate-800 text-sm font-mono group-hover:text-blue-600 transition-colors">[[ po.po_number ]]</span>
+                                            <div class="text-[10px] font-semibold text-slate-400">[[ po.date ]]</div>
+                                        </div>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">Confirmed</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-[10px]">
+                                            <i class="fas fa-store"></i>
+                                        </div>
+                                        <span class="font-bold text-slate-700 text-xs truncate">[[ po.vendor_name || '-' ]]</span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                                        <div>
+                                            <div class="text-[9px] font-black uppercase text-slate-400">[[ isArabic ? "القيمة" : "Total" ]]</div>
+                                            <div class="font-black text-slate-900 text-sm">$[[ formatNumber(po.grand_total || getPOTotalAmount(po)) ]]</div>
+                                        </div>
+                                        <div class="flex items-center gap-1" @click.stop>
+                                            <button @click="viewPODetails(po)" :title="isArabic ? 'استلام البضاعة بالمخزن' : 'Receive Goods'"
+                                                class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                                                <i class="fas fa-box-open"></i>
+                                            </button>
+                                            <button @click="printPO(po.id)" :title="isArabic ? 'طباعة' : 'Print'"
+                                                class="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-xs transition-colors">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                            <button @click="viewPODetails(po)" :title="isArabic ? 'تفاصيل' : 'Details'"
+                                                class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STAGE 3: RECEIVED POs -->
+                        <div class="bg-slate-100/70 rounded-2xl p-4 border border-slate-200 flex flex-col min-h-[450px]">
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                                    <h4 class="font-black text-slate-800 text-sm">[[ isArabic ? "تم الاستلام بالمخازن" : "Received & Stocked" ]]</h4>
+                                    <span class="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">[[ poKanbanReceived.length ]]</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3 flex-1 overflow-y-auto max-h-[650px] pr-1">
+                                <div v-if="poKanbanReceived.length === 0" class="text-center py-12 text-slate-400 text-xs font-bold border-2 border-dashed border-slate-200 rounded-xl">
+                                    [[ isArabic ? "لا توجد أوامر مستلمة" : "No received orders" ]]
+                                </div>
+                                <div v-for="po in poKanbanReceived" :key="po.id"
+                                    class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer group"
+                                    @click="viewPODetails(po)">
+                                    <div class="flex items-start justify-between gap-2 mb-2">
+                                        <div>
+                                            <span class="font-black text-slate-800 text-sm font-mono group-hover:text-emerald-600 transition-colors">[[ po.po_number ]]</span>
+                                            <div class="text-[10px] font-semibold text-slate-400">[[ po.date ]]</div>
+                                        </div>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">Received</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <div class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px]">
+                                            <i class="fas fa-store"></i>
+                                        </div>
+                                        <span class="font-bold text-slate-700 text-xs truncate">[[ po.vendor_name || '-' ]]</span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                                        <div>
+                                            <div class="text-[9px] font-black uppercase text-slate-400">[[ isArabic ? "القيمة" : "Total" ]]</div>
+                                            <div class="font-black text-slate-900 text-sm">$[[ formatNumber(po.grand_total || getPOTotalAmount(po)) ]]</div>
+                                        </div>
+                                        <div class="flex items-center gap-1" @click.stop>
+                                            <button @click="printPO(po.id)" :title="isArabic ? 'طباعة' : 'Print'"
+                                                class="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-xs transition-colors">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                            <button @click="viewPODetails(po)" :title="isArabic ? 'تفاصيل' : 'Details'"
+                                                class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
                 
-                <div class="w-full overflow-x-auto">
+                <div v-if="poViewMode === 'list'" class="w-full overflow-x-auto">
                     <table class="w-full text-left border-collapse" :dir="isArabic ? 'rtl' : 'ltr'">
                         <thead>
                             <tr class="border-b-2 border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -170,7 +386,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <template v-for="po in purchase_orders" :key="po.id">
+                            <template v-for="po in filteredPurchaseOrders" :key="po.id">
                                 <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition-colors group cursor-pointer" @click="po.showDetails = !po.showDetails">
                                     <td class="py-4 px-2">
                                         <div class="flex items-center gap-2">

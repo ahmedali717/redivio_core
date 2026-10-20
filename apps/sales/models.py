@@ -3,14 +3,29 @@ from django.apps import apps
 import decimal
 
 class Customer(models.Model):
+    CUSTOMER_TYPE_CHOICES = [
+        ('COMPANY', 'شركة / مؤسسة'),
+        ('INDIVIDUAL', 'فرد / عميل نهائي'),
+    ]
     opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
     code = models.CharField(max_length=50)
     name = models.CharField(max_length=200)
-    tax_id = models.CharField(max_length=50, blank=True, null=True)
+    customer_type = models.CharField(max_length=20, choices=CUSTOMER_TYPE_CHOICES, default='COMPANY')
+    customer_group = models.CharField(max_length=100, default='Commercial', blank=True, null=True, verbose_name="مجموعة العملاء")
+    territory = models.CharField(max_length=100, blank=True, null=True, verbose_name="المنطقة البيعية")
+    country = models.CharField(max_length=100, default='Saudi Arabia', blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    tax_id = models.CharField(max_length=50, blank=True, null=True, verbose_name="الرقم الضريبي")
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
+    contact_name = models.CharField(max_length=150, blank=True, null=True, verbose_name="اسم الشخص المسؤول")
+    website = models.URLField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
+    credit_limit = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="الحد الائتماني")
+    payment_terms = models.CharField(max_length=50, default='IMMEDIATE', blank=True, null=True, verbose_name="شروط السداد")
+    currency = models.CharField(max_length=10, default='SAR', blank=True, null=True)
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    extra_data = models.JSONField(default=dict, blank=True, verbose_name="حقول مخصصة (Custom Fields)")
     
     def __str__(self): return f"{self.code} - {self.name}"
 
@@ -27,22 +42,51 @@ class SalesOrder(models.Model):
     so_number = models.CharField(max_length=50, unique=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='orders')
     date = models.DateField(auto_now_add=True)
+    delivery_date = models.DateField(blank=True, null=True, verbose_name="تاريخ التسليم المطلوب")
+    customer_po_reference = models.CharField(max_length=100, blank=True, null=True, verbose_name="رقم أمر شراء العميل المرجعي")
+    customer_po_date = models.DateField(blank=True, null=True, verbose_name="تاريخ أمر شراء العميل")
+    currency = models.CharField(max_length=10, default='SAR', blank=True, null=True)
+    exchange_rate = models.DecimalField(max_digits=10, decimal_places=4, default=1.0)
+    payment_terms = models.CharField(max_length=50, default='IMMEDIATE', blank=True, null=True, verbose_name="شروط السداد")
+    shipping_terms = models.CharField(max_length=100, blank=True, null=True, verbose_name="شروط الشحن والتسليم")
+    shipping_address = models.TextField(blank=True, null=True, verbose_name="عنوان الشحن والتسليم")
+    billing_address = models.TextField(blank=True, null=True, verbose_name="عنوان الفوترة")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
     
+    # Financials (ERPNext Style Subtotal, Discounts, Net & Tax)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    discount_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
+    terms_and_conditions = models.TextField(blank=True, null=True, verbose_name="الشروط والأحكام")
+    notes = models.TextField(blank=True, null=True)
+    extra_data = models.JSONField(default=dict, blank=True, verbose_name="حقول مخصصة (Custom Fields)")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    notes = models.TextField(blank=True, null=True)
-
     def __str__(self): return self.so_number
 
     def calculate_totals(self):
-        self.total_amount = sum(line.total for line in self.lines.all())
-        self.tax_amount = (self.total_amount * decimal.Decimal('0.15')).quantize(decimal.Decimal('0.01'))
+        line_subtotals = sum(line.gross_total for line in self.lines.all())
+        line_discounts = sum(line.discount_amount for line in self.lines.all())
+        self.subtotal = line_subtotals
+        
+        # Order-level additional discount
+        if self.discount_rate > 0:
+            order_discount = (self.subtotal * (self.discount_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01'))
+            self.discount_amount = order_discount + line_discounts
+        else:
+            self.discount_amount = line_discounts
+            
+        self.total_amount = max(decimal.Decimal('0.00'), self.subtotal - self.discount_amount)
+        self.tax_amount = sum(line.tax_amount for line in self.lines.all())
+        if self.tax_amount == 0 and self.total_amount > 0:
+            self.tax_amount = (self.total_amount * decimal.Decimal('0.15')).quantize(decimal.Decimal('0.01'))
+            
         self.grand_total = self.total_amount + self.tax_amount
         self.save()
 
@@ -145,11 +189,20 @@ class SalesOrder(models.Model):
 class SalesOrderLine(models.Model):
     so = models.ForeignKey(SalesOrder, related_name='lines', on_delete=models.CASCADE)
     material = models.ForeignKey('item_master.Material', on_delete=models.CASCADE)
+    uom = models.CharField(max_length=30, default='Unit', blank=True, null=True, verbose_name="وحدة القياس")
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="نسبة الخصم %")
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="مبلغ الخصم")
+    gross_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15.0, verbose_name="نسبة الضريبة %")
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     shipped_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     billed_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    storage_bin = models.ForeignKey('wms.StorageBin', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="المستودع / الرف")
+    notes = models.CharField(max_length=255, blank=True, null=True)
+    extra_data = models.JSONField(default=dict, blank=True, verbose_name="حقول مخصصة (Custom Fields)")
 
     @property
     def remaining_quantity(self):
@@ -160,22 +213,44 @@ class SalesOrderLine(models.Model):
         return self.shipped_quantity - self.billed_quantity
 
     def save(self, *args, **kwargs):
-        self.total = self.quantity * self.unit_price
+        self.gross_total = self.quantity * self.unit_price
+        if self.discount_rate > 0:
+            self.discount_amount = (self.gross_total * (self.discount_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01'))
+        self.total = max(decimal.Decimal('0.00'), self.gross_total - self.discount_amount)
+        if self.tax_rate > 0:
+            self.tax_amount = (self.total * (self.tax_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01'))
+        else:
+            self.tax_amount = decimal.Decimal('0.00')
         super().save(*args, **kwargs)
 
 class SalesInvoice(models.Model):
-    STATUS_CHOICES = [('UNPAID', 'Unpaid'), ('PARTIAL', 'Partial'), ('PAID', 'Paid')]
+    STATUS_CHOICES = [
+        ('UNPAID', 'Unpaid / غير مدفوعة'), 
+        ('PARTIAL', 'Partial / سداد جزئي'), 
+        ('PAID', 'Paid / مدفوعة بالكامل'),
+        ('CANCELLED', 'Cancelled / ملغاة')
+    ]
     
     opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
     invoice_number = models.CharField(max_length=50, unique=True)
-    sales_order = models.ForeignKey(SalesOrder, on_delete=models.SET_NULL, null=True, blank=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    sales_order = models.ForeignKey(SalesOrder, on_delete=models.SET_NULL, null=True, blank=True, related_name='invoices')
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='invoices')
     date = models.DateField(auto_now_add=True)
     due_date = models.DateField()
     
+    currency = models.CharField(max_length=10, default='SAR', blank=True, null=True)
+    exchange_rate = models.DecimalField(max_digits=10, decimal_places=4, default=1.0)
+    payment_terms = models.CharField(max_length=50, default='IMMEDIATE', blank=True, null=True, verbose_name="شروط السداد")
+    billing_address = models.TextField(blank=True, null=True, verbose_name="عنوان الفوترة")
+    
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     paid_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='UNPAID')
+    notes = models.TextField(blank=True, null=True)
+    extra_data = models.JSONField(default=dict, blank=True, verbose_name="حقول مخصصة (Custom Fields)")
 
     def __str__(self): return self.invoice_number
 
@@ -188,16 +263,26 @@ class SalesInvoice(models.Model):
         super().save(*args, **kwargs)
 
 class CustomerPayment(models.Model):
-    PAYMENT_METHODS = [('CASH', 'Cash'), ('BANK', 'Bank Transfer'), ('CHECK', 'Check')]
+    PAYMENT_METHODS = [
+        ('CASH', 'Cash / نقدي'), 
+        ('BANK', 'Bank Transfer / تحويل بنكي'), 
+        ('CHECK', 'Check / شيك'),
+        ('CARD', 'Credit/Debit Card / بطاقة مصرفية')
+    ]
     
     opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
     payment_number = models.CharField(max_length=50, unique=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    invoice = models.ForeignKey(SalesInvoice, on_delete=models.SET_NULL, null=True, blank=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='payments')
+    invoice = models.ForeignKey(SalesInvoice, on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
     date = models.DateField(auto_now_add=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=10, default='SAR', blank=True, null=True)
+    exchange_rate = models.DecimalField(max_digits=10, decimal_places=4, default=1.0)
     method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='CASH')
-    reference = models.CharField(max_length=100, blank=True, null=True)
+    reference = models.CharField(max_length=100, blank=True, null=True, verbose_name="رقم المرجع / الحوالة")
+    bank_account = models.CharField(max_length=100, blank=True, null=True, verbose_name="الحساب البنكي / الخزينة")
+    notes = models.TextField(blank=True, null=True)
+    extra_data = models.JSONField(default=dict, blank=True, verbose_name="حقول مخصصة (Custom Fields)")
 
     def __str__(self): return self.payment_number
 
@@ -226,6 +311,12 @@ class StockDelivery(models.Model):
     so = models.ForeignKey(SalesOrder, on_delete=models.CASCADE, related_name='deliveries', null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True)
+    tracking_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="رقم البوليصة / التتبع")
+    driver_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="اسم السائق")
+    vehicle_plate = models.CharField(max_length=50, blank=True, null=True, verbose_name="رقم اللوحة / المركبة")
+    delivery_address = models.TextField(blank=True, null=True, verbose_name="عنوان التسليم")
+    notes = models.TextField(blank=True, null=True)
+    extra_data = models.JSONField(default=dict, blank=True, verbose_name="حقول مخصصة (Custom Fields)")
 
     def save(self, *args, **kwargs):
         if not self.delivery_number:

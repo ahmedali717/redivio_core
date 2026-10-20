@@ -309,107 +309,304 @@
             </div>
 
             <div v-if="modalType === 'po'" class="space-y-6 animate-in zoom-in-95 duration-300">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-3xl border border-slate-100">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">المورد (Vendor)</label>
-                        <div class="flex gap-2">
-                            <select v-model="forms.po.vendor" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
-                                <option value="">اختر المورد...</option>
-                                <option v-for="v in vendors" :key="v.id" :value="v.id" v-text="v.name"></option>
-                            </select>
-                            <button @click="quickAddVendor" class="bg-white border border-slate-200 text-slate-400 w-11 h-11 rounded-xl hover:text-emerald-600 hover:border-emerald-200 transition-all">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">رقم أمر التوريد</label>
-                        <input type="text" v-model="forms.po.po_number" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-mono font-bold text-emerald-700 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="PO-2026-0001">
-                    </div>
-                </div>
+                
+                <!-- Odoo-Style Control & Smart Buttons Bar -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" 
+                                v-if="(forms.po.status === 'draft' || forms.po.status === 'DRAFT') && forms.po.id"
+                                @click="updatePOStatus(forms.po.id, 'CONFIRMED')"
+                                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
+                            <i class="fas fa-check-circle"></i>
+                            <span>[[ isArabic ? 'اعتماد أمر التوريد' : 'Confirm Order' ]]</span>
+                        </button>
 
-                <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                    <table class="w-full text-right text-sm">
-                        <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
-                            <tr>
-                                <th class="p-4">الصنف (Item)</th>
-                                <th class="p-4 text-center">الكمية</th>
-                                <th class="p-4 text-center">سعر الوحدة</th>
-                                <th class="p-4 text-left">الإجمالي</th>
-                                <th class="p-4 w-10"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="(line, index) in forms.po.lines" :key="index" class="group">
-                                <td class="p-3">
-                                    <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-xs font-bold transition-all">
-                                        <option value="">اختر الصنف...</option>
-                                        <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
-                                    </select>
-                                    <div v-if="getSelectedMaterial(line.material)" class="mt-1.5 px-2 py-0.5 bg-slate-50 border border-slate-200/60 rounded-lg text-[10px] font-medium text-slate-500 flex flex-wrap items-center gap-2">
-                                        <span v-if="getSelectedMaterial(line.material).category_name || getSelectedMaterial(line.material).sale_group_name" class="text-indigo-600 font-bold">
-                                            <i class="fas fa-folder text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).category_name || getSelectedMaterial(line.material).sale_group_name ]]
-                                        </span>
-                                        <span v-if="getSelectedMaterial(line.material).barcode" class="text-slate-700 font-mono">
-                                            <i class="fas fa-barcode text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).barcode ]]
-                                        </span>
-                                        <span v-if="getSelectedMaterial(line.material).description" class="text-slate-500 italic line-clamp-1">
-                                            <i class="fas fa-align-left text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).description ]]
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="p-3">
-                                    <input type="number" v-model="line.quantity" class="w-20 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-center font-bold text-xs outline-none" step="any">
-                                </td>
-                                <td class="p-3">
-                                    <input type="number" v-model="line.unit_price" class="w-24 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-emerald-200 rounded-lg p-2 text-center font-bold text-xs outline-none" step="any">
-                                </td>
-                                <td class="p-3 text-left font-black text-slate-700" v-text="(line.quantity * line.unit_price).toFixed(2)">
-                                </td>
-                                <td class="p-3">
-                                    <button @click="removePOLine(index)" class="text-slate-300 hover:text-red-500 transition-colors">
-                                        <i class="fas fa-times-circle"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <button @click="addPOLine" class="w-full py-3 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-emerald-600 transition-all border-t border-dashed border-slate-200">
-                        <i class="fas fa-plus-circle mr-1"></i> إضافة صنف جديد
-                    </button>
-                </div>
+                        <button type="button" 
+                                v-if="['CONFIRMED', 'confirmed', 'RECEIVED', 'received'].includes(forms.po.status) && forms.po.id"
+                                @click="showModal = false; openModal('stock_entry', { receipt_type: 'PURCHASE', po: forms.po.id });"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
+                            <i class="fas fa-box-open"></i>
+                            <span>[[ isArabic ? 'إنشاء إذن استلام' : 'Receive Products' ]]</span>
+                        </button>
 
-                <div class="flex flex-col md:flex-row gap-6 items-start justify-between p-2">
-                    <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl w-full md:w-auto">
-                        <div class="flex items-center gap-4">
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" v-model="forms.po.is_tax_inclusive" class="sr-only peer">
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                            </label>
-                            <span class="text-xs font-bold text-amber-800">الأسعار شاملة الضريبة (VAT Inclusive)</span>
-                        </div>
+                        <button type="button" 
+                                v-if="forms.po.id"
+                                @click="printPO(forms.po.id)"
+                                class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-2">
+                            <i class="fas fa-print"></i>
+                            <span>[[ isArabic ? 'طباعة PDF' : 'Print' ]]</span>
+                        </button>
                     </div>
 
-                    <div class="w-full md:w-72 space-y-3">
-                        <div class="flex justify-between text-slate-500 text-xs font-bold">
-                            <span>الإجمالي قبل الضريبة:</span>
-                            <span class="font-mono" v-text="poSubtotal.toFixed(2)"></span>
-                        </div>
-                        <div class="flex justify-between items-center text-slate-500 text-xs font-bold">
-                            <div class="flex items-center gap-1">
-                                <span>ضريبة القيمة المضافة</span>
-                                <input type="number" v-model="forms.po.tax_rate" class="w-10 bg-white border rounded text-center p-0.5 text-[10px]" step="any"> %
+                    <!-- Right Side: Smart Buttons & Status Pipeline -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Smart Buttons (Stat Boxes) -->
+                        <div class="flex items-center gap-2">
+                            <div class="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center gap-2 text-xs font-bold text-slate-700 shadow-2xs">
+                                <i class="fas fa-boxes text-emerald-500 text-[11px]"></i>
+                                <span>[[ forms.po.receipts_count || (forms.po.receipts ? forms.po.receipts.length : 0) ]] [[ isArabic ? 'شحنات استلام' : 'Receipts' ]]</span>
                             </div>
-                            <span class="font-mono text-amber-600">+ <span v-text="poTaxAmount.toFixed(2)"></span></span>
                         </div>
-                        <div class="flex justify-between items-center p-4 bg-slate-900 rounded-2xl text-white">
-                            <span class="text-xs font-bold">الإجمالي النهائي:</span>
-                            <span class="text-xl font-black text-emerald-400 font-mono">
-                                <span v-text="formatCurrency(poGrandTotal)"></span>
+
+                        <!-- Status Pipeline Breadcrumb -->
+                        <div class="flex items-center bg-slate-100 p-1 rounded-2xl text-[10px] font-black uppercase tracking-wider">
+                            <span :class="(!forms.po.status || forms.po.status === 'draft' || forms.po.status === 'DRAFT') ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-400'"
+                                  class="px-3 py-1 rounded-xl transition-all">
+                                [[ isArabic ? 'مسودة' : 'Draft' ]]
+                            </span>
+                            <i class="fas fa-chevron-left text-[8px] text-slate-300 mx-1"></i>
+                            <span :class="['CONFIRMED', 'confirmed'].includes(forms.po.status) ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-400'"
+                                  class="px-3 py-1 rounded-xl transition-all">
+                                [[ isArabic ? 'معتمد' : 'Confirmed' ]]
+                            </span>
+                            <i class="fas fa-chevron-left text-[8px] text-slate-300 mx-1"></i>
+                            <span :class="['RECEIVED', 'received'].includes(forms.po.status) ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-400'"
+                                  class="px-3 py-1 rounded-xl transition-all">
+                                [[ isArabic ? 'تم الاستلام' : 'Received' ]]
                             </span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Odoo Form Header Card -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'المورد (Vendor)' : 'Vendor' ]]</label>
+                            <div class="flex gap-2">
+                                <select v-model="forms.po.vendor" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                                    <option value="">[[ isArabic ? 'اختر المورد...' : 'Select Vendor...' ]]</option>
+                                    <option v-for="v in vendors" :key="v.id" :value="v.id" v-text="v.name"></option>
+                                </select>
+                                <button type="button" @click.prevent="quickAddVendor" class="bg-slate-50 border border-slate-200 text-slate-500 w-9 h-9 rounded-xl hover:text-emerald-600 hover:border-emerald-200 flex items-center justify-center transition-all">
+                                    <i class="fas fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'رقم أمر التوريد' : 'PO Number' ]]</label>
+                            <input type="text" v-model="forms.po.po_number" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-mono font-bold text-emerald-700 outline-none" placeholder="PO-2026-0001">
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'تاريخ الاستلام المتوقع' : 'Expected Delivery' ]]</label>
+                            <input type="date" v-model="forms.po.expected_delivery_date" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2 border-t border-slate-100 text-xs">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'شروط السداد' : 'Payment Terms' ]]</label>
+                            <select v-model="forms.po.payment_terms" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                                <option value="IMMEDIATE">[[ isArabic ? 'سداد فوري (Cash)' : 'Immediate' ]]</option>
+                                <option value="NET 15">Net 15 Days</option>
+                                <option value="NET 30">Net 30 Days</option>
+                                <option value="NET 60">Net 60 Days</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'العملة' : 'Currency' ]]</label>
+                            <div class="flex gap-1 mt-1">
+                                <select v-model="forms.po.currency" class="w-24 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                                    <option value="SAR">SAR</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="EGP">EGP</option>
+                                </select>
+                                <input type="number" step="0.0001" v-model="forms.po.exchange_rate" placeholder="Rate" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'شروط الشحن (Incoterms)' : 'Shipping Terms' ]]</label>
+                            <input type="text" v-model="forms.po.shipping_terms" :placeholder="isArabic ? 'تسليم مستودع المورد / CIF / FOB' : 'e.g. Ex-Works / CIF / FOB'" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Tabs Navigation (ERPNext & Odoo Style) -->
+                <div class="flex border-b border-slate-200 gap-6 px-2 text-xs font-bold">
+                    <button type="button" 
+                            @click="forms.po.activeTab = 'items'" 
+                            :class="(!forms.po.activeTab || forms.po.activeTab === 'items') ? 'border-b-2 border-emerald-600 text-emerald-600 pb-2.5' : 'text-slate-400 hover:text-slate-600 pb-2.5'"
+                            class="transition-all flex items-center gap-2">
+                        <i class="fas fa-boxes"></i>
+                        <span>[[ isArabic ? 'البنود والأسعار' : 'Items & Pricing' ]]</span>
+                    </button>
+
+                    <button type="button" 
+                            @click="forms.po.activeTab = 'shipping'" 
+                            :class="forms.po.activeTab === 'shipping' ? 'border-b-2 border-emerald-600 text-emerald-600 pb-2.5' : 'text-slate-400 hover:text-slate-600 pb-2.5'"
+                            class="transition-all flex items-center gap-2">
+                        <i class="fas fa-shipping-fast"></i>
+                        <span>[[ isArabic ? 'عناوين الشحن والتوريد' : 'Shipping & Addresses' ]]</span>
+                    </button>
+
+                    <button type="button" 
+                            @click="forms.po.activeTab = 'terms'" 
+                            :class="forms.po.activeTab === 'terms' ? 'border-b-2 border-emerald-600 text-emerald-600 pb-2.5' : 'text-slate-400 hover:text-slate-600 pb-2.5'"
+                            class="transition-all flex items-center gap-2">
+                        <i class="fas fa-file-contract"></i>
+                        <span>[[ isArabic ? 'الشروط والملاحظات' : 'Terms & Notes' ]]</span>
+                    </button>
+
+                    <button type="button" 
+                            @click="forms.po.activeTab = 'custom'" 
+                            :class="forms.po.activeTab === 'custom' ? 'border-b-2 border-emerald-600 text-emerald-600 pb-2.5' : 'text-slate-400 hover:text-slate-600 pb-2.5'"
+                            class="transition-all flex items-center gap-2">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>[[ isArabic ? 'حقول التخصيص الذاتي' : 'Custom Fields' ]]</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Items & Pricing -->
+                <div v-show="!forms.po.activeTab || forms.po.activeTab === 'items'" class="space-y-4">
+                    <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
+                                <tr>
+                                    <th class="p-3 text-right">[[ isArabic ? 'الصنف' : 'Item' ]]</th>
+                                    <th class="p-3 text-center w-24">[[ isArabic ? 'الوحدة' : 'UOM' ]]</th>
+                                    <th class="p-3 text-center w-24">[[ isArabic ? 'الكمية' : 'Qty' ]]</th>
+                                    <th class="p-3 text-center w-28">[[ isArabic ? 'سعر الوحدة' : 'Unit Cost' ]]</th>
+                                    <th class="p-3 text-center w-20">[[ isArabic ? 'خصم %' : 'Disc %' ]]</th>
+                                    <th class="p-3 text-center w-20">[[ isArabic ? 'ضريبة %' : 'Tax %' ]]</th>
+                                    <th class="p-3 text-left w-28">[[ isArabic ? 'الإجمالي' : 'Total' ]]</th>
+                                    <th class="p-3 w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="(line, idx) in forms.po.lines" :key="idx" class="hover:bg-slate-50/50">
+                                    <td class="p-2.5">
+                                        <select v-model="line.material" @change="onPOMaterialChange(line)" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2 text-xs font-bold text-slate-800 outline-none" required>
+                                            <option value="">[[ isArabic ? 'اختر الصنف...' : 'Select item...' ]]</option>
+                                            <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
+                                        </select>
+                                        <div v-if="getSelectedMaterial(line.material)" class="mt-1 px-2 py-0.5 bg-slate-50 rounded text-[10px] text-slate-400 flex items-center gap-2">
+                                            <span v-if="getSelectedMaterial(line.material).barcode"><i class="fas fa-barcode mr-1"></i>[[ getSelectedMaterial(line.material).barcode ]]</span>
+                                            <span v-if="getSelectedMaterial(line.material).category_name"><i class="fas fa-tag mr-1"></i>[[ getSelectedMaterial(line.material).category_name ]]</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-2.5 text-center">
+                                        <input type="text" v-model="line.uom" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2 text-center text-xs font-bold text-slate-700 outline-none" placeholder="Unit">
+                                    </td>
+                                    <td class="p-2.5 text-center">
+                                        <input type="number" step="any" v-model="line.quantity" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2 text-center text-xs font-black text-slate-800 outline-none" required>
+                                    </td>
+                                    <td class="p-2.5 text-center">
+                                        <input type="number" step="0.01" v-model="line.unit_price" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2 text-center text-xs font-bold text-slate-700 outline-none">
+                                    </td>
+                                    <td class="p-2.5 text-center">
+                                        <input type="number" step="any" v-model="line.discount_rate" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2 text-center text-xs font-bold text-slate-700 outline-none" placeholder="0">
+                                    </td>
+                                    <td class="p-2.5 text-center">
+                                        <input type="number" step="any" v-model="line.tax_rate" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2 text-center text-xs font-bold text-slate-700 outline-none" placeholder="15">
+                                    </td>
+                                    <td class="p-2.5 text-left font-black text-slate-900 font-mono text-xs">
+                                        [[ formatCurrency ? formatCurrency(calculatePOLineTotal(line)) : calculatePOLineTotal(line).toFixed(2) ]]
+                                    </td>
+                                    <td class="p-2.5 text-center">
+                                        <button type="button" @click.prevent="removePOLine(idx)" class="text-slate-300 hover:text-red-500 transition-colors">
+                                            <i class="fas fa-trash-alt text-xs"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button type="button" @click.prevent="addPOLine" class="w-full py-3 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-emerald-600 transition-all border-t border-dashed border-slate-200 flex items-center justify-center gap-2">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>[[ isArabic ? 'إضافة صنف جديد' : 'Add Item' ]]</span>
+                        </button>
+                    </div>
+
+                    <!-- Summary Totals Section -->
+                    <div class="flex justify-end pt-2">
+                        <div class="w-full md:w-80 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+                            <div class="flex justify-between text-xs font-bold text-slate-500">
+                                <span>[[ isArabic ? 'المجموع قبل الخصم' : 'Subtotal' ]]:</span>
+                                <span class="font-mono text-slate-800">[[ formatCurrency ? formatCurrency(calculatePOSubtotal()) : calculatePOSubtotal().toFixed(2) ]]</span>
+                            </div>
+                            <div class="flex justify-between text-xs font-bold text-slate-500">
+                                <span>[[ isArabic ? 'إجمالي الخصومات' : 'Discounts' ]]:</span>
+                                <span class="font-mono text-rose-600">- [[ formatCurrency ? formatCurrency(calculatePODiscounts()) : calculatePODiscounts().toFixed(2) ]]</span>
+                            </div>
+                            <div class="flex justify-between text-xs font-bold text-slate-500">
+                                <span>[[ isArabic ? 'ضريبة القيمة المضافة (VAT)' : 'Tax Amount' ]]:</span>
+                                <span class="font-mono text-emerald-600">+ [[ formatCurrency ? formatCurrency(calculatePOTax()) : calculatePOTax().toFixed(2) ]]</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3.5 bg-slate-900 rounded-2xl text-white">
+                                <span class="text-xs font-bold uppercase tracking-wider">[[ isArabic ? 'الإجمالي النهائي' : 'Grand Total' ]]:</span>
+                                <span class="text-lg font-black text-emerald-400 font-mono">
+                                    [[ formatCurrency ? formatCurrency(calculatePOGrandTotal()) : calculatePOGrandTotal().toFixed(2) ]]
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Shipping & Addresses -->
+                <div v-show="forms.po.activeTab === 'shipping'" class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">[[ isArabic ? 'عنوان الفواتير (Billing Address)' : 'Billing Address' ]]</label>
+                            <textarea v-model="forms.po.billing_address" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold text-slate-700 outline-none" :placeholder="isArabic ? 'عنوان المقر الرئيسي والفوترة...' : 'Headquarters billing address...'"></textarea>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">[[ isArabic ? 'عنوان وجهة الاستلام / المستودع' : 'Shipping / Warehouse Destination' ]]</label>
+                            <textarea v-model="forms.po.shipping_address" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold text-slate-700 outline-none" :placeholder="isArabic ? 'عنوان المستودع ورقم البوابة...' : 'Warehouse delivery location...'"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Terms & Notes -->
+                <div v-show="forms.po.activeTab === 'terms'" class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">[[ isArabic ? 'الشروط والأحكام الخاصة بالتوريد' : 'Terms & Conditions' ]]</label>
+                        <textarea v-model="forms.po.terms_and_conditions" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold text-slate-700 outline-none" :placeholder="isArabic ? 'اكتب شروط الاستلام، الفحص، وفترة السماح...' : 'Delivery, inspection and return terms...'"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">[[ isArabic ? 'ملاحظات داخلية' : 'Internal Notes' ]]</label>
+                        <textarea v-model="forms.po.notes" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold text-slate-700 outline-none" :placeholder="isArabic ? 'أي ملاحظات للمراجعة...' : 'Internal notes...'"></textarea>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Dynamic Custom Fields (Self-Implementation) -->
+                <div v-show="forms.po.activeTab === 'custom'" class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-800">[[ isArabic ? 'الحقول المخصصة ذاتياً (Dynamic Custom Fields)' : 'No-Code Custom Fields' ]]</h4>
+                            <p class="text-[10px] text-slate-400">[[ isArabic ? 'أضف أي حقول مخصصة ترغب بها لمنشأتك دون الحاجة لتعديل الكود البرمجي' : 'Self-implementation custom parameters stored dynamically' ]]</p>
+                        </div>
+                        <button type="button" @click.prevent="addCustomField(forms.po)" class="px-3.5 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                            <i class="fas fa-plus"></i>
+                            <span>[[ isArabic ? 'إضافة حقل جديد' : 'Add Custom Field' ]]</span>
+                        </button>
+                    </div>
+
+                    <div v-if="!forms.po.extra_data || Object.keys(forms.po.extra_data).length === 0" class="p-8 text-center text-slate-400 text-xs border border-dashed border-slate-200 rounded-2xl">
+                        <i class="fas fa-sliders-h text-2xl mb-2 text-slate-300 block"></i>
+                        [[ isArabic ? 'لا توجد حقول مخصصة مضافة حالياً. انقر على الزر أعلاه لإضافة حقل.' : 'No custom fields defined. Click the button above to add one.' ]]
+                    </div>
+
+                    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div v-for="(val, key) in forms.po.extra_data" :key="key" class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
+                            <div class="flex-1">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider block" v-text="key"></label>
+                                <input type="text" v-model="forms.po.extra_data[key]" class="w-full bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold text-slate-800 outline-none mt-1">
+                            </div>
+                            <button type="button" @click.prevent="delete forms.po.extra_data[key]" class="text-slate-300 hover:text-red-500 transition-colors p-2">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Odoo Chatter & Collaboration Component -->
+                <div v-if="forms.po.id" class="mt-8 border-t border-slate-200 pt-6">
+                    {% include "components/odoo_chatter.html" %}
+                </div>
+
             </div>
 
             <div v-if="modalType === 'pr'" class="space-y-6 animate-in zoom-in-95 duration-300">
@@ -597,75 +794,325 @@
             </div>
 
             <div v-if="modalType === 'salesorder'" class="space-y-6 animate-in zoom-in-95 duration-300">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-3xl border border-slate-100">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">العميل (Customer)</label>
-                        <div class="flex gap-2">
-                            <select v-model="forms.salesorder.customer" class="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none" required>
-                                <option value="">اختر العميل...</option>
-                                <option v-for="c in customers" :key="c.id" :value="c.id" v-text="c.name"></option>
-                            </select>
-                            <button @click.prevent="openModal('customer')" class="bg-white border border-slate-200 text-slate-400 w-11 h-11 rounded-xl hover:text-rose-600 hover:border-rose-200 transition-all">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
+                
+                <!-- Odoo-Style Control & Smart Buttons Bar -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" 
+                                v-if="forms.salesorder.status === 'DRAFT' && forms.salesorder.id"
+                                @click="updateSOStatus(forms.salesorder.id, 'CONFIRMED')"
+                                class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
+                            <i class="fas fa-check-circle"></i>
+                            <span>[[ isArabic ? 'تأكيد أمر البيع' : 'Confirm Order' ]]</span>
+                        </button>
+
+                        <button type="button" 
+                                v-if="['CONFIRMED', 'SHIPPED'].includes(forms.salesorder.status) && forms.salesorder.id"
+                                @click="startDelivery(forms.salesorder)"
+                                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
+                            <i class="fas fa-truck-loading"></i>
+                            <span>[[ isArabic ? 'إنشاء إذن تسليم' : 'Deliver Items' ]]</span>
+                        </button>
+
+                        <button type="button" 
+                                v-if="['CONFIRMED', 'SHIPPED'].includes(forms.salesorder.status) && forms.salesorder.id"
+                                @click="generateInvoice(forms.salesorder)"
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>[[ isArabic ? 'إصدار فاتورة' : 'Create Invoice' ]]</span>
+                        </button>
+
+                        <button type="button" 
+                                v-if="forms.salesorder.id"
+                                @click="printSO(forms.salesorder.id)"
+                                class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-2">
+                            <i class="fas fa-print"></i>
+                            <span>[[ isArabic ? 'طباعة PDF' : 'Print' ]]</span>
+                        </button>
                     </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">رقم أمر البيع</label>
-                        <input type="text" v-model="forms.salesorder.so_number" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-mono font-bold text-rose-700 focus:ring-2 focus:ring-rose-500 outline-none" readonly>
+
+                    <!-- Right Side: Smart Buttons & Status Pipeline -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Smart Buttons (Stat Boxes) -->
+                        <div class="flex items-center gap-2">
+                            <div class="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center gap-2 text-xs font-bold text-slate-700 shadow-2xs">
+                                <i class="fas fa-truck text-emerald-500 text-[11px]"></i>
+                                <span>[[ forms.salesorder.deliveries_count || (forms.salesorder.deliveries ? forms.salesorder.deliveries.length : 0) ]] [[ isArabic ? 'تسليم' : 'Deliveries' ]]</span>
+                            </div>
+                            <div class="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center gap-2 text-xs font-bold text-slate-700 shadow-2xs">
+                                <i class="fas fa-file-invoice text-blue-500 text-[11px]"></i>
+                                <span>[[ forms.salesorder.invoices_count || 0 ]] [[ isArabic ? 'فواتير' : 'Invoices' ]]</span>
+                            </div>
+                        </div>
+
+                        <!-- Status Pipeline Breadcrumb -->
+                        <div class="flex items-center bg-slate-100 p-1 rounded-2xl text-[10px] font-black uppercase tracking-wider">
+                            <span :class="(!forms.salesorder.status || forms.salesorder.status === 'DRAFT') ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-400'"
+                                  class="px-3 py-1 rounded-xl transition-all">
+                                [[ isArabic ? 'مسودة' : 'Draft' ]]
+                            </span>
+                            <i class="fas fa-chevron-left text-[8px] text-slate-300 mx-1"></i>
+                            <span :class="forms.salesorder.status === 'CONFIRMED' ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-400'"
+                                  class="px-3 py-1 rounded-xl transition-all">
+                                [[ isArabic ? 'مؤكد' : 'Confirmed' ]]
+                            </span>
+                            <i class="fas fa-chevron-left text-[8px] text-slate-300 mx-1"></i>
+                            <span :class="forms.salesorder.status === 'SHIPPED' ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-400'"
+                                  class="px-3 py-1 rounded-xl transition-all">
+                                [[ isArabic ? 'تم الشحن' : 'Shipped' ]]
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                    <table class="w-full text-right text-sm">
-                        <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
-                            <tr>
-                                <th class="p-4">الصنف (Item)</th>
-                                <th class="p-4 text-center">الكمية</th>
-                                <th class="p-4 text-center">سعر الوحدة</th>
-                                <th class="p-4 text-left">الإجمالي</th>
-                                <th class="p-4 w-10"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="(line, index) in forms.salesorder.lines" :key="index" class="group">
-                                <td class="p-3">
-                                    <select v-model="line.material" class="w-full bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-xs font-bold transition-all" required>
-                                        <option value="">اختر الصنف...</option>
-                                        <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
-                                    </select>
-                                    <div v-if="getSelectedMaterial(line.material)" class="mt-1.5 px-2 py-0.5 bg-slate-50 border border-slate-200/60 rounded-lg text-[10px] font-medium text-slate-500 flex flex-wrap items-center gap-2">
-                                        <span v-if="getSelectedMaterial(line.material).category_name || getSelectedMaterial(line.material).sale_group_name" class="text-rose-600 font-bold">
-                                            <i class="fas fa-folder text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).category_name || getSelectedMaterial(line.material).sale_group_name ]]
-                                        </span>
-                                        <span v-if="getSelectedMaterial(line.material).barcode" class="text-slate-700 font-mono">
-                                            <i class="fas fa-barcode text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).barcode ]]
-                                        </span>
-                                        <span v-if="getSelectedMaterial(line.material).description" class="text-slate-500 italic line-clamp-1">
-                                            <i class="fas fa-align-left text-[9px] mr-1"></i>[[ getSelectedMaterial(line.material).description ]]
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="p-3">
-                                    <input type="number" v-model="line.quantity" class="w-20 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-center font-bold text-xs outline-none" step="any">
-                                </td>
-                                <td class="p-3">
-                                    <input type="number" v-model="line.unit_price" class="w-24 mx-auto bg-slate-50 border-transparent focus:bg-white focus:border-rose-200 rounded-lg p-2 text-center font-bold text-xs outline-none" step="any">
-                                </td>
-                                <td class="p-3 text-left font-black text-slate-700" v-text="(line.quantity * line.unit_price).toFixed(2)">
-                                </td>
-                                <td class="p-3">
-                                    <button @click.prevent="removeSalesOrderLine(index)" class="text-slate-300 hover:text-red-500 transition-colors">
-                                        <i class="fas fa-times-circle"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <button @click.prevent="addSalesOrderLine" class="w-full py-3 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-rose-600 transition-all border-t border-dashed border-slate-200">
-                        <i class="fas fa-plus-circle mr-1"></i> إضافة صنف جديد
+                <!-- Odoo Form Header Card -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'العميل' : 'Customer' ]]</label>
+                            <div class="flex gap-2">
+                                <select v-model="forms.salesorder.customer" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none" required>
+                                    <option value="">[[ isArabic ? 'اختر العميل...' : 'Select Customer...' ]]</option>
+                                    <option v-for="c in customers" :key="c.id" :value="c.id" v-text="c.name"></option>
+                                </select>
+                                <button type="button" @click.prevent="openModal('customer')" class="bg-slate-50 border border-slate-200 text-slate-500 w-9 h-9 rounded-xl hover:text-rose-600 hover:border-rose-200 flex items-center justify-center transition-all">
+                                    <i class="fas fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'رقم أمر البيع' : 'SO Number' ]]</label>
+                            <input type="text" v-model="forms.salesorder.so_number" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-mono font-bold text-rose-700 outline-none" readonly>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'تاريخ التسليم المتوقع' : 'Expected Delivery' ]]</label>
+                            <input type="date" v-model="forms.salesorder.delivery_date" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2 border-t border-slate-100 text-xs">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'رقم أمر شراء العميل (PO Ref)' : 'Customer PO Ref' ]]</label>
+                            <input type="text" v-model="forms.salesorder.customer_po_reference" :placeholder="isArabic ? 'مثال: PO-CUST-889' : 'e.g. PO-889'" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'شروط السداد' : 'Payment Terms' ]]</label>
+                            <select v-model="forms.salesorder.payment_terms" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                                <option value="IMMEDIATE">[[ isArabic ? 'سداد فوري (Cash)' : 'Immediate' ]]</option>
+                                <option value="NET 15">Net 15 Days</option>
+                                <option value="NET 30">Net 30 Days</option>
+                                <option value="NET 60">Net 60 Days</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'العملة' : 'Currency' ]]</label>
+                            <div class="flex gap-1 mt-1">
+                                <select v-model="forms.salesorder.currency" class="w-24 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                                    <option value="SAR">SAR</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="EGP">EGP</option>
+                                </select>
+                                <input type="number" step="0.0001" v-model="forms.salesorder.exchange_rate" placeholder="Rate" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'شروط الشحن (Incoterms)' : 'Shipping Terms' ]]</label>
+                            <input type="text" v-model="forms.salesorder.shipping_terms" :placeholder="isArabic ? 'تسليم مستودع / Ex-Works' : 'e.g. Ex-Works / Delivered'" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Tabs Navigation (ERPNext & Odoo Style) -->
+                <div class="flex border-b border-slate-200 gap-6 px-2 text-xs font-bold">
+                    <button type="button" 
+                            @click="forms.salesorder.activeTab = 'items'" 
+                            :class="(!forms.salesorder.activeTab || forms.salesorder.activeTab === 'items') ? 'border-b-2 border-rose-600 text-rose-600 pb-2.5' : 'text-slate-400 hover:text-slate-600 pb-2.5'"
+                            class="transition-all flex items-center gap-2">
+                        <i class="fas fa-boxes"></i>
+                        <span>[[ isArabic ? 'البنود والأسعار' : 'Items & Pricing' ]]</span>
+                    </button>
+
+                    <button type="button" 
+                            @click="forms.salesorder.activeTab = 'shipping'" 
+                            :class="forms.salesorder.activeTab === 'shipping' ? 'border-b-2 border-rose-600 text-rose-600 pb-2.5' : 'text-slate-400 hover:text-slate-600 pb-2.5'"
+                            class="transition-all flex items-center gap-2">
+                        <i class="fas fa-shipping-fast"></i>
+                        <span>[[ isArabic ? 'بيانات الشحن والعناوين' : 'Shipping & Addresses' ]]</span>
+                    </button>
+
+                    <button type="button" 
+                            @click="forms.salesorder.activeTab = 'terms'" 
+                            :class="forms.salesorder.activeTab === 'terms' ? 'border-b-2 border-rose-600 text-rose-600 pb-2.5' : 'text-slate-400 hover:text-slate-600 pb-2.5'"
+                            class="transition-all flex items-center gap-2">
+                        <i class="fas fa-file-contract"></i>
+                        <span>[[ isArabic ? 'الشروط والملاحظات' : 'Terms & Conditions' ]]</span>
+                    </button>
+
+                    <button type="button" 
+                            @click="forms.salesorder.activeTab = 'custom'" 
+                            :class="forms.salesorder.activeTab === 'custom' ? 'border-b-2 border-rose-600 text-rose-600 pb-2.5' : 'text-slate-400 hover:text-slate-600 pb-2.5'"
+                            class="transition-all flex items-center gap-2">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>[[ isArabic ? 'حقول مخصصة (Custom Fields)' : 'Custom Fields' ]]</span>
                     </button>
                 </div>
+
+                <!-- Tab 1: Items & Pricing -->
+                <div v-show="!forms.salesorder.activeTab || forms.salesorder.activeTab === 'items'" class="space-y-4">
+                    <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-slate-900 text-slate-300 text-[10px] uppercase font-black">
+                                <tr>
+                                    <th class="p-3.5">[[ isArabic ? 'الصنف' : 'Item' ]]</th>
+                                    <th class="p-3.5 text-center w-24">[[ isArabic ? 'الوحدة' : 'UOM' ]]</th>
+                                    <th class="p-3.5 text-center w-24">[[ isArabic ? 'الكمية' : 'Qty' ]]</th>
+                                    <th class="p-3.5 text-center w-28">[[ isArabic ? 'سعر الوحدة' : 'Rate' ]]</th>
+                                    <th class="p-3.5 text-center w-24">[[ isArabic ? 'خصم %' : 'Disc %' ]]</th>
+                                    <th class="p-3.5 text-center w-24">[[ isArabic ? 'ضريبة %' : 'Tax %' ]]</th>
+                                    <th class="p-3.5 text-left w-32">[[ isArabic ? 'الإجمالي' : 'Total' ]]</th>
+                                    <th class="p-3.5 w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="(line, index) in forms.salesorder.lines" :key="index" class="hover:bg-slate-50/70 transition-colors">
+                                    <td class="p-3">
+                                        <select v-model="line.material" @change="onMaterialChange(line)" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-rose-300 rounded-xl p-2 text-xs font-bold transition-all" required>
+                                            <option value="">[[ isArabic ? 'اختر الصنف...' : 'Select item...' ]]</option>
+                                            <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
+                                        </select>
+                                    </td>
+                                    <td class="p-3">
+                                        <input type="text" v-model="line.uom" placeholder="Unit" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-center text-xs font-bold">
+                                    </td>
+                                    <td class="p-3">
+                                        <input type="number" step="any" v-model="line.quantity" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-center text-xs font-bold text-slate-800" required>
+                                    </td>
+                                    <td class="p-3">
+                                        <input type="number" step="any" v-model="line.unit_price" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-center text-xs font-bold text-slate-800" required>
+                                    </td>
+                                    <td class="p-3">
+                                        <input type="number" step="any" v-model="line.discount_rate" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-center text-xs font-bold text-slate-500">
+                                    </td>
+                                    <td class="p-3">
+                                        <input type="number" step="any" v-model="line.tax_rate" placeholder="15" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-center text-xs font-bold text-slate-500">
+                                    </td>
+                                    <td class="p-3 text-left font-black text-slate-800">
+                                        [[ calculateLineTotal(line).toFixed(2) ]]
+                                    </td>
+                                    <td class="p-3 text-center">
+                                        <button type="button" @click.prevent="removeSalesOrderLine(index)" class="text-slate-300 hover:text-red-500 transition-colors">
+                                            <i class="fas fa-trash-alt text-xs"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                            <button type="button" @click.prevent="addSalesOrderLine" class="px-4 py-2 bg-white hover:bg-slate-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-2xs">
+                                <i class="fas fa-plus text-xs"></i>
+                                <span>[[ isArabic ? 'إضافة سطر جديد' : 'Add Item Row' ]]</span>
+                            </button>
+
+                            <div class="text-xs text-slate-400 font-medium">
+                                <span>[[ forms.salesorder.lines ? forms.salesorder.lines.length : 0 ]] [[ isArabic ? 'سطور مدخلة' : 'Items' ]]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Totals Summary Card (ERPNext Style) -->
+                    <div class="flex justify-end">
+                        <div class="w-full md:w-80 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2.5 text-xs">
+                            <div class="flex justify-between text-slate-500">
+                                <span>[[ isArabic ? 'المجموع الفرعي (Subtotal)' : 'Subtotal' ]]</span>
+                                <span class="font-bold text-slate-700">[[ calculateOrderSubtotal().toFixed(2) ]] [[ forms.salesorder.currency || 'SAR' ]]</span>
+                            </div>
+                            <div class="flex justify-between text-slate-500">
+                                <span>[[ isArabic ? 'إجمالي الخصومات (Discounts)' : 'Discounts' ]]</span>
+                                <span class="font-bold text-rose-600">- [[ calculateOrderDiscounts().toFixed(2) ]]</span>
+                            </div>
+                            <div class="flex justify-between text-slate-500">
+                                <span>[[ isArabic ? 'ضريبة القيمة المضافة (VAT 15%)' : 'VAT (15%)' ]]</span>
+                                <span class="font-bold text-slate-700">+ [[ calculateOrderTax().toFixed(2) ]]</span>
+                            </div>
+                            <div class="border-t border-slate-100 pt-2 flex justify-between text-sm font-black text-slate-900">
+                                <span>[[ isArabic ? 'الصافي النهائي (Grand Total)' : 'Grand Total' ]]</span>
+                                <span class="text-rose-600">[[ calculateOrderGrandTotal().toFixed(2) ]] [[ forms.salesorder.currency || 'SAR' ]]</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Shipping & Addresses -->
+                <div v-show="forms.salesorder.activeTab === 'shipping'" class="space-y-4">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">[[ isArabic ? 'عنوان تسليم البضاعة (Shipping Address)' : 'Shipping Address' ]]</label>
+                            <textarea v-model="forms.salesorder.shipping_address" rows="4" :placeholder="isArabic ? 'العنوان الوطني أو موقع المستودع للتسليم...' : 'Enter delivery address...'" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-rose-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">[[ isArabic ? 'عنوان الفوترة (Billing Address)' : 'Billing Address' ]]</label>
+                            <textarea v-model="forms.salesorder.billing_address" rows="4" :placeholder="isArabic ? 'عنوان إرسال الفواتير الضريبية...' : 'Enter billing address...'" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-rose-500"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Terms & Notes -->
+                <div v-show="forms.salesorder.activeTab === 'terms'" class="space-y-4">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">[[ isArabic ? 'الشروط والأحكام المطبوعة (Terms & Conditions)' : 'Terms & Conditions' ]]</label>
+                            <textarea v-model="forms.salesorder.terms_and_conditions" rows="3" :placeholder="isArabic ? 'تظهر أسفل أمر البيع المطبوع...' : 'Printed on PO/SO document...'" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-700 outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">[[ isArabic ? 'ملاحظات عامة' : 'Internal Notes' ]]</label>
+                            <textarea v-model="forms.salesorder.notes" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-bold text-slate-700 outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Custom Fields (Self-Implementation & No-Code Customization) -->
+                <div v-show="forms.salesorder.activeTab === 'custom'" class="space-y-4">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">[[ isArabic ? 'حقول وتخصيصات بدون كود (Self Customization)' : 'No-Code Custom Fields' ]]</h4>
+                                <p class="text-[10px] text-slate-400">[[ isArabic ? 'يمكنك إضافة أي حقول خاصة بنشاط شركتك وحفظها آلياً' : 'Add custom fields on the fly without database changes' ]]</p>
+                            </div>
+                            <button type="button" @click="addCustomField(forms.salesorder)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                                <i class="fas fa-plus text-[10px]"></i>
+                                <span>[[ isArabic ? 'إضافة حقل' : 'Add Field' ]]</span>
+                            </button>
+                        </div>
+
+                        <div v-if="!forms.salesorder.extra_data || Object.keys(forms.salesorder.extra_data).length === 0" class="text-center py-6 text-slate-400 text-xs">
+                            <i class="fas fa-sliders-h text-2xl mb-1.5 opacity-40"></i>
+                            <p>[[ isArabic ? 'لا توجد حقول مخصصة مضافة حالياً. اضغط (إضافة حقل) لتخصيص بيانات إضافية.' : 'No custom fields added yet.' ]]</p>
+                        </div>
+
+                        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div v-for="(val, key) in forms.salesorder.extra_data" :key="key" class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
+                                <div class="flex-1">
+                                    <span class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ key ]]</span>
+                                    <input type="text" v-model="forms.salesorder.extra_data[key]" class="w-full bg-white border border-slate-200 rounded-xl p-2 mt-1 text-xs font-bold text-slate-700 outline-none">
+                                </div>
+                                <button type="button" @click="delete forms.salesorder.extra_data[key]" class="text-slate-300 hover:text-red-500 p-1">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Odoo-Style Chatter & Collaboration Feed -->
+                <template v-if="forms.salesorder.id">
+                    {% include "components/odoo_chatter.html" %}
+                </template>
+
             </div>
 
             <div v-if="modalType === 'user'" class="space-y-4">

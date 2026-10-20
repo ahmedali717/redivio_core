@@ -1,19 +1,33 @@
 import datetime
+import decimal
 from django.db import models
 from django.apps import apps
 from django.conf import settings
 
 class Vendor(models.Model):
     """ موديل الموردين """
+    VENDOR_TYPE_CHOICES = [
+        ('COMPANY', 'شركة / مؤسسة'),
+        ('INDIVIDUAL', 'فرد / مورد مستقل'),
+    ]
     opco = models.ForeignKey('core.OpCo', on_delete=models.CASCADE)
     code = models.CharField(max_length=50)
     name = models.CharField(max_length=200)
-    tax_id = models.CharField(max_length=50, blank=True, null=True)
+    vendor_type = models.CharField(max_length=20, choices=VENDOR_TYPE_CHOICES, default='COMPANY', verbose_name="نوع المورد")
+    vendor_group = models.CharField(max_length=100, default='Local', blank=True, null=True, verbose_name="مجموعة الموردين")
+    country = models.CharField(max_length=100, default='Saudi Arabia', blank=True, null=True, verbose_name="الدولة")
+    city = models.CharField(max_length=100, blank=True, null=True, verbose_name="المدينة")
+    tax_id = models.CharField(max_length=50, blank=True, null=True, verbose_name="الرقم الضريبي")
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
+    contact_name = models.CharField(max_length=150, blank=True, null=True, verbose_name="اسم الشخص المسؤول")
+    website = models.URLField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
+    credit_limit = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="الحد الائتماني")
+    payment_terms = models.CharField(max_length=50, default='NET 30', blank=True, null=True, verbose_name="شروط السداد")
+    currency = models.CharField(max_length=10, default='SAR', blank=True, null=True, verbose_name="عملة التعامل")
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    extra_data = models.JSONField(default=dict, blank=True)
+    extra_data = models.JSONField(default=dict, blank=True, verbose_name="حقول مخصصة (Custom Fields)")
 
     class Meta:
         unique_together = ('opco', 'code')
@@ -221,9 +235,26 @@ class PurchaseOrder(models.Model):
     rfq = models.ForeignKey(RequestForQuotation, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_orders')
     comparison = models.ForeignKey(QuotationComparison, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_orders')
     date = models.DateField(auto_now_add=True)
+    expected_delivery_date = models.DateField(null=True, blank=True, verbose_name="تاريخ الاستلام المتوقع")
+    currency = models.CharField(max_length=10, default='SAR', blank=True, null=True, verbose_name="العملة")
+    exchange_rate = models.DecimalField(max_digits=10, decimal_places=4, default=1.0, verbose_name="سعر الصرف")
+    payment_terms = models.CharField(max_length=50, default='NET 30', blank=True, null=True, verbose_name="شروط السداد")
+    shipping_terms = models.CharField(max_length=100, blank=True, null=True, verbose_name="شروط الشحن والتسليم")
+    shipping_address = models.TextField(blank=True, null=True, verbose_name="عنوان مستودع الاستلام")
+    billing_address = models.TextField(blank=True, null=True, verbose_name="عنوان الفاتورة")
     status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='DRAFT')
     
-    extra_data = models.JSONField(default=dict, blank=True, null=True)
+    # Financials (ERPNext Style Subtotal, Discounts, Net & Tax)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    discount_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="نسبة الخصم %")
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="مبلغ الخصم")
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15.0, verbose_name="نسبة الضريبة %")
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    terms_and_conditions = models.TextField(blank=True, null=True, verbose_name="الشروط والأحكام")
+    notes = models.TextField(blank=True, null=True)
+    extra_data = models.JSONField(default=dict, blank=True, null=True, verbose_name="حقول مخصصة (Custom Fields)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -237,7 +268,21 @@ class PurchaseOrder(models.Model):
 
     @property
     def total_amount(self):
-        return sum(line.quantity * line.unit_price for line in self.lines.all())
+        calculated = sum(line.quantity * line.unit_price for line in self.lines.all())
+        return self.grand_total if self.grand_total > 0 else calculated
+
+    def calculate_totals(self):
+        line_subtotals = sum(line.quantity * line.unit_price for line in self.lines.all())
+        self.subtotal = line_subtotals
+        if self.discount_rate > 0:
+            self.discount_amount = (self.subtotal * (self.discount_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01'))
+        net = max(decimal.Decimal('0.00'), self.subtotal - self.discount_amount)
+        if self.tax_rate > 0:
+            self.tax_amount = (net * (self.tax_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01'))
+        else:
+            self.tax_amount = decimal.Decimal('0.00')
+        self.grand_total = net + self.tax_amount
+        self.save()
 
     def __str__(self):
         return self.po_number
@@ -300,13 +345,33 @@ class PurchaseOrder(models.Model):
 class PurchaseOrderLine(models.Model):
     po = models.ForeignKey(PurchaseOrder, related_name='lines', on_delete=models.CASCADE)
     material = models.ForeignKey('item_master.Material', on_delete=models.CASCADE)
+    uom = models.CharField(max_length=30, default='Unit', blank=True, null=True, verbose_name="وحدة القياس")
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
+    discount_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="نسبة الخصم %")
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="مبلغ الخصم")
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15.0, verbose_name="نسبة الضريبة %")
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    line_total = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     received_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    notes = models.CharField(max_length=255, blank=True, null=True)
+    extra_data = models.JSONField(default=dict, blank=True, verbose_name="حقول مخصصة (Custom Fields)")
 
     @property
     def remaining_quantity(self):
         return self.quantity - self.received_quantity
+
+    def save(self, *args, **kwargs):
+        gross = self.quantity * self.unit_price
+        if self.discount_rate > 0:
+            self.discount_amount = (gross * (self.discount_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01'))
+        net = max(decimal.Decimal('0.00'), gross - self.discount_amount)
+        if self.tax_rate > 0:
+            self.tax_amount = (net * (self.tax_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01'))
+        else:
+            self.tax_amount = decimal.Decimal('0.00')
+        self.line_total = net + self.tax_amount
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.po.po_number} - {self.material.name}"
