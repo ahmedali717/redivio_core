@@ -4,7 +4,7 @@
         {% include "components/item_master_modal.html" %}
     </template>
 
-    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : (['vendor', 'category', 'contracting_project', 'contracting_contract', 'contracting_abstract', 'contracting_check', 'contracting_custody', 'contracting_payment_request'].includes(modalType) ? 'w-full max-w-4xl rounded-3xl shadow-2xl p-6 md:p-8 max-h-[92vh]' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]')]">
+    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : (['vendor', 'category', 'contracting_project', 'contracting_contract', 'contracting_abstract', 'contracting_check', 'contracting_custody', 'contracting_payment_request', 'contracting_fabrication', 'contracting_mo', 'contracting_loading_note'].includes(modalType) ? 'w-full max-w-4xl rounded-3xl shadow-2xl p-6 md:p-8 max-h-[92vh]' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]')]">
         
         <div class="flex justify-between items-center mb-6 border-b pb-4">
             <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -1511,7 +1511,7 @@
                                 [[ isArabic ? 'ملف المورد الذكي' : 'Smart Vendor Master' ]]
                             </div>
                             <div class="text-xs text-slate-500 font-medium">
-                                [[ isArabic ? 'دمج مالي وتشغيلي متكامل (Odoo Contacts + ERPNext Supplier)' : 'Integrated Commercial & Financial Profile' ]]
+                                [[ isArabic ? 'ملف تجاري وتشغيلي وائتماني متكامل للمورد' : 'Integrated Commercial & Financial Profile' ]]
                             </div>
                         </div>
                     </div>
@@ -1654,7 +1654,7 @@
                 <div class="border-t border-slate-100 pt-4 bg-slate-50/70 -mx-6 -mb-6 p-6 rounded-b-3xl">
                     <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                         <i class="fas fa-file-invoice-dollar text-indigo-500"></i>
-                        <span>[[ isArabic ? 'الشروط المالية والمحاسبية (ERPNext Terms)' : 'Financial & Credit Terms' ]]</span>
+                        <span>[[ isArabic ? 'الشروط المالية والمحاسبية المعتمدة' : 'Financial & Credit Terms' ]]</span>
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
@@ -1709,7 +1709,7 @@
                                 [[ isArabic ? 'بطاقة المجموعة المخزنية' : 'Item Group / Category' ]]
                             </div>
                             <div class="text-xs text-slate-500 font-medium">
-                                [[ isArabic ? 'تصنيف هرمي وقواعد توجيه الأرفف (Odoo Putaway & ERPNext)' : 'Hierarchical grouping & putaway strategy' ]]
+                                [[ isArabic ? 'تصنيف هرمي وقواعد توجيه الأرفف والمواقع' : 'Hierarchical grouping & putaway strategy' ]]
                             </div>
                         </div>
                     </div>
@@ -2443,6 +2443,322 @@
                     </label>
                     <textarea rows="3" v-model="forms.contracting_payment_request.reason" required placeholder="صرف دفعة تحت الحساب لتنفيذ أعمال البياض والديكورات..."
                               class="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:border-rose-500 outline-none"></textarea>
+                </div>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- ⚙️ 7. FABRICATION ORDER MODAL (أمر تصنيع وتشغيل الورشة) -->
+            <!-- ========================================================= -->
+            <div v-if="modalType === 'contracting_fabrication'" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم أمر التصنيع *' : 'Order Number *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_fabrication.order_number" required placeholder="FAB-2026-001"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-orange-600 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المشروع المرتبط *' : 'Project *' ]]
+                        </label>
+                        <select v-model="forms.contracting_fabrication.project" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-orange-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر المشروع --' : '-- Select Project --' ]]</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">[[ p.code ]] - [[ p.name ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المقايسة المرتبطة (BOQ)' : 'BOQ Sheet' ]]
+                        </label>
+                        <select v-model="forms.contracting_fabrication.boq_sheet" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-orange-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختياري / غير محدد --' : '-- Optional --' ]]</option>
+                            <option v-for="cs in costSheets" :key="cs.id" :value="cs.id">[[ cs.code ]] - [[ cs.title ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'عنوان / بيان أمر التصنيع *' : 'Title / Subject *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_fabrication.title" required placeholder="تصنيع قطاعات ألمنيوم وزجاج الواجهات الرئيسية"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المهندس المسؤول / المكتب الفني *' : 'Responsible Engineer *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_fabrication.responsible_engineer" required placeholder="م. أحمد الشريف"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم اللوحة / المخطط الهندسي' : 'Drawing Reference' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_fabrication.drawing_ref" placeholder="DWG-ELV-004-A"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم المراجعة (Rev)' : 'Revision No' ]]
+                        </label>
+                        <input type="number" v-model.number="forms.contracting_fabrication.revision_no" placeholder="0"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'الورشة / المصنع المنفذ' : 'Workshop' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_fabrication.workshop_name" placeholder="مصنع الألمنيوم والواجهات"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ أمر التصنيع' : 'Order Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_fabrication.order_date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ التسليم المستهدف' : 'Target Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_fabrication.target_date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'الحالة' : 'Status' ]]
+                        </label>
+                        <select v-model="forms.contracting_fabrication.status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-orange-500 outline-none">
+                            <option value="DRAFT">[[ isArabic ? 'مسودة هندسية (Draft)' : 'Draft' ]]</option>
+                            <option value="REVIEWED">[[ isArabic ? 'مراجعة فنية (Reviewed)' : 'Reviewed' ]]</option>
+                            <option value="APPROVED">[[ isArabic ? 'معتمد للتصنيع (Approved)' : 'Approved' ]]</option>
+                            <option value="CONFIRMED">[[ isArabic ? 'مؤكد للتشغيل (Confirmed)' : 'Confirmed' ]]</option>
+                            <option value="IN_PRODUCTION">[[ isArabic ? 'جاري التصنيع بالورشة (In Production)' : 'In Production' ]]</option>
+                            <option value="READY">[[ isArabic ? 'جاهز للتحميل والتسليم (Ready)' : 'Ready' ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'إجمالي الكمية المطلوبة' : 'Total Required Quantity' ]]
+                        </label>
+                        <input type="number" step="0.001" v-model.number="forms.contracting_fabrication.total_qty" placeholder="100.000"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-orange-600 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'نسبة الإنجاز المبدئية %' : 'Initial Progress %' ]]
+                        </label>
+                        <input type="number" step="1" min="0" max="100" v-model.number="forms.contracting_fabrication.progress_percent" placeholder="0"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                        [[ isArabic ? 'المواصفات الفنية وملاحظات التصنيع' : 'Technical Specifications & Notes' ]]
+                    </label>
+                    <textarea rows="2" v-model="forms.contracting_fabrication.notes" placeholder="ملاحظات الدهان والبودرة، سمك الزجاج المزدوج، العوازل..."
+                              class="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:border-orange-500 outline-none"></textarea>
+                </div>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- ⚙️ 8. MANUFACTURING ORDER MODAL (أمر إنتاج وتشغيل MO) -->
+            <!-- ========================================================= -->
+            <div v-if="modalType === 'contracting_mo'" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم أمر الإنتاج (MO) *' : 'MO Number *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_mo.mo_number" required placeholder="MO-2026-0001"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-orange-600 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'أمر التصنيع المصدر *' : 'Fabrication Order *' ]]
+                        </label>
+                        <select v-model="forms.contracting_mo.fabrication_order" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-orange-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر أمر التصنيع --' : '-- Select Fabrication Order --' ]]</option>
+                            <option v-for="fo in fabricationOrders" :key="fo.id" :value="fo.id">[[ fo.order_number ]] - [[ fo.title ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المشروع المرتبط *' : 'Project *' ]]
+                        </label>
+                        <select v-model="forms.contracting_mo.project" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-orange-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر المشروع --' : '-- Select Project --' ]]</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">[[ p.code ]] - [[ p.name ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المنتج / العنصر المراد تصنيعه *' : 'Product / Component *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_mo.product_name" required placeholder="قطاع ألمنيوم واجهة زجاجية W100 x H250"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'مركز العمل / خط الإنتاج' : 'Workcenter' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_mo.workcenter" placeholder="قسم التقطيع والتفريغ بالماكينة CNC"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'الكمية المخططة *' : 'Planned Qty *' ]]
+                        </label>
+                        <input type="number" step="0.001" v-model.number="forms.contracting_mo.planned_qty" required placeholder="10.000"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ البدء المخطط' : 'Start Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_mo.planned_start_date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'حالة أمر الإنتاج' : 'Status' ]]
+                        </label>
+                        <select v-model="forms.contracting_mo.status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-orange-500 outline-none">
+                            <option value="DRAFT">[[ isArabic ? 'مسودة خطة (Draft)' : 'Draft' ]]</option>
+                            <option value="CONFIRMED">[[ isArabic ? 'مؤكد ومعتمد (Confirmed)' : 'Confirmed' ]]</option>
+                            <option value="IN_PROGRESS">[[ isArabic ? 'قيد التشغيل (In Progress)' : 'In Progress' ]]</option>
+                            <option value="COMPLETED">[[ isArabic ? 'مكتمل الإنتاج (Completed)' : 'Completed' ]]</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- 🚚 9. LOADING NOTE MODAL (إذن التحميل والتسيير للموقع) -->
+            <!-- ========================================================= -->
+            <div v-if="modalType === 'contracting_loading_note'" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم إذن التحميل *' : 'Loading Note # *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_loading_note.note_number" required placeholder="LN-2026-001"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-emerald-700 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المشروع الوجهة *' : 'Destination Project *' ]]
+                        </label>
+                        <select v-model="forms.contracting_loading_note.project" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر المشروع --' : '-- Select Project --' ]]</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">[[ p.code ]] - [[ p.name ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'أمر التصنيع المصدر' : 'Fabrication Order' ]]
+                        </label>
+                        <select v-model="forms.contracting_loading_note.fabrication_order" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختياري / تحميل عام --' : '-- Optional --' ]]</option>
+                            <option v-for="fo in fabricationOrders" :key="fo.id" :value="fo.id">[[ fo.order_number ]] - [[ fo.title ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم لوحة الشاحنة / السيارة *' : 'Vehicle Plate *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_loading_note.vehicle_plate" required placeholder="أ ب ج 1234"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'نوع وسيلة النقل' : 'Vehicle Type' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_loading_note.vehicle_type" placeholder="تريلا نقل ثقيل / جامبو"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'اسم السائق *' : 'Driver Name *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_loading_note.driver_name" required placeholder="رمضان عبد العظيم"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم جوال السائق *' : 'Driver Phone *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_loading_note.driver_phone" required placeholder="05XXXXXXXX"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ التحميل والتسيير' : 'Dispatch Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_loading_note.dispatch_date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'إجمالي عدد الطرود / الصناديق' : 'Total Packages' ]]
+                        </label>
+                        <input type="number" min="1" v-model.number="forms.contracting_loading_note.total_packages_count" placeholder="5"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'موقع الإنزال / عنوان المشروع *' : 'Site Destination *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_loading_note.destination_site" required placeholder="بوابة رقم 2 - موقع البرج السكني"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'حالة إذن التحميل' : 'Status' ]]
+                        </label>
+                        <select v-model="forms.contracting_loading_note.status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
+                            <option value="LOADED">[[ isArabic ? 'تم التحميل وتجهيز الشاحنة (Loaded)' : 'Loaded' ]]</option>
+                            <option value="IN_TRANSIT">[[ isArabic ? 'في الطريق للموقع (In Transit)' : 'In Transit' ]]</option>
+                            <option value="DELIVERED">[[ isArabic ? 'تم الوصول والاستلام بالموقع (Delivered)' : 'Delivered' ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                        [[ isArabic ? 'ملاحظات الشحن وتصريح المرور' : 'Dispatch Notes & Gate Pass' ]]
+                    </label>
+                    <textarea rows="2" v-model="forms.contracting_loading_note.notes" placeholder="تعليمات السائق، اسم مهندس الاستلام بالموقع، توقيت الوصول المتوقع..."
+                              class="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:border-emerald-500 outline-none"></textarea>
                 </div>
             </div>
         </form>

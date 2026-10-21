@@ -5,7 +5,9 @@ from .views import (
     ProjectViewSet, JobContractViewSet, ContractExtensionViewSet,
     JobCostSheetViewSet, JobCostLineViewSet, QuantitySurveyViewSet,
     ContractAbstractViewSet, CheckTransactionViewSet, SiteCustodyViewSet,
-    SiteCustodyExpenseViewSet, PaymentRequestViewSet, contracting_dashboard_stats
+    SiteCustodyExpenseViewSet, PaymentRequestViewSet, contracting_dashboard_stats,
+    FabricationOrderViewSet, FabricationOrderLineViewSet,
+    ManufacturingOrderViewSet, LoadingNoteViewSet, LoadingNoteLineViewSet
 )
 
 router = DefaultRouter()
@@ -20,6 +22,11 @@ router.register(r'checks', CheckTransactionViewSet, basename='contracting-check'
 router.register(r'custodies', SiteCustodyViewSet, basename='contracting-custody')
 router.register(r'custody-expenses', SiteCustodyExpenseViewSet, basename='contracting-custody-expense')
 router.register(r'payment-requests', PaymentRequestViewSet, basename='contracting-payment-request')
+router.register(r'fabrication-orders', FabricationOrderViewSet, basename='contracting-fabrication-order')
+router.register(r'fabrication-lines', FabricationOrderLineViewSet, basename='contracting-fabrication-line')
+router.register(r'manufacturing-orders', ManufacturingOrderViewSet, basename='contracting-mo')
+router.register(r'loading-notes', LoadingNoteViewSet, basename='contracting-loading-note')
+router.register(r'loading-lines', LoadingNoteLineViewSet, basename='contracting-loading-line')
 
 urlpatterns = [
     path('dashboard-stats/', contracting_dashboard_stats, name='contracting-dashboard-stats'),

@@ -7,13 +7,16 @@ from decimal import Decimal
 from .models import (
     Project, JobContract, ContractExtension, JobCostSheet, JobCostLine,
     QuantitySurvey, ContractAbstract, CheckTransaction, SiteCustody,
-    SiteCustodyExpense, PaymentRequest
+    SiteCustodyExpense, PaymentRequest, FabricationOrder, FabricationOrderLine,
+    ManufacturingOrder, LoadingNote, LoadingNoteLine
 )
 from .serializers import (
     ProjectSerializer, JobContractSerializer, ContractExtensionSerializer,
     JobCostSheetSerializer, JobCostLineSerializer, QuantitySurveySerializer,
     ContractAbstractSerializer, CheckTransactionSerializer, SiteCustodySerializer,
-    SiteCustodyExpenseSerializer, PaymentRequestSerializer
+    SiteCustodyExpenseSerializer, PaymentRequestSerializer,
+    FabricationOrderSerializer, FabricationOrderLineSerializer,
+    ManufacturingOrderSerializer, LoadingNoteSerializer, LoadingNoteLineSerializer
 )
 
 
@@ -156,6 +159,86 @@ class PaymentRequestViewSet(BaseOpCoViewSet):
     model = PaymentRequest
 
 
+class FabricationOrderViewSet(BaseOpCoViewSet):
+    queryset = FabricationOrder.objects.all().select_related('project', 'contract', 'boq_sheet', 'opco').prefetch_related('lines', 'manufacturing_orders', 'loading_notes')
+    serializer_class = FabricationOrderSerializer
+    model = FabricationOrder
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        project_id = self.request.query_params.get('project')
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        return qs
+
+
+class FabricationOrderLineViewSet(viewsets.ModelViewSet):
+    queryset = FabricationOrderLine.objects.all().select_related('fabrication_order', 'boq_line', 'material')
+    serializer_class = FabricationOrderLineSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        order_id = self.request.query_params.get('fabrication_order')
+        if order_id:
+            qs = qs.filter(fabrication_order_id=order_id)
+        return qs
+
+
+class ManufacturingOrderViewSet(BaseOpCoViewSet):
+    queryset = ManufacturingOrder.objects.all().select_related('fabrication_order', 'fabrication_line', 'project', 'opco')
+    serializer_class = ManufacturingOrderSerializer
+    model = ManufacturingOrder
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        project_id = self.request.query_params.get('project')
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        fab_id = self.request.query_params.get('fabrication_order')
+        if fab_id:
+            qs = qs.filter(fabrication_order_id=fab_id)
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        return qs
+
+
+class LoadingNoteViewSet(BaseOpCoViewSet):
+    queryset = LoadingNote.objects.all().select_related('project', 'fabrication_order', 'opco').prefetch_related('lines')
+    serializer_class = LoadingNoteSerializer
+    model = LoadingNote
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        project_id = self.request.query_params.get('project')
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        fab_id = self.request.query_params.get('fabrication_order')
+        if fab_id:
+            qs = qs.filter(fabrication_order_id=fab_id)
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        return qs
+
+
+class LoadingNoteLineViewSet(viewsets.ModelViewSet):
+    queryset = LoadingNoteLine.objects.all().select_related('loading_note', 'fabrication_line')
+    serializer_class = LoadingNoteLineSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        note_id = self.request.query_params.get('loading_note')
+        if note_id:
+            qs = qs.filter(loading_note_id=note_id)
+        return qs
+
+
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def contracting_dashboard_stats(request):
@@ -166,6 +249,9 @@ def contracting_dashboard_stats(request):
     abstracts_qs = ContractAbstract.objects.all()
     checks_qs = CheckTransaction.objects.all()
     custody_qs = SiteCustody.objects.all()
+    fab_qs = FabricationOrder.objects.all()
+    mo_qs = ManufacturingOrder.objects.all()
+    loading_qs = LoadingNote.objects.all()
 
     if opco_id:
         projects_qs = projects_qs.filter(opco_id=opco_id)
@@ -173,6 +259,9 @@ def contracting_dashboard_stats(request):
         abstracts_qs = abstracts_qs.filter(opco_id=opco_id)
         checks_qs = checks_qs.filter(opco_id=opco_id)
         custody_qs = custody_qs.filter(opco_id=opco_id)
+        fab_qs = fab_qs.filter(opco_id=opco_id)
+        mo_qs = mo_qs.filter(opco_id=opco_id)
+        loading_qs = loading_qs.filter(opco_id=opco_id)
 
     total_projects = projects_qs.count()
     active_projects = projects_qs.filter(status='IN_PROGRESS').count()
@@ -186,6 +275,10 @@ def contracting_dashboard_stats(request):
     
     active_custody_balance = sum(c.remaining_balance for c in custody_qs.filter(status='ACTIVE'))
 
+    fabrication_orders_count = fab_qs.count()
+    manufacturing_orders_count = mo_qs.count()
+    loading_notes_count = loading_qs.count()
+
     return Response({
         'total_projects': total_projects,
         'active_projects': active_projects,
@@ -195,4 +288,8 @@ def contracting_dashboard_stats(request):
         'pending_checks_count': pending_checks_count,
         'pending_checks_amount': float(pending_checks_amount),
         'active_custody_balance': float(active_custody_balance),
+        'fabrication_orders_count': fabrication_orders_count,
+        'manufacturing_orders_count': manufacturing_orders_count,
+        'loading_notes_count': loading_notes_count,
     })
+

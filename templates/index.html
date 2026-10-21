@@ -101,6 +101,12 @@
                     <div v-if="contractingTab === 'cost_sheets'" class="absolute inset-0 overflow-y-auto">
                         {% include "contracting/cost_sheets_list.html" %}
                     </div>
+                    <div v-if="contractingTab === 'fabrication'" class="absolute inset-0 overflow-y-auto">
+                        {% include "contracting/fabrication_list.html" %}
+                    </div>
+                    <div v-if="contractingTab === 'loading_notes'" class="absolute inset-0 overflow-y-auto">
+                        {% include "contracting/loading_notes_list.html" %}
+                    </div>
                     <div v-if="contractingTab === 'abstracts'" class="absolute inset-0 overflow-y-auto">
                         {% include "contracting/abstracts_list.html" %}
                     </div>
@@ -116,7 +122,7 @@
                 </div>
             </div>
 
-            <!-- Accounting & Finance Module (ERPNext Architecture) -->
+            <!-- Accounting & Finance Module -->
             <div v-if="view === 'accounting_module'" class="flex flex-col h-full space-y-4 p-4">
                 <div class="flex-1 relative min-h-[500px]">
                     <div v-if="accountingTab === 'dashboard'" class="absolute inset-0 overflow-y-auto">

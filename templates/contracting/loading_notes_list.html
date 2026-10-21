@@ -1,0 +1,246 @@
+<!-- ========================================================= -->
+<!-- 🚚 RCMS: أذون التحميل وتسيير الشاحنات للموقع (Loading Notes & Dispatch) -->
+<!-- ========================================================= -->
+<div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[700px] p-4 md:p-8 animate-in fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
+    
+    <!-- 1. TOP HEADER & MAIN ACTIONS -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-emerald-500/20">
+                <i class="fas fa-truck-ramp-box"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl md:text-2xl font-black text-slate-800" v-text="isArabic ? 'أذون التحميل وتسيير الشاحنات (Loading Notes)' : 'Site Dispatch & Loading Notes'"></h2>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        [[ filteredLoadingNotes.length ]]
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400 font-bold mt-0.5" v-text="isArabic ? 'تسيير شاحنات النقل للمواقع، بيانات السائقين، أرقام اللوحات وتتبع تسليم الطرود الموقعية' : 'Manage truck dispatch, vehicle plates, driver details & site delivery tracking'"></p>
+            </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2.5">
+            <!-- New Loading Note Button -->
+            <button @click="openModal('contracting_loading_note')" 
+                    class="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span v-text="isArabic ? 'إذن تحميل جديد' : 'New Loading Note'"></span>
+            </button>
+
+            <!-- Fabrication Orders Shortcut -->
+            <button @click="contractingTab = 'fabrication'" 
+                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
+                <i class="fas fa-industry text-orange-500"></i>
+                <span v-text="isArabic ? 'أوامر التصنيع' : 'Fabrication Orders'"></span>
+            </button>
+
+            <!-- Refresh Button -->
+            <button @click="fetchLoadingNotes" 
+                    class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2.5 rounded-xl text-xs font-bold transition-all"
+                    :title="isArabic ? 'تحديث البيانات' : 'Refresh Data'">
+                <i class="fas fa-sync-alt" :class="loading ? 'animate-spin' : ''"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. QUICK METRICS ROW -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block" v-text="isArabic ? 'إجمالي أذون التحميل' : 'Total Notes'"></span>
+                <span class="text-2xl font-black text-slate-800 font-mono">[[ loadingNotes.length ]]</span>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center text-lg">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+        </div>
+
+        <div class="bg-amber-50/70 p-4 rounded-2xl border border-amber-200/80 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 block" v-text="isArabic ? 'تم التحميل بالورشة' : 'Loaded at Plant'"></span>
+                <span class="text-2xl font-black text-amber-600 font-mono">[[ loadingNotes.filter(n => n.status === 'LOADED').length ]]</span>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg">
+                <i class="fas fa-boxes-packing"></i>
+            </div>
+        </div>
+
+        <div class="bg-blue-50/70 p-4 rounded-2xl border border-blue-200/80 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-black uppercase tracking-wider text-blue-700 block" v-text="isArabic ? 'في الطريق إلى الموقع' : 'In Transit'"></span>
+                <span class="text-2xl font-black text-blue-600 font-mono">[[ loadingNotes.filter(n => n.status === 'IN_TRANSIT').length ]]</span>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg">
+                <i class="fas fa-truck-moving"></i>
+            </div>
+        </div>
+
+        <div class="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-200/80 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 block" v-text="isArabic ? 'تم التسليم بالموقع' : 'Delivered to Site'"></span>
+                <span class="text-2xl font-black text-emerald-600 font-mono">[[ loadingNotes.filter(n => n.status === 'DELIVERED').length ]]</span>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">
+                <i class="fas fa-circle-check"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. SEARCH & STATUS FILTERS -->
+    <div class="bg-slate-50/60 rounded-2xl p-3 border border-slate-200/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-6">
+        <div class="relative flex-1 max-w-md">
+            <i class="fas fa-search absolute inset-y-0 flex items-center text-slate-400 text-xs" :class="isArabic ? 'right-3.5' : 'left-3.5'"></i>
+            <input type="text" v-model="loadingNoteSearch" 
+                   :placeholder="isArabic ? 'بحث برقم الإذن، رقم اللوحة، السائق أو المشروع...' : 'Search by note #, plate, driver, project...'"
+                   :class="isArabic ? 'pr-9 pl-8' : 'pl-9 pr-8'"
+                   class="w-full bg-white border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-800 placeholder-slate-400 focus:border-emerald-500 outline-none transition-all">
+            <button v-if="loadingNoteSearch" @click="loadingNoteSearch = ''" class="absolute inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-xs" :class="isArabic ? 'left-3' : 'right-3'">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
+
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+            <button @click="loadingNoteStatusFilter = 'ALL'"
+                    :class="loadingNoteStatusFilter === 'ALL' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm">
+                [[ isArabic ? 'الكل' : 'All' ]]
+            </button>
+            <button @click="loadingNoteStatusFilter = 'LOADED'"
+                    :class="loadingNoteStatusFilter === 'LOADED' ? 'bg-amber-600 text-white' : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200'"
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm">
+                [[ isArabic ? 'تم التحميل' : 'Loaded' ]]
+            </button>
+            <button @click="loadingNoteStatusFilter = 'IN_TRANSIT'"
+                    :class="loadingNoteStatusFilter === 'IN_TRANSIT' ? 'bg-blue-600 text-white' : 'bg-white text-blue-700 hover:bg-blue-50 border border-blue-200'"
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm">
+                [[ isArabic ? 'في الطريق' : 'In Transit' ]]
+            </button>
+            <button @click="loadingNoteStatusFilter = 'DELIVERED'"
+                    :class="loadingNoteStatusFilter === 'DELIVERED' ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-200'"
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm">
+                [[ isArabic ? 'تم الاستلام' : 'Delivered' ]]
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. CARDS GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div v-for="note in filteredLoadingNotes" :key="note.id"
+             class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-lg transition-all flex flex-col justify-between p-5 group">
+            
+            <div>
+                <!-- Top Row: Note Number & Status Badge -->
+                <div class="flex items-start justify-between gap-2 mb-3">
+                    <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        [[ note.note_number ]]
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black border"
+                          :class="{
+                              'bg-amber-50 text-amber-700 border-amber-200': note.status === 'LOADED',
+                              'bg-blue-50 text-blue-700 border-blue-200': note.status === 'IN_TRANSIT',
+                              'bg-emerald-50 text-emerald-700 border-emerald-200': note.status === 'DELIVERED',
+                              'bg-slate-100 text-slate-600 border-slate-200': note.status === 'DRAFT'
+                          }">
+                        [[ getLoadingStatusLabel(note.status) ]]
+                    </span>
+                </div>
+
+                <!-- Destination Project & Site -->
+                <h3 class="font-black text-slate-800 text-base mb-1 group-hover:text-emerald-600 transition-colors">
+                    [[ note.project_name ]]
+                </h3>
+                <p class="text-xs text-slate-500 font-bold mb-3 flex items-center gap-1.5">
+                    <i class="fas fa-location-dot text-rose-500 text-[10px]"></i>
+                    <span>[[ note.destination_site || 'الموقع الإنشائي الرئيسي' ]]</span>
+                </p>
+
+                <!-- Vehicle & Driver Card -->
+                <div class="space-y-2 bg-slate-50/80 p-3 rounded-xl border border-slate-100 text-xs mb-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-bold flex items-center gap-1">
+                            <i class="fas fa-truck text-slate-400 text-[10px]"></i>
+                            [[ isArabic ? 'الشاحنة / اللوحة:' : 'Vehicle Plate:' ]]
+                        </span>
+                        <span class="font-mono font-black text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">
+                            [[ note.vehicle_plate ]]
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-bold flex items-center gap-1">
+                            <i class="fas fa-user text-slate-400 text-[10px]"></i>
+                            [[ isArabic ? 'السائق:' : 'Driver:' ]]
+                        </span>
+                        <span class="font-bold text-slate-700">[[ note.driver_name ]]</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-bold flex items-center gap-1">
+                            <i class="fas fa-phone text-slate-400 text-[10px]"></i>
+                            [[ isArabic ? 'جوال السائق:' : 'Phone:' ]]
+                        </span>
+                        <a :href="'tel:' + note.driver_phone" class="font-mono text-emerald-600 font-bold hover:underline">
+                            [[ note.driver_phone ]]
+                        </a>
+                    </div>
+                    <div v-if="note.fabrication_order_number" class="flex items-center justify-between pt-1 border-t border-slate-200/60">
+                        <span class="text-slate-400 font-bold" v-text="isArabic ? 'أمر التصنيع المرتبط:' : 'Fabrication Ref:'"></span>
+                        <span class="font-mono text-orange-600 font-bold">[[ note.fabrication_order_number ]]</span>
+                    </div>
+                </div>
+
+                <!-- Dispatch & Timeline Stats -->
+                <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-600 mb-3 font-bold">
+                    <div class="bg-emerald-50/70 p-2 rounded-lg border border-emerald-100 text-center">
+                        <span class="text-slate-400 block text-[9px]" v-text="isArabic ? 'تاريخ التحميل' : 'Dispatch Date'"></span>
+                        <span class="font-mono font-black text-emerald-800">[[ note.dispatch_date ]]</span>
+                    </div>
+                    <div class="bg-blue-50/70 p-2 rounded-lg border border-blue-100 text-center">
+                        <span class="text-slate-400 block text-[9px]" v-text="isArabic ? 'عدد الطرود / البالتات' : 'Packages Count'"></span>
+                        <span class="font-mono font-black text-blue-800">[[ note.total_packages_count || 1 ]] [[ isArabic ? 'طرد' : 'pkgs' ]]</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Bottom Smart Dispatch Actions -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                <!-- Action 1: Dispatch truck if LOADED -->
+                <button v-if="note.status === 'LOADED'" @click="updateLoadingStatus(note.id, 'IN_TRANSIT')"
+                        class="flex-1 bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                    <i class="fas fa-truck-moving"></i>
+                    <span v-text="isArabic ? 'انطلاق الشاحنة' : 'Depart Truck'"></span>
+                </button>
+
+                <!-- Action 2: Confirm Site Delivery if IN_TRANSIT -->
+                <button v-else-if="note.status === 'IN_TRANSIT'" @click="updateLoadingStatus(note.id, 'DELIVERED')"
+                        class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20">
+                    <i class="fas fa-check-double"></i>
+                    <span v-text="isArabic ? 'تأكيد الاستلام بالموقع' : 'Confirm Delivery'"></span>
+                </button>
+
+                <!-- Action 3: Delivered State Indicator -->
+                <div v-else class="flex-1 bg-emerald-50 text-emerald-700 py-2 px-3 rounded-xl text-xs font-bold text-center border border-emerald-100 flex items-center justify-center gap-1">
+                    <i class="fas fa-circle-check"></i>
+                    <span v-text="isArabic ? 'تم الاستلام والإنزال بالموقع' : 'Delivered & Received'"></span>
+                </div>
+
+                <!-- Print Note Button -->
+                <button @click="printLoadingNote(note)" 
+                        class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-xl text-xs font-bold transition-all"
+                        :title="isArabic ? 'طباعة إذن التحميل وتصريح المرور' : 'Print Loading Note'">
+                    <i class="fas fa-print"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="filteredLoadingNotes.length === 0" class="col-span-full py-16 text-center text-slate-400">
+            <i class="fas fa-truck-ramp-box text-4xl mb-3 text-slate-300 block"></i>
+            <h4 class="font-black text-slate-700 text-base" v-text="isArabic ? 'لا توجد أذون تحميل مسجلة' : 'No Loading Notes Found'"></h4>
+            <p class="text-xs text-slate-400 mt-1 mb-4" v-text="isArabic ? 'اضغط على زر (إذن تحميل جديد) لتسجيل وتسيير شاحنة محملة بالمنتجات المصنعة إلى موقع المشروع' : 'Create a new loading note to dispatch manufactured components to project site'"></p>
+            <button @click="openModal('contracting_loading_note')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span v-text="isArabic ? 'إذن تحميل جديد' : 'New Loading Note'"></span>
+            </button>
+        </div>
+    </div>
+</div>

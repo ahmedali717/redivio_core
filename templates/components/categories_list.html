@@ -13,7 +13,7 @@
                         [[ filteredCategories.length ]]
                     </span>
                 </div>
-                <p class="text-xs text-slate-400 font-medium mt-0.5" v-text="isArabic ? 'الهيكل الشجري للأصناف، استراتيجيات التخزين وقواعد التوجيه الآلي (دمج Odoo & ERPNext)' : 'Hierarchical item classification, putaway strategies & auto-routing rules'"></p>
+                <p class="text-xs text-slate-400 font-medium mt-0.5" v-text="isArabic ? 'الهيكل الشجري للأصناف، استراتيجيات التخزين وقواعد التوجيه الآلي' : 'Hierarchical item classification, putaway strategies & auto-routing rules'"></p>
             </div>
         </div>
 
@@ -145,14 +145,14 @@
             <button @click="categoryViewMode = 'cards'"
                     :class="categoryViewMode === 'cards' ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800 font-medium'"
                     class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5"
-                    :title="isArabic ? 'عرض بطاقات (Odoo Kanban)' : 'Kanban Cards View'">
+                    :title="isArabic ? 'عرض بطاقات (Kanban)' : 'Kanban Cards View'">
                 <i class="fas fa-th-large"></i>
                 <span class="hidden sm:inline" v-text="isArabic ? 'بطاقات' : 'Cards'"></span>
             </button>
             <button @click="categoryViewMode = 'table'"
                     :class="categoryViewMode === 'table' ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800 font-medium'"
                     class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5"
-                    :title="isArabic ? 'عرض جدول شجري (ERPNext Table)' : 'Tree Table View'">
+                    :title="isArabic ? 'عرض جدول شجري متطور' : 'Tree Table View'">
                 <i class="fas fa-list"></i>
                 <span class="hidden sm:inline" v-text="isArabic ? 'جدول' : 'Table'"></span>
             </button>

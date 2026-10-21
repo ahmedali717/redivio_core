@@ -335,6 +335,9 @@ createApp({
             projects: [],
             jobContracts: [],
             costSheets: [],
+            fabricationOrders: [],
+            manufacturingOrders: [],
+            loadingNotes: [],
             contractAbstracts: [],
             checkTransactions: [],
             siteCustodies: [],
@@ -346,6 +349,9 @@ createApp({
                 average_progress: 0,
                 total_held_checks_amount: 0,
                 active_custody_balance: 0,
+                fabrication_orders_count: 0,
+                manufacturing_orders_count: 0,
+                loading_notes_count: 0,
                 active_projects: []
             },
             projectSearch: '',
@@ -355,6 +361,11 @@ createApp({
             contractTypeFilter: 'ALL',
             contractViewMode: 'cards',
             costSheetSearch: '',
+            fabricationSubTab: 'orders',
+            fabricationSearch: '',
+            fabricationStatusFilter: 'ALL',
+            loadingNoteSearch: '',
+            loadingNoteStatusFilter: 'ALL',
             abstractSearch: '',
             abstractTypeFilter: 'ALL',
             abstractViewMode: 'cards',
@@ -413,7 +424,10 @@ createApp({
                 contracting_abstract: { ar: 'مستخلص أعمال جاري/ختامي (Progress Abstract)', en: 'Contract Progress Abstract' },
                 contracting_check: { ar: 'شيك تجاري / ورقة قبض أو دفع (Commercial Check)', en: 'Commercial Check Transaction' },
                 contracting_custody: { ar: 'عهدة نقدية لمهندس موقع (Site Cash Custody)', en: 'Site Petty Cash Custody' },
-                contracting_payment_request: { ar: 'طلب صرف موقع (Site Payment Request)', en: 'Site Payment Request' }
+                contracting_payment_request: { ar: 'طلب صرف موقع (Site Payment Request)', en: 'Site Payment Request' },
+                contracting_fabrication: { ar: 'أمر تصنيع وتشغيل ورشة جديد', en: 'New Fabrication Order' },
+                contracting_mo: { ar: 'أمر إنتاج وتشغيل ورشة (MO)', en: 'New Manufacturing Order (MO)' },
+                contracting_loading_note: { ar: 'إذن تحميل وتسيير سيارات للموقع', en: 'New Site Dispatch / Loading Note' }
             },
 
             forms: {
@@ -692,6 +706,57 @@ createApp({
                     reason: '',
                     payment_method: 'BANK_TRANSFER',
                     status: 'PENDING_PM'
+                },
+                contracting_fabrication: {
+                    id: null,
+                    order_number: '',
+                    project: null,
+                    contract: null,
+                    boq_sheet: null,
+                    title: '',
+                    order_date: new Date().toISOString().substring(0, 10),
+                    target_date: '',
+                    responsible_engineer: '',
+                    workshop_name: 'مصنع الألمنيوم والواجهات والحديد',
+                    drawing_ref: '',
+                    revision_no: 0,
+                    total_pages: 1,
+                    total_qty: 0,
+                    progress_percent: 0,
+                    status: 'DRAFT',
+                    notes: ''
+                },
+                contracting_mo: {
+                    id: null,
+                    mo_number: '',
+                    fabrication_order: null,
+                    project: null,
+                    product_name: '',
+                    workcenter: 'قسم التقطيع والتجميع واللحام',
+                    planned_start_date: new Date().toISOString().substring(0, 10),
+                    planned_end_date: '',
+                    planned_qty: 1,
+                    produced_qty: 0,
+                    scrap_qty: 0,
+                    status: 'CONFIRMED',
+                    notes: ''
+                },
+                contracting_loading_note: {
+                    id: null,
+                    note_number: '',
+                    project: null,
+                    fabrication_order: null,
+                    vehicle_plate: '',
+                    vehicle_type: 'تريلا نقل ثقيل / جامبو',
+                    driver_name: '',
+                    driver_phone: '',
+                    driver_national_id: '',
+                    supervisor_name: '',
+                    destination_site: '',
+                    total_packages_count: 1,
+                    dispatch_date: new Date().toISOString().substring(0, 10),
+                    status: 'LOADED',
+                    notes: ''
                 }
             }
         };
@@ -1886,6 +1951,54 @@ createApp({
             if (this.paymentRequestSearch) {
                 const q = this.paymentRequestSearch.toLowerCase();
                 list = list.filter(r => (r.request_number || '').toLowerCase().includes(q) || (r.beneficiary_name || '').toLowerCase().includes(q) || (r.reason || '').toLowerCase().includes(q));
+            }
+            return list;
+        },
+        filteredFabricationOrders() {
+            let list = this.fabricationOrders || [];
+            if (this.fabricationStatusFilter && this.fabricationStatusFilter !== 'ALL') {
+                list = list.filter(o => o.status === this.fabricationStatusFilter);
+            }
+            if (this.fabricationSearch) {
+                const q = this.fabricationSearch.toLowerCase();
+                list = list.filter(o => 
+                    (o.order_number || '').toLowerCase().includes(q) || 
+                    (o.title || '').toLowerCase().includes(q) || 
+                    (o.project_name || '').toLowerCase().includes(q) || 
+                    (o.responsible_engineer || '').toLowerCase().includes(q)
+                );
+            }
+            return list;
+        },
+        filteredManufacturingOrders() {
+            let list = this.manufacturingOrders || [];
+            if (this.fabricationStatusFilter && this.fabricationStatusFilter !== 'ALL') {
+                list = list.filter(m => m.status === this.fabricationStatusFilter);
+            }
+            if (this.fabricationSearch) {
+                const q = this.fabricationSearch.toLowerCase();
+                list = list.filter(m => 
+                    (m.mo_number || '').toLowerCase().includes(q) || 
+                    (m.product_name || '').toLowerCase().includes(q) || 
+                    (m.project_name || '').toLowerCase().includes(q)
+                );
+            }
+            return list;
+        },
+        filteredLoadingNotes() {
+            let list = this.loadingNotes || [];
+            if (this.loadingNoteStatusFilter && this.loadingNoteStatusFilter !== 'ALL') {
+                list = list.filter(n => n.status === this.loadingNoteStatusFilter);
+            }
+            if (this.loadingNoteSearch) {
+                const q = this.loadingNoteSearch.toLowerCase();
+                list = list.filter(n => 
+                    (n.note_number || '').toLowerCase().includes(q) || 
+                    (n.vehicle_plate || '').toLowerCase().includes(q) || 
+                    (n.driver_name || '').toLowerCase().includes(q) || 
+                    (n.project_name || '').toLowerCase().includes(q) || 
+                    (n.destination_site || '').toLowerCase().includes(q)
+                );
             }
             return list;
         }
@@ -6447,6 +6560,9 @@ createApp({
             else if (type === 'contracting_check') url = isEdit ? `/api/contracting/checks/${id}/` : `/api/contracting/checks/`;
             else if (type === 'contracting_custody') url = isEdit ? `/api/contracting/custodies/${id}/` : `/api/contracting/custodies/`;
             else if (type === 'contracting_payment_request') url = isEdit ? `/api/contracting/payment-requests/${id}/` : `/api/contracting/payment-requests/`;
+            else if (type === 'contracting_fabrication') url = isEdit ? `/api/contracting/fabrication-orders/${id}/` : `/api/contracting/fabrication-orders/`;
+            else if (type === 'contracting_mo') url = isEdit ? `/api/contracting/manufacturing-orders/${id}/` : `/api/contracting/manufacturing-orders/`;
+            else if (type === 'contracting_loading_note') url = isEdit ? `/api/contracting/loading-notes/${id}/` : `/api/contracting/loading-notes/`;
 
             try {
                 this.loading = true;
@@ -9299,6 +9415,9 @@ createApp({
                 this.fetchProjects(),
                 this.fetchJobContracts(),
                 this.fetchCostSheets(),
+                this.fetchFabricationOrders(),
+                this.fetchManufacturingOrders(),
+                this.fetchLoadingNotes(),
                 this.fetchAbstracts(),
                 this.fetchCheckTransactions(),
                 this.fetchSiteCustodies(),
@@ -9488,6 +9607,232 @@ createApp({
             } finally {
                 this.loading = false;
             }
+        },
+
+        // --- ⚙️ Fabrication & Workshop Production Methods ---
+        async fetchFabricationOrders() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/fabrication-orders/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.fabricationOrders = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchFabricationOrders error:", e);
+            }
+        },
+
+        async fetchManufacturingOrders() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/manufacturing-orders/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.manufacturingOrders = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchManufacturingOrders error:", e);
+            }
+        },
+
+        async updateFabricationStatus(orderId, newStatus) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/contracting/fabrication-orders/${orderId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ 
+                        status: newStatus,
+                        progress_percent: newStatus === 'READY' ? 100 : (newStatus === 'IN_PRODUCTION' ? 50 : (newStatus === 'APPROVED' ? 25 : 0))
+                    })
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تحديث حالة أمر التصنيع بنجاح" : "Fabrication status updated", 'success');
+                    await this.fetchFabricationOrders();
+                    await this.fetchContractingStats();
+                } else {
+                    this.showToast(this.isArabic ? "فشل تحديث أمر التصنيع" : "Failed to update fabrication order", 'error');
+                }
+            } catch (e) {
+                console.error("updateFabricationStatus error:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async completeManufacturingOrder(moId) {
+            try {
+                this.loading = true;
+                const mo = this.manufacturingOrders.find(m => m.id === moId);
+                const plannedQty = mo ? mo.planned_qty : 1;
+                const res = await fetch(`/api/contracting/manufacturing-orders/${moId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ 
+                        status: 'COMPLETED',
+                        produced_qty: plannedQty,
+                        actual_completion_date: new Date().toISOString().substring(0, 10)
+                    })
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم إتمام أمر الإنتاج بنجاح" : "Manufacturing Order completed", 'success');
+                    await this.fetchManufacturingOrders();
+                    await this.fetchFabricationOrders();
+                    await this.fetchContractingStats();
+                } else {
+                    this.showToast(this.isArabic ? "فشل إتمام أمر الإنتاج" : "Failed to complete MO", 'error');
+                }
+            } catch (e) {
+                console.error("completeManufacturingOrder error:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // --- 🚚 Site Dispatch & Loading Notes Methods ---
+        async fetchLoadingNotes() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/loading-notes/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.loadingNotes = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchLoadingNotes error:", e);
+            }
+        },
+
+        async updateLoadingStatus(noteId, newStatus) {
+            try {
+                this.loading = true;
+                const payload = { status: newStatus };
+                if (newStatus === 'DELIVERED') {
+                    payload.actual_arrival_date = new Date().toISOString().substring(0, 10);
+                }
+                const res = await fetch(`/api/contracting/loading-notes/${noteId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تحديث حالة إذن التحميل بنجاح" : "Loading note status updated", 'success');
+                    await this.fetchLoadingNotes();
+                    await this.fetchContractingStats();
+                } else {
+                    this.showToast(this.isArabic ? "فشل تحديث إذن التحميل" : "Failed to update loading note", 'error');
+                }
+            } catch (e) {
+                console.error("updateLoadingStatus error:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        openLoadingNoteForFabrication(fabricationOrder) {
+            this.contractingTab = 'loading_notes';
+            this.forms.contracting_loading_note = {
+                id: null,
+                note_number: `LN-${Date.now().toString().slice(-6)}`,
+                project: fabricationOrder.project,
+                fabrication_order: fabricationOrder.id,
+                vehicle_plate: '',
+                vehicle_type: 'تريلا نقل ثقيل / جامبو',
+                driver_name: '',
+                driver_phone: '',
+                driver_national_id: '',
+                supervisor_name: fabricationOrder.responsible_engineer || '',
+                destination_site: fabricationOrder.project_name || '',
+                total_packages_count: Math.max(1, parseInt(fabricationOrder.total_qty || 1)),
+                dispatch_date: new Date().toISOString().substring(0, 10),
+                status: 'LOADED',
+                notes: `إذن تحميل صادر عن أمر التصنيع ${fabricationOrder.order_number}`
+            };
+            this.modalType = 'contracting_loading_note';
+            this.showModal = true;
+        },
+
+        printLoadingNote(note) {
+            const printContent = `
+                <div dir="${this.isArabic ? 'rtl' : 'ltr'}" style="font-family: Arial, sans-serif; padding: 20px;">
+                    <div style="border-bottom: 2px solid #059669; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h2 style="color: #065f46; margin: 0;">إذن تحميل وتسيير شاحنة للموقع - Loading & Gate Pass</h2>
+                        <p style="margin: 5px 0; color: #6b7280;">رقم الإذن: <strong>${note.note_number}</strong> | التاريخ: ${note.dispatch_date}</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>المشروع:</strong> ${note.project_name}</td>
+                            <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>موقع الإنزال:</strong> ${note.destination_site || 'الموقع الإنشائي'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>رقم لوحة الشاحنة:</strong> ${note.vehicle_plate}</td>
+                            <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>نوع الشاحنة:</strong> ${note.vehicle_type || 'جامبو / تريلا'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>اسم السائق:</strong> ${note.driver_name}</td>
+                            <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>جوال السائق:</strong> ${note.driver_phone}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>عدد الطرود المحملة:</strong> ${note.total_packages_count || 1}</td>
+                            <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>أمر التصنيع:</strong> ${note.fabrication_order_number || 'عام'}</td>
+                        </tr>
+                    </table>
+                    <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                        <div>توقيع مسؤول التحميل بالورشة: .....................</div>
+                        <div>توقيع السائق بالاستلام: .....................</div>
+                        <div>توقيع مهندس الموقع: .....................</div>
+                    </div>
+                </div>
+            `;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
+        },
+
+        getFabricationStatusLabel(status) {
+            const map = {
+                'DRAFT': this.isArabic ? 'مسودة' : 'Draft',
+                'REVIEWED': this.isArabic ? 'مراجعة فنية' : 'Reviewed',
+                'APPROVED': this.isArabic ? 'معتمد' : 'Approved',
+                'CONFIRMED': this.isArabic ? 'مؤكد' : 'Confirmed',
+                'IN_PRODUCTION': this.isArabic ? 'قيد التصنيع' : 'In Production',
+                'READY': this.isArabic ? 'جاهز للتحميل' : 'Ready',
+                'DELIVERED': this.isArabic ? 'تم التوريد للموقع' : 'Delivered',
+                'ON_HOLD': this.isArabic ? 'متوقف' : 'On Hold',
+                'CANCELLED': this.isArabic ? 'ملغي' : 'Cancelled'
+            };
+            return map[status] || status;
+        },
+
+        getMoStatusLabel(status) {
+            const map = {
+                'DRAFT': this.isArabic ? 'مسودة' : 'Draft',
+                'CONFIRMED': this.isArabic ? 'مؤكد' : 'Confirmed',
+                'IN_PROGRESS': this.isArabic ? 'قيد التشغيل' : 'In Progress',
+                'COMPLETED': this.isArabic ? 'مكتمل الإنتاج' : 'Completed',
+                'CANCELLED': this.isArabic ? 'ملغي' : 'Cancelled'
+            };
+            return map[status] || status;
+        },
+
+        getLoadingStatusLabel(status) {
+            const map = {
+                'DRAFT': this.isArabic ? 'مسودة' : 'Draft',
+                'LOADED': this.isArabic ? 'تم التحميل' : 'Loaded',
+                'IN_TRANSIT': this.isArabic ? 'في الطريق' : 'In Transit',
+                'DELIVERED': this.isArabic ? 'تم الاستلام بالموقع' : 'Delivered',
+                'CANCELLED': this.isArabic ? 'ملغي' : 'Cancelled'
+            };
+            return map[status] || status;
         }
     }
 }).mount('#app');

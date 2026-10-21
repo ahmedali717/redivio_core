@@ -270,7 +270,33 @@
                 </div>
             </a>
 
-            <!-- 5. Abstracts & Progress Billings -->
+            <!-- 5. Fabrication & MO Orders (أوامر تصنيع وتشغيل الورشة) -->
+            <a href="#" @click.prevent="contractingTab = 'fabrication'; fetchFabricationOrders(); fetchManufacturingOrders();"
+                :class="contractingTab === 'fabrication' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-industry text-orange-400"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'أوامر التصنيع والتشغيل (MO)' : 'Fabrication & MO' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'أوامر الورشة، لوحات التقطيع والإنتاج' : 'Workshop cutting & production' ]]</span>
+                </div>
+            </a>
+
+            <!-- 6. Loading Notes & Site Dispatch (أذون التحميل وتسيير الشاحنات للموقع) -->
+            <a href="#" @click.prevent="contractingTab = 'loading_notes'; fetchLoadingNotes();"
+                :class="contractingTab === 'loading_notes' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-truck-ramp-box text-teal-400"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'أذون التحميل والتسيير للموقع' : 'Site Loading Notes' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'شاحنات النقل، السائقين وتوريد الموقع' : 'Truck dispatch & site delivery' ]]</span>
+                </div>
+            </a>
+
+            <!-- 7. Abstracts & Progress Billings -->
             <a href="#" @click.prevent="contractingTab = 'abstracts'; fetchAbstracts();"
                 :class="contractingTab === 'abstracts' ? 'active' : 'inactive'"
                 class="sidebar-item-premium flex items-center gap-3 rounded-xl group">

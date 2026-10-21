@@ -3,7 +3,8 @@ from django.contrib import admin
 from .models import (
     Project, JobContract, ContractExtension, JobCostSheet, JobCostLine,
     QuantitySurvey, ContractAbstract, CheckTransaction, SiteCustody,
-    SiteCustodyExpense, PaymentRequest
+    SiteCustodyExpense, PaymentRequest, FabricationOrder, FabricationOrderLine,
+    ManufacturingOrder, LoadingNote, LoadingNoteLine
 )
 
 
@@ -19,6 +20,16 @@ class ContractExtensionInline(admin.TabularInline):
 
 class SiteCustodyExpenseInline(admin.TabularInline):
     model = SiteCustodyExpense
+    extra = 1
+
+
+class FabricationOrderLineInline(admin.TabularInline):
+    model = FabricationOrderLine
+    extra = 1
+
+
+class LoadingNoteLineInline(admin.TabularInline):
+    model = LoadingNoteLine
     extra = 1
 
 
@@ -72,3 +83,27 @@ class PaymentRequestAdmin(admin.ModelAdmin):
     list_display = ('request_number', 'project', 'beneficiary_type', 'beneficiary_name', 'amount', 'status', 'date')
     list_filter = ('beneficiary_type', 'status', 'opco')
     search_fields = ('request_number', 'beneficiary_name', 'project__name')
+
+
+@admin.register(FabricationOrder)
+class FabricationOrderAdmin(admin.ModelAdmin):
+    list_display = ('order_number', 'title', 'project', 'status', 'order_date', 'target_date', 'responsible_engineer')
+    list_filter = ('status', 'opco')
+    search_fields = ('order_number', 'title', 'project__name', 'responsible_engineer')
+    inlines = [FabricationOrderLineInline]
+
+
+@admin.register(ManufacturingOrder)
+class ManufacturingOrderAdmin(admin.ModelAdmin):
+    list_display = ('mo_number', 'product_name', 'project', 'fabrication_order', 'planned_qty', 'produced_qty', 'status')
+    list_filter = ('status', 'opco')
+    search_fields = ('mo_number', 'product_name', 'project__name')
+
+
+@admin.register(LoadingNote)
+class LoadingNoteAdmin(admin.ModelAdmin):
+    list_display = ('note_number', 'project', 'vehicle_plate', 'driver_name', 'driver_phone', 'status', 'dispatch_date')
+    list_filter = ('status', 'opco')
+    search_fields = ('note_number', 'vehicle_plate', 'driver_name', 'project__name')
+    inlines = [LoadingNoteLineInline]
+

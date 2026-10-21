@@ -1,0 +1,304 @@
+<!-- ========================================================= -->
+<!-- ⚙️ RCMS: أوامر تشغيل وتصنيع الورشة والإنتاج (Fabrication Orders & MO) -->
+<!-- ========================================================= -->
+<div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[700px] p-4 md:p-8 animate-in fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
+    
+    <!-- 1. TOP HEADER & MAIN ACTIONS -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-orange-500/20">
+                <i class="fas fa-industry"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl md:text-2xl font-black text-slate-800" v-text="isArabic ? 'أوامر تصنيع الورشة والإنتاج (Fabrication & MO)' : 'Fabrication & Manufacturing Orders'"></h2>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-orange-100 text-orange-800 border border-orange-200">
+                        [[ fabricationSubTab === 'orders' ? filteredFabricationOrders.length : filteredManufacturingOrders.length ]]
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400 font-bold mt-0.5" v-text="isArabic ? 'أوامر تشغيل الورشة، لوحات التقطيع، خطوط الإنتاج وأوامر التصنيع التنفيذية (MO)' : 'Workshop cutting lists, production lines & manufacturing orders (MO)'"></p>
+            </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2.5">
+            <!-- New Fabrication Order Button -->
+            <button @click="openModal('contracting_fabrication')" 
+                    class="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-md shadow-orange-500/20 transition-all flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span v-text="isArabic ? 'أمر تصنيع جديد' : 'New Fabrication Order'"></span>
+            </button>
+
+            <!-- New Manufacturing Order (MO) Button -->
+            <button @click="openModal('contracting_mo')" 
+                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
+                <i class="fas fa-cogs text-orange-500"></i>
+                <span v-text="isArabic ? 'أمر إنتاج (MO)' : 'New MO'"></span>
+            </button>
+
+            <!-- Create Loading Note Shortcut -->
+            <button @click="contractingTab = 'loading_notes'; openModal('contracting_loading_note');"
+                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
+                <i class="fas fa-truck-ramp-box text-emerald-600"></i>
+                <span v-text="isArabic ? 'إذن تحميل للموقع' : 'Dispatch Note'"></span>
+            </button>
+
+            <!-- Refresh Button -->
+            <button @click="fetchFabricationOrders(); fetchManufacturingOrders();" 
+                    class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2.5 rounded-xl text-xs font-bold transition-all"
+                    :title="isArabic ? 'تحديث البيانات' : 'Refresh Data'">
+                <i class="fas fa-sync-alt" :class="loading ? 'animate-spin' : ''"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. SUB-TABS (Fabrication Orders vs Manufacturing Orders MO) & STATS -->
+    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mb-6">
+        <!-- Sub-tabs pill toggle -->
+        <div class="inline-flex p-1 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-black">
+            <button @click="fabricationSubTab = 'orders'"
+                    :class="fabricationSubTab === 'orders' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                    class="px-5 py-2 rounded-xl transition-all flex items-center gap-2">
+                <i class="fas fa-file-lines"></i>
+                <span v-text="isArabic ? 'أوامر تصنيع الورشة (Fabrication)' : 'Fabrication Orders'"></span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] bg-orange-100 text-orange-800">[[ fabricationOrders.length ]]</span>
+            </button>
+            <button @click="fabricationSubTab = 'mo'"
+                    :class="fabricationSubTab === 'mo' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                    class="px-5 py-2 rounded-xl transition-all flex items-center gap-2">
+                <i class="fas fa-gears"></i>
+                <span v-text="isArabic ? 'أوامر الإنتاج والتشغيل (MO)' : 'Manufacturing Orders (MO)'"></span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700">[[ manufacturingOrders.length ]]</span>
+            </button>
+        </div>
+
+        <!-- Filter Pills for Status -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <button @click="fabricationStatusFilter = 'ALL'"
+                    :class="fabricationStatusFilter === 'ALL' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap">
+                [[ isArabic ? 'الكل' : 'All' ]]
+            </button>
+            <button @click="fabricationStatusFilter = 'IN_PRODUCTION'"
+                    :class="fabricationStatusFilter === 'IN_PRODUCTION' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap">
+                [[ isArabic ? 'قيد التصنيع' : 'In Production' ]]
+            </button>
+            <button @click="fabricationStatusFilter = 'READY'"
+                    :class="fabricationStatusFilter === 'READY' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap">
+                [[ isArabic ? 'جاهز للتحميل' : 'Ready' ]]
+            </button>
+            <button @click="fabricationStatusFilter = 'DELIVERED'"
+                    :class="fabricationStatusFilter === 'DELIVERED' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap">
+                [[ isArabic ? 'تم التوريد للموقع' : 'Delivered' ]]
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. SEARCH BAR -->
+    <div class="bg-slate-50/60 rounded-2xl p-3 border border-slate-200/80 flex items-center justify-between gap-3 mb-6">
+        <div class="relative flex-1 max-w-md">
+            <i class="fas fa-search absolute inset-y-0 flex items-center text-slate-400 text-xs" :class="isArabic ? 'right-3.5' : 'left-3.5'"></i>
+            <input type="text" v-model="fabricationSearch" 
+                   :placeholder="isArabic ? 'بحث برقم الأمر، البيان، المشروع أو المهندس...' : 'Search by order #, title, project, engineer...'"
+                   :class="isArabic ? 'pr-9 pl-8' : 'pl-9 pr-8'"
+                   class="w-full bg-white border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-800 placeholder-slate-400 focus:border-orange-500 outline-none transition-all">
+            <button v-if="fabricationSearch" @click="fabricationSearch = ''" class="absolute inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-xs" :class="isArabic ? 'left-3' : 'right-3'">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
+        <div class="text-xs font-bold text-slate-400">
+            [[ isArabic ? 'إجمالي السجلات:' : 'Total Records:' ]] <span class="font-mono font-black text-slate-700">[[ fabricationSubTab === 'orders' ? filteredFabricationOrders.length : filteredManufacturingOrders.length ]]</span>
+        </div>
+    </div>
+
+    <!-- 4. TAB 1: FABRICATION ORDERS GRID -->
+    <div v-if="fabricationSubTab === 'orders'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div v-for="order in filteredFabricationOrders" :key="order.id"
+             class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:border-orange-400 hover:shadow-lg transition-all flex flex-col justify-between p-5 group">
+            
+            <div>
+                <!-- Top Badge: Order Number & Status -->
+                <div class="flex items-start justify-between gap-2 mb-3">
+                    <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 border border-orange-200">
+                        [[ order.order_number ]]
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black border"
+                          :class="{
+                              'bg-amber-50 text-amber-700 border-amber-200': order.status === 'IN_PRODUCTION' || order.status === 'CONFIRMED',
+                              'bg-emerald-50 text-emerald-700 border-emerald-200': order.status === 'READY',
+                              'bg-blue-50 text-blue-700 border-blue-200': order.status === 'DELIVERED',
+                              'bg-purple-50 text-purple-700 border-purple-200': order.status === 'APPROVED',
+                              'bg-slate-100 text-slate-600 border-slate-200': order.status === 'DRAFT'
+                          }">
+                        [[ getFabricationStatusLabel(order.status) ]]
+                    </span>
+                </div>
+
+                <!-- Title & Project -->
+                <h3 class="font-black text-slate-800 text-base mb-1 group-hover:text-orange-600 transition-colors">
+                    [[ order.title ]]
+                </h3>
+                <p class="text-xs text-slate-500 font-bold mb-3 flex items-center gap-1.5">
+                    <i class="fas fa-city text-amber-500 text-[10px]"></i>
+                    <span>[[ order.project_name ]]</span>
+                    <span class="font-mono text-slate-400">([[ order.project_code ]])</span>
+                </p>
+
+                <!-- Technical Specs & Engineering Drawing -->
+                <div class="space-y-2 bg-slate-50/80 p-3 rounded-xl border border-slate-100 text-xs mb-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-bold" v-text="isArabic ? 'المكتب الفني / المهندس:' : 'Engineer:'"></span>
+                        <span class="font-black text-slate-700">[[ order.responsible_engineer ]]</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-bold" v-text="isArabic ? 'رقم اللوحة / المخطط:' : 'Drawing Ref:'"></span>
+                        <span class="font-mono font-bold text-indigo-600">[[ order.drawing_ref || '---' ]] (Rev [[ order.revision_no ]])</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-bold" v-text="isArabic ? 'الورشة / المصنع:' : 'Workshop:'"></span>
+                        <span class="font-bold text-slate-600 truncate max-w-[180px]">[[ order.workshop_name ]]</span>
+                    </div>
+                </div>
+
+                <!-- Production Progress Bar -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+                        <span class="text-slate-500" v-text="isArabic ? 'نسبة الإنجاز بالورشة:' : 'Workshop Progress:'"></span>
+                        <span class="font-mono font-black text-orange-600">[[ order.progress_percent || 0 ]]%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div class="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-500"
+                             :style="{ width: (order.progress_percent || 0) + '%' }"></div>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold mt-1">
+                        <span>[[ isArabic ? 'المنجز:' : 'Produced:' ]] [[ order.finished_qty || 0 ]]</span>
+                        <span>[[ isArabic ? 'المطلوب:' : 'Target:' ]] [[ order.total_qty || 0 ]]</span>
+                    </div>
+                </div>
+
+                <!-- Related Links (MO & Loading Notes count) -->
+                <div class="flex items-center gap-2 pt-2 border-t border-slate-100 text-xs">
+                    <span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[10px]">
+                        <i class="fas fa-gears text-[9px]"></i> [[ order.mo_count || 0 ]] [[ isArabic ? 'أمر إنتاج MO' : 'MOs' ]]
+                    </span>
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px]">
+                        <i class="fas fa-truck text-[9px]"></i> [[ order.loading_notes_count || 0 ]] [[ isArabic ? 'إذن تحميل' : 'Dispatches' ]]
+                    </span>
+                </div>
+            </div>
+
+            <!-- Card Footer Smart Actions -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                <!-- Status advance button -->
+                <button v-if="order.status === 'DRAFT'" @click="updateFabricationStatus(order.id, 'APPROVED')"
+                        class="flex-1 bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white py-1.5 px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1">
+                    <i class="fas fa-check"></i>
+                    <span v-text="isArabic ? 'اعتماد للتصنيع' : 'Approve'"></span>
+                </button>
+                <button v-else-if="order.status === 'APPROVED'" @click="updateFabricationStatus(order.id, 'IN_PRODUCTION')"
+                        class="flex-1 bg-amber-50 hover:bg-amber-600 text-amber-700 hover:text-white py-1.5 px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1">
+                    <i class="fas fa-play"></i>
+                    <span v-text="isArabic ? 'بدء التشغيل' : 'Start Prod'"></span>
+                </button>
+                <button v-else-if="order.status === 'IN_PRODUCTION'" @click="updateFabricationStatus(order.id, 'READY')"
+                        class="flex-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white py-1.5 px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1">
+                    <i class="fas fa-box-check"></i>
+                    <span v-text="isArabic ? 'جاهز للتسليم' : 'Mark Ready'"></span>
+                </button>
+                <button v-else
+                        class="flex-1 bg-slate-100 text-slate-500 py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-default">
+                    <i class="fas fa-circle-check text-emerald-500"></i>
+                    <span>[[ getFabricationStatusLabel(order.status) ]]</span>
+                </button>
+
+                <!-- Create Loading Note shortcut for this order -->
+                <button @click="openLoadingNoteForFabrication(order)"
+                        class="bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white p-2 rounded-xl text-xs font-bold transition-all"
+                        :title="isArabic ? 'إنشاء إذن تحميل وتسيير سيارات' : 'Create Loading Note'">
+                    <i class="fas fa-truck-ramp-box"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="filteredFabricationOrders.length === 0" class="col-span-full py-16 text-center text-slate-400">
+            <i class="fas fa-industry text-4xl mb-3 text-slate-300 block"></i>
+            <h4 class="font-black text-slate-700 text-base" v-text="isArabic ? 'لا توجد أوامر تصنيع مسجلة' : 'No Fabrication Orders Found'"></h4>
+            <p class="text-xs text-slate-400 mt-1 mb-4" v-text="isArabic ? 'اضغط على زر (أمر تصنيع جديد) لإنشاء أمر تشغيل للورشة مرتبط بالمشروع والمقايسة' : 'Create a new fabrication order linked to project & BOQ'"></p>
+            <button @click="openModal('contracting_fabrication')" class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span v-text="isArabic ? 'أمر تصنيع جديد' : 'New Fabrication Order'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 5. TAB 2: MANUFACTURING ORDERS (MO) TABLE -->
+    <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right" :dir="isArabic ? 'rtl' : 'ltr'">
+                <thead class="bg-slate-50 border-b border-slate-200 text-xs font-black text-slate-500 uppercase">
+                    <tr>
+                        <th class="p-3.5" v-text="isArabic ? 'رقم أمر التشغيل (MO)' : 'MO Number'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'المنتج / العنصر' : 'Product / Component'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'أمر التصنيع المصدر' : 'Fabrication Order'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'المشروع' : 'Project'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'مركز العمل' : 'Workcenter'"></th>
+                        <th class="p-3.5 text-center" v-text="isArabic ? 'الكمية (مخطط / منفذ)' : 'Qty (Plan / Done)'"></th>
+                        <th class="p-3.5 text-center" v-text="isArabic ? 'الحالة' : 'Status'"></th>
+                        <th class="p-3.5 text-center" v-text="isArabic ? 'إجراءات' : 'Actions'"></th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-slate-100">
+                    <tr v-for="mo in filteredManufacturingOrders" :key="mo.id" class="hover:bg-slate-50/80 transition-colors">
+                        <td class="p-3.5 font-mono font-black text-orange-600">
+                            [[ mo.mo_number ]]
+                        </td>
+                        <td class="p-3.5 font-black text-slate-800">
+                            [[ mo.product_name ]]
+                        </td>
+                        <td class="p-3.5 font-mono text-xs text-indigo-600 font-bold">
+                            [[ mo.fabrication_order_number || '---' ]]
+                        </td>
+                        <td class="p-3.5">
+                            <span class="font-bold text-slate-700">[[ mo.project_name ]]</span>
+                            <span class="font-mono text-[10px] text-slate-400 block">([[ mo.project_code ]])</span>
+                        </td>
+                        <td class="p-3.5 text-slate-500 font-bold">
+                            [[ mo.workcenter ]]
+                        </td>
+                        <td class="p-3.5 text-center font-mono font-black">
+                            <span class="text-emerald-600">[[ mo.produced_qty ]]</span>
+                            <span class="text-slate-400"> / </span>
+                            <span class="text-slate-800">[[ mo.planned_qty ]]</span>
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black border"
+                                  :class="{
+                                      'bg-amber-50 text-amber-700 border-amber-200': mo.status === 'IN_PROGRESS',
+                                      'bg-emerald-50 text-emerald-700 border-emerald-200': mo.status === 'COMPLETED',
+                                      'bg-blue-50 text-blue-700 border-blue-200': mo.status === 'CONFIRMED',
+                                      'bg-slate-100 text-slate-600 border-slate-200': mo.status === 'DRAFT'
+                                  }">
+                                [[ getMoStatusLabel(mo.status) ]]
+                            </span>
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <button v-if="mo.status !== 'COMPLETED'" @click="completeManufacturingOrder(mo.id)"
+                                    class="bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white px-2.5 py-1 rounded-lg text-xs font-bold transition-all">
+                                <i class="fas fa-check"></i> [[ isArabic ? 'إتمام الإنتاج' : 'Complete' ]]
+                            </button>
+                            <span v-else class="text-emerald-600 font-bold text-xs">
+                                <i class="fas fa-circle-check"></i> [[ isArabic ? 'مكتمل' : 'Done' ]]
+                            </span>
+                        </td>
+                    </tr>
+                    <tr v-if="filteredManufacturingOrders.length === 0">
+                        <td colspan="8" class="p-8 text-center text-slate-400 font-bold" v-text="isArabic ? 'لا توجد أوامر إنتاج MO مسجلة حالياً' : 'No manufacturing orders found'"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

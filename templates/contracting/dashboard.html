@@ -1,6 +1,6 @@
 <!-- ========================================================= -->
 <!-- 🏗️ RCMS: لوحة القيادة التنفيذية للمقاولات والمشاريع (Contracting Dashboard) -->
-<!-- مستوحاة من Odoo 19 & ERPNext v15 Fusion Architecture -->
+<!-- Contracting & Project Management System (RCMS) -->
 <!-- ========================================================= -->
 <div class="bg-slate-50/50 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[700px] p-4 md:p-8 animate-in fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
     
@@ -13,34 +13,48 @@
             <div>
                 <div class="flex items-center gap-2">
                     <h2 class="text-2xl font-black text-slate-800" v-text="isArabic ? 'إدارة المقاولات والمشاريع (RCMS)' : 'Contracting & Projects (RCMS)'"></h2>
-                    <span class="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800 border border-amber-200">
-                        Odoo & ERPNext Fusion
+                    <span class="px-3 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-800 border border-blue-200">
+                        Enterprise Edition
                     </span>
                 </div>
-                <p class="text-xs text-slate-400 font-bold mt-1" v-text="isArabic ? 'متابعة المشاريع الإنشائية، المقايسات، المستخلصات الجارية، الشيكات والعهد الموقعية' : 'Monitor projects, BOQ, progress billings, checks & site custody'"></p>
+                <p class="text-xs text-slate-400 font-bold mt-1" v-text="isArabic ? 'متابعة المشاريع الإنشائية، المقايسات، أوامر التصنيع، أذون التحميل، المستخلصات والشيكات' : 'Monitor projects, BOQ, fabrication, loading notes, billings & checks'"></p>
             </div>
         </div>
 
         <div class="flex items-center flex-wrap gap-2.5">
             <!-- New Project Button -->
             <button @click="openModal('contracting_project')" 
-                    class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-md shadow-amber-500/20 transition-all flex items-center gap-2">
+                    class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-4 py-2.5 rounded-xl font-black text-xs shadow-md shadow-amber-500/20 transition-all flex items-center gap-2">
                 <i class="fas fa-plus"></i>
                 <span v-text="isArabic ? 'مشروع جديد' : 'New Project'"></span>
             </button>
 
             <!-- New Contract Button -->
             <button @click="openModal('contracting_contract')" 
-                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
+                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
                 <i class="fas fa-file-contract text-amber-600"></i>
-                <span v-text="isArabic ? 'عقد مقاولة' : 'New Contract'"></span>
+                <span v-text="isArabic ? 'عقد مقاولة' : 'Contract'"></span>
+            </button>
+
+            <!-- Fabrication Order Button -->
+            <button @click="contractingTab = 'fabrication'; openModal('contracting_fabrication')" 
+                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
+                <i class="fas fa-industry text-orange-500"></i>
+                <span v-text="isArabic ? 'أمر تصنيع ورشة' : 'Fabrication'"></span>
+            </button>
+
+            <!-- Loading Note Button -->
+            <button @click="contractingTab = 'loading_notes'; openModal('contracting_loading_note')" 
+                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
+                <i class="fas fa-truck-ramp-box text-emerald-600"></i>
+                <span v-text="isArabic ? 'إذن تحميل للموقع' : 'Loading Note'"></span>
             </button>
 
             <!-- New Abstract Button -->
             <button @click="openModal('contracting_abstract')" 
-                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
+                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
                 <i class="fas fa-file-invoice-dollar text-emerald-600"></i>
-                <span v-text="isArabic ? 'مستخلص جديد' : 'New Abstract'"></span>
+                <span v-text="isArabic ? 'مستخلص' : 'Abstract'"></span>
             </button>
 
             <!-- Refresh Button -->
@@ -213,7 +227,109 @@
         </div>
     </div>
 
-    <!-- 4. ACTIVE PROJECTS SUMMARY TABLE -->
+    <!-- 4. WORKSHOP FABRICATION & SITE DISPATCH OVERVIEW -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Fabrication Orders & MO Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:border-orange-300 transition-all">
+            <div>
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold">
+                            <i class="fas fa-industry"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-slate-800 text-sm" v-text="isArabic ? 'ورشة التصنيع وأوامر الإنتاج (Fabrication & MO)' : 'Workshop Fabrication & Production'"></h3>
+                            <p class="text-[10px] text-slate-400 font-bold" v-text="isArabic ? 'متابعة أوامر تصنيع الواجهات والحديد وأوامر التشغيل' : 'Monitor workshop orders, cutting lists & MO production'"></p>
+                        </div>
+                    </div>
+                    <button @click="contractingTab = 'fabrication'" class="text-orange-600 hover:text-orange-800 text-xs font-black flex items-center gap-1">
+                        <span v-text="isArabic ? 'عرض الأوامر' : 'View Orders'"></span>
+                        <i class="fas" :class="isArabic ? 'fa-arrow-left text-[9px]' : 'fa-arrow-right text-[9px]'"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                        <span class="text-[10px] font-bold text-slate-400 block" v-text="isArabic ? 'إجمالي الأوامر' : 'Total Orders'"></span>
+                        <div class="text-base font-black text-slate-800 mt-1 font-mono">
+                            [[ contractingStats.fabrication_orders_count || fabricationOrders.length ]]
+                        </div>
+                    </div>
+                    <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-center">
+                        <span class="text-[10px] font-bold text-amber-700 block" v-text="isArabic ? 'قيد التصنيع' : 'In Production'"></span>
+                        <div class="text-base font-black text-amber-600 mt-1 font-mono">
+                            [[ fabricationOrders.filter(f => f.status === 'IN_PRODUCTION' || f.status === 'CONFIRMED').length ]]
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-center">
+                        <span class="text-[10px] font-bold text-emerald-700 block" v-text="isArabic ? 'جاهز للتسليم' : 'Ready for Dispatch'"></span>
+                        <div class="text-base font-black text-emerald-600 mt-1 font-mono">
+                            [[ fabricationOrders.filter(f => f.status === 'READY').length ]]
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-orange-50/60 rounded-xl p-3 flex items-center justify-between text-xs border border-orange-100">
+                <span class="font-bold text-orange-800" v-text="isArabic ? 'أوامر الإنتاج النشطة (MO):' : 'Active Manufacturing Orders:'"></span>
+                <button @click="contractingTab = 'fabrication'; fabricationSubTab = 'mo';" class="font-black text-orange-700 font-mono text-sm hover:underline flex items-center gap-1">
+                    <span>[[ contractingStats.manufacturing_orders_count || manufacturingOrders.length ]]</span>
+                    <i class="fas fa-arrow-left text-[9px]"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Site Vehicle Dispatch & Loading Notes Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:border-emerald-300 transition-all">
+            <div>
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+                            <i class="fas fa-truck-ramp-box"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-slate-800 text-sm" v-text="isArabic ? 'تسيير الشاحنات وأذون التحميل (Loading Notes)' : 'Truck Dispatch & Loading Notes'"></h3>
+                            <p class="text-[10px] text-slate-400 font-bold" v-text="isArabic ? 'حركة الشاحنات وتوريد المنتجات المصنعة للمواقع' : 'Vehicle trips, driver dispatch & site deliveries'"></p>
+                        </div>
+                    </div>
+                    <button @click="contractingTab = 'loading_notes'" class="text-teal-600 hover:text-teal-800 text-xs font-black flex items-center gap-1">
+                        <span v-text="isArabic ? 'عرض الأذون' : 'View Notes'"></span>
+                        <i class="fas" :class="isArabic ? 'fa-arrow-left text-[9px]' : 'fa-arrow-right text-[9px]'"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-center">
+                        <span class="text-[10px] font-bold text-amber-700 block" v-text="isArabic ? 'تم التحميل' : 'Loaded'"></span>
+                        <div class="text-base font-black text-amber-600 mt-1 font-mono">
+                            [[ loadingNotes.filter(n => n.status === 'LOADED').length ]]
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center">
+                        <span class="text-[10px] font-bold text-blue-700 block" v-text="isArabic ? 'في الطريق' : 'In Transit'"></span>
+                        <div class="text-base font-black text-blue-600 mt-1 font-mono">
+                            [[ loadingNotes.filter(n => n.status === 'IN_TRANSIT').length ]]
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-center">
+                        <span class="text-[10px] font-bold text-emerald-700 block" v-text="isArabic ? 'تم الاستلام' : 'Delivered'"></span>
+                        <div class="text-base font-black text-emerald-600 mt-1 font-mono">
+                            [[ loadingNotes.filter(n => n.status === 'DELIVERED').length ]]
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-teal-50/60 rounded-xl p-3 flex items-center justify-between text-xs border border-teal-100">
+                <span class="font-bold text-teal-800" v-text="isArabic ? 'إجمالي أذون التحميل والتسيير:' : 'Total Loading Notes:'"></span>
+                <span class="font-black text-teal-700 font-mono text-sm">
+                    [[ contractingStats.loading_notes_count || loadingNotes.length ]]
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. ACTIVE PROJECTS SUMMARY TABLE -->
     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div class="flex items-center gap-2">

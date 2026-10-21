@@ -500,3 +500,219 @@ class PaymentRequest(models.Model):
 
     def __str__(self):
         return f"{self.request_number} - {self.beneficiary_name} ({self.amount})"
+
+
+# ==============================================================================
+# 12. أوامـر تشغيل وتصنيع الورشـة / المصنع (Fabrication Orders)
+# ==============================================================================
+class FabricationOrder(models.Model):
+    FABRICATION_STATUS = [
+        ('DRAFT', 'مسودة هندسية (Draft)'),
+        ('REVIEWED', 'مراجعة فنية (Reviewed)'),
+        ('APPROVED', 'معتمد للتصنيع (Approved)'),
+        ('CONFIRMED', 'مؤكد للتشغيل (Confirmed)'),
+        ('IN_PRODUCTION', 'جاري التصنيع بالورشة (In Production)'),
+        ('READY', 'جاهز للتحميل والتسليم (Ready for Dispatch)'),
+        ('DELIVERED', 'تم التوريد للموقع (Delivered to Site)'),
+        ('ON_HOLD', 'متوقف مؤقتاً (On Hold)'),
+        ('CANCELLED', 'ملغي (Cancelled)'),
+    ]
+
+    opco = models.ForeignKey(OpCo, on_delete=models.CASCADE, related_name='fabrication_orders', verbose_name='الشركة المشغلة')
+    order_number = models.CharField(max_length=50, unique=True, verbose_name='رقم أمر التصنيع')
+    title = models.CharField(max_length=255, verbose_name='عنوان / بيان أمر التصنيع')
+    
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='fabrication_orders', verbose_name='المشروع')
+    contract = models.ForeignKey(JobContract, on_delete=models.SET_NULL, null=True, blank=True, related_name='fabrication_orders', verbose_name='عقد المقاولة المرتبط')
+    boq_sheet = models.ForeignKey(JobCostSheet, on_delete=models.SET_NULL, null=True, blank=True, related_name='fabrication_orders', verbose_name='مقايسة العمليات (BOQ)')
+    
+    order_date = models.DateField(default=timezone.now, verbose_name='تاريخ أمر التصنيع')
+    target_date = models.DateField(null=True, blank=True, verbose_name='تاريخ التسليم المستهدف')
+    
+    responsible_engineer = models.CharField(max_length=150, verbose_name='المهندس المسؤول / المكتب الفني')
+    workshop_name = models.CharField(max_length=150, default='مصنع الألمنيوم والواجهات والحديد', verbose_name='الورشة / المصنع المنفذ')
+    
+    drawing_ref = models.CharField(max_length=100, blank=True, default='', verbose_name='رقم المخطط الفني / اللوحة الهندسية (Drawing Ref)')
+    revision_no = models.IntegerField(default=0, verbose_name='رقم المراجعة والتعديل (Rev)')
+    total_pages = models.IntegerField(default=1, verbose_name='عدد صفحات المخططات')
+    
+    total_qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('0.000'), verbose_name='إجمالي الكمية المطلوبة')
+    finished_qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('0.000'), verbose_name='الكمية التامة المصنعة')
+    progress_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'), verbose_name='نسبة الإنجاز في الورشة %')
+    
+    status = models.CharField(max_length=25, choices=FABRICATION_STATUS, default='DRAFT', verbose_name='حالة أمر التصنيع')
+    notes = models.TextField(blank=True, default='', verbose_name='المواصفات الفنية وملاحظات التصنيع')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'contracting_fabrication_orders'
+        verbose_name = 'أمر تصنيع وتشغيل ورشة'
+        verbose_name_plural = 'أوامر تصنيع وتشغيل الورشة (Fabrication Orders)'
+        ordering = ['-id']
+
+    def __str__(self):
+        return f"{self.order_number} - {self.title} ({self.project.code})"
+
+
+# ==============================================================================
+# 13. بنـود ومقاسـات أمر التصنيع وجداول التقطيع (Fabrication Order Lines)
+# ==============================================================================
+class FabricationOrderLine(models.Model):
+    ORDER_TYPE_CHOICES = [
+        ('MANUFACTURING', 'تصنيع محلي بالورشة (In-house Manufacturing)'),
+        ('BUY', 'شراء جاهز / توريد مباشر (Buy / Procurement)'),
+    ]
+
+    fabrication_order = models.ForeignKey(FabricationOrder, on_delete=models.CASCADE, related_name='lines', verbose_name='أمر التصنيع')
+    boq_line = models.ForeignKey(JobCostLine, on_delete=models.SET_NULL, null=True, blank=True, related_name='fabrication_lines', verbose_name='بند المقايسة (BOQ Line)')
+    
+    item_code = models.CharField(max_length=50, verbose_name='كود القطعة / العنصر')
+    description = models.CharField(max_length=255, verbose_name='الوصف والمقاسات الفنية')
+    material = models.ForeignKey(Material, on_delete=models.SET_NULL, null=True, blank=True, related_name='fabrication_lines', verbose_name='الخامة الأساسية')
+    
+    dimensions_spec = models.CharField(max_length=200, blank=True, default='', verbose_name='الأبعاد والمقاسات (العرض x الارتفاع x الثخانة mm)')
+    cutting_list_ref = models.CharField(max_length=100, blank=True, default='', verbose_name='رقم جدول التقطيع (Cutting List)')
+    
+    uom = models.CharField(max_length=20, default='PCS', verbose_name='وحدة القياس')
+    ordered_qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('1.000'), verbose_name='الكمية المطلوبة')
+    finished_qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('0.000'), verbose_name='الكمية المنجزة')
+    remaining_qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('0.000'), verbose_name='الكمية المتبقية')
+    
+    order_type = models.CharField(max_length=20, choices=ORDER_TYPE_CHOICES, default='MANUFACTURING', verbose_name='نوع التنفيذ')
+    status = models.CharField(max_length=20, default='PENDING', verbose_name='الحالة')
+    notes = models.CharField(max_length=255, blank=True, default='', verbose_name='ملاحظات البند')
+
+    class Meta:
+        db_table = 'contracting_fabrication_lines'
+        verbose_name = 'بند أمر تصنيع'
+        verbose_name_plural = 'بنود أوامر التصنيع وجداول التقطيع'
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.item_code} - {self.description[:40]} ({self.ordered_qty} {self.uom})"
+
+
+# ==============================================================================
+# 14. أوامـر الإنتاج والتشغيل التنفيذية بالورشة (Manufacturing Orders - MO)
+# ==============================================================================
+class ManufacturingOrder(models.Model):
+    MO_STATUS = [
+        ('DRAFT', 'مسودة خطة إنتاج (Draft)'),
+        ('CONFIRMED', 'مؤكد ومعتمد (Confirmed)'),
+        ('IN_PROGRESS', 'قيد التشغيل على الماكينات (In Progress)'),
+        ('COMPLETED', 'مكتمل وتام الإنتاج (Completed)'),
+        ('CANCELLED', 'ملغي (Cancelled)'),
+    ]
+
+    opco = models.ForeignKey(OpCo, on_delete=models.CASCADE, related_name='contracting_manufacturing_orders', verbose_name='الشركة المشغلة')
+    mo_number = models.CharField(max_length=50, unique=True, verbose_name='رقم أمر التشغيل (MO)')
+    
+    fabrication_order = models.ForeignKey(FabricationOrder, on_delete=models.CASCADE, related_name='manufacturing_orders', verbose_name='أمر التصنيع الرئيسي')
+    fabrication_line = models.ForeignKey(FabricationOrderLine, on_delete=models.SET_NULL, null=True, blank=True, related_name='manufacturing_orders', verbose_name='بند التصنيع')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='manufacturing_orders', verbose_name='المشروع المرتبط')
+    
+    product_name = models.CharField(max_length=255, verbose_name='المنتج / العنصر المراد تصنيعه')
+    workcenter = models.CharField(max_length=150, default='قسم التقطيع والتجميع واللحام', verbose_name='مركز العمل / خط الإنتاج')
+    
+    planned_start_date = models.DateField(default=timezone.now, verbose_name='تاريخ البدء المخطط')
+    planned_end_date = models.DateField(null=True, blank=True, verbose_name='تاريخ الانتهاء المخطط')
+    actual_completion_date = models.DateField(null=True, blank=True, verbose_name='تاريخ الإنجاز الفعلي')
+    
+    planned_qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('1.000'), verbose_name='الكمية المخططة')
+    produced_qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('0.000'), verbose_name='الكمية المنتجة فعلياً')
+    scrap_qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('0.000'), verbose_name='كمية الهالك والتالف')
+    
+    status = models.CharField(max_length=20, choices=MO_STATUS, default='CONFIRMED', verbose_name='حالة أمر الإنتاج')
+    notes = models.TextField(blank=True, default='', verbose_name='ملاحظات وتعليمات التشغيل')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'contracting_manufacturing_orders'
+        verbose_name = 'أمر إنتاج وتشغيل (MO)'
+        verbose_name_plural = 'أوامر الإنتاج والتشغيل (Manufacturing Orders - MO)'
+        ordering = ['-id']
+
+    def __str__(self):
+        return f"{self.mo_number} - {self.product_name} ({self.planned_qty})"
+
+
+# ==============================================================================
+# 15. إذن التحميل والتسيير للموقع (Loading Note & Site Vehicle Dispatch)
+# ==============================================================================
+class LoadingNote(models.Model):
+    LOADING_STATUS = [
+        ('DRAFT', 'مسودة إذن تحميل (Draft)'),
+        ('LOADED', 'تم التحميل وتجهيز الشاحنة (Loaded)'),
+        ('IN_TRANSIT', 'في الطريق للموقع (In Transit)'),
+        ('DELIVERED', 'تم الوصول والتسليم للموقع (Delivered to Site)'),
+        ('CANCELLED', 'ملغي (Cancelled)'),
+    ]
+
+    opco = models.ForeignKey(OpCo, on_delete=models.CASCADE, related_name='loading_notes', verbose_name='الشركة المشغلة')
+    note_number = models.CharField(max_length=50, unique=True, verbose_name='رقم إذن التحميل')
+    
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='loading_notes', verbose_name='المشروع الوجهة')
+    fabrication_order = models.ForeignKey(FabricationOrder, on_delete=models.SET_NULL, null=True, blank=True, related_name='loading_notes', verbose_name='أمر التصنيع المصدر')
+    
+    dispatch_date = models.DateField(default=timezone.now, verbose_name='تاريخ التحميل والتسيير')
+    delivery_expected_date = models.DateField(null=True, blank=True, verbose_name='تاريخ الوصول المتوقع')
+    actual_arrival_date = models.DateField(null=True, blank=True, verbose_name='تاريخ الاستلام الفعلي بالموقع')
+    
+    destination_site = models.CharField(max_length=255, verbose_name='موقع الإنزال / عنوان المشروع')
+    vehicle_plate = models.CharField(max_length=50, verbose_name='رقم لوحة الشاحنة / السيارة')
+    vehicle_type = models.CharField(max_length=100, default='تريلا نقل ثقيل / جامبو', verbose_name='نوع وسيلة النقل')
+    
+    driver_name = models.CharField(max_length=150, verbose_name='اسم السائق')
+    driver_phone = models.CharField(max_length=50, verbose_name='رقم جوال السائق')
+    driver_national_id = models.CharField(max_length=50, blank=True, default='', verbose_name='رقم هوية / إقامة السائق')
+    
+    supervisor_name = models.CharField(max_length=150, blank=True, default='', verbose_name='المشرف على التحميل / مهندس الاستلام')
+    total_packages_count = models.IntegerField(default=1, verbose_name='إجمالي عدد الطرود / الصناديق')
+    
+    status = models.CharField(max_length=20, choices=LOADING_STATUS, default='LOADED', verbose_name='حالة إذن التحميل')
+    notes = models.TextField(blank=True, default='', verbose_name='ملاحظات الشحن والتسليم')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'contracting_loading_notes'
+        verbose_name = 'إذن تحميل وتسيير موقع (Loading Note)'
+        verbose_name_plural = 'أذون التحميل والتسيير للمواقع (Loading Notes)'
+        ordering = ['-id']
+
+    def __str__(self):
+        return f"{self.note_number} - {self.vehicle_plate} -> {self.project.code}"
+
+
+# ==============================================================================
+# 16. أصناف وبنود إذن التحميل (Loading Note Lines)
+# ==============================================================================
+class LoadingNoteLine(models.Model):
+    loading_note = models.ForeignKey(LoadingNote, on_delete=models.CASCADE, related_name='lines', verbose_name='إذن التحميل')
+    fabrication_line = models.ForeignKey(FabricationOrderLine, on_delete=models.SET_NULL, null=True, blank=True, related_name='loading_lines', verbose_name='بند أمر التصنيع')
+    
+    item_code = models.CharField(max_length=50, verbose_name='كود الصنف / العنصر')
+    item_description = models.CharField(max_length=255, verbose_name='بيان الصنف والمقاسات')
+    uom = models.CharField(max_length=20, default='PCS', verbose_name='وحدة القياس')
+    
+    loaded_qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('1.000'), verbose_name='الكمية المحملة')
+    received_qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('0.000'), verbose_name='الكمية المستلمة بالموقع')
+    
+    package_number = models.CharField(max_length=50, blank=True, default='', verbose_name='رقم الطرد / البالتة')
+    status = models.CharField(max_length=20, default='LOADED', verbose_name='حالة البند')
+    notes = models.CharField(max_length=255, blank=True, default='', verbose_name='ملاحظات')
+
+    class Meta:
+        db_table = 'contracting_loading_lines'
+        verbose_name = 'بند إذن تحميل'
+        verbose_name_plural = 'بنود أذون التحميل'
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.item_code} - {self.loaded_qty} {self.uom}"
+
