@@ -210,6 +210,119 @@
             </a>
         </template>
 
+        <!-- Contracting & Projects Context (RCMS) -->
+        <template v-else-if="view === 'contracting_module'">
+            <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">
+                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-amber-400 uppercase tracking-[0.2em]"
+                    v-text="isArabic ? 'RCMS (المقاولات والمشاريع)' : 'RCMS Contracting'"></span>
+                <hr class="border-amber-500/20 flex-1">
+            </div>
+
+            <!-- 1. Command Center -->
+            <a href="#" @click.prevent="contractingTab = 'dashboard'; fetchContractingData();"
+                :class="contractingTab === 'dashboard' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-chart-pie text-amber-400"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'لوحة القيادة والمؤشرات' : 'Command Center' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'مؤشرات الأداء وموقف المشاريع' : 'Executive project KPIs' ]]</span>
+                </div>
+            </a>
+
+            <!-- 2. Projects Registry -->
+            <a href="#" @click.prevent="contractingTab = 'projects'; fetchProjects();"
+                :class="contractingTab === 'projects' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-city text-amber-500"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'المشاريع الإنشائية' : 'Construction Projects' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'المواقع، الملاك ونسب الإنجاز' : 'Sites, clients & progress' ]]</span>
+                </div>
+            </a>
+
+            <!-- 3. Contracts & Subcontracts -->
+            <a href="#" @click.prevent="contractingTab = 'contracts'; fetchJobContracts();"
+                :class="contractingTab === 'contracts' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-file-contract text-blue-400"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'عقود المقاولات ومقاولو الباطن' : 'Contracts & Subcontracts' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'العقود، التأمينات وملاحق التغيير' : 'Main & subcontracts, terms' ]]</span>
+                </div>
+            </a>
+
+            <!-- 4. Job Costing & BOQ -->
+            <a href="#" @click.prevent="contractingTab = 'cost_sheets'; fetchCostSheets();"
+                :class="contractingTab === 'cost_sheets' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-calculator text-emerald-400"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'المقايسات وتكاليف العمليات' : 'Job Costing & BOQ' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'تحليل التكاليف ومقارنة المنصرف' : 'Estimated vs actual costs' ]]</span>
+                </div>
+            </a>
+
+            <!-- 5. Abstracts & Progress Billings -->
+            <a href="#" @click.prevent="contractingTab = 'abstracts'; fetchAbstracts();"
+                :class="contractingTab === 'abstracts' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-file-invoice-dollar text-teal-400"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'المستخلصات الجارية والختامية' : 'Progress Billings' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'مستخلصات الملاك ومقاولي الباطن' : 'Valuations & retention deduct' ]]</span>
+                </div>
+            </a>
+
+            <!-- 6. Commercial Checks -->
+            <a href="#" @click.prevent="contractingTab = 'checks'; fetchCheckTransactions();"
+                :class="contractingTab === 'checks' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-money-check text-indigo-400"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'أوراق القبض والدفع والشيكات' : 'Checks Portfolio' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'التحصيل، الارتداد وتواريخ الاستحقاق' : 'Clearing, maturity & banking' ]]</span>
+                </div>
+            </a>
+
+            <!-- 7. Site Cash Custody -->
+            <a href="#" @click.prevent="contractingTab = 'custody'; fetchSiteCustodies();"
+                :class="contractingTab === 'custody' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-wallet text-cyan-400"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'عهد المواقع النثرية' : 'Site Cash Custodies' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'مصروفات المهندسين وتسوية العهد' : 'Petty cash & site expenses' ]]</span>
+                </div>
+            </a>
+
+            <!-- 8. Payment Requests -->
+            <a href="#" @click.prevent="contractingTab = 'payment_requests'; fetchPaymentRequests();"
+                :class="contractingTab === 'payment_requests' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-hand-holding-dollar text-rose-400"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'طلبات الصرف الموقعية' : 'Payment Requests' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'موافقات واعتماد مستحقات الموقع' : 'Site disbursement approvals' ]]</span>
+                </div>
+            </a>
+        </template>
+
         <!-- Accounting Context -->
         <template v-else-if="view === 'accounting_module'">
             <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">

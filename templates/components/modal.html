@@ -4,11 +4,11 @@
         {% include "components/item_master_modal.html" %}
     </template>
 
-    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : (['vendor', 'category'].includes(modalType) ? 'w-full max-w-3xl rounded-3xl shadow-2xl p-6 md:p-8 max-h-[92vh]' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]')]">
+    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : (['vendor', 'category', 'contracting_project', 'contracting_contract', 'contracting_abstract', 'contracting_check', 'contracting_custody', 'contracting_payment_request'].includes(modalType) ? 'w-full max-w-4xl rounded-3xl shadow-2xl p-6 md:p-8 max-h-[92vh]' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]')]">
         
         <div class="flex justify-between items-center mb-6 border-b pb-4">
             <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <i :class="modalType === 'vendor' ? 'fas fa-truck text-emerald-500' : (modalType === 'category' ? 'fas fa-folder-tree text-indigo-500' : (modalType === 'stock_entry' ? 'fas fa-exchange-alt text-emerald-500' : 'fas fa-plus-circle text-indigo-500'))"></i>
+                <i :class="modalType === 'vendor' ? 'fas fa-truck text-emerald-500' : (modalType.startsWith('contracting_') ? 'fas fa-hard-hat text-amber-500' : (modalType === 'category' ? 'fas fa-folder-tree text-indigo-500' : (modalType === 'stock_entry' ? 'fas fa-exchange-alt text-emerald-500' : 'fas fa-plus-circle text-indigo-500')))"></i>
                 <span v-text="isArabic ? modalTitles[modalType]?.ar : modalTitles[modalType]?.en"></span>
             </h3>
             <div class="flex items-center gap-3">
@@ -1772,6 +1772,677 @@
                             [[ isArabic ? 'تحدد كيفية توجيه أصناف هذه الفئة عند الاستلام والتخزين في الرفوف.' : 'Determines how inbound items are routed to warehouse bins.' ]]
                         </p>
                     </div>
+                </div>
+            </div>
+
+            <!-- 🏗️ Contracting: Project Modal -->
+            <div v-if="modalType === 'contracting_project'" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'كود المشروع *' : 'Project Code *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_project.code" required placeholder="PRJ-2026-001"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'اسم المشروع *' : 'Project Name *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_project.name" required placeholder="مشروع إنشاء برج سكني / طريق سريع"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'العميل / المالك *' : 'Client / Customer *' ]]
+                        </label>
+                        <select v-model="forms.contracting_project.customer" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-amber-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر العميل --' : '-- Select Customer --' ]]</option>
+                            <option v-for="c in customers" :key="c.id" :value="c.id">[[ c.name ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'موقع المشروع / العنوان' : 'Site Location / Address' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_project.location_address" placeholder="الرياض / القاهرة الجديدة"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 focus:border-amber-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'الاستشاري المشرف' : 'Consultant' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_project.consultant_name" placeholder="دار الهندسة / م. استشاري"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'مدير المشروع' : 'Project Manager' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_project.project_manager" placeholder="م. أحمد الشريف"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'مهندس الموقع' : 'Site Engineer' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_project.site_engineer" placeholder="م. محمود توفيق"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-amber-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'قيمة العقد الإجمالية' : 'Total Contract Value' ]]
+                        </label>
+                        <input type="number" step="0.01" v-model.number="forms.contracting_project.contract_value" placeholder="0.00"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'التكلفة التقديرية (Estimated)' : 'Estimated Cost' ]]
+                        </label>
+                        <input type="number" step="0.01" v-model.number="forms.contracting_project.estimated_cost" placeholder="0.00"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'نسبة الإنجاز %' : 'Progress %' ]]
+                        </label>
+                        <input type="number" step="0.1" min="0" max="100" v-model.number="forms.contracting_project.progress_percent" placeholder="0"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-amber-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ البدء المخطط' : 'Start Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_project.start_date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ الانتهاء المخطط' : 'End Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_project.end_date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'حالة المشروع' : 'Status' ]]
+                        </label>
+                        <select v-model="forms.contracting_project.status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-amber-500 outline-none">
+                            <option value="DRAFT">[[ isArabic ? 'مسودة / قيد الدراسة' : 'Draft' ]]</option>
+                            <option value="IN_PROGRESS">[[ isArabic ? 'قيد التنفيذ' : 'In Progress' ]]</option>
+                            <option value="SUSPENDED">[[ isArabic ? 'متوقف مؤقتاً' : 'Suspended' ]]</option>
+                            <option value="HANDOVER_INITIAL">[[ isArabic ? 'تسليم ابتدائي' : 'Initial Handover' ]]</option>
+                            <option value="HANDOVER_FINAL">[[ isArabic ? 'تسليم نهائي وإقفال' : 'Final Handover' ]]</option>
+                            <option value="CLOSED">[[ isArabic ? 'مغلق' : 'Closed' ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                        [[ isArabic ? 'ملاحظات المشروع' : 'Project Notes' ]]
+                    </label>
+                    <textarea rows="2" v-model="forms.contracting_project.notes" placeholder="ملاحظات وشروط خاصة بالمشروع..."
+                              class="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:border-amber-500 outline-none"></textarea>
+                </div>
+            </div>
+
+            <!-- 📜 Contracting: Job Contract Modal -->
+            <div v-if="modalType === 'contracting_contract'" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المشروع المرتبط *' : 'Project *' ]]
+                        </label>
+                        <select v-model="forms.contracting_contract.project" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-blue-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر المشروع --' : '-- Select Project --' ]]</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">[[ p.code ]] - [[ p.name ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'نوع العقد *' : 'Contract Type *' ]]
+                        </label>
+                        <select v-model="forms.contracting_contract.contract_type" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-blue-500 outline-none">
+                            <option value="MAIN">[[ isArabic ? 'عقد رئيسي مع المالك (Main Contract)' : 'Main Contract' ]]</option>
+                            <option value="SUBCONTRACT">[[ isArabic ? 'عقد مقاولة باطن (Subcontract)' : 'Subcontract' ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم العقد *' : 'Contract Number *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_contract.contract_number" required placeholder="CTR-2026-001"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'عنوان / موضوع العقد *' : 'Contract Title *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_contract.title" required placeholder="عقد تنفيذ أعمال الخرسانات المسلحة"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-blue-500 outline-none">
+                    </div>
+                    <div v-if="forms.contracting_contract.contract_type === 'MAIN'">
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المالك / العميل' : 'Client / Customer' ]]
+                        </label>
+                        <select v-model="forms.contracting_contract.customer" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-blue-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر العميل --' : '-- Select Customer --' ]]</option>
+                            <option v-for="c in customers" :key="c.id" :value="c.id">[[ c.name ]]</option>
+                        </select>
+                    </div>
+                    <div v-else>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'مقاول الباطن (Vendor)' : 'Subcontractor' ]]
+                        </label>
+                        <select v-model="forms.contracting_contract.subcontractor" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-blue-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر مقاول الباطن --' : '-- Select Subcontractor --' ]]</option>
+                            <option v-for="v in vendors" :key="v.id" :value="v.id">[[ v.name ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'قيمة العقد التعاقدية *' : 'Total Contract Amount *' ]]
+                        </label>
+                        <input type="number" step="0.01" v-model.number="forms.contracting_contract.total_amount" required placeholder="0.00"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ توقيع العقد' : 'Contract Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_contract.contract_date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'حالة العقد' : 'Status' ]]
+                        </label>
+                        <select v-model="forms.contracting_contract.status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-blue-500 outline-none">
+                            <option value="DRAFT">[[ isArabic ? 'مسودة' : 'Draft' ]]</option>
+                            <option value="ACTIVE">[[ isArabic ? 'ساري ومعتمد' : 'Active' ]]</option>
+                            <option value="COMPLETED">[[ isArabic ? 'مكتمل' : 'Completed' ]]</option>
+                            <option value="TERMINATED">[[ isArabic ? 'مفسوخ' : 'Terminated' ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- شروط التأمينات والدفعة المقدمة والضمان -->
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                    <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-shield-halved text-blue-500"></i>
+                        <span>[[ isArabic ? 'الشروط التعاقدية والتأمينات والضمانات' : 'Terms & Guarantees' ]]</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'دفعة مقدمة %' : 'Advance %' ]]</label>
+                            <input type="number" step="0.1" v-model.number="forms.contracting_contract.advance_payment_pct" placeholder="10"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'قيمة الدفعة المقدمة' : 'Advance Amount' ]]</label>
+                            <input type="number" step="0.01" v-model.number="forms.contracting_contract.advance_payment_amount" placeholder="0.00"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'استقطاع الدفعة المقدمة %' : 'Advance Recov %' ]]</label>
+                            <input type="number" step="0.1" v-model.number="forms.contracting_contract.advance_deduction_pct" placeholder="10"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'ضمان أعمال (Retention) %' : 'Retention %' ]]</label>
+                            <input type="number" step="0.1" v-model.number="forms.contracting_contract.retention_pct" placeholder="5"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 bg-white">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'التأمين الابتدائي (Bid Bond)' : 'Bid Bond' ]]</label>
+                            <input type="number" step="0.01" v-model.number="forms.contracting_contract.primary_insurance_amount" placeholder="0.00"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'التأمين النهائي (Performance Bond)' : 'Performance Bond' ]]</label>
+                            <input type="number" step="0.01" v-model.number="forms.contracting_contract.final_insurance_amount" placeholder="0.00"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'مدة الضمان (شهور)' : 'Warranty (Months)' ]]</label>
+                            <input type="number" v-model.number="forms.contracting_contract.warranty_period_months" placeholder="12"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 bg-white">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                        [[ isArabic ? 'الشروط والملاحظات الخاصة' : 'Terms & Remarks' ]]
+                    </label>
+                    <textarea rows="2" v-model="forms.contracting_contract.notes" placeholder="شروط التعاقد..."
+                              class="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:border-blue-500 outline-none"></textarea>
+                </div>
+            </div>
+
+            <!-- 📑 Contracting: Progress Abstract Modal -->
+            <div v-if="modalType === 'contracting_abstract'" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المشروع المرتبط *' : 'Project *' ]]
+                        </label>
+                        <select v-model="forms.contracting_abstract.project" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر المشروع --' : '-- Select Project --' ]]</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">[[ p.code ]] - [[ p.name ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'عقد المقاولة *' : 'Job Contract *' ]]
+                        </label>
+                        <select v-model="forms.contracting_abstract.contract" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر العقد --' : '-- Select Contract --' ]]</option>
+                            <option v-for="c in (forms.contracting_abstract.project ? jobContracts.filter(x => x.project === forms.contracting_abstract.project) : jobContracts)" :key="c.id" :value="c.id">
+                                [[ c.contract_number ]] - [[ c.title ]]
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'نوع المستخلص *' : 'Abstract Type *' ]]
+                        </label>
+                        <select v-model="forms.contracting_abstract.abstract_type" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
+                            <option value="CLIENT">[[ isArabic ? 'مستخلص عميل / مالك (Client)' : 'Client Abstract' ]]</option>
+                            <option value="SUBCONTRACTOR">[[ isArabic ? 'مستخلص مقاول باطن (Subcontractor)' : 'Subcontractor Abstract' ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم المستخلص *' : 'Abstract Number *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_abstract.abstract_number" required placeholder="جاري 01 / ختامي"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ التحرير' : 'Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_abstract.date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'عن الفترة من' : 'Period From' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_abstract.period_from"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'إلى تاريخ' : 'Period To' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_abstract.period_to"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <!-- قيم الأعمال والاستقطاعات والصافي -->
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                    <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-calculator text-emerald-500"></i>
+                        <span>[[ isArabic ? 'الحسابات المالية والاستقطاعات والضريبة' : 'Financials & Deductions' ]]</span>
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'قيمة الأعمال المنفذة حالياً *' : 'Current Work Amount *' ]]</label>
+                            <input type="number" step="0.01" v-model.number="forms.contracting_abstract.current_work_amount" required placeholder="0.00"
+                                   @input="calculateAbstractNet()"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'إجمالي الأعمال السابقة' : 'Previous Work Amount' ]]</label>
+                            <input type="number" step="0.01" v-model.number="forms.contracting_abstract.previous_work_amount" placeholder="0.00"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'إجمالي الأعمال التراكمية' : 'Cumulative Work Amount' ]]</label>
+                            <input type="number" step="0.01" v-model.number="forms.contracting_abstract.cumulative_work_amount" placeholder="0.00"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 bg-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'استقطاع دفعة مقدمة' : 'Advance Deduction' ]]</label>
+                            <input type="number" step="0.01" v-model.number="forms.contracting_abstract.advance_deduction" placeholder="0.00"
+                                   @input="calculateAbstractNet()"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-rose-600 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'استقطاع ضمان (Retention)' : 'Retention Deduction' ]]</label>
+                            <input type="number" step="0.01" v-model.number="forms.contracting_abstract.retention_deduction" placeholder="0.00"
+                                   @input="calculateAbstractNet()"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-rose-600 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'استقطاعات / جزاءات أخرى' : 'Other Deductions' ]]</label>
+                            <input type="number" step="0.01" v-model.number="forms.contracting_abstract.other_deductions" placeholder="0.00"
+                                   @input="calculateAbstractNet()"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-rose-600 bg-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">[[ isArabic ? 'ضريبة القيمة المضافة (VAT)' : 'VAT Amount' ]]</label>
+                            <input type="number" step="0.01" v-model.number="forms.contracting_abstract.vat_amount" placeholder="0.00"
+                                   @input="calculateAbstractNet()"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-blue-600 bg-white">
+                        </div>
+                        <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] font-black text-emerald-800 uppercase tracking-wider block">[[ isArabic ? 'صافي المستحق للصرف' : 'Net Payable Amount' ]]</span>
+                                <span class="text-xs text-emerald-600">[[ isArabic ? '(الأعمال - الاستقطاعات + الضريبة)' : '(Work - Deductions + VAT)' ]]</span>
+                            </div>
+                            <span class="text-lg font-black font-mono text-emerald-700">[[ (forms.contracting_abstract.net_payable_amount || 0).toLocaleString() ]]</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'حالة المستخلص' : 'Status' ]]
+                        </label>
+                        <select v-model="forms.contracting_abstract.status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
+                            <option value="DRAFT">[[ isArabic ? 'مسودة مستخلص' : 'Draft' ]]</option>
+                            <option value="SUBMITTED">[[ isArabic ? 'مقدم للاستشاري' : 'Submitted' ]]</option>
+                            <option value="APPROVED">[[ isArabic ? 'معتمد من الاستشاري' : 'Approved' ]]</option>
+                            <option value="INVOICED">[[ isArabic ? 'مرحل للمحاسبة' : 'Invoiced' ]]</option>
+                            <option value="PAID">[[ isArabic ? 'مصروف / مدفوع' : 'Paid' ]]</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-3 pt-6">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" v-model="forms.contracting_abstract.is_final" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                        <span class="text-xs font-bold text-slate-700">[[ isArabic ? 'مستخلص ختامي نهائي للمشروع (Final Abstract)' : 'Final Project Abstract' ]]</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 💳 Contracting: Commercial Check Modal -->
+            <div v-if="modalType === 'contracting_check'" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'نوع الشيك / الورقة *' : 'Check Type *' ]]
+                        </label>
+                        <select v-model="forms.contracting_check.check_type" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-cyan-500 outline-none">
+                            <option value="RECEIVABLE">[[ isArabic ? 'شيك قبض وارد (Receivable)' : 'Receivable Check' ]]</option>
+                            <option value="PAYABLE">[[ isArabic ? 'شيك دفع صادر (Payable)' : 'Payable Check' ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم الشيك *' : 'Check Number *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_check.check_number" required placeholder="CHK-987654"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-cyan-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المشروع المرتبط' : 'Related Project' ]]
+                        </label>
+                        <select v-model="forms.contracting_check.project" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-cyan-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- غير مرتبط بمشروع محدد --' : '-- No Project --' ]]</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">[[ p.code ]] - [[ p.name ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'مبلغ الشيك *' : 'Amount *' ]]
+                        </label>
+                        <input type="number" step="0.01" v-model.number="forms.contracting_check.amount" required placeholder="0.00"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-cyan-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'اسم البنك *' : 'Bank Name *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_check.bank_name" required placeholder="مصرف الراجحي / بنك مصر"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-cyan-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'فرع البنك' : 'Branch' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_check.branch" placeholder="فرع التجمع / الملز"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-cyan-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'الساحب / المستفيد *' : 'Drawer / Beneficiary *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_check.party_name" required placeholder="شركة الأفق للتعمير"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-cyan-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ التحرير' : 'Issue Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_check.issue_date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-cyan-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ الاستحقاق *' : 'Due Date *' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_check.due_date" required
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-cyan-700 focus:border-cyan-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'حالة الشيك' : 'Status' ]]
+                        </label>
+                        <select v-model="forms.contracting_check.status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-cyan-500 outline-none">
+                            <option value="HELD">[[ isArabic ? 'في الخزينة / تحت اليد' : 'Held / In Treasury' ]]</option>
+                            <option value="DEPOSITED">[[ isArabic ? 'مُودع بالبنك برسم التحصيل' : 'Deposited (Under Collection)' ]]</option>
+                            <option value="COLLECTED">[[ isArabic ? 'تم التحصيل والصرف' : 'Collected' ]]</option>
+                            <option value="BOUNCED">[[ isArabic ? 'مرتد / مرفوض من البنك' : 'Bounced / Rejected' ]]</option>
+                            <option value="ENDORSED">[[ isArabic ? 'مُظهّر لطرف ثالث' : 'Endorsed' ]]</option>
+                            <option value="CANCELLED">[[ isArabic ? 'ملغي' : 'Cancelled' ]]</option>
+                        </select>
+                    </div>
+                    <div v-if="forms.contracting_check.status === 'BOUNCED'">
+                        <label class="block text-xs font-black text-rose-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'سبب الارتداد / الرفض' : 'Rejection Reason' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_check.rejection_reason" placeholder="عدم كفاية الرصيد / توقيع غير مطابق"
+                               class="w-full border border-rose-300 rounded-xl px-4 py-2.5 text-sm text-rose-800 focus:border-rose-500 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 💼 Contracting: Site Custody Modal -->
+            <div v-if="modalType === 'contracting_custody'" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المشروع المرتبط *' : 'Project *' ]]
+                        </label>
+                        <select v-model="forms.contracting_custody.project" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-purple-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر المشروع --' : '-- Select Project --' ]]</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">[[ p.code ]] - [[ p.name ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'كود العهدة *' : 'Custody Code *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_custody.custody_code" required placeholder="CUST-2026-001"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-purple-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المسؤول عن العهدة / مهندس الموقع *' : 'Custodian Name *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_custody.custodian_name" required placeholder="م. حسام الدين"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'مبلغ العهدة المستلم *' : 'Assigned Amount *' ]]
+                        </label>
+                        <input type="number" step="0.01" v-model.number="forms.contracting_custody.assigned_amount" required placeholder="10000.00"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-purple-700 focus:border-purple-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ فتح العهدة' : 'Open Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_custody.open_date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'حالة العهدة' : 'Status' ]]
+                        </label>
+                        <select v-model="forms.contracting_custody.status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-purple-500 outline-none">
+                            <option value="ACTIVE">[[ isArabic ? 'نشطة ومفتوحة' : 'Active' ]]</option>
+                            <option value="SETTLED">[[ isArabic ? 'تمت التسوية والإقفال' : 'Settled' ]]</option>
+                            <option value="REPLENISHED">[[ isArabic ? 'تمت الاستعاضة' : 'Replenished' ]]</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 💸 Contracting: Site Payment Request Modal -->
+            <div v-if="modalType === 'contracting_payment_request'" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المشروع المرتبط *' : 'Project *' ]]
+                        </label>
+                        <select v-model="forms.contracting_payment_request.project" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-rose-500 outline-none">
+                            <option :value="null">[[ isArabic ? '-- اختر المشروع --' : '-- Select Project --' ]]</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">[[ p.code ]] - [[ p.name ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'رقم طلب الصرف *' : 'Request Number *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_payment_request.request_number" required placeholder="PAY-REQ-2026-001"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-rose-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تاريخ الطلب' : 'Request Date' ]]
+                        </label>
+                        <input type="date" v-model="forms.contracting_payment_request.date"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:border-rose-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'نوع المستفيد *' : 'Beneficiary Type *' ]]
+                        </label>
+                        <select v-model="forms.contracting_payment_request.beneficiary_type" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-rose-500 outline-none">
+                            <option value="SUBCONTRACTOR">[[ isArabic ? 'مقاول باطن (Subcontractor)' : 'Subcontractor' ]]</option>
+                            <option value="VENDOR">[[ isArabic ? 'مورد خامات (Vendor)' : 'Vendor' ]]</option>
+                            <option value="LABOUR_WAGES">[[ isArabic ? 'يوميات عمالة (Labor Wages)' : 'Labor Wages' ]]</option>
+                            <option value="STAFF">[[ isArabic ? 'موظف / مهندس (Staff)' : 'Staff' ]]</option>
+                            <option value="OTHER">[[ isArabic ? 'جهة أخرى (Other)' : 'Other' ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'اسم المستفيد *' : 'Beneficiary Name *' ]]
+                        </label>
+                        <input type="text" v-model="forms.contracting_payment_request.beneficiary_name" required placeholder="مؤسسة الإنشاءات المتطورة"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-rose-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المبلغ المطلوب *' : 'Requested Amount *' ]]
+                        </label>
+                        <input type="number" step="0.01" v-model.number="forms.contracting_payment_request.amount" required placeholder="0.00"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-rose-700 focus:border-rose-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'طريقة الصرف المقترحة' : 'Payment Method' ]]
+                        </label>
+                        <select v-model="forms.contracting_payment_request.payment_method" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-rose-500 outline-none">
+                            <option value="BANK_TRANSFER">[[ isArabic ? 'تحويل بنكي (Bank Transfer)' : 'Bank Transfer' ]]</option>
+                            <option value="CHECK">[[ isArabic ? 'شيك بنكي (Check)' : 'Check' ]]</option>
+                            <option value="CASH">[[ isArabic ? 'نقداً من الخزينة (Cash)' : 'Cash' ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'حالة الطلب' : 'Status' ]]
+                        </label>
+                        <select v-model="forms.contracting_payment_request.status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-rose-500 outline-none">
+                            <option value="PENDING_ENGINEER">[[ isArabic ? 'بانتظار اعتماد مهندس الموقع' : 'Pending Engineer' ]]</option>
+                            <option value="PENDING_PM">[[ isArabic ? 'بانتظار اعتماد مدير المشروع' : 'Pending PM' ]]</option>
+                            <option value="APPROVED">[[ isArabic ? 'معتمد للصرف' : 'Approved' ]]</option>
+                            <option value="DISBURSED">[[ isArabic ? 'تم الصرف' : 'Disbursed' ]]</option>
+                            <option value="REJECTED">[[ isArabic ? 'مرفوض' : 'Rejected' ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                        [[ isArabic ? 'سبب ومبررات الصرف *' : 'Reason / Justification *' ]]
+                    </label>
+                    <textarea rows="3" v-model="forms.contracting_payment_request.reason" required placeholder="صرف دفعة تحت الحساب لتنفيذ أعمال البياض والديكورات..."
+                              class="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:border-rose-500 outline-none"></textarea>
                 </div>
             </div>
         </form>

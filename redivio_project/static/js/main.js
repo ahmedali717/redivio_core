@@ -241,7 +241,8 @@ createApp({
                     { id: 'procurement_module', name: { ar: 'RPMS (المشتريات)', en: 'RPMS (Procurement)' }, icon: 'fas fa-shopping-cart' },
                     { id: 'sales_module', name: { ar: 'إدارة المبيعات', en: 'Sales & CRM' }, icon: 'fas fa-cart-shopping' },
                     { id: 'accounting_module', name: { ar: 'المحاسبة والمالية', en: 'Accounting' }, icon: 'fas fa-file-invoice-dollar' },
-                    { id: 'restaurant_pos_module', name: { ar: 'نقاط البيع (POS)', en: 'POS System' }, icon: 'fas fa-cash-register' }
+                    { id: 'restaurant_pos_module', name: { ar: 'نقاط البيع (POS)', en: 'POS System' }, icon: 'fas fa-cash-register' },
+                    { id: 'contracting_module', name: { ar: 'RCMS (المقاولات والمشاريع)', en: 'RCMS (Contracting)' }, icon: 'fas fa-hard-hat' }
                 ]
             },
 
@@ -329,6 +330,39 @@ createApp({
             sales_returns: [],
             pending_pos: [],
 
+            // --- 🏗️ RCMS Contracting & Construction Module State ---
+            contractingTab: 'dashboard',
+            projects: [],
+            jobContracts: [],
+            costSheets: [],
+            contractAbstracts: [],
+            checkTransactions: [],
+            siteCustodies: [],
+            paymentRequests: [],
+            contractingStats: {
+                active_projects_count: 0,
+                total_contract_value: 0,
+                total_actual_cost: 0,
+                average_progress: 0,
+                total_held_checks_amount: 0,
+                active_custody_balance: 0,
+                active_projects: []
+            },
+            projectSearch: '',
+            projectFilter: 'ALL',
+            projectListViewMode: 'cards',
+            contractSearch: '',
+            contractTypeFilter: 'ALL',
+            contractViewMode: 'cards',
+            costSheetSearch: '',
+            abstractSearch: '',
+            abstractTypeFilter: 'ALL',
+            abstractViewMode: 'cards',
+            checkSearch: '',
+            checkStatusFilter: 'ALL',
+            custodySearch: '',
+            paymentRequestSearch: '',
+
 
             showModal: false,
             materialTab: 'general',
@@ -373,7 +407,13 @@ createApp({
                 purchase_invoice: { ar: 'فاتورة شراء ومطالبة مورد (Purchase Invoice)', en: 'Purchase Invoice' },
                 payment_entry: { ar: 'سند قبض / صرف نقدية (Payment Entry)', en: 'Payment Entry' },
                 vendor: { ar: 'بيانات المورد (Vendor Profile)', en: 'Vendor Profile' },
-                category: { ar: 'مجموعة أصناف مخزنية (Item Group)', en: 'Item Group / Category' }
+                category: { ar: 'مجموعة أصناف مخزنية (Item Group)', en: 'Item Group / Category' },
+                contracting_project: { ar: 'مشروع إنشائي جديد (New Project)', en: 'New Construction Project' },
+                contracting_contract: { ar: 'عقد مقاولة / مقاول باطن (Contract / Subcontract)', en: 'Job Contract / Subcontract' },
+                contracting_abstract: { ar: 'مستخلص أعمال جاري/ختامي (Progress Abstract)', en: 'Contract Progress Abstract' },
+                contracting_check: { ar: 'شيك تجاري / ورقة قبض أو دفع (Commercial Check)', en: 'Commercial Check Transaction' },
+                contracting_custody: { ar: 'عهدة نقدية لمهندس موقع (Site Cash Custody)', en: 'Site Petty Cash Custody' },
+                contracting_payment_request: { ar: 'طلب صرف موقع (Site Payment Request)', en: 'Site Payment Request' }
             },
 
             forms: {
@@ -547,7 +587,112 @@ createApp({
                 matrix: { rfq: '', title: '', notes: '', winning_vendor: '' },
                 rtv: { return_number: '', po: '', vendor: '', notes: '', lines: [{ material: '', quantity: 1, return_reason: 'Defective' }] },
                 transfer: { transfer_number: '', source_plant: '', target_plant: '', notes: '', lines: [{ material: '', quantity: 1 }] },
-                scrap: { scrap_number: '', plant: '', notes: '', lines: [{ material: '', quantity: 1, reason: 'Expired' }] }
+                scrap: { scrap_number: '', plant: '', notes: '', lines: [{ material: '', quantity: 1, reason: 'Expired' }] },
+                
+                // 🏗️ Contracting Forms
+                contracting_project: {
+                    id: null,
+                    code: '',
+                    name: '',
+                    customer: null,
+                    consultant_name: '',
+                    project_manager: '',
+                    site_engineer: '',
+                    location_address: '',
+                    start_date: new Date().toISOString().substring(0, 10),
+                    end_date: null,
+                    contract_value: 0,
+                    estimated_cost: 0,
+                    progress_percent: 0,
+                    status: 'IN_PROGRESS',
+                    notes: ''
+                },
+                contracting_contract: {
+                    id: null,
+                    project: null,
+                    contract_type: 'MAIN',
+                    contract_number: '',
+                    title: '',
+                    customer: null,
+                    subcontractor: null,
+                    contract_date: new Date().toISOString().substring(0, 10),
+                    start_date: new Date().toISOString().substring(0, 10),
+                    end_date: null,
+                    total_amount: 0,
+                    advance_payment_pct: 0,
+                    advance_payment_amount: 0,
+                    advance_deduction_pct: 10,
+                    retention_pct: 5,
+                    primary_insurance_amount: 0,
+                    final_insurance_amount: 0,
+                    penalty_per_day: 0,
+                    warranty_period_months: 12,
+                    status: 'ACTIVE',
+                    notes: ''
+                },
+                contracting_abstract: {
+                    id: null,
+                    project: null,
+                    contract: null,
+                    abstract_type: 'CLIENT',
+                    abstract_number: '',
+                    is_final: false,
+                    date: new Date().toISOString().substring(0, 10),
+                    period_from: null,
+                    period_to: null,
+                    current_work_amount: 0,
+                    previous_work_amount: 0,
+                    cumulative_work_amount: 0,
+                    advance_deduction: 0,
+                    retention_deduction: 0,
+                    other_deductions: 0,
+                    vat_amount: 0,
+                    net_payable_amount: 0,
+                    status: 'DRAFT',
+                    notes: ''
+                },
+                contracting_check: {
+                    id: null,
+                    check_type: 'RECEIVABLE',
+                    check_number: '',
+                    bank_name: '',
+                    branch: '',
+                    amount: 0,
+                    currency: 'SAR',
+                    issue_date: new Date().toISOString().substring(0, 10),
+                    due_date: new Date().toISOString().substring(0, 10),
+                    project: null,
+                    party_name: '',
+                    customer: null,
+                    vendor: null,
+                    status: 'HELD',
+                    action_date: null,
+                    rejection_reason: '',
+                    notes: ''
+                },
+                contracting_custody: {
+                    id: null,
+                    project: null,
+                    custody_code: '',
+                    custodian_name: '',
+                    assigned_amount: 0,
+                    open_date: new Date().toISOString().substring(0, 10),
+                    status: 'ACTIVE',
+                    notes: ''
+                },
+                contracting_payment_request: {
+                    id: null,
+                    project: null,
+                    request_number: '',
+                    date: new Date().toISOString().substring(0, 10),
+                    beneficiary_type: 'SUBCONTRACTOR',
+                    beneficiary_name: '',
+                    vendor: null,
+                    amount: 0,
+                    reason: '',
+                    payment_method: 'BANK_TRANSFER',
+                    status: 'PENDING_PM'
+                }
             }
         };
     },
@@ -1673,6 +1818,76 @@ createApp({
                 );
             }
             return list;
+        },
+
+        // --- 🏗️ RCMS Contracting Computed Filters ---
+        filteredProjects() {
+            let list = this.projects || [];
+            if (this.projectFilter && this.projectFilter !== 'ALL') {
+                list = list.filter(p => p.status === this.projectFilter);
+            }
+            if (this.projectSearch) {
+                const q = this.projectSearch.toLowerCase();
+                list = list.filter(p => (p.name || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q) || (p.customer_name || '').toLowerCase().includes(q));
+            }
+            return list;
+        },
+        filteredContracts() {
+            let list = this.jobContracts || [];
+            if (this.contractTypeFilter && this.contractTypeFilter !== 'ALL') {
+                list = list.filter(c => c.contract_type === this.contractTypeFilter);
+            }
+            if (this.contractSearch) {
+                const q = this.contractSearch.toLowerCase();
+                list = list.filter(c => (c.title || '').toLowerCase().includes(q) || (c.contract_number || '').toLowerCase().includes(q) || (c.party_name || '').toLowerCase().includes(q));
+            }
+            return list;
+        },
+        filteredCostSheets() {
+            let list = this.costSheets || [];
+            if (this.costSheetSearch) {
+                const q = this.costSheetSearch.toLowerCase();
+                list = list.filter(s => (s.title || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q) || (s.project_name || '').toLowerCase().includes(q));
+            }
+            return list;
+        },
+        filteredAbstracts() {
+            let list = this.contractAbstracts || [];
+            if (this.abstractTypeFilter && this.abstractTypeFilter !== 'ALL') {
+                list = list.filter(a => a.abstract_type === this.abstractTypeFilter);
+            }
+            if (this.abstractSearch) {
+                const q = this.abstractSearch.toLowerCase();
+                list = list.filter(a => (a.abstract_number || '').toLowerCase().includes(q) || (a.project_name || '').toLowerCase().includes(q));
+            }
+            return list;
+        },
+        filteredChecks() {
+            let list = this.checkTransactions || [];
+            if (this.checkStatusFilter && this.checkStatusFilter !== 'ALL') {
+                list = list.filter(c => c.status === this.checkStatusFilter);
+            }
+            if (this.checkSearch) {
+                const q = this.checkSearch.toLowerCase();
+                list = list.filter(c => (c.check_number || '').toLowerCase().includes(q) || (c.bank_name || '').toLowerCase().includes(q) || (c.party_name || '').toLowerCase().includes(q));
+            }
+            return list;
+        },
+        filteredCustodies() {
+            let list = this.siteCustodies || [];
+            if (this.custodySearch) {
+                const q = this.custodySearch.toLowerCase();
+                list = list.filter(c => (c.custodian_name || '').toLowerCase().includes(q) || (c.custody_code || '').toLowerCase().includes(q) || (c.project_name || '').toLowerCase().includes(q));
+            }
+            return list;
+        },
+        filteredPaymentRequests() {
+            let list = this.paymentRequests || [];
+            if (this.paymentRequestSearch) {
+                const q = this.paymentRequestSearch.toLowerCase();
+                list = list.filter(r => (r.request_number || '').toLowerCase().includes(q) || (r.beneficiary_name || '').toLowerCase().includes(q) || (r.reason || '').toLowerCase().includes(q));
+            }
+            return list;
         }
     },
 
@@ -1687,6 +1902,9 @@ createApp({
                 if (this.view === 'accounting_module') {
                     this.fetchAccountingData();
                 }
+                if (this.view === 'contracting_module') {
+                    this.fetchContractingData();
+                }
             }
         },
         view(newView) {
@@ -1698,6 +1916,9 @@ createApp({
             }
             if (newView === 'accounting_module') {
                 this.fetchAccountingData();
+            }
+            if (newView === 'contracting_module') {
+                this.fetchContractingData();
             }
         },
         posMode: {
@@ -6219,6 +6440,13 @@ createApp({
             else if (type === 'journal_entry') url = isEdit ? `/api/accounting/journal-entries/${id}/` : `/api/accounting/journal-entries/`;
             else if (type === 'purchase_invoice') url = isEdit ? `/api/accounting/purchase-invoices/${id}/` : `/api/accounting/purchase-invoices/`;
             else if (type === 'payment_entry') url = isEdit ? `/api/accounting/payment-entries/${id}/` : `/api/accounting/payment-entries/`;
+            else if (type === 'contracting_project') url = isEdit ? `/api/contracting/projects/${id}/` : `/api/contracting/projects/`;
+            else if (type === 'contracting_contract') url = isEdit ? `/api/contracting/contracts/${id}/` : `/api/contracting/contracts/`;
+            else if (type === 'contracting_cost_sheet') url = isEdit ? `/api/contracting/cost-sheets/${id}/` : `/api/contracting/cost-sheets/`;
+            else if (type === 'contracting_abstract') url = isEdit ? `/api/contracting/abstracts/${id}/` : `/api/contracting/abstracts/`;
+            else if (type === 'contracting_check') url = isEdit ? `/api/contracting/checks/${id}/` : `/api/contracting/checks/`;
+            else if (type === 'contracting_custody') url = isEdit ? `/api/contracting/custodies/${id}/` : `/api/contracting/custodies/`;
+            else if (type === 'contracting_payment_request') url = isEdit ? `/api/contracting/payment-requests/${id}/` : `/api/contracting/payment-requests/`;
 
             try {
                 this.loading = true;
@@ -6318,6 +6546,9 @@ createApp({
                     await this.refreshAllData();
                     if (['account', 'journal_entry', 'purchase_invoice', 'payment_entry'].includes(type)) {
                         await this.fetchAccountingData();
+                    }
+                    if (type.startsWith('contracting_')) {
+                        await this.fetchContractingData();
                     }
                     this.showToast(this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully", 'success');
                 } else {
@@ -6637,7 +6868,8 @@ createApp({
                     this.fetchFloorsAndTables(),
                     this.fetchPOSDashboard(),
                     this.checkInventoryFreezeStatus(),
-                    this.fetchAccountingData()
+                    this.fetchAccountingData(),
+                    this.fetchContractingData()
                 ]);
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {
@@ -6661,7 +6893,8 @@ createApp({
                 'procurement_module': 'procurement',
                 'sales_module': 'sales',
                 'accounting_module': 'sales',
-                'restaurant_pos_module': 'restaurant_pos'
+                'restaurant_pos_module': 'restaurant_pos',
+                'contracting_module': 'contracting'
             };
             
             const mappedId = idMap[modId] || modId;
@@ -6676,7 +6909,8 @@ createApp({
                 'procurement_module': 'procurement',
                 'sales_module': 'sales',
                 'accounting_module': 'sales',
-                'restaurant_pos_module': 'restaurant_pos'
+                'restaurant_pos_module': 'restaurant_pos',
+                'contracting_module': 'contracting'
             };
             const mappedId = idMap[modId] || modId;
             return this.config.purchased_modules.includes(mappedId);
@@ -8076,6 +8310,7 @@ createApp({
                 'procurement_module': ['warehouse', 'manager', 'admin'],
                 'sales_module': ['manager', 'admin'],
                 'accounting_module': ['manager', 'admin'],
+                'contracting_module': ['manager', 'admin', 'warehouse'],
                 'users': ['manager', 'admin'],
                 'global_config': ['manager', 'admin'],
                 'org_builder': ['manager', 'admin'],
@@ -9052,6 +9287,206 @@ createApp({
 
         printCurrentReport() {
             window.print();
+        },
+
+        // =====================================================================
+        // 🏗️ RCMS Contracting & Construction Methods
+        // =====================================================================
+        async fetchContractingData() {
+            if (!this.activeOpcoId) return;
+            await Promise.all([
+                this.fetchProjects(),
+                this.fetchJobContracts(),
+                this.fetchCostSheets(),
+                this.fetchAbstracts(),
+                this.fetchCheckTransactions(),
+                this.fetchSiteCustodies(),
+                this.fetchPaymentRequests(),
+                this.fetchContractingStats()
+            ]);
+        },
+
+        async fetchProjects() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/projects/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.projects = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchProjects error:", e);
+            }
+        },
+
+        async fetchJobContracts() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/contracts/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.jobContracts = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchJobContracts error:", e);
+            }
+        },
+
+        async fetchCostSheets() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/cost-sheets/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.costSheets = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchCostSheets error:", e);
+            }
+        },
+
+        async fetchAbstracts() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/abstracts/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.contractAbstracts = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchAbstracts error:", e);
+            }
+        },
+
+        async fetchCheckTransactions() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/checks/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.checkTransactions = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchCheckTransactions error:", e);
+            }
+        },
+
+        async fetchSiteCustodies() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/custodies/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.siteCustodies = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchSiteCustodies error:", e);
+            }
+        },
+
+        async fetchPaymentRequests() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/payment-requests/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.paymentRequests = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchPaymentRequests error:", e);
+            }
+        },
+
+        async fetchContractingStats() {
+            if (!this.activeOpcoId) return;
+            try {
+                const res = await fetch(`/api/contracting/dashboard-stats/?opco=${this.activeOpcoId}`);
+                if (res.ok) {
+                    this.contractingStats = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchContractingStats error:", e);
+            }
+        },
+
+        calculateAbstractNet() {
+            const form = this.forms.contracting_abstract;
+            if (!form) return;
+            const currentWork = parseFloat(form.current_work_amount || 0);
+            const advDeduction = parseFloat(form.advance_deduction || 0);
+            const retDeduction = parseFloat(form.retention_deduction || 0);
+            const othDeductions = parseFloat(form.other_deductions || 0);
+            const vat = parseFloat(form.vat_amount || 0);
+
+            const net = Math.max(0, currentWork - advDeduction - retDeduction - othDeductions + vat);
+            form.net_payable_amount = Math.round(net * 100) / 100;
+        },
+
+        async updateCheckStatus(checkId, newStatus) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/contracting/checks/${checkId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ status: newStatus, action_date: new Date().toISOString().substring(0, 10) })
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم تحديث حالة الشيك بنجاح" : "Check status updated", 'success');
+                    await this.fetchCheckTransactions();
+                    await this.fetchContractingStats();
+                } else {
+                    this.showToast(this.isArabic ? "فشل تحديث حالة الشيك" : "Failed to update check", 'error');
+                }
+            } catch (e) {
+                console.error("updateCheckStatus error:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async approvePaymentRequest(reqId) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/contracting/payment-requests/${reqId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ status: 'APPROVED', approved_by: this.user.name || 'Manager' })
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تم اعتماد طلب الصرف بنجاح" : "Payment request approved", 'success');
+                    await this.fetchPaymentRequests();
+                } else {
+                    this.showToast(this.isArabic ? "فشل اعتماد الطلب" : "Approval failed", 'error');
+                }
+            } catch (e) {
+                console.error("approvePaymentRequest error:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async settleCustody(custodyId) {
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/contracting/custodies/${custodyId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ status: 'SETTLED', settled_date: new Date().toISOString().substring(0, 10) })
+                });
+                if (res.ok) {
+                    this.showToast(this.isArabic ? "تمت تسوية العهدة بنجاح" : "Custody settled successfully", 'success');
+                    await this.fetchSiteCustodies();
+                    await this.fetchContractingStats();
+                } else {
+                    this.showToast(this.isArabic ? "فشل تسوية العهدة" : "Failed to settle custody", 'error');
+                }
+            } catch (e) {
+                console.error("settleCustody error:", e);
+            } finally {
+                this.loading = false;
+            }
         }
     }
 }).mount('#app');

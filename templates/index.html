@@ -86,6 +86,36 @@
                 </div>
             </div>
 
+            <!-- Contracting & Projects Module (RCMS Architecture) -->
+            <div v-if="view === 'contracting_module'" class="flex flex-col h-full space-y-4 p-4">
+                <div class="flex-1 relative min-h-[500px]">
+                    <div v-if="contractingTab === 'dashboard'" class="absolute inset-0 overflow-y-auto">
+                        {% include "contracting/dashboard.html" %}
+                    </div>
+                    <div v-if="contractingTab === 'projects'" class="absolute inset-0 overflow-y-auto">
+                        {% include "contracting/projects_list.html" %}
+                    </div>
+                    <div v-if="contractingTab === 'contracts'" class="absolute inset-0 overflow-y-auto">
+                        {% include "contracting/contracts_list.html" %}
+                    </div>
+                    <div v-if="contractingTab === 'cost_sheets'" class="absolute inset-0 overflow-y-auto">
+                        {% include "contracting/cost_sheets_list.html" %}
+                    </div>
+                    <div v-if="contractingTab === 'abstracts'" class="absolute inset-0 overflow-y-auto">
+                        {% include "contracting/abstracts_list.html" %}
+                    </div>
+                    <div v-if="contractingTab === 'checks'" class="absolute inset-0 overflow-y-auto">
+                        {% include "contracting/checks_list.html" %}
+                    </div>
+                    <div v-if="contractingTab === 'custody'" class="absolute inset-0 overflow-y-auto">
+                        {% include "contracting/custody_list.html" %}
+                    </div>
+                    <div v-if="contractingTab === 'payment_requests'" class="absolute inset-0 overflow-y-auto">
+                        {% include "contracting/payment_requests_list.html" %}
+                    </div>
+                </div>
+            </div>
+
             <!-- Accounting & Finance Module (ERPNext Architecture) -->
             <div v-if="view === 'accounting_module'" class="flex flex-col h-full space-y-4 p-4">
                 <div class="flex-1 relative min-h-[500px]">

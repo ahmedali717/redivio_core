@@ -1,0 +1,183 @@
+<!-- ========================================================= -->
+<!-- 🏗️ RCMS: المستخلصات الجارية والختامية (Abstracts & Billing) -->
+<!-- ========================================================= -->
+<div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[700px] p-4 md:p-8 animate-in fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
+    
+    <!-- 1. TOP HEADER & ACTIONS -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-teal-500/20">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl md:text-2xl font-black text-slate-800" v-text="isArabic ? 'المستخلصات الجارية والختامية' : 'Progress Billings & Abstracts'"></h2>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-teal-100 text-teal-800 border border-teal-200">
+                        [[ filteredAbstracts.length ]]
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400 font-bold mt-0.5" v-text="isArabic ? 'مستخلصات الملاك والعملاء، ومستخلصات مقاولي الباطن باحتساب الاستقطاعات تلقائياً' : 'Client valuations & subcontractor progress billings with auto-deductions'"></p>
+            </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2.5">
+            <!-- View Mode Switcher -->
+            <div class="flex items-center border border-slate-200 rounded-xl p-0.5 bg-slate-100">
+                <button type="button" @click="abstractViewMode = 'cards'"
+                        :class="abstractViewMode === 'cards' ? 'bg-white text-teal-600 shadow-sm font-black' : 'text-slate-500 font-medium'"
+                        class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5">
+                    <i class="fas fa-th-large"></i>
+                    <span class="hidden sm:inline" v-text="isArabic ? 'بطاقات' : 'Cards'"></span>
+                </button>
+                <button type="button" @click="abstractViewMode = 'table'"
+                        :class="abstractViewMode === 'table' ? 'bg-white text-teal-600 shadow-sm font-black' : 'text-slate-500 font-medium'"
+                        class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5">
+                    <i class="fas fa-list"></i>
+                    <span class="hidden sm:inline" v-text="isArabic ? 'جدول' : 'Table'"></span>
+                </button>
+            </div>
+
+            <!-- New Abstract Button -->
+            <button @click="openModal('contracting_abstract')" 
+                    class="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-md shadow-teal-500/20 transition-all flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span v-text="isArabic ? 'مستخلص جديد' : 'New Abstract'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. SEARCH & FILTER PILLS -->
+    <div class="bg-slate-50/60 rounded-2xl p-3 border border-slate-200/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-6">
+        <div class="relative flex-1 max-w-md">
+            <i class="fas fa-search absolute inset-y-0 flex items-center text-slate-400 text-xs" :class="isArabic ? 'right-3.5' : 'left-3.5'"></i>
+            <input type="text" v-model="abstractSearch" 
+                   :placeholder="isArabic ? 'بحث برقم المستخلص، اسم المشروع أو العقد...' : 'Search by abstract #, project...'"
+                   :class="isArabic ? 'pr-9 pl-8' : 'pl-9 pr-8'"
+                   class="w-full bg-white border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-800 placeholder-slate-400 focus:border-teal-500 outline-none transition-all">
+            <button v-if="abstractSearch" @click="abstractSearch = ''" class="absolute inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-xs" :class="isArabic ? 'left-3' : 'right-3'">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-1.5">
+            <button @click="abstractTypeFilter = 'ALL'"
+                    :class="abstractTypeFilter === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'الكل' : 'All'"></button>
+            <button @click="abstractTypeFilter = 'CLIENT'"
+                    :class="abstractTypeFilter === 'CLIENT' ? 'bg-teal-600 text-white shadow-sm' : 'bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'مستخلصات عملاء' : 'Client Abstracts'"></button>
+            <button @click="abstractTypeFilter = 'SUBCONTRACTOR'"
+                    :class="abstractTypeFilter === 'SUBCONTRACTOR' ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-50 text-purple-800 hover:bg-purple-100 border border-purple-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'مقاولو باطن' : 'Subcontractors'"></button>
+        </div>
+    </div>
+
+    <!-- 3. VIEW 1: KANBAN CARDS -->
+    <div v-if="abstractViewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div v-for="ab in filteredAbstracts" :key="ab.id"
+             class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:border-teal-400 hover:shadow-lg transition-all flex flex-col justify-between p-5 group">
+            
+            <div>
+                <!-- Top Badge: Number & Type -->
+                <div class="flex items-start justify-between gap-2 mb-3">
+                    <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 border border-teal-200">
+                        [[ ab.abstract_number ]]
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black border"
+                          :class="ab.status === 'APPROVED' || ab.status === 'PAID' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'">
+                        [[ ab.status === 'APPROVED' ? (isArabic ? 'معتمد' : 'Approved') : (ab.status === 'PAID' ? (isArabic ? 'مصروف' : 'Paid') : (isArabic ? 'مسودة' : 'Draft')) ]]
+                    </span>
+                </div>
+
+                <!-- Project & Contract Info -->
+                <h3 class="font-black text-slate-800 text-base mb-1 group-hover:text-teal-600 transition-colors">
+                    [[ ab.project_name ]]
+                </h3>
+                <p class="text-xs text-slate-400 font-bold mb-3 flex items-center gap-1.5">
+                    <i class="fas fa-file-contract text-blue-500 text-[10px]"></i>
+                    <span>[[ ab.contract_number ]] - [[ ab.contract_title ]]</span>
+                </p>
+
+                <!-- Financial Breakdown -->
+                <div class="space-y-1.5 bg-slate-50/70 p-3 rounded-xl border border-slate-100 text-xs mb-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-bold" v-text="isArabic ? 'الأعمال المنفذة الحالية:' : 'Current Work:'"></span>
+                        <span class="font-mono font-black text-slate-700">[[ formatNumber(ab.current_work_amount) ]] SAR</span>
+                    </div>
+                    <div class="flex items-center justify-between text-rose-600">
+                        <span class="font-bold" v-text="isArabic ? 'استقطاع دفعة مقدمة + ضمان:' : 'Advance & Retention:'"></span>
+                        <span class="font-mono font-bold">- [[ formatNumber(Number(ab.advance_deduction || 0) + Number(ab.retention_deduction || 0)) ]] SAR</span>
+                    </div>
+                    <div class="flex items-center justify-between pt-1 border-t border-slate-200/60">
+                        <span class="text-slate-600 font-black" v-text="isArabic ? 'صافي المستحق للصرف:' : 'Net Payable:'"></span>
+                        <span class="font-mono font-black text-emerald-600 text-sm">[[ formatNumber(ab.net_payable_amount) ]] SAR</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Bottom Actions -->
+            <div class="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+                <button @click="openModal('contracting_abstract', ab)"
+                        class="flex-1 bg-teal-50 hover:bg-teal-600 text-teal-700 hover:text-white py-1.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5">
+                    <i class="fas fa-edit text-[10px]"></i>
+                    <span v-text="isArabic ? 'تعديل المستخلص' : 'Edit Abstract'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. VIEW 2: TABLE VIEW -->
+    <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right" :dir="isArabic ? 'rtl' : 'ltr'">
+                <thead class="bg-slate-50 border-b border-slate-200 text-xs font-black text-slate-500 uppercase">
+                    <tr>
+                        <th class="p-3.5" v-text="isArabic ? 'رقم المستخلص' : 'Abstract #'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'المشروع' : 'Project'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'العقد' : 'Contract'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'النوع' : 'Type'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'الأعمال الحالية' : 'Current Work'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'استقطاع دفعة' : 'Adv. Deduct'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'استقطاع ضمان' : 'Retention'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'صافي المستحق' : 'Net Amount'"></th>
+                        <th class="p-3.5 text-center" v-text="isArabic ? 'الحالة' : 'Status'"></th>
+                        <th class="p-3.5 text-center" v-text="isArabic ? 'إجراءات' : 'Actions'"></th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-slate-100">
+                    <tr v-for="ab in filteredAbstracts" :key="ab.id" class="hover:bg-slate-50/70 transition-colors">
+                        <td class="p-3.5 font-mono font-black text-teal-600">[[ ab.abstract_number ]]</td>
+                        <td class="p-3.5 font-bold text-slate-800">[[ ab.project_name ]]</td>
+                        <td class="p-3.5 text-slate-600">[[ ab.contract_number ]]</td>
+                        <td class="p-3.5">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                                  :class="ab.abstract_type === 'CLIENT' ? 'bg-teal-50 text-teal-700' : 'bg-purple-50 text-purple-700'">
+                                [[ ab.abstract_type === 'CLIENT' ? (isArabic ? 'عميل' : 'Client') : (isArabic ? 'باطن' : 'Sub') ]]
+                            </span>
+                        </td>
+                        <td class="p-3.5 font-mono font-bold text-slate-700">[[ formatNumber(ab.current_work_amount) ]]</td>
+                        <td class="p-3.5 font-mono text-rose-600">[[ formatNumber(ab.advance_deduction) ]]</td>
+                        <td class="p-3.5 font-mono text-purple-600">[[ formatNumber(ab.retention_deduction) ]]</td>
+                        <td class="p-3.5 font-mono font-black text-emerald-600 text-sm">[[ formatNumber(ab.net_payable_amount) ]] SAR</td>
+                        <td class="p-3.5 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black border"
+                                  :class="ab.status === 'APPROVED' || ab.status === 'PAID' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'">
+                                [[ ab.status ]]
+                            </span>
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <button @click="openModal('contracting_abstract', ab)"
+                                    class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-800 text-slate-600 hover:text-white transition-all text-xs"
+                                    :title="isArabic ? 'تعديل' : 'Edit'">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

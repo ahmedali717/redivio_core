@@ -1,0 +1,127 @@
+<!-- ========================================================= -->
+<!-- 🏗️ RCMS: محفظة الشيكات وأوراق القبض والدفع (Checks Portfolio) -->
+<!-- ========================================================= -->
+<div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[700px] p-4 md:p-8 animate-in fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
+    
+    <!-- 1. TOP HEADER & ACTIONS -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-500/20">
+                <i class="fas fa-money-check"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl md:text-2xl font-black text-slate-800" v-text="isArabic ? 'محفظة الشيكات وأوراق القبض والدفع' : 'Commercial Checks Portfolio'"></h2>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        [[ filteredChecks.length ]]
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400 font-bold mt-0.5" v-text="isArabic ? 'متابعة الشيكات الواردة من الملاك، والشيكات الصادرة للمقاولين والموردين وتواريخ استحقاقها' : 'Receivable & payable checks tracking, clearing, collection & maturity dates'"></p>
+            </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2.5">
+            <!-- New Check Button -->
+            <button @click="openModal('contracting_check')" 
+                    class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span v-text="isArabic ? 'تسجيل شيك جديد' : 'New Check'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. SEARCH & QUICK FILTER PILLS -->
+    <div class="bg-slate-50/60 rounded-2xl p-3 border border-slate-200/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-6">
+        <div class="relative flex-1 max-w-md">
+            <i class="fas fa-search absolute inset-y-0 flex items-center text-slate-400 text-xs" :class="isArabic ? 'right-3.5' : 'left-3.5'"></i>
+            <input type="text" v-model="checkSearch" 
+                   :placeholder="isArabic ? 'بحث برقم الشيك، البنك، المستفيد أو الساحب...' : 'Search by check #, bank, party...'"
+                   :class="isArabic ? 'pr-9 pl-8' : 'pl-9 pr-8'"
+                   class="w-full bg-white border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-800 placeholder-slate-400 focus:border-indigo-500 outline-none transition-all">
+            <button v-if="checkSearch" @click="checkSearch = ''" class="absolute inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-xs" :class="isArabic ? 'left-3' : 'right-3'">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-1.5">
+            <button @click="checkStatusFilter = 'ALL'"
+                    :class="checkStatusFilter === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'الكل' : 'All'"></button>
+            <button @click="checkStatusFilter = 'HELD'"
+                    :class="checkStatusFilter === 'HELD' ? 'bg-slate-700 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'في الخزينة' : 'In Treasury'"></button>
+            <button @click="checkStatusFilter = 'DEPOSITED'"
+                    :class="checkStatusFilter === 'DEPOSITED' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'برسم التحصيل' : 'Deposited'"></button>
+            <button @click="checkStatusFilter = 'COLLECTED'"
+                    :class="checkStatusFilter === 'COLLECTED' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'تم التحصيل' : 'Collected'"></button>
+            <button @click="checkStatusFilter = 'BOUNCED'"
+                    :class="checkStatusFilter === 'BOUNCED' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'مرتد / مرفوض' : 'Bounced'"></button>
+        </div>
+    </div>
+
+    <!-- 3. TABLE VIEW -->
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right" :dir="isArabic ? 'rtl' : 'ltr'">
+                <thead class="bg-slate-50 border-b border-slate-200 text-xs font-black text-slate-500 uppercase">
+                    <tr>
+                        <th class="p-3.5" v-text="isArabic ? 'رقم الشيك' : 'Check #'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'النوع' : 'Type'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'البنك' : 'Bank'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'الطرف (الساحب / المستفيد)' : 'Party'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'تاريخ الاستحقاق' : 'Due Date'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'المبلغ' : 'Amount'"></th>
+                        <th class="p-3.5 text-center" v-text="isArabic ? 'الحالة' : 'Status'"></th>
+                        <th class="p-3.5 text-center" v-text="isArabic ? 'إجراءات' : 'Actions'"></th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-slate-100">
+                    <tr v-for="ch in filteredChecks" :key="ch.id" class="hover:bg-slate-50/70 transition-colors">
+                        <td class="p-3.5 font-mono font-black text-indigo-600">[[ ch.check_number ]]</td>
+                        <td class="p-3.5">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                                  :class="ch.check_type === 'RECEIVABLE' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'">
+                                [[ ch.check_type === 'RECEIVABLE' ? (isArabic ? 'شيك قبض وارد' : 'Receivable') : (isArabic ? 'شيك دفع صادر' : 'Payable') ]]
+                            </span>
+                        </td>
+                        <td class="p-3.5 font-bold text-slate-700">[[ ch.bank_name ]]</td>
+                        <td class="p-3.5 font-bold text-slate-800">[[ ch.party_name ]]</td>
+                        <td class="p-3.5 font-mono font-bold text-slate-600">[[ ch.due_date ]]</td>
+                        <td class="p-3.5 font-mono font-black text-indigo-700 text-sm">
+                            [[ formatNumber(ch.amount) ]] [[ ch.currency || 'SAR' ]]
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black border"
+                                  :class="{
+                                      'bg-slate-100 text-slate-700 border-slate-200': ch.status === 'HELD',
+                                      'bg-amber-50 text-amber-700 border-amber-200': ch.status === 'DEPOSITED',
+                                      'bg-emerald-50 text-emerald-700 border-emerald-200': ch.status === 'COLLECTED',
+                                      'bg-rose-50 text-rose-700 border-rose-200': ch.status === 'BOUNCED'
+                                  }">
+                                [[ ch.status === 'HELD' ? (isArabic ? 'بالخزينة' : 'In Treasury') : (ch.status === 'DEPOSITED' ? (isArabic ? 'برسم التحصيل' : 'Deposited') : (ch.status === 'COLLECTED' ? (isArabic ? 'محصل' : 'Collected') : (ch.status === 'BOUNCED' ? (isArabic ? 'مرتد' : 'Bounced') : ch.status))) ]]
+                            </span>
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <button @click="openModal('contracting_check', ch)"
+                                    class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-800 text-slate-600 hover:text-white transition-all text-xs"
+                                    :title="isArabic ? 'تعديل' : 'Edit'">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr v-if="!filteredChecks || filteredChecks.length === 0">
+                        <td colspan="8" class="p-8 text-center text-slate-400 font-bold" v-text="isArabic ? 'لا توجد شيكات مسجلة مطابقة للبحث' : 'No checks found'"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

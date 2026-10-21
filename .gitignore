@@ -1,1 +1,5 @@
 db.sqlite3
+__pycache__/
+*.py[cod]
+New_Cairo-main/
+scratch/

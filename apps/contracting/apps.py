@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class ContractingConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.contracting'
+    verbose_name = 'إدارة المقاولات والمشاريع (Contracting & Projects)'
