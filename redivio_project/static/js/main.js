@@ -169,6 +169,8 @@ createApp({
             },
             accountSearch: '',
             accountRootFilter: 'ALL',
+            accountViewMode: 'tree',
+            expandedAccountNodes: {},
             jvSearch: '',
             jvViewMode: 'list',
             jvStatusFilter: 'ALL',
@@ -1309,6 +1311,103 @@ createApp({
                 );
             }
             return list;
+        },
+
+        hierarchicalAccounts() {
+            const rawList = this.accounts || [];
+            if (!rawList.length) return [];
+
+            const nodeMap = new Map();
+            const childrenMap = new Map();
+            const rootNodes = [];
+
+            rawList.forEach(a => {
+                nodeMap.set(a.id, a);
+                childrenMap.set(a.id, []);
+            });
+
+            rawList.forEach(a => {
+                if (a.parent && nodeMap.has(a.parent)) {
+                    childrenMap.get(a.parent).push(a);
+                } else {
+                    rootNodes.push(a);
+                }
+            });
+
+            const sortFn = (x, y) => (x.account_number || '').localeCompare(y.account_number || '', undefined, { numeric: true });
+            rootNodes.sort(sortFn);
+            childrenMap.forEach(arr => arr.sort(sortFn));
+
+            const q = (this.accountSearch || '').trim().toLowerCase();
+            const rootFilter = this.accountRootFilter;
+
+            const matchesQuery = (acc) => {
+                if (!q) return true;
+                return (acc.account_number && acc.account_number.toLowerCase().includes(q)) ||
+                       (acc.account_name && acc.account_name.toLowerCase().includes(q));
+            };
+
+            const hasMatchingDescendant = (accId) => {
+                const children = childrenMap.get(accId) || [];
+                for (const child of children) {
+                    if (matchesQuery(child) || hasMatchingDescendant(child.id)) return true;
+                }
+                return false;
+            };
+
+            const result = [];
+            const traverse = (node, level, ancestors) => {
+                if (rootFilter && rootFilter !== 'ALL' && node.root_type !== rootFilter) {
+                    return;
+                }
+
+                const children = childrenMap.get(node.id) || [];
+                const hasChildren = children.length > 0;
+                const isMatch = matchesQuery(node);
+                const hasMatchBelow = q ? hasMatchingDescendant(node.id) : false;
+
+                const isExpanded = q 
+                    ? (hasMatchBelow || !!this.expandedAccountNodes[node.id]) 
+                    : (this.expandedAccountNodes[node.id] !== undefined ? !!this.expandedAccountNodes[node.id] : (level < 2));
+
+                let isVisible = true;
+                if (q) {
+                    isVisible = isMatch || hasMatchBelow;
+                } else {
+                    for (const ancId of ancestors) {
+                        const ancExpanded = (this.expandedAccountNodes[ancId] !== undefined) 
+                            ? !!this.expandedAccountNodes[ancId] 
+                            : true;
+                        if (!ancExpanded) {
+                            isVisible = false;
+                            break;
+                        }
+                    }
+                }
+
+                result.push({
+                    ...node,
+                    level,
+                    hasChildren,
+                    isExpanded,
+                    isVisible,
+                    childrenCount: children.length
+                });
+
+                for (const child of children) {
+                    traverse(child, level + 1, [...ancestors, node.id]);
+                }
+            };
+
+            for (const root of rootNodes) {
+                traverse(root, 0, []);
+            }
+
+            return result;
+        },
+
+        visibleHierarchicalAccounts() {
+            return this.hierarchicalAccounts.filter(a => a.isVisible);
         },
 
         jvStats() {
@@ -8278,6 +8377,36 @@ createApp({
             } finally {
                 this.loading = false;
             }
+        },
+
+        toggleAccountNode(nodeId) {
+            const current = this.expandedAccountNodes[nodeId];
+            this.expandedAccountNodes = {
+                ...this.expandedAccountNodes,
+                [nodeId]: current !== undefined ? !current : false
+            };
+        },
+
+        expandAllAccounts() {
+            const newMap = {};
+            (this.accounts || []).forEach(a => {
+                if (a.is_group) newMap[a.id] = true;
+            });
+            this.expandedAccountNodes = newMap;
+        },
+
+        collapseAllAccounts() {
+            const newMap = {};
+            (this.accounts || []).forEach(a => {
+                if (a.is_group) newMap[a.id] = false;
+            });
+            this.expandedAccountNodes = newMap;
+        },
+
+        openAccountLedger(acc) {
+            this.accountingTab = 'general_ledger';
+            this.glFilters.account_id = acc.id;
+            this.fetchGLEntries();
         },
 
         openNewAccountModal(parentAcc = null) {

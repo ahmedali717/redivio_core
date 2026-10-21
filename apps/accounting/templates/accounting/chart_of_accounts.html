@@ -1,24 +1,49 @@
 <div class="space-y-6 animate-in slide-in-from-bottom-4 duration-500 pb-10">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-black shadow-sm border border-amber-100">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center text-2xl font-black shadow-md shadow-amber-500/20">
                 <i class="fas fa-sitemap"></i>
             </div>
             <div>
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "دليل وشجرة الحسابات (Chart of Accounts)" : "Chart of Accounts" ]]</h2>
-                <p class="text-slate-500 text-xs font-semibold">[[ isArabic ? "الهيكل المالي الشجري للأصول، الالتزامات، حقوق الملكية، الإيرادات والمصروفات" : "Multi-level financial tree for Assets, Liabilities, Equity, Income & Expenses" ]]</p>
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "دليل وشجرة الحسابات (ERPNext Chart of Accounts)" : "Chart of Accounts" ]]</h2>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200">
+                        ERPNext & IFRS Standard
+                    </span>
+                </div>
+                <p class="text-slate-500 text-xs font-semibold mt-1">
+                    [[ isArabic ? "الهيكل المالي الشجري المعياري المتكامل للأصول، الالتزامات، حقوق الملكية، الإيرادات والمصروفات" : "Multi-level financial tree for Assets, Liabilities, Equity, Income & Expenses" ]]
+                </p>
+                <!-- Quick Stats -->
+                <div class="flex items-center gap-4 mt-2 text-[11px] font-bold text-slate-500 flex-wrap">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fas fa-list-check text-blue-500"></i>
+                        [[ isArabic ? "إجمالي الحسابات:" : "Total Accounts:" ]] 
+                        <span class="text-slate-800 font-mono font-black">[[ accounts.length ]]</span>
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <i class="fas fa-folder text-amber-500"></i>
+                        [[ isArabic ? "حسابات رئيسية وتجميعية:" : "Groups:" ]] 
+                        <span class="text-slate-800 font-mono font-black">[[ accounts.filter(a => a.is_group).length ]]</span>
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <i class="fas fa-file-invoice text-emerald-500"></i>
+                        [[ isArabic ? "حسابات أستاذ فرعية:" : "Ledgers:" ]] 
+                        <span class="text-slate-800 font-mono font-black">[[ accounts.filter(a => !a.is_group).length ]]</span>
+                    </span>
+                </div>
             </div>
         </div>
 
         <div class="flex items-center gap-2.5 flex-wrap">
-            <button v-if="accounts.length === 0" @click="seedDefaultCOA()"
-                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2">
-                <i class="fas fa-magic"></i>
-                <span>[[ isArabic ? "توليد شجرة الحسابات القياسية" : "Generate Standard COA" ]]</span>
+            <button @click="seedDefaultCOA()"
+                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2">
+                <i class="fas fa-layer-group"></i>
+                <span>[[ accounts.length < 50 ? (isArabic ? "ترقية وتوسيع شجرة ERPNext الكاملة (+70 حساباً)" : "Upgrade to Full ERPNext COA") : (isArabic ? "تحديث شجرة الحسابات القياسية" : "Sync / Update COA") ]]</span>
             </button>
             <button @click="openNewAccountModal()"
-                class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2">
+                class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-amber-500/20 transition-all flex items-center gap-2">
                 <i class="fas fa-plus"></i>
                 <span>[[ isArabic ? "إضافة حساب جديد" : "New Account" ]]</span>
             </button>
@@ -26,15 +51,17 @@
     </div>
 
     <!-- Filter & Search Controls -->
-    <div class="bg-white border border-slate-200/90 rounded-2xl p-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-2xs">
-        <div class="relative flex-1">
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-3.5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 shadow-2xs">
+        <!-- Search Input -->
+        <div class="relative flex-1 min-w-[240px]">
             <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
             <input type="text" v-model="accountSearch" 
-                :placeholder="isArabic ? 'البحث برقم الحساب أو اسم الحساب...' : 'Search by account code or name...'"
+                :placeholder="isArabic ? 'البحث برقم الحساب أو الاسم أو النوع...' : 'Search by account code, name, or type...'"
                 class="w-full bg-slate-50 border border-slate-200/80 rounded-xl py-2 pl-10 pr-4 text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all">
         </div>
 
-        <div class="flex items-center gap-1.5 overflow-x-auto">
+        <!-- Root Filter Tabs -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
             <button @click="accountRootFilter = 'ALL'" 
                 :class="accountRootFilter === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
                 class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
@@ -66,19 +93,176 @@
                 [[ isArabic ? "المصروفات (5)" : "Expenses" ]]
             </button>
         </div>
+
+        <!-- View Mode & Tree Actions -->
+        <div class="flex items-center gap-2 border-t lg:border-t-0 lg:border-l border-slate-200/80 pt-2 lg:pt-0 lg:pl-3 justify-end">
+            <!-- Expand/Collapse Controls for Tree Mode -->
+            <template v-if="accountViewMode === 'tree'">
+                <button @click="expandAllAccounts()" :title="isArabic ? 'توسيع كافة المجموعات' : 'Expand All'"
+                    class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1">
+                    <i class="fas fa-folder-open text-amber-500"></i>
+                    <span class="hidden sm:inline">[[ isArabic ? "توسيع الكل" : "Expand All" ]]</span>
+                </button>
+                <button @click="collapseAllAccounts()" :title="isArabic ? 'طي كافة المجموعات' : 'Collapse All'"
+                    class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1">
+                    <i class="fas fa-folder text-slate-400"></i>
+                    <span class="hidden sm:inline">[[ isArabic ? "طي الكل" : "Collapse All" ]]</span>
+                </button>
+            </template>
+
+            <!-- Mode Switcher -->
+            <div class="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200/80">
+                <button @click="accountViewMode = 'tree'" 
+                    :class="accountViewMode === 'tree' ? 'bg-white text-slate-800 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
+                    <i class="fas fa-folder-tree text-amber-500"></i>
+                    <span>[[ isArabic ? "عرض شجري" : "Tree View" ]]</span>
+                </button>
+                <button @click="accountViewMode = 'list'" 
+                    :class="accountViewMode === 'list' ? 'bg-white text-slate-800 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
+                    <i class="fas fa-list text-blue-500"></i>
+                    <span>[[ isArabic ? "عرض مسطح" : "List View" ]]</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Tree View Container -->
-    <div class="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm min-h-[500px]">
-        <div v-if="filteredAccounts.length === 0" class="text-center py-16 text-slate-400">
-            <i class="fas fa-folder-tree text-4xl mb-3 text-slate-300 block"></i>
-            <p class="font-bold text-sm mb-4">[[ isArabic ? "لا توجد حسابات مسجلة أو مطابقة للبحث" : "No accounts found matching criteria" ]]</p>
-            <button @click="seedDefaultCOA()" class="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-md hover:bg-emerald-700 transition-all">
-                <i class="fas fa-magic mr-1"></i> [[ isArabic ? "توليد شجرة الحسابات القياسية الآن" : "Generate Standard COA Now" ]]
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-4 md:p-6 shadow-sm min-h-[500px]">
+        <!-- Empty State -->
+        <div v-if="accounts.length === 0" class="text-center py-20 text-slate-400">
+            <div class="w-20 h-20 mx-auto rounded-3xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center text-4xl mb-4 shadow-sm">
+                <i class="fas fa-sitemap"></i>
+            </div>
+            <h3 class="font-black text-slate-800 text-lg mb-1">[[ isArabic ? "لا توجد شجرة حسابات حتى الآن" : "No Chart of Accounts Found" ]]</h3>
+            <p class="font-semibold text-xs text-slate-400 max-w-md mx-auto mb-6">
+                [[ isArabic ? "اضغط على الزر أدناه لتوليد وتأسيس شجرة حسابات ERPNext القياسية المتكاملة (أكثر من 70 حساباً وفق المعايير المحاسبية العالمية)." : "Generate the complete standard multi-level ERPNext chart of accounts with all standard accounts and groups." ]]
+            </p>
+            <button @click="seedDefaultCOA()" class="px-6 py-3 bg-emerald-600 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 transition-all flex items-center gap-2 mx-auto">
+                <i class="fas fa-wand-magic-sparkles"></i>
+                <span>[[ isArabic ? "توليد وتأسيس شجرة ERPNext الكاملة الآن (+70 حساباً)" : "Generate Full ERPNext COA Now" ]]</span>
             </button>
         </div>
 
-        <!-- Hierarchical List -->
+        <!-- No search matches -->
+        <div v-else-if="accountViewMode === 'tree' ? visibleHierarchicalAccounts.length === 0 : filteredAccounts.length === 0" class="text-center py-16 text-slate-400">
+            <i class="fas fa-search text-3xl mb-3 text-slate-300 block"></i>
+            <p class="font-bold text-sm">[[ isArabic ? "لا توجد حسابات مطابقة لمعايير البحث الحالية" : "No accounts match current criteria" ]]</p>
+        </div>
+
+        <!-- 🌳 1. ERPNext Hierarchical Collapsible Tree View -->
+        <div v-else-if="accountViewMode === 'tree'" class="space-y-1">
+            <div v-for="acc in visibleHierarchicalAccounts" :key="acc.id"
+                class="flex items-center justify-between p-2.5 rounded-xl transition-all group relative border"
+                :class="[
+                    acc.level === 0 ? 'bg-gradient-to-r from-slate-50 to-white border-slate-200 my-2 shadow-2xs font-black' :
+                    acc.is_group ? 'bg-slate-50/40 hover:bg-slate-50 border-slate-100 font-bold' :
+                    'bg-white hover:bg-amber-50/30 border-transparent hover:border-amber-200/60 font-semibold'
+                ]"
+                :style="{ [isArabic ? 'paddingRight' : 'paddingLeft']: (acc.level * 28 + 14) + 'px' }">
+                
+                <!-- Left / Content Block -->
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <!-- Expand/Collapse Chevron for Group Nodes -->
+                    <button v-if="acc.hasChildren" @click="toggleAccountNode(acc.id)"
+                        class="w-6 h-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-100/60 transition-all cursor-pointer">
+                        <i class="fas fa-chevron-left text-[11px] transition-transform duration-200"
+                            :class="[acc.isExpanded ? '-rotate-90 text-amber-600 font-black' : (isArabic ? '' : 'rotate-180')]"></i>
+                    </button>
+                    <span v-else class="w-6 h-6 inline-block"></span>
+
+                    <!-- Node Icon (Folder vs Leaf) -->
+                    <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0"
+                        :class="[
+                            acc.level === 0 ? 'bg-slate-900 text-white font-black' :
+                            acc.is_group ? (acc.isExpanded ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500') :
+                            'bg-slate-50 text-slate-400 border border-slate-200/60'
+                        ]">
+                        <i v-if="acc.is_group" :class="acc.isExpanded ? 'fas fa-folder-open' : 'fas fa-folder'"></i>
+                        <i v-else-if="acc.account_type === 'BANK'" class="fas fa-building-columns text-blue-500"></i>
+                        <i v-else-if="acc.account_type === 'CASH'" class="fas fa-money-bill-wave text-emerald-500"></i>
+                        <i v-else-if="acc.account_type === 'RECEIVABLE'" class="fas fa-user-tag text-indigo-500"></i>
+                        <i v-else-if="acc.account_type === 'PAYABLE'" class="fas fa-hand-holding-dollar text-rose-500"></i>
+                        <i v-else-if="acc.account_type === 'STOCK'" class="fas fa-boxes-stacked text-amber-600"></i>
+                        <i v-else-if="acc.account_type === 'TAX'" class="fas fa-percent text-purple-500"></i>
+                        <i v-else-if="acc.account_type === 'FIXED_ASSET'" class="fas fa-city text-teal-600"></i>
+                        <i v-else-if="acc.account_type === 'ACCUMULATED_DEPRECIATION'" class="fas fa-arrow-trend-down text-rose-600"></i>
+                        <i v-else class="fas fa-file-invoice"></i>
+                    </span>
+
+                    <!-- Account Number & Title -->
+                    <div class="flex items-center gap-2 flex-wrap min-w-0">
+                        <span class="font-mono text-xs px-2 py-0.5 rounded font-bold shrink-0 shadow-2xs"
+                            :class="[
+                                acc.level === 0 ? 'bg-slate-900 text-white' :
+                                acc.is_group ? 'bg-slate-200 text-slate-700' :
+                                'bg-slate-100 text-slate-600'
+                            ]">
+                            [[ acc.account_number ]]
+                        </span>
+                        
+                        <span class="text-sm tracking-tight truncate"
+                            :class="[
+                                acc.level === 0 ? 'text-slate-900 font-black text-base' :
+                                acc.is_group ? 'text-slate-800 font-bold' :
+                                'text-slate-700'
+                            ]">
+                            [[ acc.account_name ]]
+                        </span>
+
+                        <!-- Group Badge -->
+                        <span v-if="acc.is_group" class="text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wide shrink-0"
+                            :class="acc.level === 0 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-100 text-slate-600 border border-slate-200'">
+                            [[ isArabic ? "مجموعة" : "Group" ]]
+                            <span v-if="acc.childrenCount" class="font-mono">([[ acc.childrenCount ]])</span>
+                        </span>
+
+                        <!-- Account Type Badge (for non-group accounts) -->
+                        <span v-if="!acc.is_group && acc.account_type && acc.account_type !== 'OTHER'" 
+                            class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase shrink-0 bg-blue-50 text-blue-700 border border-blue-100">
+                            [[ acc.account_type ]]
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Right / Balance & Actions Block -->
+                <div class="flex items-center gap-4 shrink-0">
+                    <!-- Balance -->
+                    <div class="text-right">
+                        <div class="text-xs font-black font-mono tracking-tight"
+                            :class="acc.balance >= 0 ? 'text-slate-800' : 'text-rose-600'">
+                            [[ formatNumber(acc.balance) ]]
+                        </div>
+                        <div class="text-[9px] text-slate-400 font-bold">[[ acc.currency || 'SAR' ]]</div>
+                    </div>
+
+                    <!-- Quick Actions Hover Bar -->
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <!-- Add child under this group -->
+                        <button v-if="acc.is_group" @click.stop="addChildAccount(acc)" 
+                            :title="isArabic ? 'إضافة حساب فرعي تحته' : 'Add Child Account'"
+                            class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <!-- Open in General Ledger Statement -->
+                        <button v-if="!acc.is_group" @click.stop="openAccountLedger(acc)"
+                            :title="isArabic ? 'عرض كشف حساب الأستاذ العام' : 'View General Ledger'"
+                            class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                            <i class="fas fa-book-open"></i>
+                        </button>
+                        <!-- Edit account -->
+                        <button @click.stop="editAccount(acc)" 
+                            :title="isArabic ? 'تعديل الحساب' : 'Edit Account'"
+                            class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📋 2. Flat List View Mode -->
         <div v-else class="space-y-2">
             <div v-for="acc in filteredAccounts" :key="acc.id"
                 class="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 hover:border-amber-200 hover:bg-slate-50/70 transition-all group"
@@ -122,6 +306,11 @@
                             :title="isArabic ? 'إضافة حساب فرعي تحته' : 'Add Child Account'"
                             class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center text-xs transition-colors">
                             <i class="fas fa-plus"></i>
+                        </button>
+                        <button v-if="!acc.is_group" @click="openAccountLedger(acc)"
+                            :title="isArabic ? 'عرض كشف حساب الأستاذ العام' : 'View General Ledger'"
+                            class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                            <i class="fas fa-book-open"></i>
                         </button>
                         <button @click="editAccount(acc)" 
                             :title="isArabic ? 'تعديل الحساب' : 'Edit Account'"

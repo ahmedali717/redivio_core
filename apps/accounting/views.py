@@ -92,18 +92,22 @@ class AccountViewSet(viewsets.ModelViewSet):
         if not opco:
             return Response({"error": "الشركة التابعة (OpCo) غير محددة أو غير موجودة."}, status=status.HTTP_400_BAD_REQUEST)
 
-        created = seed_default_chart_of_accounts(opco)
-        if created:
+        created_count, total_count = seed_default_chart_of_accounts(opco)
+        if created_count > 0:
             return Response({
-                "message": f"تم إنشاء شجرة الحسابات القياسية بنجاح للشركة: {opco.name}",
+                "message": f"تم توليد وتحديث شجرة حسابات ERPNext بنجاح للشركة: {opco.name} (تمت إضافة {created_count} حساباً جديداً، الإجمالي: {total_count})",
                 "opco_id": opco.id,
-                "opco_name": opco.name
+                "opco_name": opco.name,
+                "created_count": created_count,
+                "total_count": total_count
             })
         else:
             return Response({
-                "message": f"شجرة الحسابات موجودة بالفعل للشركة: {opco.name}",
+                "message": f"شجرة حسابات ERPNext مكتملة ومحدثة بالكامل للشركة: {opco.name} (إجمالي {total_count} حساباً)",
                 "opco_id": opco.id,
-                "opco_name": opco.name
+                "opco_name": opco.name,
+                "created_count": created_count,
+                "total_count": total_count
             }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='tree')
