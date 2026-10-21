@@ -6964,6 +6964,73 @@ createApp({
                 this.forms.transfer = { transfer_number: `TR-${Date.now()}`, source_plant: '', target_plant: '', notes: '', lines: [{ material: '', quantity: 1 }] };
             } else if (type === 'scrap') {
                 this.forms.scrap = { scrap_number: `SCR-${Date.now()}`, plant: '', notes: '', lines: [{ material: '', quantity: 1, reason: 'Expired' }] };
+            } else if (['journal_entry', 'account', 'purchase_invoice', 'payment_entry'].includes(type)) {
+                if (data) {
+                    this.isEditing = true;
+                    this.forms[type] = JSON.parse(JSON.stringify(data));
+                } else {
+                    if (type === 'journal_entry') {
+                        this.forms.journal_entry = {
+                            id: null,
+                            entry_number: `JV-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`,
+                            posting_date: new Date().toISOString().substring(0, 10),
+                            entry_type: 'JOURNAL_ENTRY',
+                            reference_number: '',
+                            user_remark: '',
+                            extra_data: {},
+                            lines: [
+                                { account: '', party_type: 'NONE', party_id: null, party_name: '', debit: 0, credit: 0, remark: '' },
+                                { account: '', party_type: 'NONE', party_id: null, party_name: '', debit: 0, credit: 0, remark: '' }
+                            ]
+                        };
+                    } else if (type === 'account') {
+                        this.forms.account = {
+                            id: null,
+                            account_number: '',
+                            account_name: '',
+                            root_type: 'ASSET',
+                            account_type: 'OTHER',
+                            parent: null,
+                            is_group: false,
+                            currency: 'SAR',
+                            extra_data: {}
+                        };
+                    } else if (type === 'purchase_invoice') {
+                        this.forms.purchase_invoice = {
+                            id: null,
+                            vendor: '',
+                            purchase_order: null,
+                            posting_date: new Date().toISOString().substring(0, 10),
+                            due_date: new Date().toISOString().substring(0, 10),
+                            subtotal: 0,
+                            tax_amount: 0,
+                            discount_amount: 0,
+                            grand_total: 0,
+                            credit_to_account: null,
+                            expense_account: null,
+                            notes: '',
+                            extra_data: {}
+                        };
+                    } else if (type === 'payment_entry') {
+                        this.forms.payment_entry = {
+                            id: null,
+                            payment_type: 'RECEIVE',
+                            party_type: 'CUSTOMER',
+                            party_id: null,
+                            party_name: '',
+                            sales_invoice: null,
+                            purchase_invoice: null,
+                            paid_from_account: null,
+                            paid_to_account: null,
+                            paid_amount: 0,
+                            posting_date: new Date().toISOString().substring(0, 10),
+                            payment_method: 'CASH',
+                            reference_no: '',
+                            notes: '',
+                            extra_data: {}
+                        };
+                    }
+                }
             }
         },
 
@@ -8150,77 +8217,6 @@ createApp({
             return Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
 
-        openModal(type, data = null) {
-            this.modalType = type;
-            this.isEditing = !!data;
-            if (data) {
-                this.forms[type] = JSON.parse(JSON.stringify(data));
-            } else {
-                if (type === 'journal_entry') {
-                    this.forms.journal_entry = {
-                        id: null,
-                        entry_number: `JV-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`,
-                        posting_date: new Date().toISOString().substring(0, 10),
-                        entry_type: 'JOURNAL_ENTRY',
-                        reference_number: '',
-                        user_remark: '',
-                        extra_data: {},
-                        lines: [
-                            { account: '', party_type: 'NONE', party_id: null, party_name: '', debit: 0, credit: 0, remark: '' },
-                            { account: '', party_type: 'NONE', party_id: null, party_name: '', debit: 0, credit: 0, remark: '' }
-                        ]
-                    };
-                } else if (type === 'account') {
-                    this.forms.account = {
-                        id: null,
-                        account_number: '',
-                        account_name: '',
-                        root_type: 'ASSET',
-                        account_type: 'OTHER',
-                        parent: null,
-                        is_group: false,
-                        currency: 'SAR',
-                        extra_data: {}
-                    };
-                } else if (type === 'purchase_invoice') {
-                    this.forms.purchase_invoice = {
-                        id: null,
-                        vendor: '',
-                        purchase_order: null,
-                        posting_date: new Date().toISOString().substring(0, 10),
-                        due_date: new Date().toISOString().substring(0, 10),
-                        subtotal: 0,
-                        tax_amount: 0,
-                        discount_amount: 0,
-                        grand_total: 0,
-                        credit_to_account: null,
-                        expense_account: null,
-                        notes: '',
-                        extra_data: {}
-                    };
-                } else if (type === 'payment_entry') {
-                    this.forms.payment_entry = {
-                        id: null,
-                        payment_type: 'RECEIVE',
-                        party_type: 'CUSTOMER',
-                        party_id: null,
-                        party_name: '',
-                        sales_invoice: null,
-                        purchase_invoice: null,
-                        paid_from_account: null,
-                        paid_to_account: null,
-                        paid_amount: 0,
-                        posting_date: new Date().toISOString().substring(0, 10),
-                        payment_method: 'CASH',
-                        reference_no: '',
-                        notes: '',
-                        extra_data: {}
-                    };
-                }
-            }
-            this.showModal = true;
-        },
-
         async fetchAccountingData() {
             try {
                 await Promise.all([
@@ -8241,11 +8237,13 @@ createApp({
                 const opcoParam = this.activeOpcoId ? `?opco=${this.activeOpcoId}` : '';
                 const res = await fetch(`/api/accounting/accounts/${opcoParam}`);
                 if (res.ok) {
-                    this.accounts = await res.json();
+                    const data = await res.json();
+                    this.accounts = Array.isArray(data) ? data : (data.results || []);
                 }
                 const treeRes = await fetch(`/api/accounting/accounts/tree/${opcoParam}`);
                 if (treeRes.ok) {
-                    this.accountsTree = await treeRes.json();
+                    const treeData = await treeRes.json();
+                    this.accountsTree = Array.isArray(treeData) ? treeData : [];
                 }
             } catch (e) {
                 console.error("fetchAccounts error:", e);
@@ -8256,20 +8254,24 @@ createApp({
             const csrftoken = this.getCookie('csrftoken');
             try {
                 this.loading = true;
+                const activeId = this.activeOpcoId || (this.allOpcos && this.allOpcos[0] ? this.allOpcos[0].id : null);
                 const res = await fetch('/api/accounting/accounts/seed-coa/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrftoken
                     },
-                    body: JSON.stringify({ opco: this.activeOpcoId })
+                    body: JSON.stringify({ 
+                        opco: activeId,
+                        opco_id: activeId 
+                    })
                 });
+                const data = await res.json().catch(() => ({}));
                 if (res.ok) {
-                    const data = await res.json();
                     this.showToast(data.message || (this.isArabic ? "تم توليد شجرة الحسابات بنجاح" : "COA generated"), 'success');
                     await this.fetchAccounts();
                 } else {
-                    this.showToast(this.isArabic ? "فشل توليد شجرة الحسابات" : "COA generation failed", 'error');
+                    this.showToast(data.error || (this.isArabic ? "فشل توليد شجرة الحسابات" : "COA generation failed"), 'error');
                 }
             } catch (e) {
                 this.showToast(this.isArabic ? "خطأ في الاتصال" : "Network error", 'error');

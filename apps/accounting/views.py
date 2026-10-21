@@ -14,13 +14,50 @@ from .serializers import (
 from .services import seed_default_chart_of_accounts
 
 
+def get_request_opco_id(request):
+    """
+    استخراج معرف الشركة التابعة (OpCo ID) من الطلب بعدة طرق موثوقة:
+    1. Query param 'opco' أو 'opco_id'
+    2. Body param 'opco' أو 'opco_id'
+    3. request.tenant (من TenantMiddleware)
+    4. request.session['active_opco_id']
+    5. Fallback إلى أول شركة موجودة في النظام
+    """
+    opco_id = None
+    if hasattr(request, 'query_params'):
+        opco_id = request.query_params.get('opco') or request.query_params.get('opco_id')
+    if not opco_id and hasattr(request, 'data') and isinstance(request.data, dict):
+        opco_id = request.data.get('opco_id') or request.data.get('opco')
+
+    if opco_id and str(opco_id).lower() not in ['null', 'undefined', '', 'none', 'all']:
+        try:
+            return int(opco_id)
+        except (ValueError, TypeError):
+            return opco_id
+
+    if opco_id and str(opco_id).lower() == 'all':
+        return None
+
+    if hasattr(request, 'tenant') and request.tenant:
+        return request.tenant.id
+
+    if hasattr(request, 'session'):
+        session_opco = request.session.get('active_opco_id')
+        if session_opco:
+            return session_opco
+
+    from apps.core.models import OpCo
+    first_opco = OpCo.objects.first()
+    return first_opco.id if first_opco else None
+
+
 class AccountViewSet(viewsets.ModelViewSet):
     serializer_class = AccountSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = Account.objects.all().select_related('parent')
-        opco_id = self.request.query_params.get('opco')
+        opco_id = get_request_opco_id(self.request)
         if opco_id:
             qs = qs.filter(opco_id=opco_id)
         root_type = self.request.query_params.get('root_type')
@@ -31,34 +68,48 @@ class AccountViewSet(viewsets.ModelViewSet):
             qs = qs.filter(is_group=(is_group.lower() == 'true'))
         return qs
 
+    def perform_create(self, serializer):
+        opco_id = get_request_opco_id(self.request)
+        if 'opco' not in serializer.validated_data and opco_id:
+            from apps.core.models import OpCo
+            serializer.save(opco=OpCo.objects.filter(id=opco_id).first())
+        else:
+            serializer.save()
+
     @action(detail=False, methods=['post'], url_path='seed-coa')
     def seed_coa(self, request):
         """توليد شجرة الحسابات القياسية للشركة التابعة بضغطة زر"""
-        opco_id = request.data.get('opco_id')
-        if not opco_id:
-            from apps.core.models import OpCo
-            opco = OpCo.objects.first()
-        else:
-            from apps.core.models import OpCo
+        from apps.core.models import OpCo
+        opco_id = get_request_opco_id(request)
+        opco = None
+        if opco_id:
             opco = OpCo.objects.filter(id=opco_id).first()
+        if not opco and hasattr(request, 'tenant') and request.tenant:
+            opco = request.tenant
+        if not opco:
+            opco = OpCo.objects.first()
 
         if not opco:
             return Response({"error": "الشركة التابعة (OpCo) غير محددة أو غير موجودة."}, status=status.HTTP_400_BAD_REQUEST)
 
         created = seed_default_chart_of_accounts(opco)
         if created:
-            return Response({"message": f"تم إنشاء شجرة الحسابات القياسية بنجاح للشركة: {opco.name}"})
+            return Response({
+                "message": f"تم إنشاء شجرة الحسابات القياسية بنجاح للشركة: {opco.name}",
+                "opco_id": opco.id,
+                "opco_name": opco.name
+            })
         else:
-            return Response({"message": "شجرة الحسابات موجودة بالفعل لهذه الشركة."}, status=status.HTTP_200_OK)
+            return Response({
+                "message": f"شجرة الحسابات موجودة بالفعل للشركة: {opco.name}",
+                "opco_id": opco.id,
+                "opco_name": opco.name
+            }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='tree')
     def tree(self, request):
         """إرجاع شجرة الحسابات بتسلسل هرمي للعرض المرئي"""
-        opco_id = request.query_params.get('opco')
         qs = self.get_queryset()
-        if opco_id:
-            qs = qs.filter(opco_id=opco_id)
-        
         accounts = list(qs.order_by('account_number'))
         account_dict = {a.id: {
             'id': a.id,
@@ -90,10 +141,18 @@ class CostCenterViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = CostCenter.objects.all()
-        opco_id = self.request.query_params.get('opco')
+        opco_id = get_request_opco_id(self.request)
         if opco_id:
             qs = qs.filter(opco_id=opco_id)
         return qs
+
+    def perform_create(self, serializer):
+        opco_id = get_request_opco_id(self.request)
+        if 'opco' not in serializer.validated_data and opco_id:
+            from apps.core.models import OpCo
+            serializer.save(opco=OpCo.objects.filter(id=opco_id).first())
+        else:
+            serializer.save()
 
 
 class JournalEntryViewSet(viewsets.ModelViewSet):
@@ -102,7 +161,7 @@ class JournalEntryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = JournalEntry.objects.all().prefetch_related('lines__account')
-        opco_id = self.request.query_params.get('opco')
+        opco_id = get_request_opco_id(self.request)
         if opco_id:
             qs = qs.filter(opco_id=opco_id)
         entry_status = self.request.query_params.get('status')
@@ -111,7 +170,12 @@ class JournalEntryViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        opco_id = get_request_opco_id(self.request)
+        kwargs = {'created_by': self.request.user}
+        if 'opco' not in serializer.validated_data and opco_id:
+            from apps.core.models import OpCo
+            kwargs['opco'] = OpCo.objects.filter(id=opco_id).first()
+        serializer.save(**kwargs)
 
     @action(detail=True, methods=['post'], url_path='submit')
     def submit_entry(self, request, pk=None):
@@ -140,7 +204,7 @@ class GLEntryViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = GLEntry.objects.filter(is_cancelled=False).select_related('account')
-        opco_id = self.request.query_params.get('opco')
+        opco_id = get_request_opco_id(self.request)
         if opco_id:
             qs = qs.filter(opco_id=opco_id)
         account_id = self.request.query_params.get('account')
@@ -170,7 +234,7 @@ class PurchaseInvoiceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = PurchaseInvoice.objects.all().select_related('vendor', 'purchase_order')
-        opco_id = self.request.query_params.get('opco')
+        opco_id = get_request_opco_id(self.request)
         if opco_id:
             qs = qs.filter(opco_id=opco_id)
         inv_status = self.request.query_params.get('status')
@@ -181,6 +245,14 @@ class PurchaseInvoiceViewSet(viewsets.ModelViewSet):
             qs = qs.filter(vendor_id=vendor_id)
         return qs
 
+    def perform_create(self, serializer):
+        opco_id = get_request_opco_id(self.request)
+        if 'opco' not in serializer.validated_data and opco_id:
+            from apps.core.models import OpCo
+            serializer.save(opco=OpCo.objects.filter(id=opco_id).first())
+        else:
+            serializer.save()
+
 
 class PaymentEntryViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentEntrySerializer
@@ -188,7 +260,7 @@ class PaymentEntryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = PaymentEntry.objects.all().select_related('paid_from_account', 'paid_to_account', 'sales_invoice', 'purchase_invoice')
-        opco_id = self.request.query_params.get('opco')
+        opco_id = get_request_opco_id(self.request)
         if opco_id:
             qs = qs.filter(opco_id=opco_id)
         payment_type = self.request.query_params.get('payment_type')
@@ -198,6 +270,14 @@ class PaymentEntryViewSet(viewsets.ModelViewSet):
         if entry_status:
             qs = qs.filter(status=entry_status)
         return qs
+
+    def perform_create(self, serializer):
+        opco_id = get_request_opco_id(self.request)
+        if 'opco' not in serializer.validated_data and opco_id:
+            from apps.core.models import OpCo
+            serializer.save(opco=OpCo.objects.filter(id=opco_id).first())
+        else:
+            serializer.save()
 
     @action(detail=True, methods=['post'], url_path='submit')
     def submit_payment(self, request, pk=None):
@@ -230,7 +310,7 @@ class FinancialReportsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='trial-balance')
     def trial_balance(self, request):
-        opco_id = request.query_params.get('opco')
+        opco_id = get_request_opco_id(request)
         from_date = request.query_params.get('from_date')
         to_date = request.query_params.get('to_date', datetime.date.today().isoformat())
 
@@ -280,20 +360,25 @@ class FinancialReportsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='profit-and-loss')
     def profit_and_loss(self, request):
-        opco_id = request.query_params.get('opco')
+        opco_id = get_request_opco_id(request)
         from_date = request.query_params.get('from_date')
         to_date = request.query_params.get('to_date', datetime.date.today().isoformat())
 
         # حساب الإيرادات (Income)
         income_accs = Account.objects.filter(root_type='INCOME', is_group=False)
-        if opco_id: income_accs = income_accs.filter(opco_id=opco_id)
+        if opco_id:
+            income_accs = income_accs.filter(opco_id=opco_id)
         
         income_rows = []
         total_income = decimal.Decimal('0.00')
         for acc in income_accs:
             gl = GLEntry.objects.filter(account=acc, is_cancelled=False)
-            if from_date: gl = gl.filter(posting_date__gte=from_date)
-            if to_date: gl = gl.filter(posting_date__lte=to_date)
+            if opco_id:
+                gl = gl.filter(opco_id=opco_id)
+            if from_date:
+                gl = gl.filter(posting_date__gte=from_date)
+            if to_date:
+                gl = gl.filter(posting_date__lte=to_date)
             t = gl.aggregate(d=Sum('debit'), c=Sum('credit'))
             amt = (t['c'] or 0) - (t['d'] or 0)
             if amt != 0:
@@ -302,14 +387,19 @@ class FinancialReportsViewSet(viewsets.ViewSet):
 
         # حساب المصروفات (Expenses)
         expense_accs = Account.objects.filter(root_type='EXPENSE', is_group=False)
-        if opco_id: expense_accs = expense_accs.filter(opco_id=opco_id)
+        if opco_id:
+            expense_accs = expense_accs.filter(opco_id=opco_id)
         
         expense_rows = []
         total_expenses = decimal.Decimal('0.00')
         for acc in expense_accs:
             gl = GLEntry.objects.filter(account=acc, is_cancelled=False)
-            if from_date: gl = gl.filter(posting_date__gte=from_date)
-            if to_date: gl = gl.filter(posting_date__lte=to_date)
+            if opco_id:
+                gl = gl.filter(opco_id=opco_id)
+            if from_date:
+                gl = gl.filter(posting_date__gte=from_date)
+            if to_date:
+                gl = gl.filter(posting_date__lte=to_date)
             t = gl.aggregate(d=Sum('debit'), c=Sum('credit'))
             amt = (t['d'] or 0) - (t['c'] or 0)
             if amt != 0:
@@ -330,16 +420,19 @@ class FinancialReportsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='balance-sheet')
     def balance_sheet(self, request):
-        opco_id = request.query_params.get('opco')
+        opco_id = get_request_opco_id(request)
         as_of_date = request.query_params.get('as_of_date', datetime.date.today().isoformat())
 
         def get_root_total(root_type):
             accs = Account.objects.filter(root_type=root_type, is_group=False)
-            if opco_id: accs = accs.filter(opco_id=opco_id)
+            if opco_id:
+                accs = accs.filter(opco_id=opco_id)
             total = decimal.Decimal('0.00')
             items = []
             for acc in accs:
                 gl = GLEntry.objects.filter(account=acc, is_cancelled=False, posting_date__lte=as_of_date)
+                if opco_id:
+                    gl = gl.filter(opco_id=opco_id)
                 t = gl.aggregate(d=Sum('debit'), c=Sum('credit'))
                 d = t['d'] or decimal.Decimal('0.00')
                 c = t['c'] or decimal.Decimal('0.00')
