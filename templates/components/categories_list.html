@@ -1,0 +1,330 @@
+<div class="bg-slate-50/50 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[600px] p-4 md:p-8 animate-in fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
+    
+    <!-- 1. TOP HEADER & NAVIGATION BAR -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-500 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-500/20">
+                <i class="fas fa-folder-tree"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl md:text-2xl font-black text-slate-800" v-text="isArabic ? 'المجموعات المخزنية وفئات الأصناف' : 'Item Groups & Categories'"></h2>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        [[ filteredCategories.length ]]
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400 font-medium mt-0.5" v-text="isArabic ? 'الهيكل الشجري للأصناف، استراتيجيات التخزين وقواعد التوجيه الآلي (دمج Odoo & ERPNext)' : 'Hierarchical item classification, putaway strategies & auto-routing rules'"></p>
+            </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2.5 w-full md:w-auto">
+            <!-- New Category Button -->
+            <button @click="openCategoryModal()" 
+                    class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-md shadow-indigo-600/20 hover:shadow-lg transition-all flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span v-text="isArabic ? 'مجموعة جديدة' : 'New Category'"></span>
+            </button>
+
+            <!-- Switch to Item Master -->
+            <button @click="inventoryTab = 'items'" 
+                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
+                <i class="fas fa-boxes text-indigo-500"></i>
+                <span v-text="isArabic ? 'سجل الأصناف' : 'Item Master'"></span>
+            </button>
+
+            <!-- Back to Stock Levels -->
+            <button @click="inventoryTab = 'levels'" 
+                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
+                <i class="fas" :class="isArabic ? 'fa-arrow-right' : 'fa-arrow-left'"></i>
+                <span v-text="isArabic ? 'الأرصدة المخزنية' : 'Stock Levels'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. ODOO-STYLE KPI SUMMARY CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- Metric 1: Total Groups -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-indigo-300 transition-all">
+            <div>
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1" v-text="isArabic ? 'إجمالي المجموعات' : 'Total Categories'"></span>
+                <div class="text-2xl font-black text-slate-800">[[ categoryStats.totalCount ]]</div>
+                <div class="text-[11px] text-slate-500 font-bold mt-1">
+                    [[ categoryStats.rootCount ]] [[ isArabic ? 'رئيسية' : 'Root' ]] • [[ categoryStats.subCount ]] [[ isArabic ? 'فرعية' : 'Sub' ]]
+                </div>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg border border-indigo-100">
+                <i class="fas fa-layer-group"></i>
+            </div>
+        </div>
+
+        <!-- Metric 2: Categorized Items -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-emerald-300 transition-all">
+            <div>
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1" v-text="isArabic ? 'أصناف مصنفة' : 'Categorized Items'"></span>
+                <div class="text-2xl font-black text-emerald-600">[[ categoryStats.totalCategorizedItems ]]</div>
+                <div class="text-[11px] text-slate-500 font-bold mt-1" v-text="isArabic ? 'منتجات مرتبطة بهذه المجموعات' : 'Assigned in catalog'"></div>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg border border-emerald-100">
+                <i class="fas fa-boxes"></i>
+            </div>
+        </div>
+
+        <!-- Metric 3: Fixed Bin Putaway -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-amber-300 transition-all">
+            <div>
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1" v-text="isArabic ? 'تخزين رف ثابت (Fixed)' : 'Fixed Bin Strategy'"></span>
+                <div class="text-2xl font-black text-amber-600">
+                    [[ (categories || []).filter(c => c.default_putaway_strategy === 'fixed').length ]]
+                </div>
+                <div class="text-[11px] text-slate-500 font-bold mt-1" v-text="isArabic ? 'توجيه آلي لرفوف مخصصة' : 'Auto assigned racks'"></div>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg border border-amber-200">
+                <i class="fas fa-thumbtack"></i>
+            </div>
+        </div>
+
+        <!-- Metric 4: Dynamic/FIFO Putaway -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-purple-300 transition-all">
+            <div>
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1" v-text="isArabic ? 'استراتيجيات FIFO / الأقرب' : 'Dynamic / FIFO Rules'"></span>
+                <div class="text-2xl font-black text-purple-600">
+                    [[ (categories || []).filter(c => c.default_putaway_strategy !== 'fixed').length ]]
+                </div>
+                <div class="text-[11px] text-slate-500 font-bold mt-1" v-text="isArabic ? 'تدوير مخزني ذكي' : 'Smart inventory rotation'"></div>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg border border-purple-100">
+                <i class="fas fa-route"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. SEARCH, FILTERS & VIEW MODE CONTROLS -->
+    <div class="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 mb-6">
+        <!-- Search Input -->
+        <div class="relative flex-1 min-w-[260px]">
+            <i class="fas fa-search absolute inset-y-0 flex items-center text-slate-400 text-xs" :class="isArabic ? 'right-3.5' : 'left-3.5'"></i>
+            <input type="text" v-model="categorySearch" 
+                   :placeholder="isArabic ? 'بحث باسم المجموعة أو الكود...' : 'Search category by name or code...'"
+                   :class="isArabic ? 'pr-9 pl-8' : 'pl-9 pr-8'"
+                   class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-800 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+            <button v-if="categorySearch" @click="categorySearch = ''" class="absolute inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-xs" :class="isArabic ? 'left-3' : 'right-3'">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="flex items-center flex-wrap gap-1.5">
+            <button @click="categoryFilter = 'ALL'"
+                    :class="categoryFilter === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'الكل' : 'All'"></button>
+
+            <button @click="categoryFilter = 'ROOT'"
+                    :class="categoryFilter === 'ROOT' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'رئيسية فقط' : 'Root Groups'"></button>
+
+            <button @click="categoryFilter = 'SUB'"
+                    :class="categoryFilter === 'SUB' ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'فرعية' : 'Sub-categories'"></button>
+
+            <button @click="categoryFilter = 'fixed'"
+                    :class="categoryFilter === 'fixed' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'رف ثابت' : 'Fixed Bin'"></button>
+
+            <button @click="categoryFilter = 'fifo'"
+                    :class="categoryFilter === 'fifo' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'FIFO' : 'FIFO'"></button>
+        </div>
+
+        <!-- View Mode Switcher -->
+        <div class="flex items-center border border-slate-200 rounded-xl p-0.5 bg-slate-100 self-end lg:self-auto">
+            <button @click="categoryViewMode = 'cards'"
+                    :class="categoryViewMode === 'cards' ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                    class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5"
+                    :title="isArabic ? 'عرض بطاقات (Odoo Kanban)' : 'Kanban Cards View'">
+                <i class="fas fa-th-large"></i>
+                <span class="hidden sm:inline" v-text="isArabic ? 'بطاقات' : 'Cards'"></span>
+            </button>
+            <button @click="categoryViewMode = 'table'"
+                    :class="categoryViewMode === 'table' ? 'bg-white text-indigo-600 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                    class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5"
+                    :title="isArabic ? 'عرض جدول شجري (ERPNext Table)' : 'Tree Table View'">
+                <i class="fas fa-list"></i>
+                <span class="hidden sm:inline" v-text="isArabic ? 'جدول' : 'Table'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. VIEW 1: ODOO-STYLE KANBAN CARDS -->
+    <div v-if="categoryViewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div v-for="cat in filteredCategories" :key="cat.id"
+             class="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all flex flex-col justify-between group overflow-hidden">
+            
+            <div class="p-4">
+                <div class="flex items-start justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 text-white font-black flex items-center justify-center text-base shadow-sm">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <div>
+                            <div class="font-mono font-bold text-[11px] text-indigo-600 tracking-wider">
+                                [[ cat.code ]]
+                            </div>
+                            <span v-if="cat.parent_name" class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                <i class="fas fa-level-up-alt rotate-90 text-[8px]"></i> [[ cat.parent_name ]]
+                            </span>
+                            <span v-else class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
+                                [[ isArabic ? 'مجموعة رئيسية' : 'Root Group' ]]
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Items Count Badge -->
+                    <span class="px-2.5 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                        <i class="fas fa-box text-[10px]"></i>
+                        <span>[[ cat.items_count || 0 ]]</span>
+                    </span>
+                </div>
+
+                <!-- Category Name -->
+                <h3 @click="filterItemsByCategory(cat.id)" 
+                    class="font-black text-slate-800 text-base mb-2 hover:text-indigo-600 cursor-pointer transition-colors"
+                    :title="cat.name">
+                    [[ cat.name ]]
+                </h3>
+
+                <!-- Putaway Strategy Badge -->
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 pt-2 border-t border-slate-100">
+                    <span class="text-[10px] font-bold text-slate-400" v-text="isArabic ? 'قاعدة التخزين:' : 'Putaway:'"></span>
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                          :class="cat.default_putaway_strategy === 'fixed' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-200'">
+                        [[ cat.default_putaway_strategy === 'fixed' ? (isArabic ? 'الرف الثابت (Fixed)' : 'Fixed Bin') : (cat.default_putaway_strategy === 'fifo' ? 'FIFO' : (isArabic ? 'الموقع الأقرب' : 'Closest')) ]]
+                    </span>
+                </div>
+            </div>
+
+            <!-- Card Bottom Smart Actions -->
+            <div class="bg-slate-50/80 border-t border-slate-100 p-2.5 flex items-center justify-between gap-1.5">
+                <!-- Filter Items Button -->
+                <button @click="filterItemsByCategory(cat.id)"
+                        class="flex-1 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white py-1.5 px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1">
+                    <i class="fas fa-boxes text-[10px]"></i>
+                    <span v-text="isArabic ? 'عرض الأصناف' : 'View Items'"></span>
+                </button>
+
+                <!-- Edit Category -->
+                <button @click="openCategoryModal(cat)"
+                        class="bg-white hover:bg-slate-800 text-slate-600 hover:text-white p-1.5 rounded-xl text-xs font-bold transition-all border border-slate-200"
+                        :title="isArabic ? 'تعديل الفئة' : 'Edit Category'">
+                    <i class="fas fa-edit"></i>
+                </button>
+
+                <!-- Delete Category -->
+                <button @click="deleteItem('category', cat.id)"
+                        class="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white p-1.5 rounded-xl text-xs font-bold transition-all"
+                        :title="isArabic ? 'حذف الفئة' : 'Delete Category'">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. VIEW 2: ERPNEXT-STYLE DETAILED TREE TABLE -->
+    <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right" :dir="isArabic ? 'rtl' : 'ltr'">
+                <thead class="bg-slate-50/80 border-b border-slate-200 text-xs font-black text-slate-500 uppercase tracking-wider">
+                    <tr>
+                        <th class="p-3.5" v-text="isArabic ? 'الكود' : 'Code'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'اسم المجموعة المخزنية' : 'Category Name'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'المجموعة الأم' : 'Parent Category'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'استراتيجية التخزين (Putaway)' : 'Putaway Strategy'"></th>
+                        <th class="p-3.5 text-center" v-text="isArabic ? 'الأصناف التابعة' : 'Items Count'"></th>
+                        <th class="p-3.5 text-center" v-text="isArabic ? 'الإجراءات' : 'Actions'"></th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-slate-100">
+                    <tr v-for="cat in filteredCategories" :key="cat.id"
+                        class="hover:bg-slate-50/70 transition-colors group">
+                        
+                        <td class="p-3.5 font-mono font-black text-indigo-600 cursor-pointer" @click="filterItemsByCategory(cat.id)">
+                            [[ cat.code ]]
+                        </td>
+
+                        <td class="p-3.5 cursor-pointer" @click="filterItemsByCategory(cat.id)">
+                            <div class="font-black text-slate-800 text-sm group-hover:text-indigo-600 transition-colors flex items-center gap-2">
+                                <i class="fas fa-folder text-indigo-400"></i>
+                                <span>[[ cat.name ]]</span>
+                            </div>
+                        </td>
+
+                        <td class="p-3.5">
+                            <span v-if="cat.parent_name" class="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                                [[ cat.parent_name ]]
+                            </span>
+                            <span v-else class="text-slate-400 italic">
+                                [[ isArabic ? 'مجموعة رئيسية (Root)' : 'Root Group' ]]
+                            </span>
+                        </td>
+
+                        <td class="p-3.5">
+                            <span class="px-2 py-0.5 rounded-md font-bold text-[11px]"
+                                  :class="cat.default_putaway_strategy === 'fixed' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-200'">
+                                [[ cat.default_putaway_strategy === 'fixed' ? (isArabic ? 'الرف الثابت (Fixed Bin)' : 'Fixed Bin') : (cat.default_putaway_strategy === 'fifo' ? 'FIFO' : (isArabic ? 'الموقع الأقرب' : 'Closest')) ]]
+                            </span>
+                        </td>
+
+                        <td class="p-3.5 text-center">
+                            <span class="font-mono font-black text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                [[ cat.items_count || 0 ]]
+                            </span>
+                        </td>
+
+                        <td class="p-3.5 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <button @click="filterItemsByCategory(cat.id)"
+                                        class="px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white font-black text-xs transition-all flex items-center gap-1"
+                                        :title="isArabic ? 'عرض الأصناف' : 'View Items'">
+                                    <i class="fas fa-boxes"></i>
+                                    <span class="hidden sm:inline" v-text="isArabic ? 'الأصناف' : 'Items'"></span>
+                                </button>
+
+                                <button @click="openCategoryModal(cat)"
+                                        class="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white transition-all text-xs"
+                                        :title="isArabic ? 'تعديل' : 'Edit'">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+
+                                <button @click="deleteItem('category', cat.id)"
+                                        class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all text-xs"
+                                        :title="isArabic ? 'حذف' : 'Delete'">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 6. EMPTY STATE -->
+    <div v-if="filteredCategories.length === 0" 
+         class="my-auto py-16 flex flex-col items-center justify-center text-center">
+        <div class="w-20 h-20 rounded-3xl bg-slate-100 text-slate-400 flex items-center justify-center text-3xl mb-4 border border-slate-200">
+            <i class="fas fa-folder-open"></i>
+        </div>
+        <h3 class="text-base font-black text-slate-700 mb-1" v-text="isArabic ? 'لا توجد مجموعات مطابقة' : 'No Categories Found'"></h3>
+        <p class="text-xs text-slate-400 max-w-sm mb-5" v-text="isArabic ? 'لم يتم العثور على أي مجموعات مخزنية تطابق معايير البحث.' : 'No item categories match your search criteria.'"></p>
+        <button @click="openCategoryModal()" 
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-md transition-all flex items-center gap-2">
+            <i class="fas fa-plus"></i>
+            <span v-text="isArabic ? 'إضافة مجموعة جديدة الآن' : 'Add New Category Now'"></span>
+        </button>
+    </div>
+
+</div>

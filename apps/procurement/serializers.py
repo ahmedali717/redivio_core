@@ -7,9 +7,17 @@ from .models import (
 
 class VendorSerializer(serializers.ModelSerializer):
     extra_data = serializers.JSONField(required=False)
+    supplied_items_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Vendor
         fields = '__all__'
+
+    def get_supplied_items_count(self, obj):
+        try:
+            return obj.supplied_materials.count()
+        except Exception:
+            return 0
 
 
 # --- 1. Purchase Requisition Serializers (PR) ---

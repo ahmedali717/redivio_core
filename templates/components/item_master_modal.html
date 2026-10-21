@@ -10,7 +10,15 @@
                     <i class="fas fa-barcode ml-2 text-indigo-600"></i>
                     [[ isEditing ? (isArabic ? 'تعديل صنف' : 'Edit Material') : (isArabic ? 'تعريف صنف جديد' : 'New Material') ]]
                 </h2>
-                <p class="text-xs text-slate-500 mt-1">[[ forms.material.sku || '---' ]] | [[ forms.material.name || '...' ]]</p>
+                <div class="flex items-center gap-2 mt-1 flex-wrap">
+                    <p class="text-xs font-mono font-bold text-slate-500">[[ forms.material.sku || '---' ]] | [[ forms.material.name || '...' ]]</p>
+                    <span v-if="forms.material.on_hand !== undefined" class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-black border border-emerald-200">
+                        <i class="fas fa-box"></i> [[ forms.material.on_hand ]] [[ forms.material.base_uom ]]
+                    </span>
+                    <span v-if="forms.material.default_vendor_name || (vendors.find(v => v.id === forms.material.default_vendor) || {}).name" class="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-black border border-blue-200">
+                        <i class="fas fa-truck"></i> [[ forms.material.default_vendor_name || (vendors.find(v => v.id === forms.material.default_vendor) || {}).name ]]
+                    </span>
+                </div>
             </div>
             
             <div class="flex items-center gap-3">
@@ -44,6 +52,11 @@
                     :class="materialTab === 'inventory' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'"
                     class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
                 <i class="fas fa-boxes ml-1"></i> [[ isArabic ? 'المخزون والرفوف' : 'Inventory & Bins' ]]
+            </button>
+            <button @click="materialTab = 'purchasing'" 
+                    :class="materialTab === 'purchasing' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500'"
+                    class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
+                <i class="fas fa-truck ml-1"></i> [[ isArabic ? 'الشراء والموردين' : 'Purchasing & Vendors' ]]
             </button>
             <button @click="materialTab = 'recipe'" 
                     v-if="view === 'restaurant_pos_module' || purchasedModules.includes('restaurant_pos')"
@@ -162,13 +175,18 @@
                             </select>
                         </div>
 
-                        <!-- 🚀 Category & Sale Group prominently placed -->
+                        <!-- 🚀 Category with + button to add category inline -->
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'فئة الصنف (Category)' : 'Category' ]]</label>
-                            <select v-model="forms.material.category" class="w-full px-4 py-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500">
-                                <option value="">[[ isArabic ? '-- بدون فئة --' : '-- No Category --' ]]</option>
-                                <option v-for="c in categories" :key="c.id" :value="c.id">[[ c.name ]]</option>
-                            </select>
+                            <div class="flex gap-1.5">
+                                <select v-model="forms.material.category" class="flex-1 px-4 py-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">[[ isArabic ? '-- بدون فئة --' : '-- No Category --' ]]</option>
+                                    <option v-for="c in categories" :key="c.id" :value="c.id">[[ c.name ]]</option>
+                                </select>
+                                <button type="button" @click="openCategoryModal()" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition-all font-bold text-xs" :title="isArabic ? 'إضافة مجموعة جديدة' : 'Add Category'">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="col-span-2 md:col-span-1">
@@ -314,6 +332,92 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'الحد الأقصى (Max)' : 'Max Level' ]]</label>
                         <input type="number" step="0.01" v-model.number="forms.material.max_level" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purchasing & Vendor Tab (Odoo & ERPNext Fusion) -->
+            <div v-show="materialTab === 'purchasing'" class="space-y-6 animate-in slide-in-from-right-4">
+                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-2xl border border-emerald-100">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg font-bold shadow-md shadow-emerald-500/20">
+                            <i class="fas fa-truck-loading"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-black text-emerald-900 uppercase tracking-widest">
+                                [[ isArabic ? 'إعدادات المشتريات والمورد الافتراضي (Odoo Vendor Master)' : 'Purchasing & Vendor Integration' ]]
+                            </h4>
+                            <p class="text-[10px] text-emerald-700 font-medium">
+                                [[ isArabic ? 'ربط الصنف بالمورد الرئيسي، شروط التوريد والحد الأدنى للطلب (MOQ)' : 'Link item with primary supplier, part numbers & lead time' ]]
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-5 rounded-xl border border-emerald-100 shadow-sm" :dir="isArabic ? 'rtl' : 'ltr'">
+                        <!-- Default Vendor -->
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="block text-xs font-black text-slate-700 mb-1.5">
+                                [[ isArabic ? 'المورد الافتراضي للصنف *' : 'Default Supplier / Vendor' ]]
+                            </label>
+                            <div class="flex gap-1.5">
+                                <select v-model="forms.material.default_vendor" class="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none">
+                                    <option :value="null">[[ isArabic ? '-- بدون مورد افتراضي --' : '-- No Default Vendor --' ]]</option>
+                                    <option v-for="v in vendors" :key="v.id" :value="v.id">
+                                        [[ v.name ]] ([[ v.code ]])
+                                    </option>
+                                </select>
+                                <button type="button" @click="openVendorModal()" class="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-xl transition-all font-bold text-xs" :title="isArabic ? 'إضافة مورد جديد' : 'Add Vendor'">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Vendor Part Number -->
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="block text-xs font-black text-slate-700 mb-1.5">
+                                [[ isArabic ? 'كود الصنف عند المورد (Supplier SKU)' : 'Supplier Part Number / SKU' ]]
+                            </label>
+                            <input type="text" v-model="forms.material.vendor_part_number" placeholder="e.g. VEN-PART-889"
+                                   class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                        </div>
+
+                        <!-- Standard Cost -->
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 mb-1.5">
+                                [[ isArabic ? 'تكلفة الشراء المعيارية (Purchase Cost)' : 'Purchase Standard Cost' ]]
+                            </label>
+                            <div class="relative">
+                                <input type="number" step="0.01" v-model.number="forms.material.standard_price"
+                                       class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                                <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-400">SAR</span>
+                            </div>
+                        </div>
+
+                        <!-- Lead Time Days -->
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 mb-1.5">
+                                [[ isArabic ? 'فترة التوريد المتوقعة (Lead Time)' : 'Lead Time (Days)' ]]
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" min="0" v-model.number="forms.material.lead_time_days"
+                                       class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                                <span class="text-xs font-bold text-slate-400 whitespace-nowrap">[[ isArabic ? 'يوم' : 'Days' ]]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Direct PO Generation from Item Modal -->
+                    <div class="mt-4 flex items-center justify-between p-4 bg-white/80 rounded-xl border border-emerald-200">
+                        <div>
+                            <div class="text-xs font-black text-slate-800" v-text="isArabic ? 'إنشاء أمر شراء فوري للصنف' : 'Instant Purchase Order'"></div>
+                            <div class="text-[10px] text-slate-500" v-text="isArabic ? 'توليد أمر توريد فوري (PO) للمورد الافتراضي بهذا الصنف' : 'Directly initiate a procurement order for this supplier'"></div>
+                        </div>
+                        <button type="button" 
+                                @click="showModal = false; openModal('po', { items: [{ material: forms.material.id, uom: forms.material.base_uom, quantity: forms.material.reorder_level || 1, unit_price: forms.material.standard_price || 0 }], vendor: forms.material.default_vendor })"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-sm">
+                            <i class="fas fa-cart-plus"></i>
+                            <span v-text="isArabic ? 'إنشاء أمر شراء (+ PO)' : 'Create PO Now'"></span>
+                        </button>
                     </div>
                 </div>
             </div>

@@ -4,11 +4,11 @@
         {% include "components/item_master_modal.html" %}
     </template>
 
-    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : (modalType === 'vendor' ? 'w-full max-w-3xl rounded-3xl shadow-2xl p-6 md:p-8 max-h-[92vh]' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]')]">
+    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : (['vendor', 'category'].includes(modalType) ? 'w-full max-w-3xl rounded-3xl shadow-2xl p-6 md:p-8 max-h-[92vh]' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]')]">
         
         <div class="flex justify-between items-center mb-6 border-b pb-4">
             <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <i :class="modalType === 'vendor' ? 'fas fa-truck text-emerald-500' : (modalType === 'stock_entry' ? 'fas fa-exchange-alt text-emerald-500' : 'fas fa-plus-circle text-indigo-500')"></i>
+                <i :class="modalType === 'vendor' ? 'fas fa-truck text-emerald-500' : (modalType === 'category' ? 'fas fa-folder-tree text-indigo-500' : (modalType === 'stock_entry' ? 'fas fa-exchange-alt text-emerald-500' : 'fas fa-plus-circle text-indigo-500'))"></i>
                 <span v-text="isArabic ? modalTitles[modalType]?.ar : modalTitles[modalType]?.en"></span>
             </h3>
             <div class="flex items-center gap-3">
@@ -1690,6 +1690,87 @@
                                 <option value="AED">AED - درهم إماراتي</option>
                             </select>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 6. CATEGORY / ITEM GROUP MODAL (المجموعات المخزنية) -->
+            <!-- ========================================== -->
+            <div v-if="modalType === 'category'" class="space-y-5">
+                <!-- Identity Banner -->
+                <div class="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-500/20 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-indigo-500/20">
+                            <i class="fas fa-folder-tree"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-black text-indigo-700 uppercase tracking-widest">
+                                [[ isArabic ? 'بطاقة المجموعة المخزنية' : 'Item Group / Category' ]]
+                            </div>
+                            <div class="text-xs text-slate-500 font-medium">
+                                [[ isArabic ? 'تصنيف هرمي وقواعد توجيه الأرفف (Odoo Putaway & ERPNext)' : 'Hierarchical grouping & putaway strategy' ]]
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-slate-400">[[ isArabic ? 'الكود:' : 'Code:' ]]</span>
+                        <span class="font-mono font-black text-sm bg-white px-3 py-1 rounded-xl border border-slate-200 text-slate-800 shadow-sm">
+                            [[ forms.category.code || 'CAT-AUTO' ]]
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Code & Name -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'كود المجموعة *' : 'Category Code *' ]]
+                        </label>
+                        <input type="text" v-model="forms.category.code" required
+                               placeholder="e.g. CAT-RAW"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all shadow-sm">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'اسم المجموعة / الفئة *' : 'Category Name *' ]]
+                        </label>
+                        <input type="text" v-model="forms.category.name" required
+                               placeholder="e.g. Raw Materials / مواد خام"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all shadow-sm">
+                    </div>
+                </div>
+
+                <!-- Parent Category & Putaway Strategy -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'المجموعة الرئيسية (الأب)' : 'Parent Category' ]]
+                        </label>
+                        <select v-model="forms.category.parent" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all shadow-sm">
+                            <option :value="null">[[ isArabic ? '-- فئة رئيسية (Root Category) --' : '-- Root Category --' ]]</option>
+                            <option v-for="c in (categories || []).filter(x => !forms.category.id || x.id !== forms.category.id)" :key="c.id" :value="c.id">
+                                [[ c.name ]] ([[ c.code ]])
+                            </option>
+                        </select>
+                        <p class="text-[10px] text-slate-400 mt-1">
+                            [[ isArabic ? 'اختر فئة رئيسية لتكون هذه الفئة فرعية منها، أو اتركها كفئة رئيسية.' : 'Select a parent category to create a sub-category hierarchy.' ]]
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'استراتيجية التخزين (Putaway Strategy)' : 'Putaway Strategy' ]]
+                        </label>
+                        <select v-model="forms.category.default_putaway_strategy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all shadow-sm">
+                            <option value="fixed">[[ isArabic ? 'الرف الثابت (Fixed Bin) - توجيه الصنف لرف محدد' : 'Fixed Bin - Store in primary bin' ]]</option>
+                            <option value="closest">[[ isArabic ? 'الموقع الأقرب (Closest Location) - للمدخل ومناطق التجهيز' : 'Closest Location' ]]</option>
+                            <option value="fifo">[[ isArabic ? 'الوارد أولاً يصرف أولاً (FIFO) - الأقدم أولاً' : 'FIFO - First In First Out' ]]</option>
+                        </select>
+                        <p class="text-[10px] text-slate-400 mt-1">
+                            [[ isArabic ? 'تحدد كيفية توجيه أصناف هذه الفئة عند الاستلام والتخزين في الرفوف.' : 'Determines how inbound items are routed to warehouse bins.' ]]
+                        </p>
                     </div>
                 </div>
             </div>

@@ -45,6 +45,18 @@ class Material(TenantBaseModel):
     # 🚀 Item 10: حقل التفعيل والتعطيل للصنف
     is_active = models.BooleanField(default=True, verbose_name="نشط؟", help_text="تعطيل الصنف يمنع أي معاملات مخزنية أو بيعية عليه")
     
+    # 🚀 Odoo & ERPNext Fusion: ربط الصنف بالمورد الافتراضي وشروط التوريد
+    default_vendor = models.ForeignKey(
+        'procurement.Vendor',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='supplied_materials',
+        verbose_name="المورد الافتراضي (Default Supplier)"
+    )
+    vendor_part_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="كود الصنف عند المورد")
+    lead_time_days = models.PositiveIntegerField(default=1, verbose_name="فترة التوريد بالأيام")
+    
     barcode = models.CharField(max_length=100, null=True, blank=True)
     image = models.ImageField(upload_to='materials/', null=True, blank=True)
     extra_images = models.JSONField(default=list, blank=True, help_text="معرض صور إضافية للصنف")

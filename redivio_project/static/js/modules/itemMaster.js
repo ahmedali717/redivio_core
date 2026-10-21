@@ -45,7 +45,11 @@ export const itemMasterModule = {
                 allowed_terminals: [],
                 // 👕 Product Variants
                 has_variants: false,
-                variants: []
+                variants: [],
+                // 🛒 المشتريات والمورد الافتراضي (دمج Odoo & ERPNext)
+                default_vendor: null,
+                vendor_part_number: '',
+                lead_time_days: 1
             }
         }
     },
@@ -181,6 +185,11 @@ export const itemMasterModule = {
                 has_variants: material.has_variants || false,
                 variants: material.variants ? JSON.parse(JSON.stringify(material.variants)) : [],
                 
+                // 🛒 المشتريات والمورد الافتراضي (دمج Odoo & ERPNext)
+                default_vendor: material.default_vendor || null,
+                vendor_part_number: material.vendor_part_number || '',
+                lead_time_days: material.lead_time_days !== undefined ? material.lead_time_days : 1,
+
                 // 🚀 البيانات الجديدة لعرض الأرصدة (Odoo 19 Modal)
                 on_hand: material.on_hand || 0,
                 stock_details: material.stock_details || []

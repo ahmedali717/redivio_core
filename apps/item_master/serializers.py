@@ -1,11 +1,21 @@
 import json
+from django.apps import apps
 from rest_framework import serializers
 from .models import Material, Category, MaterialLocation, SaleGroup, ComboItem
 
 class CategorySerializer(serializers.ModelSerializer):
+    parent_name = serializers.CharField(source='parent.name', read_only=True)
+    items_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ['id', 'code', 'name', 'parent', 'parent_name', 'default_putaway_strategy', 'items_count']
+
+    def get_items_count(self, obj):
+        try:
+            return obj.material_set.count()
+        except Exception:
+            return 0
 
 class SaleGroupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,6 +25,8 @@ class SaleGroupSerializer(serializers.ModelSerializer):
 class MaterialSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     sale_group_name = serializers.CharField(source='sale_group.name', read_only=True)
+    default_vendor_name = serializers.CharField(source='default_vendor.name', read_only=True)
+    default_vendor_code = serializers.CharField(source='default_vendor.code', read_only=True)
     company_assignments = serializers.SerializerMethodField()
     on_hand = serializers.SerializerMethodField()
     recipe_lines = serializers.SerializerMethodField()
@@ -27,6 +39,11 @@ class MaterialSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=False, allow_null=True)
     sale_group = serializers.PrimaryKeyRelatedField(queryset=SaleGroup.objects.all(), required=False, allow_null=True)
     parent_template = serializers.PrimaryKeyRelatedField(queryset=Material.objects.all(), required=False, allow_null=True)
+    default_vendor = serializers.PrimaryKeyRelatedField(
+        queryset=apps.get_model('procurement', 'Vendor').objects.all() if apps.is_installed('apps.procurement') else None,
+        required=False,
+        allow_null=True
+    )
 
     class Meta:
         model = Material
@@ -34,6 +51,7 @@ class MaterialSerializer(serializers.ModelSerializer):
             'id', 'sku', 'name', 'description', 'category', 'category_name', 'sale_group', 'sale_group_name',
             'base_uom', 'alternate_uom', 'uom_conversion_factor', 'is_active', 'barcode', 'company_assignments',
             'standard_price', 'sales_price', 'tax_rate', 'plant_prices',
+            'default_vendor', 'default_vendor_name', 'default_vendor_code', 'vendor_part_number', 'lead_time_days',
             'image', 'extra_images', 'tracking', 'reorder_level', 'max_level', 'on_hand', 'stock_details',
             'is_pos_item', 'is_combo', 'expiry_date', 'recipe_lines', 'combo_lines', 'allowed_terminals',
             'has_variants', 'parent_template', 'variant_name', 'variants'
@@ -61,7 +79,7 @@ class MaterialSerializer(serializers.ModelSerializer):
             raw_data.pop(custom_field, None)
 
         # 🚀 تنظيف الحقول المرتبطة (Foreign Keys)
-        for fk_field in ['category', 'sale_group', 'parent_template']:
+        for fk_field in ['category', 'sale_group', 'parent_template', 'default_vendor']:
             val = raw_data.get(fk_field)
             if isinstance(val, list):
                 val = val[0] if len(val) > 0 else None

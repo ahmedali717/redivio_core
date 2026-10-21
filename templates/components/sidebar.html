@@ -114,6 +114,18 @@
                 </div>
             </a>
 
+            <a href="#" v-if="canAccess('inventory_module')" @click.prevent="inventoryTab = 'categories'"
+                :class="inventoryTab === 'categories' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-folder-tree"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'المجموعات المخزنية' : 'Item Groups' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'تصنيفات وفئات الأصناف' : 'Categories & Putaway' ]]</span>
+                </div>
+            </a>
+
             <!-- Full Package: العمليات المخزنية -->
             <a v-if="systemMode !== 'standalone'" href="#" @click.prevent="inventoryTab = 'item_ledger'"
                 :class="inventoryTab === 'item_ledger' ? 'active' : 'inactive'"

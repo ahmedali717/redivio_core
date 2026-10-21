@@ -182,6 +182,13 @@ createApp({
             vendorSearch: '',
             vendorTypeFilter: 'ALL',
             vendorViewMode: 'cards',
+            // 📦 المجموعات المخزنية والأصناف (دمج Odoo & ERPNext)
+            categorySearch: '',
+            categoryFilter: 'ALL',
+            categoryViewMode: 'cards',
+            materialFilter: 'ALL',
+            selectedCategoryFilter: '',
+            selectedVendorFilter: '',
             customers: [],
             salesOrders: [],
             salesInvoices: [],
@@ -365,11 +372,19 @@ createApp({
                 journal_entry: { ar: 'سند قيد محاسبي مزدوج (Journal Entry)', en: 'Journal Entry Voucher' },
                 purchase_invoice: { ar: 'فاتورة شراء ومطالبة مورد (Purchase Invoice)', en: 'Purchase Invoice' },
                 payment_entry: { ar: 'سند قبض / صرف نقدية (Payment Entry)', en: 'Payment Entry' },
-                vendor: { ar: 'بيانات المورد (Vendor Profile)', en: 'Vendor Profile' }
+                vendor: { ar: 'بيانات المورد (Vendor Profile)', en: 'Vendor Profile' },
+                category: { ar: 'مجموعة أصناف مخزنية (Item Group)', en: 'Item Group / Category' }
             },
 
             forms: {
                 ...(inventoryModule.state?.forms || {}),
+                category: {
+                    id: null,
+                    code: '',
+                    name: '',
+                    parent: null,
+                    default_putaway_strategy: 'fixed'
+                },
                 account: {
                     id: null,
                     account_number: '',
@@ -455,7 +470,10 @@ createApp({
                     combo_lines: [],
                     allowed_terminals: [],
                     has_variants: false,
-                    variants: []
+                    variants: [],
+                    default_vendor: null,
+                    vendor_part_number: '',
+                    lead_time_days: 1
                 },
                 po: {
                     id: null,
@@ -589,6 +607,76 @@ createApp({
                 vendorsWithDebt: vendorsWithDebt,
                 companiesCount: companiesCount,
                 individualsCount: individualsCount
+            };
+        },
+
+        // --- 📦 المجموعات المخزنية (Item Groups & Categories) ---
+        filteredCategories() {
+            let list = this.categories || [];
+            if (this.categoryFilter && this.categoryFilter !== 'ALL') {
+                if (this.categoryFilter === 'ROOT') {
+                    list = list.filter(c => !c.parent);
+                } else if (this.categoryFilter === 'SUB') {
+                    list = list.filter(c => !!c.parent);
+                } else if (this.categoryFilter === 'fixed') {
+                    list = list.filter(c => c.default_putaway_strategy === 'fixed');
+                } else if (this.categoryFilter === 'fifo') {
+                    list = list.filter(c => c.default_putaway_strategy === 'fifo');
+                }
+            }
+            if (this.categorySearch) {
+                const q = this.categorySearch.trim().toLowerCase();
+                list = list.filter(c =>
+                    (c.name && c.name.toLowerCase().includes(q)) ||
+                    (c.code && c.code.toLowerCase().includes(q)) ||
+                    (c.parent_name && c.parent_name.toLowerCase().includes(q))
+                );
+            }
+            return list;
+        },
+
+        categoryStats() {
+            const list = this.categories || [];
+            let rootCount = 0;
+            let subCount = 0;
+            let totalItems = 0;
+            list.forEach(c => {
+                if (c.parent) subCount++;
+                else rootCount++;
+                totalItems += (c.items_count || 0);
+            });
+            return {
+                totalCount: list.length,
+                rootCount: rootCount,
+                subCount: subCount,
+                totalCategorizedItems: totalItems
+            };
+        },
+
+        itemStats() {
+            const list = (this.materials_list || []).filter(item => !item.parent_template);
+            let activeCount = 0;
+            let lowStockCount = 0;
+            let totalValuation = 0;
+
+            list.forEach(m => {
+                if (m.is_active !== false) activeCount++;
+                const onHand = parseFloat(m.on_hand || 0);
+                const reorder = parseFloat(m.reorder_level || 0);
+                const cost = parseFloat(m.standard_price || 0);
+                
+                if (reorder > 0 && onHand <= reorder) {
+                    lowStockCount++;
+                }
+                totalValuation += (onHand * cost);
+            });
+
+            return {
+                totalCount: list.length,
+                activeCount: activeCount,
+                lowStockCount: lowStockCount,
+                totalValuation: totalValuation,
+                categoriesCount: (this.categories || []).length
             };
         },
 
@@ -898,19 +986,46 @@ createApp({
                 });
             }
 
-            // 2. تصفية إضافية لموديول المطاعم (اختياري: يمكنك فلترة الأصناف هنا إذا رغبت)
-            if (this.view === 'restaurant_pos_module' && this.posTab === 'recipes') {
-                // سنعرض كل الأصناف حالياً لتمكين إدارة المكونات أيضاً
+            // 2. فلترة سريعة بالمجموعات (Category) إذا تم تحديدها
+            if (this.selectedCategoryFilter) {
+                list = list.filter(item => parseInt(item.category) === parseInt(this.selectedCategoryFilter));
             }
 
-            // 2. فلترة بنص البحث (لو المستخدم كتب حاجة)
+            // 3. فلترة بالمورد (Vendor) إذا تم التحويل من شاشة الموردين
+            if (this.selectedVendorFilter) {
+                list = list.filter(item => parseInt(item.default_vendor) === parseInt(this.selectedVendorFilter));
+            }
+
+            // 4. فلترة بحسب الحالة وحبات الفلترة (Quick Filter Pills)
+            if (this.materialFilter && this.materialFilter !== 'ALL') {
+                if (this.materialFilter === 'IN_STOCK') {
+                    list = list.filter(item => parseFloat(item.on_hand || 0) > 0);
+                } else if (this.materialFilter === 'LOW_STOCK') {
+                    list = list.filter(item => {
+                        const reorder = parseFloat(item.reorder_level || 0);
+                        const onHand = parseFloat(item.on_hand || 0);
+                        return reorder > 0 && onHand <= reorder;
+                    });
+                } else if (this.materialFilter === 'HAS_VARIANTS') {
+                    list = list.filter(item => item.has_variants);
+                } else if (this.materialFilter === 'POS') {
+                    list = list.filter(item => item.is_pos_item);
+                } else if (this.materialFilter === 'ACTIVE') {
+                    list = list.filter(item => item.is_active !== false);
+                }
+            }
+
+            // 5. فلترة بنص البحث
             if (!this.searchQuery) return list;
 
             const query = this.searchQuery.toLowerCase();
             return list.filter(item =>
                 (item.name && item.name.toLowerCase().includes(query)) ||
                 (item.sku && item.sku.toLowerCase().includes(query)) ||
-                (item.barcode && item.barcode.toLowerCase().includes(query))
+                (item.barcode && item.barcode.toLowerCase().includes(query)) ||
+                (item.description && item.description.toLowerCase().includes(query)) ||
+                (item.default_vendor_name && item.default_vendor_name.toLowerCase().includes(query)) ||
+                (item.vendor_part_number && item.vendor_part_number.toLowerCase().includes(query))
             );
         },
 
@@ -5881,7 +5996,9 @@ createApp({
             this.modalType = type;
             this.showModal = true;
 
-            if (type === 'material') {
+            if (type === 'category') {
+                return this.openCategoryModal(item);
+            } else if (type === 'material') {
                 const itemData = JSON.parse(JSON.stringify(item));
 
                 this.forms.material = {
@@ -5907,6 +6024,10 @@ createApp({
                     allowed_terminals: itemData.allowed_terminals ? [...itemData.allowed_terminals] : [],
                     has_variants: itemData.has_variants || false,
                     variants: itemData.variants ? JSON.parse(JSON.stringify(itemData.variants)) : [],
+                    // 🛒 Procurement & Vendor Integration
+                    default_vendor: itemData.default_vendor || null,
+                    vendor_part_number: itemData.vendor_part_number || '',
+                    lead_time_days: itemData.lead_time_days !== undefined ? itemData.lead_time_days : 1,
                     // 🚀 التعديل الجوهري هنا لملء الجدول الديناميكي عند التعديل
                     // نحول البيانات المسطحة القادمة من السيرفر إلى مصفوفة الـ Assignments
                     company_assignments: itemData.company_assignments || [
@@ -6005,7 +6126,8 @@ createApp({
                 this.confirmModal.show = false; // إخفاء المودال فوراً
                 try {
                     this.loading = true;
-                    const res = await fetch(`/api/${type}s/${id}/`, {
+                    const deleteUrl = (type === 'category') ? `/api/categories/${id}/` : `/api/${type}s/${id}/`;
+                    const res = await fetch(deleteUrl, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRFToken': this.getCookie('csrftoken')
@@ -6079,6 +6201,7 @@ createApp({
 
             // تصحيح مسارات الـ API الخاصة بكل موديل
             if (type === 'po') url = isEdit ? `/api/orders/${id}/` : `/api/orders/`;
+            else if (type === 'category') url = isEdit ? `/api/categories/${id}/` : `/api/categories/`;
             else if (type === 'salesorder') url = isEdit ? `/api/sales-orders/${id}/` : `/api/sales-orders/`;
             else if (type === 'customer') url = isEdit ? `/api/customers/${id}/` : `/api/customers/`;
             else if (type === 'delivery') url = '/api/stock-deliveries/';
@@ -6134,7 +6257,7 @@ createApp({
                             let val = data[key];
                             if (typeof val === 'boolean') val = val ? 'true' : 'false';
                             // 🚀 حظر إرسال السلاسل الفارغة للحقول المرتبطة وتواريخ الانتهاء
-                            if (['category', 'sale_group', 'parent_template', 'expiry_date'].includes(key) && (val === '' || val === 'null' || val === 'undefined' || val === null || val === undefined)) {
+                            if (['category', 'sale_group', 'parent_template', 'expiry_date', 'default_vendor'].includes(key) && (val === '' || val === 'null' || val === 'undefined' || val === null || val === undefined)) {
                                 return;
                             }
                             payload.append(key, val);
@@ -7039,12 +7162,16 @@ createApp({
                 this.forms.location = { id: null, plant: this.activePlantId, code: '', name: '' };
             } else if (type === 'bin') {
                 this.forms.bin = { id: null, plant: this.activePlantId, code: '', is_active: true };
+            } else if (type === 'category') {
+                this.openCategoryModal(data);
+                return;
             } else if (type === 'material') {
                 this.forms.material = {
                     id: null, sku: '', name: '', category: '', sale_group: '', base_uom: 'PCS', barcode: '',
                     standard_price: 0, sales_price: 0, tax_rate: 15, is_pos_item: false, is_combo: false,
                     company_assignments: [{ opco_id: this.activeOpcoId, bins: [], primary_bin: null }],
-                    tracking: 'none', reorder_level: 0, max_level: 0, recipe_lines: [], combo_lines: []
+                    tracking: 'none', reorder_level: 0, max_level: 0, recipe_lines: [], combo_lines: [],
+                    default_vendor: null, vendor_part_number: '', lead_time_days: 1
                 };
             } else if (type === 'stock_entry') {
                 this.activeOperation = 'manual';
@@ -7220,6 +7347,52 @@ createApp({
                     }
                 }
             }
+        },
+
+        // 📦 المجموعات المخزنية وربط الأصناف والموردين (دمج Odoo & ERPNext)
+        openCategoryModal(cat = null) {
+            this.modalType = 'category';
+            if (cat) {
+                this.isEditing = true;
+                this.forms.category = {
+                    id: cat.id,
+                    code: cat.code || '',
+                    name: cat.name || '',
+                    parent: cat.parent || null,
+                    default_putaway_strategy: cat.default_putaway_strategy || 'fixed'
+                };
+            } else {
+                this.isEditing = false;
+                this.forms.category = {
+                    id: null,
+                    code: `CAT-${(this.categories.length + 1).toString().padStart(3, '0')}`,
+                    name: '',
+                    parent: null,
+                    default_putaway_strategy: 'fixed'
+                };
+            }
+            this.showModal = true;
+        },
+
+        filterItemsByCategory(catId) {
+            this.selectedCategoryFilter = catId;
+            this.selectedVendorFilter = '';
+            this.materialFilter = 'ALL';
+            this.inventoryTab = 'items';
+            this.view = 'inventory_module';
+            const cat = (this.categories || []).find(c => c.id === catId);
+            const name = cat ? cat.name : catId;
+            this.showToast(this.isArabic ? `تصفية الأصناف بالمجموعة: ${name}` : `Filtered by group: ${name}`, 'info');
+        },
+
+        viewVendorItems(vendor) {
+            if (!vendor) return;
+            this.selectedVendorFilter = vendor.id;
+            this.selectedCategoryFilter = '';
+            this.materialFilter = 'ALL';
+            this.view = 'inventory_module';
+            this.inventoryTab = 'items';
+            this.showToast(this.isArabic ? `عرض أصناف المورد: ${vendor.name}` : `Showing items supplied by: ${vendor.name}`, 'info');
         },
 
         openVendorModal(vendor = null) {
