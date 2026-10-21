@@ -206,6 +206,7 @@
                 <hr class="border-amber-500/20 flex-1">
             </div>
 
+            <!-- 1. Overview -->
             <a href="#" v-if="canAccess('accounting_module')" @click.prevent="accountingTab = 'dashboard'"
                 :class="accountingTab === 'dashboard' ? 'active' : 'inactive'"
                 class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
@@ -214,22 +215,50 @@
                 </div>
                 <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
                     <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'نظرة عامة' : 'Overview' ]]</span>
-                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'الملخصات المالية' : 'Financial summaries' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'الملخصات والسيولة' : 'Liquidity summaries' ]]</span>
                 </div>
             </a>
 
-            <a href="#" @click.prevent="accountingTab = 'customers'"
-                :class="accountingTab === 'customers' ? 'active' : 'inactive'"
+            <!-- 2. Chart of Accounts -->
+            <a href="#" @click.prevent="accountingTab = 'chart_of_accounts'; fetchAccounts();"
+                :class="accountingTab === 'chart_of_accounts' ? 'active' : 'inactive'"
                 class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
                 <div class="icon-wrapper">
-                    <i class="fas fa-users"></i>
+                    <i class="fas fa-sitemap"></i>
                 </div>
                 <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
-                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'العملاء' : 'Customers' ]]</span>
-                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'دليل وحسابات العملاء' : 'Directory & credit terms' ]]</span>
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'دليل الحسابات' : 'Chart of Accounts' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'الهيكل المالي الشجري' : 'Account hierarchy' ]]</span>
                 </div>
             </a>
 
+            <!-- 3. Journal Entries -->
+            <a href="#" @click.prevent="accountingTab = 'journal_entries'; fetchJournalEntries();"
+                :class="accountingTab === 'journal_entries' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-book-journal-whills"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'قيود اليومية' : 'Journal Entries' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'القيود المزدوجة والتسويات' : 'Double entry vouchers' ]]</span>
+                </div>
+            </a>
+
+            <!-- 4. General Ledger -->
+            <a href="#" @click.prevent="accountingTab = 'general_ledger'; fetchGLEntries();"
+                :class="accountingTab === 'general_ledger' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-scale-balanced"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'الأستاذ العام' : 'General Ledger' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'سجل الحركات الموحد' : 'Financial transaction log' ]]</span>
+                </div>
+            </a>
+
+            <!-- 5. Sales Invoices -->
             <a href="#" @click.prevent="accountingTab = 'invoices'"
                 :class="accountingTab === 'invoices' ? 'active' : 'inactive'"
                 class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
@@ -237,20 +266,47 @@
                     <i class="fas fa-file-invoice"></i>
                 </div>
                 <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
-                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'الفواتير' : 'Invoices' ]]</span>
-                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'إصدار ومتابعة الفواتير' : 'Billing & tax reports' ]]</span>
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'فواتير المبيعات' : 'Sales Invoices' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'حسابات العملاء والفوترة' : 'Debtors & billing' ]]</span>
                 </div>
             </a>
 
-            <a href="#" @click.prevent="accountingTab = 'payments'"
+            <!-- 6. Purchase Invoices -->
+            <a href="#" @click.prevent="accountingTab = 'purchase_invoices'; fetchPurchaseInvoices();"
+                :class="accountingTab === 'purchase_invoices' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'فواتير المشتريات' : 'Purchase Bills' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'مطالبات واستحقاق الموردين' : 'Creditors & bills' ]]</span>
+                </div>
+            </a>
+
+            <!-- 7. Payment Entries -->
+            <a href="#" @click.prevent="accountingTab = 'payments'; fetchPaymentEntries();"
                 :class="accountingTab === 'payments' ? 'active' : 'inactive'"
                 class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
                 <div class="icon-wrapper">
-                    <i class="fas fa-money-bill-wave"></i>
+                    <i class="fas fa-money-check-dollar"></i>
                 </div>
                 <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
-                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'المدفوعات' : 'Payments' ]]</span>
-                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'حركات الخزينة والبنك' : 'Cash & bank transactions' ]]</span>
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'القبض والصرف' : 'Payment Entries' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'سندات الخزينة والبنوك' : 'Receipts & vouchers' ]]</span>
+                </div>
+            </a>
+
+            <!-- 8. Financial Reports -->
+            <a href="#" @click.prevent="accountingTab = 'reports'; loadReportData();"
+                :class="accountingTab === 'reports' ? 'active' : 'inactive'"
+                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                <div class="icon-wrapper">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                    <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'التقارير المالية' : 'Financial Reports' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'ميزان المراجعة والأرباح' : 'Trial balance & P&L' ]]</span>
                 </div>
             </a>
         </template>

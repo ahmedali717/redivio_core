@@ -1,0 +1,221 @@
+<div class="space-y-6 animate-in slide-in-from-bottom-4 duration-500 pb-10">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-black shadow-sm border border-amber-100">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "القوائم والتقارير الختامية (Financial Statements)" : "Financial Reports" ]]</h2>
+                <p class="text-slate-500 text-xs font-semibold">[[ isArabic ? "ميزان المراجعة، الأرباح والخسائر، والميزانية العمومية مستخرجة مباشرة من الأستاذ العام" : "Trial Balance, Profit & Loss, and Balance Sheet directly generated from GL" ]]</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button @click="printCurrentReport()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2">
+                <i class="fas fa-print"></i>
+                <span>[[ isArabic ? "طباعة التقرير" : "Print Report" ]]</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Sub-tab Navigation (Reports) -->
+    <div class="bg-slate-900 p-2 rounded-2xl flex flex-wrap gap-2 text-xs font-bold text-slate-400 border border-slate-800">
+        <button @click="activeReportTab = 'trial_balance'; loadReportData();"
+            :class="activeReportTab === 'trial_balance' ? 'bg-amber-500 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-slate-200'"
+            class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-balance-scale"></i>
+            <span>[[ isArabic ? "ميزان المراجعة (Trial Balance)" : "Trial Balance" ]]</span>
+        </button>
+        <button @click="activeReportTab = 'profit_and_loss'; loadReportData();"
+            :class="activeReportTab === 'profit_and_loss' ? 'bg-emerald-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-slate-200'"
+            class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-arrow-trend-up"></i>
+            <span>[[ isArabic ? "قائمة الدخل / الأرباح والخسائر (P&L)" : "Profit & Loss" ]]</span>
+        </button>
+        <button @click="activeReportTab = 'balance_sheet'; loadReportData();"
+            :class="activeReportTab === 'balance_sheet' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-slate-200'"
+            class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-building-columns"></i>
+            <span>[[ isArabic ? "الميزانية العمومية (Balance Sheet)" : "Balance Sheet" ]]</span>
+        </button>
+    </div>
+
+    <!-- Date Filters Bar -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-2xs">
+        <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-400">[[ isArabic ? "من:" : "From:" ]]</span>
+                <input type="date" v-model="reportFilters.from_date" @change="loadReportData" class="bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500">
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-400">[[ isArabic ? "إلى:" : "To:" ]]</span>
+                <input type="date" v-model="reportFilters.to_date" @change="loadReportData" class="bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500">
+            </div>
+        </div>
+
+        <button @click="loadReportData" class="px-4 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5">
+            <i class="fas fa-filter"></i>
+            <span>[[ isArabic ? "تطبيق الفلاتر" : "Apply" ]]</span>
+        </button>
+    </div>
+
+    <!-- 1. TRIAL BALANCE TAB -->
+    <div v-if="activeReportTab === 'trial_balance'" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="flex items-center justify-between border-b pb-4">
+            <div>
+                <h3 class="font-black text-slate-800 text-lg">[[ isArabic ? "ميزان المراجعة بالأرصدة" : "Trial Balance" ]]</h3>
+                <p class="text-xs text-slate-400 font-bold">[[ isArabic ? "التحقق من توازن الأرصدة المدينة والدائنة" : "Debit and Credit parity validation" ]]</p>
+            </div>
+            <span v-if="accountingReports.trialBalance" :class="accountingReports.trialBalance.is_balanced ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
+                class="px-3 py-1 rounded-full text-xs font-black uppercase flex items-center gap-1.5">
+                <i :class="accountingReports.trialBalance.is_balanced ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle'"></i>
+                [[ accountingReports.trialBalance.is_balanced ? (isArabic ? 'الميزان متطابق ومتوازن' : 'Balanced') : (isArabic ? 'يوجد فرق' : 'Unbalanced') ]]
+            </span>
+        </div>
+
+        <div v-if="!accountingReports.trialBalance || accountingReports.trialBalance.rows.length === 0" class="text-center py-12 text-slate-400 font-bold">
+            [[ isArabic ? "لا توجد حركات مسجلة بالفترة المحددة" : "No entries in this period" ]]
+        </div>
+
+        <div v-else class="overflow-x-auto">
+            <table class="w-full text-xs text-right border-collapse">
+                <thead class="bg-slate-50 text-[10px] uppercase font-black text-slate-400 border-b">
+                    <tr>
+                        <th class="p-3">[[ isArabic ? "كود الحساب" : "Code" ]]</th>
+                        <th class="p-3">[[ isArabic ? "اسم الحساب" : "Account Name" ]]</th>
+                        <th class="p-3">[[ isArabic ? "النوع" : "Root Type" ]]</th>
+                        <th class="p-3 text-center">[[ isArabic ? "مجموع المدين (Debit)" : "Total Debit" ]]</th>
+                        <th class="p-3 text-center">[[ isArabic ? "مجموع الدائن (Credit)" : "Total Credit" ]]</th>
+                        <th class="p-3 text-center">[[ isArabic ? "الرصيد الصافي (Net)" : "Net Balance" ]]</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    <tr v-for="r in accountingReports.trialBalance.rows" :key="r.account_id" class="hover:bg-slate-50/80">
+                        <td class="p-3 font-mono font-bold text-slate-600">[[ r.account_number ]]</td>
+                        <td class="p-3 font-bold text-slate-800">[[ r.account_name ]]</td>
+                        <td class="p-3 text-slate-500">[[ r.root_type ]]</td>
+                        <td class="p-3 text-center font-mono font-bold text-blue-600">$[[ formatNumber(r.debit) ]]</td>
+                        <td class="p-3 text-center font-mono font-bold text-emerald-600">$[[ formatNumber(r.credit) ]]</td>
+                        <td class="p-3 text-center font-mono font-black text-slate-900">$[[ formatNumber(r.net) ]]</td>
+                    </tr>
+                </tbody>
+                <tfoot class="bg-slate-100/90 font-black text-slate-900 border-t-2 border-slate-300">
+                    <tr>
+                        <td colspan="3" class="p-3.5 text-sm uppercase">[[ isArabic ? "الإجمالي الكلي:" : "Total Parity:" ]]</td>
+                        <td class="p-3.5 text-center font-mono text-sm text-blue-700">$[[ formatNumber(accountingReports.trialBalance.total_debit) ]]</td>
+                        <td class="p-3.5 text-center font-mono text-sm text-emerald-700">$[[ formatNumber(accountingReports.trialBalance.total_credit) ]]</td>
+                        <td class="p-3.5 text-center font-mono text-sm">$[[ formatNumber(accountingReports.trialBalance.total_debit - accountingReports.trialBalance.total_credit) ]]</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- 2. PROFIT & LOSS TAB -->
+    <div v-if="activeReportTab === 'profit_and_loss'" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="flex items-center justify-between border-b pb-4">
+            <div>
+                <h3 class="font-black text-slate-800 text-lg">[[ isArabic ? "قائمة الدخل والأرباح والخسائر" : "Profit and Loss Statement" ]]</h3>
+                <p class="text-xs text-slate-400 font-bold">[[ isArabic ? "الإيرادات المحققة مطروحاً منها المصروفات التشغيلية والتكلفة" : "Revenue minus Cost of Goods Sold and Expenses" ]]</p>
+            </div>
+            
+            <div v-if="accountingReports.profitAndLoss" class="text-right">
+                <span class="text-[10px] font-black uppercase tracking-wider block text-slate-400">[[ isArabic ? "صافي الدخل / الربح" : "Net Profit / Loss" ]]</span>
+                <span class="text-xl font-black font-mono tracking-tight" :class="accountingReports.profitAndLoss.net_profit >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                    $[[ formatNumber(accountingReports.profitAndLoss.net_profit) ]]
+                </span>
+            </div>
+        </div>
+
+        <div v-if="accountingReports.profitAndLoss" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Revenues -->
+            <div class="bg-emerald-50/40 rounded-2xl p-5 border border-emerald-100 space-y-3">
+                <div class="flex justify-between items-center border-b border-emerald-200/60 pb-2">
+                    <h4 class="font-black text-emerald-900 text-sm">[[ isArabic ? "الإيرادات (Revenues)" : "Revenues" ]]</h4>
+                    <span class="font-mono font-black text-emerald-700 text-sm">$[[ formatNumber(accountingReports.profitAndLoss.total_income) ]]</span>
+                </div>
+                <div class="space-y-2 text-xs">
+                    <div v-for="(row, idx) in accountingReports.profitAndLoss.income_rows" :key="idx" class="flex justify-between items-center text-slate-700">
+                        <span>[[ row.account_name ]]</span>
+                        <span class="font-mono font-bold">$[[ formatNumber(row.amount) ]]</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses -->
+            <div class="bg-rose-50/40 rounded-2xl p-5 border border-rose-100 space-y-3">
+                <div class="flex justify-between items-center border-b border-rose-200/60 pb-2">
+                    <h4 class="font-black text-rose-900 text-sm">[[ isArabic ? "المصروفات والتكاليف (Expenses)" : "Expenses & Costs" ]]</h4>
+                    <span class="font-mono font-black text-rose-700 text-sm">$[[ formatNumber(accountingReports.profitAndLoss.total_expenses) ]]</span>
+                </div>
+                <div class="space-y-2 text-xs">
+                    <div v-for="(row, idx) in accountingReports.profitAndLoss.expense_rows" :key="idx" class="flex justify-between items-center text-slate-700">
+                        <span>[[ row.account_name ]]</span>
+                        <span class="font-mono font-bold">$[[ formatNumber(row.amount) ]]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. BALANCE SHEET TAB -->
+    <div v-if="activeReportTab === 'balance_sheet'" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="flex items-center justify-between border-b pb-4">
+            <div>
+                <h3 class="font-black text-slate-800 text-lg">[[ isArabic ? "قائمة المركز المالي (الميزانية العمومية)" : "Balance Sheet" ]]</h3>
+                <p class="text-xs text-slate-400 font-bold">[[ isArabic ? "الأصول = الالتزامات + حقوق الملكية" : "Assets = Liabilities + Equity" ]]</p>
+            </div>
+
+            <span v-if="accountingReports.balanceSheet" :class="accountingReports.balanceSheet.is_balanced ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
+                class="px-3 py-1 rounded-full text-xs font-black uppercase flex items-center gap-1.5">
+                <i :class="accountingReports.balanceSheet.is_balanced ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle'"></i>
+                [[ accountingReports.balanceSheet.is_balanced ? (isArabic ? 'الميزانية مطابقة ومتوازنة' : 'Balanced') : (isArabic ? 'يوجد فارق' : 'Unbalanced') ]]
+            </span>
+        </div>
+
+        <div v-if="accountingReports.balanceSheet" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Assets Side -->
+            <div class="bg-blue-50/40 rounded-2xl p-5 border border-blue-100 space-y-4">
+                <div class="flex justify-between items-center border-b border-blue-200/60 pb-2">
+                    <h4 class="font-black text-blue-900 text-sm">[[ isArabic ? "الأصول (Assets)" : "Assets" ]]</h4>
+                    <span class="font-mono font-black text-blue-700 text-sm">$[[ formatNumber(accountingReports.balanceSheet.total_assets) ]]</span>
+                </div>
+                <div class="space-y-2 text-xs">
+                    <div v-for="(row, idx) in accountingReports.balanceSheet.asset_items" :key="idx" class="flex justify-between items-center text-slate-700">
+                        <span>[[ row.account_name ]]</span>
+                        <span class="font-mono font-bold">$[[ formatNumber(row.amount) ]]</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liabilities & Equity Side -->
+            <div class="bg-slate-50/80 rounded-2xl p-5 border border-slate-200 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                    <h4 class="font-black text-slate-800 text-sm">[[ isArabic ? "الالتزامات وحقوق الملكية" : "Liabilities & Equity" ]]</h4>
+                    <span class="font-mono font-black text-slate-900 text-sm">$[[ formatNumber(accountingReports.balanceSheet.total_liabilities + accountingReports.balanceSheet.total_equity) ]]</span>
+                </div>
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <div class="font-bold text-slate-500 text-[11px] mb-1">[[ isArabic ? "الالتزامات (Liabilities):" : "Liabilities:" ]]</div>
+                        <div v-for="(row, idx) in accountingReports.balanceSheet.liability_items" :key="'liab-'+idx" class="flex justify-between items-center text-slate-700 pr-2">
+                            <span>[[ row.account_name ]]</span>
+                            <span class="font-mono font-bold">$[[ formatNumber(row.amount) ]]</span>
+                        </div>
+                    </div>
+                    <div class="border-t pt-2">
+                        <div class="font-bold text-slate-500 text-[11px] mb-1">[[ isArabic ? "حقوق الملكية والأرباح المحتجزة:" : "Equity & Reserves:" ]]</div>
+                        <div v-for="(row, idx) in accountingReports.balanceSheet.equity_items" :key="'eq-'+idx" class="flex justify-between items-center text-slate-700 pr-2">
+                            <span>[[ row.account_name ]]</span>
+                            <span class="font-mono font-bold">$[[ formatNumber(row.amount) ]]</span>
+                        </div>
+                        <div class="flex justify-between items-center text-emerald-700 font-bold pr-2 mt-1">
+                            <span>[[ isArabic ? "أرباح الفترة الحالية (P&L):" : "Current Period Profit:" ]]</span>
+                            <span class="font-mono font-bold">$[[ formatNumber(accountingReports.balanceSheet.period_profit) ]]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -4,7 +4,7 @@
         {% include "components/item_master_modal.html" %}
     </template>
 
-    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]']">
+    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]']">
         
         <div class="flex justify-between items-center mb-6 border-b pb-4">
             <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -1140,6 +1140,359 @@
                     <select v-model="forms.user.company" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" required>
                         <option v-for="o in allOpcos" :key="o.id" :value="o.id" v-text="o.name"></option>
                     </select>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 1. ACCOUNT MODAL (بطاقة الحساب المالي)      -->
+            <!-- ========================================== -->
+            <div v-if="modalType === 'account'" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'رقم الحساب / الكود' : 'Account Number / Code' ]]</label>
+                        <input v-model="forms.account.account_number" type="text" class="w-full border p-3 rounded-xl font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500" placeholder="e.g. 1111" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'اسم الحساب' : 'Account Name' ]]</label>
+                        <input v-model="forms.account.account_name" type="text" class="w-full border p-3 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500" placeholder="e.g. الخزينة الرئيسية" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'النوع الرئيسي (Root Type)' : 'Root Type' ]]</label>
+                        <select v-model="forms.account.root_type" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500" required>
+                            <option value="ASSET">[[ isArabic ? 'أصول (Asset)' : 'Asset' ]]</option>
+                            <option value="LIABILITY">[[ isArabic ? 'التزامات (Liability)' : 'Liability' ]]</option>
+                            <option value="EQUITY">[[ isArabic ? 'حقوق ملكية (Equity)' : 'Equity' ]]</option>
+                            <option value="INCOME">[[ isArabic ? 'إيرادات (Income)' : 'Income' ]]</option>
+                            <option value="EXPENSE">[[ isArabic ? 'مصروفات (Expense)' : 'Expense' ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'نوع الحساب التفصيلي (Account Type)' : 'Account Type' ]]</label>
+                        <select v-model="forms.account.account_type" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="CASH">[[ isArabic ? 'نقدية / خزينة (Cash)' : 'Cash' ]]</option>
+                            <option value="BANK">[[ isArabic ? 'بنك (Bank)' : 'Bank' ]]</option>
+                            <option value="RECEIVABLE">[[ isArabic ? 'عملاء ومدينون (Accounts Receivable)' : 'Receivable' ]]</option>
+                            <option value="PAYABLE">[[ isArabic ? 'موردون ودائنون (Accounts Payable)' : 'Payable' ]]</option>
+                            <option value="STOCK">[[ isArabic ? 'مخزون بضاعة (Stock in Hand)' : 'Stock' ]]</option>
+                            <option value="COST_OF_GOODS_SOLD">[[ isArabic ? 'تكلفة بضاعة مباعة (COGS)' : 'COGS' ]]</option>
+                            <option value="TAX">[[ isArabic ? 'ضريبة وقيمة مضافة (Tax / VAT)' : 'Tax' ]]</option>
+                            <option value="EXPENSE_ACCOUNT">[[ isArabic ? 'حساب مصروف (Expense)' : 'Expense' ]]</option>
+                            <option value="INCOME_ACCOUNT">[[ isArabic ? 'حساب إيراد (Income)' : 'Income' ]]</option>
+                            <option value="FIXED_ASSET">[[ isArabic ? 'أصل ثابت (Fixed Asset)' : 'Fixed Asset' ]]</option>
+                            <option value="EQUITY">[[ isArabic ? 'حقوق ملكية ورأس مال (Equity)' : 'Equity' ]]</option>
+                            <option value="OTHER">[[ isArabic ? 'أخرى (Other)' : 'Other' ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'الحساب الأب (Parent Account)' : 'Parent Account' ]]</label>
+                        <select v-model="forms.account.parent" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500">
+                            <option :value="null">[[ isArabic ? '-- بدون حساب أب (جذر رئيسي) --' : '-- No Parent --' ]]</option>
+                            <option v-for="a in accounts.filter(x => x.is_group && x.id !== forms.account.id)" :key="a.id" :value="a.id">
+                                [[ a.account_number ]] - [[ a.account_name ]]
+                            </option>
+                        </select>
+                    </div>
+                    <div class="flex items-center pt-6">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="forms.account.is_group" class="w-4 h-4 text-amber-600 rounded">
+                            <span class="text-xs font-bold text-slate-700">[[ isArabic ? 'حساب تجميعي (Group - مجلد لا يقبل قيود مباشرة)' : 'Is Group Account' ]]</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Custom Fields Tab -->
+                <div class="border-t pt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-700">[[ isArabic ? 'حقول وتخصيصات إضافية' : 'Custom Fields' ]]</span>
+                        <button type="button" @click="addCustomField(forms.account)" class="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] rounded-lg font-bold">
+                            + [[ isArabic ? 'إضافة حقل' : 'Add Field' ]]
+                        </button>
+                    </div>
+                    <div v-for="(val, key) in forms.account.extra_data" :key="key" class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] font-bold text-slate-500 w-1/3 truncate">[[ key ]]:</span>
+                        <input type="text" v-model="forms.account.extra_data[key]" class="flex-1 border p-1.5 rounded-lg text-xs font-bold">
+                        <button type="button" @click="delete forms.account.extra_data[key]" class="text-slate-300 hover:text-red-500 text-xs">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 2. JOURNAL ENTRY MODAL (سند قيد محاسبي)     -->
+            <!-- ========================================== -->
+            <div v-if="modalType === 'journal_entry'" class="space-y-6">
+                <!-- Status Pipeline -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+                    <div class="flex items-center gap-3">
+                        <span class="font-mono font-black text-sm text-indigo-600">[[ forms.journal_entry.entry_number || 'JV-NEW' ]]</span>
+                        <span :class="{'bg-amber-100 text-amber-800': forms.journal_entry.status === 'DRAFT', 'bg-emerald-100 text-emerald-800': forms.journal_entry.status === 'SUBMITTED'}"
+                            class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase">
+                            [[ forms.journal_entry.status || 'DRAFT' ]]
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button type="button" v-if="forms.journal_entry.id && forms.journal_entry.status === 'DRAFT'"
+                            @click="submitJournalEntry(forms.journal_entry.id); showModal = false;"
+                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                            <i class="fas fa-check-circle"></i>
+                            <span>[[ isArabic ? 'اعتماد وترحيل للأستاذ العام' : 'Post to GL' ]]</span>
+                        </button>
+                        <button type="button" v-if="forms.journal_entry.id && forms.journal_entry.status === 'SUBMITTED'"
+                            @click="cancelJournalEntry(forms.journal_entry.id); showModal = false;"
+                            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                            <i class="fas fa-undo"></i>
+                            <span>[[ isArabic ? 'إلغاء وعكس القيد' : 'Cancel Entry' ]]</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form Header -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'تاريخ الترحيل' : 'Posting Date' ]]</label>
+                        <input type="date" v-model="forms.journal_entry.posting_date" class="w-full border p-2.5 rounded-xl font-bold text-xs" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'نوع القيد' : 'Entry Type' ]]</label>
+                        <select v-model="forms.journal_entry.entry_type" class="w-full border p-2.5 rounded-xl bg-white font-bold text-xs">
+                            <option value="JOURNAL_ENTRY">[[ isArabic ? 'قيد يومية عام (Journal Entry)' : 'Journal Entry' ]]</option>
+                            <option value="BANK_ENTRY">[[ isArabic ? 'قيد بنكي (Bank Entry)' : 'Bank Entry' ]]</option>
+                            <option value="CASH_ENTRY">[[ isArabic ? 'قيد نقدي (Cash Entry)' : 'Cash Entry' ]]</option>
+                            <option value="OPENING_ENTRY">[[ isArabic ? 'قيد افتتاحي (Opening Entry)' : 'Opening Entry' ]]</option>
+                            <option value="CREDIT_NOTE">[[ isArabic ? 'إشعار دائن (Credit Note)' : 'Credit Note' ]]</option>
+                            <option value="DEBIT_NOTE">[[ isArabic ? 'إشعار مدين (Debit Note)' : 'Debit Note' ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'رقم المرجع / الشيك' : 'Reference / Cheque#' ]]</label>
+                        <input type="text" v-model="forms.journal_entry.reference_number" placeholder="e.g. CHQ-9901" class="w-full border p-2.5 rounded-xl font-bold text-xs">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'البيان وشرح القيد المحاسبي' : 'User Remark' ]]</label>
+                        <textarea v-model="forms.journal_entry.user_remark" rows="2" placeholder="بيان القيد المحاسبي..." class="w-full border p-2.5 rounded-xl text-xs font-bold"></textarea>
+                    </div>
+                </div>
+
+                <!-- Double-Entry Lines Table -->
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+                    <div class="p-4 bg-slate-50 border-b flex items-center justify-between">
+                        <h4 class="font-black text-xs text-slate-800 uppercase tracking-wider">[[ isArabic ? "أطراف وسطور القيد المزدوج" : "Accounting Lines" ]]</h4>
+                        <button type="button" @click="addJournalEntryLine()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm">
+                            <i class="fas fa-plus text-[10px]"></i>
+                            <span>[[ isArabic ? "إضافة سطر قيد" : "Add Line" ]]</span>
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-right border-collapse">
+                            <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase border-b">
+                                <tr>
+                                    <th class="p-3 w-1/3">[[ isArabic ? "الحساب" : "Account" ]]</th>
+                                    <th class="p-3">[[ isArabic ? "الطرف (Party)" : "Party" ]]</th>
+                                    <th class="p-3 text-center w-32">[[ isArabic ? "مدين (Debit)" : "Debit" ]]</th>
+                                    <th class="p-3 text-center w-32">[[ isArabic ? "دائن (Credit)" : "Credit" ]]</th>
+                                    <th class="p-3">[[ isArabic ? "شرح السطر" : "Remark" ]]</th>
+                                    <th class="p-3 text-center w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="(line, idx) in forms.journal_entry.lines" :key="idx" class="hover:bg-slate-50/50">
+                                    <td class="p-2">
+                                        <select v-model="line.account" class="w-full border p-2 rounded-lg font-bold text-xs bg-white" required>
+                                            <option value="">[[ isArabic ? '-- اختر الحساب --' : '-- Select Account --' ]]</option>
+                                            <option v-for="a in accounts.filter(x => !x.is_group)" :key="a.id" :value="a.id">
+                                                [[ a.account_number ]] - [[ a.account_name ]]
+                                            </option>
+                                        </select>
+                                    </td>
+                                    <td class="p-2">
+                                        <input type="text" v-model="line.party_name" placeholder="اسم الطرف (اختياري)..." class="w-full border p-2 rounded-lg text-xs">
+                                    </td>
+                                    <td class="p-2 text-center">
+                                        <input type="number" step="0.01" v-model.number="line.debit" @input="line.credit = (line.debit > 0 ? 0 : line.credit); calculateJVTotals();" class="w-full border p-2 rounded-lg text-xs font-mono font-bold text-center text-blue-600">
+                                    </td>
+                                    <td class="p-2 text-center">
+                                        <input type="number" step="0.01" v-model.number="line.credit" @input="line.debit = (line.credit > 0 ? 0 : line.debit); calculateJVTotals();" class="w-full border p-2 rounded-lg text-xs font-mono font-bold text-center text-emerald-600">
+                                    </td>
+                                    <td class="p-2">
+                                        <input type="text" v-model="line.remark" placeholder="بيان السطر..." class="w-full border p-2 rounded-lg text-xs">
+                                    </td>
+                                    <td class="p-2 text-center">
+                                        <button type="button" @click="removeJournalEntryLine(idx)" class="text-slate-300 hover:text-red-500 p-1">
+                                            <i class="fas fa-trash text-xs"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="bg-slate-100/80 font-black border-t">
+                                <tr>
+                                    <td colspan="2" class="p-3 text-right">[[ isArabic ? "مجموع القيد والفرق:" : "Totals & Parity:" ]]</td>
+                                    <td class="p-3 text-center font-mono text-sm text-blue-700">$[[ formatNumber(calculateJVTotals().debit) ]]</td>
+                                    <td class="p-3 text-center font-mono text-sm text-emerald-700">$[[ formatNumber(calculateJVTotals().credit) ]]</td>
+                                    <td colspan="2" class="p-3">
+                                        <span :class="calculateJVTotals().isBalanced ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
+                                            class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase flex items-center justify-center gap-1">
+                                            <i :class="calculateJVTotals().isBalanced ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                                            [[ calculateJVTotals().isBalanced ? (isArabic ? 'متطابق ومتوازن' : 'Balanced') : (isArabic ? 'الفرق: ' + formatNumber(calculateJVTotals().diff) : 'Diff: ' + formatNumber(calculateJVTotals().diff)) ]]
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Chatter Feed if existing entry -->
+                <template v-if="forms.journal_entry.id">
+                    {% include "components/odoo_chatter.html" %}
+                </template>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 3. PURCHASE INVOICE MODAL (فاتورة مشتريات) -->
+            <!-- ========================================== -->
+            <div v-if="modalType === 'purchase_invoice'" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'المورد' : 'Vendor' ]]</label>
+                        <select v-model="forms.purchase_invoice.vendor" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500" required>
+                            <option value="">[[ isArabic ? '-- اختر المورد --' : '-- Select Vendor --' ]]</option>
+                            <option v-for="v in vendors" :key="v.id" :value="v.id">[[ v.name ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'أمر الشراء المرتبط (اختياري)' : 'PO Reference' ]]</label>
+                        <select v-model="forms.purchase_invoice.purchase_order" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500">
+                            <option :value="null">[[ isArabic ? '-- بدون أمر شراء --' : '-- Direct Bill --' ]]</option>
+                            <option v-for="po in purchase_orders" :key="po.id" :value="po.id">[[ po.po_number ]] — [[ po.vendor_name ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'تاريخ الفاتورة' : 'Bill Date' ]]</label>
+                        <input type="date" v-model="forms.purchase_invoice.posting_date" class="w-full border p-3 rounded-xl font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'تاريخ الاستحقاق' : 'Due Date' ]]</label>
+                        <input type="date" v-model="forms.purchase_invoice.due_date" class="w-full border p-3 rounded-xl font-bold" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'المبلغ قبل الضريبة' : 'Subtotal' ]]</label>
+                        <input type="number" step="0.01" v-model.number="forms.purchase_invoice.subtotal" @input="forms.purchase_invoice.tax_amount = parseFloat((forms.purchase_invoice.subtotal * 0.15).toFixed(2)); forms.purchase_invoice.grand_total = forms.purchase_invoice.subtotal + forms.purchase_invoice.tax_amount;" class="w-full border p-3 rounded-xl font-mono font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)' ]]</label>
+                        <input type="number" step="0.01" v-model.number="forms.purchase_invoice.tax_amount" @input="forms.purchase_invoice.grand_total = forms.purchase_invoice.subtotal + forms.purchase_invoice.tax_amount;" class="w-full border p-3 rounded-xl font-mono font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'الإجمالي الصافي' : 'Grand Total' ]]</label>
+                        <input type="number" step="0.01" v-model.number="forms.purchase_invoice.grand_total" class="w-full border p-3 rounded-xl font-mono font-black text-rose-600 bg-rose-50/50" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'حساب المشتريات / المخزون (مدين)' : 'Expense / Stock Account' ]]</label>
+                        <select v-model="forms.purchase_invoice.expense_account" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none">
+                            <option :value="null">[[ isArabic ? '-- تلقائي (حساب المخزون / المشتريات) --' : '-- Default Stock/Expense --' ]]</option>
+                            <option v-for="a in accounts.filter(x => !x.is_group && (x.root_type === 'EXPENSE' || x.account_type === 'STOCK'))" :key="a.id" :value="a.id">
+                                [[ a.account_number ]] - [[ a.account_name ]]
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'حساب الموردين (دائن)' : 'Creditors Account' ]]</label>
+                        <select v-model="forms.purchase_invoice.credit_to_account" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none">
+                            <option :value="null">[[ isArabic ? '-- تلقائي (حساب الموردين) --' : '-- Default Accounts Payable --' ]]</option>
+                            <option v-for="a in accounts.filter(x => !x.is_group && x.account_type === 'PAYABLE')" :key="a.id" :value="a.id">
+                                [[ a.account_number ]] - [[ a.account_name ]]
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'ملاحظات' : 'Notes' ]]</label>
+                    <textarea v-model="forms.purchase_invoice.notes" rows="2" class="w-full border p-2.5 rounded-xl text-xs font-bold"></textarea>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 4. PAYMENT ENTRY MODAL (سند قبض / صرف)    -->
+            <!-- ========================================== -->
+            <div v-if="modalType === 'payment_entry'" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'نوع السند' : 'Payment Type' ]]</label>
+                        <select v-model="forms.payment_entry.payment_type" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-teal-500" required>
+                            <option value="RECEIVE">[[ isArabic ? 'سند قبض من عميل (Receive from Customer)' : 'Receive' ]]</option>
+                            <option value="PAY">[[ isArabic ? 'سند صرف لمورد (Pay to Vendor)' : 'Pay' ]]</option>
+                            <option value="INTERNAL_TRANSFER">[[ isArabic ? 'تحويل نقدية بين الصناديق والبنوك (Internal Transfer)' : 'Transfer' ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'المبلغ' : 'Amount' ]]</label>
+                        <input type="number" step="0.01" v-model.number="forms.payment_entry.paid_amount" class="w-full border p-3 rounded-xl font-mono font-bold text-slate-900" placeholder="0.00" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'الحساب المدفوع منه (الدائن)' : 'Paid From Account' ]]</label>
+                        <select v-model="forms.payment_entry.paid_from_account" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none" required>
+                            <option value="">[[ isArabic ? '-- اختر الحساب --' : '-- Select Account --' ]]</option>
+                            <option v-for="a in accounts.filter(x => !x.is_group)" :key="a.id" :value="a.id">
+                                [[ a.account_number ]] - [[ a.account_name ]]
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'الحساب المستلم (المدين)' : 'Paid To Account' ]]</label>
+                        <select v-model="forms.payment_entry.paid_to_account" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none" required>
+                            <option value="">[[ isArabic ? '-- اختر الحساب --' : '-- Select Account --' ]]</option>
+                            <option v-for="a in accounts.filter(x => !x.is_group)" :key="a.id" :value="a.id">
+                                [[ a.account_number ]] - [[ a.account_name ]]
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'تاريخ السند' : 'Date' ]]</label>
+                        <input type="date" v-model="forms.payment_entry.posting_date" class="w-full border p-2.5 rounded-xl font-bold text-xs" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'طريقة الدفع' : 'Payment Method' ]]</label>
+                        <select v-model="forms.payment_entry.payment_method" class="w-full border p-2.5 rounded-xl bg-white font-bold text-xs">
+                            <option value="CASH">[[ isArabic ? 'نقدي (Cash)' : 'Cash' ]]</option>
+                            <option value="BANK">[[ isArabic ? 'تحويل بنكي (Bank Transfer)' : 'Bank Transfer' ]]</option>
+                            <option value="CHEQUE">[[ isArabic ? 'شيك بنكي (Cheque)' : 'Cheque' ]]</option>
+                            <option value="CARD">[[ isArabic ? 'بطاقة مصرفية (Card)' : 'Card' ]]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'رقم الإيصال / الحوالة' : 'Reference#' ]]</label>
+                        <input type="text" v-model="forms.payment_entry.reference_no" placeholder="e.g. TR-8812" class="w-full border p-2.5 rounded-xl font-bold text-xs">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'البيان وملاحظات' : 'Remarks' ]]</label>
+                    <textarea v-model="forms.payment_entry.notes" rows="2" class="w-full border p-2.5 rounded-xl text-xs font-bold"></textarea>
                 </div>
             </div>
         </form>

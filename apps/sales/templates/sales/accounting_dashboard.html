@@ -19,12 +19,18 @@
         </div>
         
         <!-- Quick Control Actions -->
-        <div class="flex flex-wrap gap-3">
-            <button @click="accountingTab = 'payments'" class="group bg-amber-50 hover:bg-amber-500 text-amber-600 hover:text-white px-5 py-3 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold tracking-wide">
-                <i class="fas fa-cash-register group-hover:scale-110 transition-transform"></i> <span v-text="isArabic ? 'تسجيل استلام/دفع' : 'Register Payment'"></span>
+        <div class="flex flex-wrap gap-2.5">
+            <button @click="openModal('journal_entry')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 font-bold text-xs">
+                <i class="fas fa-plus"></i> <span v-text="isArabic ? 'قيد يومية جديد' : 'New Journal Entry'"></span>
             </button>
-            <button class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl shadow-lg transition-all flex items-center gap-2 font-bold tracking-wide">
-                <i class="fas fa-file-export"></i> <span v-text="isArabic ? 'قائمة المركز المالي' : 'Balance Sheet'"></span>
+            <button @click="accountingTab = 'payments'" class="bg-amber-50 hover:bg-amber-500 text-amber-600 hover:text-white px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold text-xs">
+                <i class="fas fa-money-check-dollar"></i> <span v-text="isArabic ? 'سند قبض / صرف' : 'Payment Entry'"></span>
+            </button>
+            <button @click="accountingTab = 'chart_of_accounts'; fetchAccounts();" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold text-xs">
+                <i class="fas fa-sitemap"></i> <span v-text="isArabic ? 'دليل الحسابات' : 'Chart of Accounts'"></span>
+            </button>
+            <button @click="accountingTab = 'reports'; activeReportTab = 'balance_sheet'; loadReportData();" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 font-bold text-xs">
+                <i class="fas fa-chart-pie"></i> <span v-text="isArabic ? 'التقارير المالية' : 'Financial Reports'"></span>
             </button>
         </div>
     </div>

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "apps.wms",
     "apps.procurement",
     "apps.sales",
+    "apps.accounting",
     "apps.restaurant_pos",
     "apps.ai_assistant",
 ]

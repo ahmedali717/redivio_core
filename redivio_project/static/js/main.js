@@ -141,8 +141,42 @@ createApp({
             soStatusFilter: 'ALL',
             poViewMode: 'list',
             poSearch: '',
-            poStatusFilter: 'ALL',
             accountingTab: 'dashboard',
+            accounts: [],
+            accountsTree: [],
+            costCenters: [],
+            journalEntries: [],
+            glEntries: [],
+            purchaseInvoices: [],
+            paymentEntries: [],
+            accountingReports: {
+                trialBalance: null,
+                profitAndLoss: null,
+                balanceSheet: null
+            },
+            glFilters: {
+                account_id: '',
+                from_date: '',
+                to_date: '',
+                voucher_no: '',
+                party_type: '',
+                party_id: ''
+            },
+            reportFilters: {
+                from_date: '',
+                to_date: '',
+                as_of_date: ''
+            },
+            accountSearch: '',
+            accountRootFilter: 'ALL',
+            jvSearch: '',
+            jvViewMode: 'list',
+            jvStatusFilter: 'ALL',
+            piSearch: '',
+            piStatusFilter: 'ALL',
+            paySearch: '',
+            payTypeFilter: 'ALL',
+            activeReportTab: 'trial_balance',
             customers: [],
             salesOrders: [],
             salesInvoices: [],
@@ -321,11 +355,71 @@ createApp({
                 matrix: { ar: 'مقارنة عروض الأسعار (Matrix)', en: 'Quotation Comparison Matrix' },
                 rtv: { ar: 'مرتجع مشتريات (RTV)', en: 'Purchase Return (RTV)' },
                 transfer: { ar: 'تحويل بين المخازن (Transfer)', en: 'Warehouse Transfer' },
-                scrap: { ar: 'إذن تخريد / هالك (Scrap)', en: 'Stock Scrap' }
+                scrap: { ar: 'إذن تخريد / هالك (Scrap)', en: 'Stock Scrap' },
+                account: { ar: 'بطاقة حساب مالي (Account)', en: 'Financial Account' },
+                journal_entry: { ar: 'سند قيد محاسبي مزدوج (Journal Entry)', en: 'Journal Entry Voucher' },
+                purchase_invoice: { ar: 'فاتورة شراء ومطالبة مورد (Purchase Invoice)', en: 'Purchase Invoice' },
+                payment_entry: { ar: 'سند قبض / صرف نقدية (Payment Entry)', en: 'Payment Entry' }
             },
 
             forms: {
                 ...(inventoryModule.state?.forms || {}),
+                account: {
+                    id: null,
+                    account_number: '',
+                    account_name: '',
+                    root_type: 'ASSET',
+                    account_type: 'OTHER',
+                    parent: null,
+                    is_group: false,
+                    currency: 'SAR',
+                    extra_data: {}
+                },
+                journal_entry: {
+                    id: null,
+                    entry_number: '',
+                    posting_date: new Date().toISOString().substring(0, 10),
+                    entry_type: 'JOURNAL_ENTRY',
+                    reference_number: '',
+                    user_remark: '',
+                    extra_data: {},
+                    lines: [
+                        { account: '', party_type: 'NONE', party_id: null, party_name: '', debit: 0, credit: 0, remark: '' },
+                        { account: '', party_type: 'NONE', party_id: null, party_name: '', debit: 0, credit: 0, remark: '' }
+                    ]
+                },
+                purchase_invoice: {
+                    id: null,
+                    vendor: '',
+                    purchase_order: null,
+                    posting_date: new Date().toISOString().substring(0, 10),
+                    due_date: new Date().toISOString().substring(0, 10),
+                    subtotal: 0,
+                    tax_amount: 0,
+                    discount_amount: 0,
+                    grand_total: 0,
+                    credit_to_account: null,
+                    expense_account: null,
+                    notes: '',
+                    extra_data: {}
+                },
+                payment_entry: {
+                    id: null,
+                    payment_type: 'RECEIVE',
+                    party_type: 'CUSTOMER',
+                    party_id: null,
+                    party_name: '',
+                    sales_invoice: null,
+                    purchase_invoice: null,
+                    paid_from_account: null,
+                    paid_to_account: null,
+                    paid_amount: 0,
+                    posting_date: new Date().toISOString().substring(0, 10),
+                    payment_method: 'CASH',
+                    reference_no: '',
+                    notes: '',
+                    extra_data: {}
+                },
                 opco: { id: null, code: '', name: '', currency: 'USD', parent: null, is_holding: false },
                 plant: { id: null, opco: null, code: '', name: '' },
                 location: { id: null, plant: null, code: '', name: '' },
@@ -1199,6 +1293,105 @@ createApp({
                 countedValue: totalCountedValue,
                 differenceValue: totalDiffValue
             };
+        },
+
+        // --- Accounting Module Computed Properties (ERPNext Engine) ---
+        filteredAccounts() {
+            let list = this.accounts || [];
+            if (this.accountRootFilter && this.accountRootFilter !== 'ALL') {
+                list = list.filter(a => a.root_type === this.accountRootFilter);
+            }
+            if (this.accountSearch) {
+                const q = this.accountSearch.toLowerCase();
+                list = list.filter(a =>
+                    (a.account_number && a.account_number.toLowerCase().includes(q)) ||
+                    (a.account_name && a.account_name.toLowerCase().includes(q))
+                );
+            }
+            return list;
+        },
+
+        jvStats() {
+            const list = this.journalEntries || [];
+            const totalCount = list.length;
+            const totalValue = list.reduce((sum, j) => sum + (parseFloat(j.total_debit) || 0), 0);
+            
+            const drafts = list.filter(j => (j.status || '').toUpperCase() === 'DRAFT');
+            const draftCount = drafts.length;
+            const draftValue = drafts.reduce((sum, j) => sum + (parseFloat(j.total_debit) || 0), 0);
+
+            const submitted = list.filter(j => (j.status || '').toUpperCase() === 'SUBMITTED');
+            const submittedCount = submitted.length;
+            const submittedValue = submitted.reduce((sum, j) => sum + (parseFloat(j.total_debit) || 0), 0);
+
+            return { totalCount, totalValue, draftCount, draftValue, submittedCount, submittedValue };
+        },
+
+        filteredJournalEntries() {
+            let list = this.journalEntries || [];
+            if (this.jvStatusFilter && this.jvStatusFilter !== 'ALL') {
+                list = list.filter(j => (j.status || '').toUpperCase() === this.jvStatusFilter);
+            }
+            if (this.jvSearch) {
+                const q = this.jvSearch.toLowerCase();
+                list = list.filter(j =>
+                    (j.entry_number && j.entry_number.toLowerCase().includes(q)) ||
+                    (j.user_remark && j.user_remark.toLowerCase().includes(q)) ||
+                    (j.reference_number && j.reference_number.toLowerCase().includes(q))
+                );
+            }
+            return list;
+        },
+
+        jvKanbanDraft() {
+            return (this.journalEntries || []).filter(j => {
+                if ((j.status || '').toUpperCase() !== 'DRAFT') return false;
+                if (!this.jvSearch) return true;
+                const q = this.jvSearch.toLowerCase();
+                return (j.entry_number && j.entry_number.toLowerCase().includes(q)) ||
+                       (j.user_remark && j.user_remark.toLowerCase().includes(q));
+            });
+        },
+
+        jvKanbanSubmitted() {
+            return (this.journalEntries || []).filter(j => {
+                if ((j.status || '').toUpperCase() !== 'SUBMITTED') return false;
+                if (!this.jvSearch) return true;
+                const q = this.jvSearch.toLowerCase();
+                return (j.entry_number && j.entry_number.toLowerCase().includes(q)) ||
+                       (j.user_remark && j.user_remark.toLowerCase().includes(q));
+            });
+        },
+
+        filteredPurchaseInvoices() {
+            let list = this.purchaseInvoices || [];
+            if (this.piStatusFilter && this.piStatusFilter !== 'ALL') {
+                list = list.filter(i => (i.status || '').toUpperCase() === this.piStatusFilter);
+            }
+            if (this.piSearch) {
+                const q = this.piSearch.toLowerCase();
+                list = list.filter(i =>
+                    (i.invoice_number && i.invoice_number.toLowerCase().includes(q)) ||
+                    (i.vendor_name && i.vendor_name.toLowerCase().includes(q))
+                );
+            }
+            return list;
+        },
+
+        filteredPaymentEntries() {
+            let list = this.paymentEntries || [];
+            if (this.payTypeFilter && this.payTypeFilter !== 'ALL') {
+                list = list.filter(p => (p.payment_type || '').toUpperCase() === this.payTypeFilter);
+            }
+            if (this.paySearch) {
+                const q = this.paySearch.toLowerCase();
+                list = list.filter(p =>
+                    (p.entry_number && p.entry_number.toLowerCase().includes(q)) ||
+                    (p.party_name && p.party_name.toLowerCase().includes(q)) ||
+                    (p.reference_no && p.reference_no.toLowerCase().includes(q))
+                );
+            }
+            return list;
         }
     },
 
@@ -1210,6 +1403,9 @@ createApp({
                 if (this.view === 'restaurant_pos_module') {
                     this.fetchPOSTerminals();
                 }
+                if (this.view === 'accounting_module') {
+                    this.fetchAccountingData();
+                }
             }
         },
         view(newView) {
@@ -1218,6 +1414,9 @@ createApp({
             if (newView === 'global_config' && this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             if (newView === 'restaurant_pos_module') {
                 this.fetchPOSTerminals();
+            }
+            if (newView === 'accounting_module') {
+                this.fetchAccountingData();
             }
         },
         posMode: {
@@ -5727,6 +5926,10 @@ createApp({
             else if (type === 'stock_entry') {
                 url = '/api/wms/moves/';
             }
+            else if (type === 'account') url = isEdit ? `/api/accounting/accounts/${id}/` : `/api/accounting/accounts/`;
+            else if (type === 'journal_entry') url = isEdit ? `/api/accounting/journal-entries/${id}/` : `/api/accounting/journal-entries/`;
+            else if (type === 'purchase_invoice') url = isEdit ? `/api/accounting/purchase-invoices/${id}/` : `/api/accounting/purchase-invoices/`;
+            else if (type === 'payment_entry') url = isEdit ? `/api/accounting/payment-entries/${id}/` : `/api/accounting/payment-entries/`;
 
             try {
                 this.loading = true;
@@ -5800,6 +6003,13 @@ createApp({
                         finalData.tax_amount = this.calculatePOTax();
                         finalData.grand_total = this.calculatePOGrandTotal();
                         delete finalData.activeTab;
+                    } else if (type === 'journal_entry') {
+                        const parity = this.calculateJVTotals();
+                        if (!parity.isBalanced) {
+                            this.showToast(this.isArabic ? "سند القيد غير متوازن، مجموع المدين يجب أن يساوي مجموع الدائن تماماً!" : "Journal entry is not balanced! Total debit must equal credit.", 'error');
+                            this.loading = false;
+                            return;
+                        }
                     }
 
                     payload = JSON.stringify(finalData);
@@ -5817,6 +6027,9 @@ createApp({
                     this.selectedFile = null;
                     this.imagePreview = null;
                     await this.refreshAllData();
+                    if (['account', 'journal_entry', 'purchase_invoice', 'payment_entry'].includes(type)) {
+                        await this.fetchAccountingData();
+                    }
                     this.showToast(this.isArabic ? "تم حفظ البيانات بنجاح" : "Data saved successfully", 'success');
                 } else {
                     const errorText = await response.text();
@@ -6134,7 +6347,8 @@ createApp({
                     this.fetchCompanyUsers(),
                     this.fetchFloorsAndTables(),
                     this.fetchPOSDashboard(),
-                    this.checkInventoryFreezeStatus()
+                    this.checkInventoryFreezeStatus(),
+                    this.fetchAccountingData()
                 ]);
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {
@@ -7926,6 +8140,494 @@ createApp({
             printWindow.document.open();
             printWindow.document.write(htmlContent);
             printWindow.document.close();
+        },
+
+        // =========================================================================
+        // 💰 ACCOUNTING & FINANCE MODULE METHODS (ERPNext Architectural Engine)
+        // =========================================================================
+        formatNumber(val) {
+            if (val === undefined || val === null || isNaN(val)) return '0.00';
+            return Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        openModal(type, data = null) {
+            this.modalType = type;
+            this.isEditing = !!data;
+            if (data) {
+                this.forms[type] = JSON.parse(JSON.stringify(data));
+            } else {
+                if (type === 'journal_entry') {
+                    this.forms.journal_entry = {
+                        id: null,
+                        entry_number: `JV-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`,
+                        posting_date: new Date().toISOString().substring(0, 10),
+                        entry_type: 'JOURNAL_ENTRY',
+                        reference_number: '',
+                        user_remark: '',
+                        extra_data: {},
+                        lines: [
+                            { account: '', party_type: 'NONE', party_id: null, party_name: '', debit: 0, credit: 0, remark: '' },
+                            { account: '', party_type: 'NONE', party_id: null, party_name: '', debit: 0, credit: 0, remark: '' }
+                        ]
+                    };
+                } else if (type === 'account') {
+                    this.forms.account = {
+                        id: null,
+                        account_number: '',
+                        account_name: '',
+                        root_type: 'ASSET',
+                        account_type: 'OTHER',
+                        parent: null,
+                        is_group: false,
+                        currency: 'SAR',
+                        extra_data: {}
+                    };
+                } else if (type === 'purchase_invoice') {
+                    this.forms.purchase_invoice = {
+                        id: null,
+                        vendor: '',
+                        purchase_order: null,
+                        posting_date: new Date().toISOString().substring(0, 10),
+                        due_date: new Date().toISOString().substring(0, 10),
+                        subtotal: 0,
+                        tax_amount: 0,
+                        discount_amount: 0,
+                        grand_total: 0,
+                        credit_to_account: null,
+                        expense_account: null,
+                        notes: '',
+                        extra_data: {}
+                    };
+                } else if (type === 'payment_entry') {
+                    this.forms.payment_entry = {
+                        id: null,
+                        payment_type: 'RECEIVE',
+                        party_type: 'CUSTOMER',
+                        party_id: null,
+                        party_name: '',
+                        sales_invoice: null,
+                        purchase_invoice: null,
+                        paid_from_account: null,
+                        paid_to_account: null,
+                        paid_amount: 0,
+                        posting_date: new Date().toISOString().substring(0, 10),
+                        payment_method: 'CASH',
+                        reference_no: '',
+                        notes: '',
+                        extra_data: {}
+                    };
+                }
+            }
+            this.showModal = true;
+        },
+
+        async fetchAccountingData() {
+            try {
+                await Promise.all([
+                    this.fetchAccounts(),
+                    this.fetchJournalEntries(),
+                    this.fetchGLEntries(),
+                    this.fetchPurchaseInvoices(),
+                    this.fetchPaymentEntries(),
+                    this.fetchCostCenters()
+                ]);
+            } catch (err) {
+                console.error("fetchAccountingData error:", err);
+            }
+        },
+
+        async fetchAccounts() {
+            try {
+                const opcoParam = this.activeOpcoId ? `?opco=${this.activeOpcoId}` : '';
+                const res = await fetch(`/api/accounting/accounts/${opcoParam}`);
+                if (res.ok) {
+                    this.accounts = await res.json();
+                }
+                const treeRes = await fetch(`/api/accounting/accounts/tree/${opcoParam}`);
+                if (treeRes.ok) {
+                    this.accountsTree = await treeRes.json();
+                }
+            } catch (e) {
+                console.error("fetchAccounts error:", e);
+            }
+        },
+
+        async seedDefaultCOA() {
+            const csrftoken = this.getCookie('csrftoken');
+            try {
+                this.loading = true;
+                const res = await fetch('/api/accounting/accounts/seed-coa/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ opco: this.activeOpcoId })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.showToast(data.message || (this.isArabic ? "تم توليد شجرة الحسابات بنجاح" : "COA generated"), 'success');
+                    await this.fetchAccounts();
+                } else {
+                    this.showToast(this.isArabic ? "فشل توليد شجرة الحسابات" : "COA generation failed", 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "خطأ في الاتصال" : "Network error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        openNewAccountModal(parentAcc = null) {
+            this.isEditing = false;
+            this.modalType = 'account';
+            this.forms.account = {
+                id: null,
+                account_number: '',
+                account_name: '',
+                root_type: parentAcc ? parentAcc.root_type : 'ASSET',
+                account_type: parentAcc ? parentAcc.account_type : 'OTHER',
+                parent: parentAcc ? parentAcc.id : null,
+                is_group: false,
+                currency: 'SAR',
+                extra_data: {}
+            };
+            this.showModal = true;
+        },
+
+        addChildAccount(acc) {
+            this.openNewAccountModal(acc);
+        },
+
+        editAccount(acc) {
+            this.isEditing = true;
+            this.modalType = 'account';
+            this.forms.account = JSON.parse(JSON.stringify(acc));
+            this.showModal = true;
+        },
+
+        async fetchCostCenters() {
+            try {
+                const opcoParam = this.activeOpcoId ? `?opco=${this.activeOpcoId}` : '';
+                const res = await fetch(`/api/accounting/cost-centers/${opcoParam}`);
+                if (res.ok) {
+                    this.costCenters = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchCostCenters error:", e);
+            }
+        },
+
+        async fetchJournalEntries() {
+            try {
+                const opcoParam = this.activeOpcoId ? `?opco=${this.activeOpcoId}` : '';
+                const res = await fetch(`/api/accounting/journal-entries/${opcoParam}`);
+                if (res.ok) {
+                    this.journalEntries = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchJournalEntries error:", e);
+            }
+        },
+
+        addJournalEntryLine() {
+            if (!this.forms.journal_entry.lines) this.forms.journal_entry.lines = [];
+            this.forms.journal_entry.lines.push({
+                account: '',
+                party_type: 'NONE',
+                party_id: null,
+                party_name: '',
+                debit: 0,
+                credit: 0,
+                remark: ''
+            });
+        },
+
+        removeJournalEntryLine(idx) {
+            if (this.forms.journal_entry.lines && this.forms.journal_entry.lines.length > 2) {
+                this.forms.journal_entry.lines.splice(idx, 1);
+            } else {
+                this.showToast(this.isArabic ? "سند القيد المحاسبي المزدوج يتطلب سطرين على الأقل" : "Journal entry requires at least 2 lines", 'warning');
+            }
+        },
+
+        calculateJVTotals() {
+            if (!this.forms.journal_entry || !this.forms.journal_entry.lines) {
+                return { debit: 0, credit: 0, diff: 0, isBalanced: true };
+            }
+            const debit = this.forms.journal_entry.lines.reduce((s, l) => s + (parseFloat(l.debit) || 0), 0);
+            const credit = this.forms.journal_entry.lines.reduce((s, l) => s + (parseFloat(l.credit) || 0), 0);
+            const diff = Math.round(Math.abs(debit - credit) * 100) / 100;
+            const isBalanced = diff < 0.01;
+            this.forms.journal_entry.total_debit = Math.round(debit * 100) / 100;
+            this.forms.journal_entry.total_credit = Math.round(credit * 100) / 100;
+            return { debit, credit, diff, isBalanced };
+        },
+
+        editJournalEntry(jv) {
+            this.isEditing = true;
+            this.modalType = 'journal_entry';
+            this.forms.journal_entry = JSON.parse(JSON.stringify(jv));
+            this.showModal = true;
+        },
+
+        async submitJournalEntry(id) {
+            const csrftoken = this.getCookie('csrftoken');
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/accounting/journal-entries/${id}/submit/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.showToast(data.message || (this.isArabic ? "تم ترحيل سند القيد بنجاح" : "Journal entry posted"), 'success');
+                    await this.fetchJournalEntries();
+                    await this.fetchGLEntries();
+                    await this.fetchAccounts();
+                } else {
+                    this.showToast(data.error || (this.isArabic ? "فشل ترحيل سند القيد" : "Post failed"), 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "خطأ في الشبكة" : "Network error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async cancelJournalEntry(id) {
+            const csrftoken = this.getCookie('csrftoken');
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/accounting/journal-entries/${id}/cancel/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.showToast(data.message || (this.isArabic ? "تم إلغاء سند القيد" : "Journal entry cancelled"), 'success');
+                    await this.fetchJournalEntries();
+                    await this.fetchGLEntries();
+                    await this.fetchAccounts();
+                } else {
+                    this.showToast(data.error || (this.isArabic ? "فشل إلغاء سند القيد" : "Cancel failed"), 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "خطأ في الشبكة" : "Network error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchGLEntries() {
+            try {
+                const params = new URLSearchParams();
+                if (this.activeOpcoId) params.append('opco', this.activeOpcoId);
+                if (this.glFilters.account_id) params.append('account', this.glFilters.account_id);
+                if (this.glFilters.from_date) params.append('from_date', this.glFilters.from_date);
+                if (this.glFilters.to_date) params.append('to_date', this.glFilters.to_date);
+                if (this.glFilters.voucher_no) params.append('voucher_no', this.glFilters.voucher_no);
+                
+                const res = await fetch(`/api/accounting/gl-entries/?${params.toString()}`);
+                if (res.ok) {
+                    this.glEntries = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchGLEntries error:", e);
+            }
+        },
+
+        async fetchPurchaseInvoices() {
+            try {
+                const opcoParam = this.activeOpcoId ? `?opco=${this.activeOpcoId}` : '';
+                const res = await fetch(`/api/accounting/purchase-invoices/${opcoParam}`);
+                if (res.ok) {
+                    this.purchaseInvoices = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchPurchaseInvoices error:", e);
+            }
+        },
+
+        async fetchPaymentEntries() {
+            try {
+                const opcoParam = this.activeOpcoId ? `?opco=${this.activeOpcoId}` : '';
+                const res = await fetch(`/api/accounting/payment-entries/${opcoParam}`);
+                if (res.ok) {
+                    this.paymentEntries = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchPaymentEntries error:", e);
+            }
+        },
+
+        openNewPaymentModal(type = 'RECEIVE') {
+            this.isEditing = false;
+            this.modalType = 'payment_entry';
+            this.forms.payment_entry = {
+                id: null,
+                payment_type: type,
+                party_type: type === 'RECEIVE' ? 'CUSTOMER' : (type === 'PAY' ? 'VENDOR' : 'NONE'),
+                party_id: null,
+                party_name: '',
+                sales_invoice: null,
+                purchase_invoice: null,
+                paid_from_account: null,
+                paid_to_account: null,
+                paid_amount: 0,
+                posting_date: new Date().toISOString().substring(0, 10),
+                payment_method: 'CASH',
+                reference_no: '',
+                notes: '',
+                extra_data: {}
+            };
+            this.showModal = true;
+        },
+
+        openPaymentForInvoice(type, inv) {
+            this.isEditing = false;
+            this.modalType = 'payment_entry';
+            if (type === 'purchase') {
+                const remaining = (parseFloat(inv.grand_total) || 0) - (parseFloat(inv.paid_amount) || 0);
+                this.forms.payment_entry = {
+                    id: null,
+                    payment_type: 'PAY',
+                    party_type: 'VENDOR',
+                    party_id: inv.vendor,
+                    party_name: inv.vendor_name,
+                    sales_invoice: null,
+                    purchase_invoice: inv.id,
+                    paid_from_account: null,
+                    paid_to_account: inv.credit_to_account,
+                    paid_amount: remaining > 0 ? remaining : 0,
+                    posting_date: new Date().toISOString().substring(0, 10),
+                    payment_method: 'BANK_TRANSFER',
+                    reference_no: inv.invoice_number,
+                    notes: `Payment for bill ${inv.invoice_number}`,
+                    extra_data: {}
+                };
+            }
+            this.showModal = true;
+        },
+
+        async submitPaymentEntry(id) {
+            const csrftoken = this.getCookie('csrftoken');
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/accounting/payment-entries/${id}/submit/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.showToast(data.message || (this.isArabic ? "تم اعتماد وترحيل سند الدفع" : "Payment entry submitted"), 'success');
+                    await this.fetchPaymentEntries();
+                    await this.fetchPurchaseInvoices();
+                    await this.fetchGLEntries();
+                    await this.fetchAccounts();
+                } else {
+                    this.showToast(data.error || (this.isArabic ? "فشل اعتماد سند الدفع" : "Submit failed"), 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "خطأ في الاتصال" : "Network error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async cancelPaymentEntry(id) {
+            const csrftoken = this.getCookie('csrftoken');
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/accounting/payment-entries/${id}/cancel/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.showToast(data.message || (this.isArabic ? "تم إلغاء سند الدفع" : "Payment entry cancelled"), 'success');
+                    await this.fetchPaymentEntries();
+                    await this.fetchPurchaseInvoices();
+                    await this.fetchGLEntries();
+                    await this.fetchAccounts();
+                } else {
+                    this.showToast(data.error || (this.isArabic ? "فشل إلغاء سند الدفع" : "Cancel failed"), 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "خطأ في الاتصال" : "Network error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async loadReportData() {
+            if (this.activeReportTab === 'trial_balance') {
+                await this.fetchTrialBalance();
+            } else if (this.activeReportTab === 'profit_and_loss') {
+                await this.fetchProfitAndLoss();
+            } else if (this.activeReportTab === 'balance_sheet') {
+                await this.fetchBalanceSheet();
+            }
+        },
+
+        async fetchTrialBalance() {
+            try {
+                this.loading = true;
+                const params = new URLSearchParams();
+                if (this.activeOpcoId) params.append('opco', this.activeOpcoId);
+                if (this.reportFilters.from_date) params.append('from_date', this.reportFilters.from_date);
+                if (this.reportFilters.to_date) params.append('to_date', this.reportFilters.to_date);
+
+                const res = await fetch(`/api/accounting/reports/trial-balance/?${params.toString()}`);
+                if (res.ok) {
+                    this.accountingReports.trialBalance = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchTrialBalance error:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchProfitAndLoss() {
+            try {
+                this.loading = true;
+                const params = new URLSearchParams();
+                if (this.activeOpcoId) params.append('opco', this.activeOpcoId);
+                if (this.reportFilters.from_date) params.append('from_date', this.reportFilters.from_date);
+                if (this.reportFilters.to_date) params.append('to_date', this.reportFilters.to_date);
+
+                const res = await fetch(`/api/accounting/reports/profit-and-loss/?${params.toString()}`);
+                if (res.ok) {
+                    this.accountingReports.profitAndLoss = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchProfitAndLoss error:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchBalanceSheet() {
+            try {
+                this.loading = true;
+                const params = new URLSearchParams();
+                if (this.activeOpcoId) params.append('opco', this.activeOpcoId);
+                if (this.reportFilters.to_date) params.append('as_of_date', this.reportFilters.to_date);
+
+                const res = await fetch(`/api/accounting/reports/balance-sheet/?${params.toString()}`);
+                if (res.ok) {
+                    this.accountingReports.balanceSheet = await res.json();
+                }
+            } catch (e) {
+                console.error("fetchBalanceSheet error:", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        printCurrentReport() {
+            window.print();
         }
     }
 }).mount('#app');

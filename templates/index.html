@@ -48,15 +48,29 @@
                     <div v-if="accountingTab === 'dashboard'" class="absolute inset-0 overflow-y-auto">
                         {% include "sales/accounting_dashboard.html" %}
                     </div>
+                    <div v-if="accountingTab === 'chart_of_accounts'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/chart_of_accounts.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'journal_entries'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/journal_entries.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'general_ledger'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/general_ledger.html" %}
+                    </div>
                     <div v-if="accountingTab === 'customers'" class="absolute inset-0 overflow-y-auto">
                         {% include "sales/customers_list.html" %}
                     </div>
                     <div v-if="accountingTab === 'invoices'" class="absolute inset-0 overflow-y-auto">
                         {% include "sales/invoices_list.html" %}
                     </div>
+                    <div v-if="accountingTab === 'purchase_invoices'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/purchase_invoices.html" %}
+                    </div>
                     <div v-if="accountingTab === 'payments'" class="absolute inset-0 overflow-y-auto">
-                        <div class="flex items-center justify-center h-64 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400 font-bold" v-text="isArabic ? 'سجل المدفوعات قادم قريباً' : 'Payments Ledger Coming Soon'">
-                        </div>
+                        {% include "accounting/payment_entries.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'reports'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/financial_reports.html" %}
                     </div>
                 </div>
             </div>
@@ -68,6 +82,36 @@
                     </div>
                     <div v-if="salesTab === 'orders'" class="absolute inset-0 overflow-y-auto">
                         {% include "sales/orders_list.html" %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accounting & Finance Module (ERPNext Architecture) -->
+            <div v-if="view === 'accounting_module'" class="flex flex-col h-full space-y-4 p-4">
+                <div class="flex-1 relative min-h-[500px]">
+                    <div v-if="accountingTab === 'dashboard'" class="absolute inset-0 overflow-y-auto">
+                        {% include "sales/accounting_dashboard.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'chart_of_accounts'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/chart_of_accounts.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'journal_entries'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/journal_entries.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'general_ledger'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/general_ledger.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'sales_invoices'" class="absolute inset-0 overflow-y-auto">
+                        {% include "sales/invoices_list.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'purchase_invoices'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/purchase_invoices.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'payment_entries'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/payment_entries.html" %}
+                    </div>
+                    <div v-if="accountingTab === 'financial_reports'" class="absolute inset-0 overflow-y-auto">
+                        {% include "accounting/financial_reports.html" %}
                     </div>
                 </div>
             </div>

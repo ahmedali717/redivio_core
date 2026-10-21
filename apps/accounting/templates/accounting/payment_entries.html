@@ -1,0 +1,128 @@
+<div class="space-y-6 animate-in slide-in-from-bottom-4 duration-500 pb-10">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl font-black shadow-sm border border-teal-100">
+                <i class="fas fa-money-check-dollar"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "سندات القبض والصرف (Payment Entries)" : "Payment Entries" ]]</h2>
+                <p class="text-slate-500 text-xs font-semibold">[[ isArabic ? "إدارة تحصيلات العملاء، سدادات الموردين، والتحويلات النقدية بين الصناديق والبنوك" : "Customer receipts, vendor payments, and cash/bank internal transfers" ]]</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+            <button @click="openNewPaymentModal('RECEIVE')"
+                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5">
+                <i class="fas fa-arrow-down"></i>
+                <span>[[ isArabic ? "سند قبض (عميل)" : "Receive" ]]</span>
+            </button>
+            <button @click="openNewPaymentModal('PAY')"
+                class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5">
+                <i class="fas fa-arrow-up"></i>
+                <span>[[ isArabic ? "سند صرف (مورد)" : "Pay" ]]</span>
+            </button>
+            <button @click="openNewPaymentModal('INTERNAL_TRANSFER')"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5">
+                <i class="fas fa-exchange-alt"></i>
+                <span>[[ isArabic ? "تحويل نقدية / بنك" : "Transfer" ]]</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Tabs & Search -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-2xs">
+        <div class="relative flex-1">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" v-model="paySearch" 
+                :placeholder="isArabic ? 'البحث برقم السند أو اسم الطرف أو المرجع...' : 'Search by voucher#, party, or reference...'"
+                class="w-full bg-slate-50 border border-slate-200/80 rounded-xl py-2 pl-10 pr-4 text-xs font-semibold outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all">
+        </div>
+
+        <div class="flex items-center gap-1.5 overflow-x-auto">
+            <button @click="payTypeFilter = 'ALL'" 
+                :class="payTypeFilter === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                [[ isArabic ? "الكل" : "All" ]]
+            </button>
+            <button @click="payTypeFilter = 'RECEIVE'" 
+                :class="payTypeFilter === 'RECEIVE' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                [[ isArabic ? "مقبوضات (Receive)" : "Receipts" ]]
+            </button>
+            <button @click="payTypeFilter = 'PAY'" 
+                :class="payTypeFilter === 'PAY' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                [[ isArabic ? "مدفوعات (Pay)" : "Payments" ]]
+            </button>
+            <button @click="payTypeFilter = 'INTERNAL_TRANSFER'" 
+                :class="payTypeFilter === 'INTERNAL_TRANSFER' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                [[ isArabic ? "تحويلات (Transfer)" : "Transfers" ]]
+            </button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-right border-collapse">
+                <thead class="bg-slate-50 text-[10px] uppercase font-black text-slate-400 border-b border-slate-200">
+                    <tr>
+                        <th class="px-4 py-3.5">[[ isArabic ? "رقم السند" : "Voucher No" ]]</th>
+                        <th class="px-4 py-3.5">[[ isArabic ? "النوع" : "Type" ]]</th>
+                        <th class="px-4 py-3.5">[[ isArabic ? "الطرف" : "Party" ]]</th>
+                        <th class="px-4 py-3.5">[[ isArabic ? "مدفوع من" : "Paid From" ]]</th>
+                        <th class="px-4 py-3.5">[[ isArabic ? "مستلم إلى" : "Paid To" ]]</th>
+                        <th class="px-4 py-3.5 text-center">[[ isArabic ? "المبلغ" : "Amount" ]]</th>
+                        <th class="px-4 py-3.5">[[ isArabic ? "التاريخ" : "Date" ]]</th>
+                        <th class="px-4 py-3.5 text-center">[[ isArabic ? "الحالة" : "Status" ]]</th>
+                        <th class="px-4 py-3.5 text-center">[[ isArabic ? "التحكم" : "Action" ]]</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    <tr v-if="filteredPaymentEntries.length === 0">
+                        <td colspan="9" class="text-center py-12 text-slate-400 font-bold">
+                            <i class="fas fa-hand-holding-dollar text-3xl mb-2 text-slate-300 block"></i>
+                            [[ isArabic ? "لا توجد سندات دفع مطابقة" : "No payment entries found" ]]
+                        </td>
+                    </tr>
+                    <tr v-for="pay in filteredPaymentEntries" :key="pay.id" class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-4 py-3 font-mono font-bold text-slate-800">[[ pay.entry_number ]]</td>
+                        <td class="px-4 py-3">
+                            <span :class="{'bg-emerald-50 text-emerald-700': pay.payment_type === 'RECEIVE', 'bg-rose-50 text-rose-700': pay.payment_type === 'PAY', 'bg-indigo-50 text-indigo-700': pay.payment_type === 'INTERNAL_TRANSFER'}"
+                                class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase">
+                                [[ pay.payment_type ]]
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 font-bold text-slate-700">[[ pay.party_name || '-' ]]</td>
+                        <td class="px-4 py-3 text-slate-600">[[ pay.paid_from_name ]]</td>
+                        <td class="px-4 py-3 text-slate-600">[[ pay.paid_to_name ]]</td>
+                        <td class="px-4 py-3 text-center font-mono font-bold text-slate-900 text-sm">$[[ formatNumber(pay.paid_amount) ]]</td>
+                        <td class="px-4 py-3 text-slate-500">[[ pay.posting_date ]]</td>
+                        <td class="px-4 py-3 text-center">
+                            <span :class="{'bg-amber-50 text-amber-700 border-amber-200': pay.status === 'DRAFT', 'bg-emerald-50 text-emerald-700 border-emerald-200': pay.status === 'SUBMITTED', 'bg-rose-50 text-rose-700 border-rose-200': pay.status === 'CANCELLED'}"
+                                class="text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase border">
+                                [[ pay.status ]]
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <button v-if="pay.status === 'DRAFT'" @click="submitPaymentEntry(pay.id)"
+                                    :title="isArabic ? 'اعتماد وترحيل' : 'Submit'"
+                                    class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button v-if="pay.status === 'SUBMITTED'" @click="cancelPaymentEntry(pay.id)"
+                                    :title="isArabic ? 'إلغاء وعكس' : 'Cancel'"
+                                    class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
