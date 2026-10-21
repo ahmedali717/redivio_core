@@ -6898,7 +6898,7 @@ createApp({
             };
             
             const mappedId = idMap[modId] || modId;
-            return this.purchasedModules.includes(mappedId);
+            return this.purchasedModules.includes(mappedId) || this.purchasedModules.includes(modId);
         },
 
         isConfigModuleSelected(modId) {
@@ -6913,7 +6913,7 @@ createApp({
                 'contracting_module': 'contracting'
             };
             const mappedId = idMap[modId] || modId;
-            return this.config.purchased_modules.includes(mappedId);
+            return this.config.purchased_modules.includes(mappedId) || this.config.purchased_modules.includes(modId);
         },
 
         setConfigMode(mode) {
@@ -6947,16 +6947,17 @@ createApp({
                 'procurement_module': 'procurement',
                 'sales_module': 'sales',
                 'accounting_module': 'sales',
-                'restaurant_pos_module': 'restaurant_pos'
+                'restaurant_pos_module': 'restaurant_pos',
+                'contracting_module': 'contracting'
             };
             const mappedId = idMap[modId] || modId;
 
-            if (this.config.purchased_modules.includes(mappedId)) {
+            if (this.config.purchased_modules.includes(mappedId) || this.config.purchased_modules.includes(modId)) {
                 if (this.config.purchased_modules.length > 1) {
-                    this.config.purchased_modules = this.config.purchased_modules.filter(m => m !== mappedId);
+                    this.config.purchased_modules = this.config.purchased_modules.filter(m => m !== mappedId && m !== modId);
                 }
             } else {
-                const plan = this.license.plan;
+                const plan = (this.license.plan || '').toLowerCase();
                 if (this.config.system_mode === 'standalone') {
                     this.config.purchased_modules = [mappedId];
                 } else {
