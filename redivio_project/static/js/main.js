@@ -6072,6 +6072,10 @@ createApp({
             const active = this.allOpcos.find(o => o.id === parseInt(opcoId));
             if (active) {
                 const finalLogo = this.fixImagePath(active.logo);
+                let pModules = active.purchased_modules || [];
+                if (typeof pModules === 'string') {
+                    try { pModules = JSON.parse(pModules); } catch(e) { pModules = []; }
+                }
                 this.config = {
                     company_name: active.name || '',
                     is_holding: !!active.is_holding,
@@ -6079,7 +6083,7 @@ createApp({
                     cr_number: active.cr_number || '',
                     logo: finalLogo,
                     system_mode: active.system_mode || 'modular',
-                    purchased_modules: active.purchased_modules || []
+                    purchased_modules: Array.isArray(pModules) ? pModules : []
                 };
             }
         },
@@ -7002,6 +7006,11 @@ createApp({
                 }
             } else {
                 if (!this.purchasedModules || this.purchasedModules.length === 0) return true;
+                // Enterprise plan or Superuser gets access to all modules including contracting!
+                const p = (this.license && this.license.plan ? this.license.plan : '').toLowerCase();
+                if (p === 'enterprise' || (this.user && this.user.is_superuser)) {
+                    return true;
+                }
             }
             
             const idMap = {
@@ -7014,11 +7023,21 @@ createApp({
             };
             
             const mappedId = idMap[modId] || modId;
-            return this.purchasedModules.includes(mappedId) || this.purchasedModules.includes(modId);
+            let list = this.purchasedModules;
+            if (typeof list === 'string') {
+                try { list = JSON.parse(list); } catch(e) { list = []; }
+            }
+            if (!Array.isArray(list)) list = [];
+            return list.includes(mappedId) || list.includes(modId);
         },
 
         isConfigModuleSelected(modId) {
             if (!this.config || !this.config.purchased_modules) return false;
+            let list = this.config.purchased_modules;
+            if (typeof list === 'string') {
+                try { list = JSON.parse(list); } catch(e) { list = []; }
+            }
+            if (!Array.isArray(list)) return false;
             
             const idMap = {
                 'inventory_module': 'wms',
@@ -7029,14 +7048,14 @@ createApp({
                 'contracting_module': 'contracting'
             };
             const mappedId = idMap[modId] || modId;
-            return this.config.purchased_modules.includes(mappedId) || this.config.purchased_modules.includes(modId);
+            return list.includes(mappedId) || list.includes(modId);
         },
 
         setConfigMode(mode) {
-            const plan = this.license.plan;
+            const plan = (this.license && this.license.plan ? this.license.plan : '').toLowerCase();
             if (mode === 'modular' && (plan === 'starter' || plan === 'free')) {
                 Swal.fire({
-                    title: this.isArabic ? 'ترقية المطلوبة' : 'Upgrade Required',
+                    title: this.isArabic ? 'ترقية مطلوبة' : 'Upgrade Required',
                     text: this.isArabic 
                         ? 'الخطة الحالية (Starter) تدعم فقط نمط موديول مستقل (Stand Alone). يرجى الترقية إلى باقة أعلى للتبديل للكامل.'
                         : 'The current plan (Starter) only supports Stand Alone mode. Please upgrade to a higher plan to switch to Full Package.',
@@ -7057,6 +7076,11 @@ createApp({
             if (!this.config.purchased_modules) {
                 this.config.purchased_modules = [];
             }
+            let list = this.config.purchased_modules;
+            if (typeof list === 'string') {
+                try { list = JSON.parse(list); } catch(e) { list = []; }
+            }
+            if (!Array.isArray(list)) list = [];
             
             const idMap = {
                 'inventory_module': 'wms',
@@ -7068,18 +7092,19 @@ createApp({
             };
             const mappedId = idMap[modId] || modId;
 
-            if (this.config.purchased_modules.includes(mappedId) || this.config.purchased_modules.includes(modId)) {
-                if (this.config.purchased_modules.length > 1) {
-                    this.config.purchased_modules = this.config.purchased_modules.filter(m => m !== mappedId && m !== modId);
+            if (list.includes(mappedId) || list.includes(modId)) {
+                if (list.length > 1) {
+                    this.config.purchased_modules = list.filter(m => m !== mappedId && m !== modId);
+                    this.showToast(this.isArabic ? 'تم إلغاء تحديد الموديول. اضغط حفظ التغييرات للاعتماد' : 'Module unselected. Click Save Settings to apply.', 'info');
                 }
             } else {
-                const plan = (this.license.plan || '').toLowerCase();
+                const plan = (this.license && this.license.plan ? this.license.plan : '').toLowerCase();
                 if (this.config.system_mode === 'standalone') {
                     this.config.purchased_modules = [mappedId];
                 } else {
                     if (plan === 'starter' || plan === 'free') {
                         Swal.fire({
-                            title: this.isArabic ? 'ترقية المطلوبة' : 'Upgrade Required',
+                            title: this.isArabic ? 'ترقية مطلوبة' : 'Upgrade Required',
                             text: this.isArabic 
                                 ? 'الخطة الحالية (Starter) تسمح بموديول واحد فقط في وضع التشغيل المستقل.'
                                 : 'Starter plan only supports one active module in Stand Alone mode.',
@@ -7089,9 +7114,9 @@ createApp({
                             confirmButtonColor: '#3b82f6'
                         });
                         return;
-                    } else if (plan === 'business' && this.config.purchased_modules.length >= 3) {
+                    } else if (plan === 'business' && list.length >= 3) {
                         Swal.fire({
-                            title: this.isArabic ? 'ترقية المطلوبة' : 'Upgrade Required',
+                            title: this.isArabic ? 'ترقية مطلوبة' : 'Upgrade Required',
                             text: this.isArabic 
                                 ? 'خطة الأعمال (Business) تسمح بتفعيل 3 موديولات كحد أقصى. يرجى الترقية إلى الباقة الاحترافية لتفعيل المزيد.'
                                 : 'Business plan supports up to 3 active modules. Please upgrade to Professional to activate more.',
@@ -7102,7 +7127,8 @@ createApp({
                         });
                         return;
                     }
-                    this.config.purchased_modules.push(mappedId);
+                    this.config.purchased_modules = [...list, mappedId];
+                    this.showToast(this.isArabic ? 'تم تفعيل الموديول! اضغط حفظ التغييرات بالأعلى للاعتماد' : 'Module selected! Click Save Settings above to apply.', 'success');
                 }
             }
         },

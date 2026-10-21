@@ -20,25 +20,52 @@ class OpCoSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         system_mode = attrs.get('system_mode', getattr(self.instance, 'system_mode', 'modular') if self.instance else 'modular')
         purchased_modules = attrs.get('purchased_modules', getattr(self.instance, 'purchased_modules', []) if self.instance else [])
-        plan = getattr(self.instance, 'plan', 'starter') if self.instance else 'starter'
         
+        # Safely parse JSON string if sent from FormData
+        if isinstance(purchased_modules, str):
+            import json
+            try:
+                purchased_modules = json.loads(purchased_modules)
+                attrs['purchased_modules'] = purchased_modules
+            except Exception:
+                purchased_modules = []
+                attrs['purchased_modules'] = []
+
+        # Determine effective plan (inherit from holding company if subsidiary)
+        holding_opco = None
+        if self.instance:
+            if self.instance.is_holding or not self.instance.parent:
+                holding_opco = self.instance
+            else:
+                curr = self.instance
+                while curr.parent:
+                    curr = curr.parent
+                holding_opco = curr
+        
+        plan = (holding_opco.plan if holding_opco and holding_opco.plan else getattr(self.instance, 'plan', 'enterprise') if self.instance else 'enterprise')
+        if not plan:
+            plan = 'enterprise'
+        plan = str(plan).lower()
+
         request = self.context.get('request')
         is_arabic = request and request.LANGUAGE_CODE and request.LANGUAGE_CODE.startswith('ar')
+        is_superuser = request and request.user and getattr(request.user, 'is_superuser', False)
 
-        if plan in ['starter', 'free']:
-            if system_mode == 'modular':
-                raise serializers.ValidationError({
-                    "system_mode": "خطة المبتدئ تدعم فقط نمط موديول مستقل." if is_arabic else "Starter plan supports Stand Alone mode only."
-                })
-            if isinstance(purchased_modules, list) and len(purchased_modules) > 1:
-                raise serializers.ValidationError({
-                    "purchased_modules": "خطة المبتدئ تسمح بموديول واحد فقط." if is_arabic else "Starter plan supports only one active module."
-                })
-        elif plan == 'business':
-            if isinstance(purchased_modules, list) and len(purchased_modules) > 3:
-                raise serializers.ValidationError({
-                    "purchased_modules": "خطة الأعمال تسمح بحد أقصى 3 موديولات." if is_arabic else "Business plan supports up to 3 active modules."
-                })
+        if not is_superuser and plan not in ['enterprise', 'pro', 'professional']:
+            if plan in ['starter', 'free']:
+                if system_mode == 'modular':
+                    raise serializers.ValidationError({
+                        "system_mode": "خطة المبتدئ تدعم فقط نمط موديول مستقل." if is_arabic else "Starter plan supports Stand Alone mode only."
+                    })
+                if isinstance(purchased_modules, list) and len(purchased_modules) > 1:
+                    raise serializers.ValidationError({
+                        "purchased_modules": "خطة المبتدئ تسمح بموديول واحد فقط." if is_arabic else "Starter plan supports only one active module."
+                    })
+            elif plan == 'business':
+                if isinstance(purchased_modules, list) and len(purchased_modules) > 3:
+                    raise serializers.ValidationError({
+                        "purchased_modules": "خطة الأعمال تسمح بحد أقصى 3 موديولات." if is_arabic else "Business plan supports up to 3 active modules."
+                    })
 
         return attrs
 
