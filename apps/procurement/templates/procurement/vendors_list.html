@@ -1,26 +1,421 @@
-<div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[500px] p-6 animate-in fade-in">
-    <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
-        <h2 class="text-xl font-black text-slate-800"><i class="fas fa-truck text-emerald-500 mr-2"></i> قائمة الموردين</h2>
-        <button @click="view = (vendorsListBackView || (systemMode === 'standalone' ? 'restaurant_pos_module' : 'procurement_module')); vendorsListBackView = null;" class="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-slate-700" v-text="(vendorsListBackView === 'restaurant_pos_module' || systemMode === 'standalone') ? (isArabic ? 'عودة لنقاط البيع' : 'Back to POS') : (isArabic ? 'عودة للمشتريات' : 'Back to Procurement')"></button>
+<div class="bg-slate-50/50 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col min-h-[600px] p-4 md:p-8 animate-in fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
+    
+    <!-- 1. TOP HEADER & NAVIGATION BAR -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-emerald-500/20">
+                <i class="fas fa-truck"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl md:text-2xl font-black text-slate-800" v-text="isArabic ? 'دليل الموردين والمشتريات' : 'Vendors & Suppliers Master'"></h2>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        [[ filteredVendors.length ]]
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400 font-medium mt-0.5" v-text="isArabic ? 'إدارة الموردين، كشوفات الحسابات، شروط الدفع والحدود الائتمانية (دمج Odoo & ERPNext)' : 'Manage suppliers, ledgers, credit terms & procurement relationships'"></p>
+            </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2.5 w-full md:w-auto">
+            <!-- New Vendor Button -->
+            <button @click="openVendorModal()" 
+                    class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-md shadow-emerald-600/20 hover:shadow-lg transition-all flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span v-text="isArabic ? 'مورد جديد' : 'New Vendor'"></span>
+            </button>
+
+            <!-- Back Button -->
+            <button @click="view = (vendorsListBackView || (systemMode === 'standalone' ? 'restaurant_pos_module' : 'procurement_module')); vendorsListBackView = null;" 
+                    class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm">
+                <i class="fas" :class="isArabic ? 'fa-arrow-right' : 'fa-arrow-left'"></i>
+                <span v-text="(vendorsListBackView === 'restaurant_pos_module' || systemMode === 'standalone') ? (isArabic ? 'عودة لنقاط البيع' : 'Back to POS') : (isArabic ? 'عودة للمشتريات' : 'Back to Procurement')"></span>
+            </button>
+        </div>
     </div>
-    <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden">
-        <table class="w-full text-right" dir="rtl">
-            <thead class="bg-white border-b border-slate-200 text-xs text-slate-500">
-                <tr>
-                    <th class="p-4 font-bold">الكود</th>
-                    <th class="p-4 font-bold">الاسم</th>
-                    <th class="p-4 font-bold">الرقم الضريبي</th>
-                </tr>
-            </thead>
-            <tbody class="text-sm">
-                <tr v-for="v in (vendors || [])" :key="v.id" 
-                    @click="fetchVendorLedger(v)"
-                    class="border-b border-white hover:bg-white/50 transition-colors cursor-pointer group">
-                    <td class="p-4 font-bold text-emerald-600 group-hover:underline">[[ v.code ]]</td>
-                    <td class="p-4 font-bold text-slate-700">[[ v.name ]]</td>
-                    <td class="p-4 text-slate-400">[[ v.tax_id || '---' ]]</td>
-                </tr>
-            </tbody>
-        </table>
+
+    <!-- 2. ODOO-STYLE KPI SUMMARY CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- Metric 1: Total Vendors -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-blue-300 transition-all">
+            <div>
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1" v-text="isArabic ? 'إجمالي الموردين' : 'Total Suppliers'"></span>
+                <div class="text-2xl font-black text-slate-800">[[ vendorStats.totalCount ]]</div>
+                <div class="text-[11px] text-slate-500 font-bold mt-1">
+                    [[ vendorStats.companiesCount ]] [[ isArabic ? 'شركة' : 'Companies' ]] • [[ vendorStats.individualsCount ]] [[ isArabic ? 'أفراد' : 'Individuals' ]]
+                </div>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg border border-blue-100">
+                <i class="fas fa-building"></i>
+            </div>
+        </div>
+
+        <!-- Metric 2: Outstanding Payables -->
+        <div class="bg-white rounded-2xl p-4 border border-amber-200 shadow-sm flex items-center justify-between hover:border-amber-300 transition-all">
+            <div>
+                <span class="text-[11px] font-black uppercase tracking-wider text-amber-600 block mb-1" v-text="isArabic ? 'مستحقات غير مسددة' : 'Outstanding Payables'"></span>
+                <div class="text-2xl font-black text-amber-600 font-mono">
+                    [[ formatNumber(vendorStats.totalPayable) ]] <span class="text-xs font-bold text-slate-400">SAR</span>
+                </div>
+                <div class="text-[11px] text-slate-500 font-bold mt-1">
+                    [[ vendorStats.vendorsWithDebt ]] [[ isArabic ? 'موردين لديهم مطالبات' : 'Vendors with balance' ]]
+                </div>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg border border-amber-200">
+                <i class="fas fa-coins"></i>
+            </div>
+        </div>
+
+        <!-- Metric 3: Local Suppliers -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-emerald-300 transition-all">
+            <div>
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1" v-text="isArabic ? 'موردون محليون' : 'Local Suppliers'"></span>
+                <div class="text-2xl font-black text-emerald-600">
+                    [[ (vendors || []).filter(v => (v.vendor_group || '').toLowerCase().includes('local') || (v.country || '').includes('Saudi') || (v.country || '').includes('السعود')).length ]]
+                </div>
+                <div class="text-[11px] text-slate-500 font-bold mt-1" v-text="isArabic ? 'عقود توريد محلية نشطة' : 'Direct domestic supply'"></div>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg border border-emerald-100">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+        </div>
+
+        <!-- Metric 4: Credit Facility Active -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-purple-300 transition-all">
+            <div>
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1" v-text="isArabic ? 'تسهيلات ائتمانية' : 'Credit Terms Active'"></span>
+                <div class="text-2xl font-black text-purple-600">
+                    [[ (vendors || []).filter(v => parseFloat(v.credit_limit || 0) > 0).length ]]
+                </div>
+                <div class="text-[11px] text-slate-500 font-bold mt-1" v-text="isArabic ? 'موردون بحد ائتماني محدد' : 'Vendors with credit limit'"></div>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg border border-purple-100">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+        </div>
     </div>
+
+    <!-- 3. SEARCH, FILTERS & VIEW MODE CONTROLS -->
+    <div class="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 mb-6">
+        <!-- Search Input -->
+        <div class="relative flex-1 min-w-[260px]">
+            <i class="fas fa-search absolute inset-y-0 flex items-center text-slate-400 text-xs" :class="isArabic ? 'right-3.5' : 'left-3.5'"></i>
+            <input type="text" v-model="vendorSearch" 
+                   :placeholder="isArabic ? 'بحث بالاسم، الكود، الرقم الضريبي، الهاتف، المدينة...' : 'Search by name, code, VAT, phone, city...'"
+                   :class="isArabic ? 'pr-9 pl-8' : 'pl-9 pr-8'"
+                   class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-800 placeholder-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+            <button v-if="vendorSearch" @click="vendorSearch = ''" class="absolute inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-xs" :class="isArabic ? 'left-3' : 'right-3'">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
+
+        <!-- Filter Pills (Odoo/ERPNext style) -->
+        <div class="flex items-center flex-wrap gap-1.5">
+            <button @click="vendorTypeFilter = 'ALL'"
+                    :class="vendorTypeFilter === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'الكل' : 'All'"></button>
+
+            <button @click="vendorTypeFilter = 'PAYABLE_ONLY'"
+                    :class="vendorTypeFilter === 'PAYABLE_ONLY' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
+                <i class="fas fa-exclamation-circle text-[10px]"></i>
+                <span v-text="isArabic ? 'مستحقات معلقة' : 'Payables Due'"></span>
+            </button>
+
+            <button @click="vendorTypeFilter = 'COMPANY'"
+                    :class="vendorTypeFilter === 'COMPANY' ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'شركات' : 'Companies'"></button>
+
+            <button @click="vendorTypeFilter = 'INDIVIDUAL'"
+                    :class="vendorTypeFilter === 'INDIVIDUAL' ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'أفراد' : 'Individuals'"></button>
+
+            <button @click="vendorTypeFilter = 'LOCAL'"
+                    :class="vendorTypeFilter === 'LOCAL' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    v-text="isArabic ? 'محلي' : 'Local'"></button>
+        </div>
+
+        <!-- View Mode Switcher -->
+        <div class="flex items-center border border-slate-200 rounded-xl p-0.5 bg-slate-100 self-end lg:self-auto">
+            <button @click="vendorViewMode = 'cards'"
+                    :class="vendorViewMode === 'cards' ? 'bg-white text-emerald-600 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                    class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5"
+                    :title="isArabic ? 'عرض بطاقات (Odoo Kanban)' : 'Kanban Cards View'">
+                <i class="fas fa-th-large"></i>
+                <span class="hidden sm:inline" v-text="isArabic ? 'بطاقات' : 'Cards'"></span>
+            </button>
+            <button @click="vendorViewMode = 'table'"
+                    :class="vendorViewMode === 'table' ? 'bg-white text-emerald-600 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                    class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5"
+                    :title="isArabic ? 'عرض جدول تفصيلي (ERPNext Table)' : 'Detailed Table View'">
+                <i class="fas fa-list"></i>
+                <span class="hidden sm:inline" v-text="isArabic ? 'جدول' : 'Table'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. VIEW 1: ODOO-STYLE KANBAN CARDS -->
+    <div v-if="vendorViewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div v-for="v in filteredVendors" :key="v.id"
+             class="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between group overflow-hidden">
+            
+            <!-- Card Body Top -->
+            <div class="p-4">
+                <div class="flex items-start justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-3">
+                        <!-- Avatar -->
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white font-black flex items-center justify-center text-sm shadow-sm uppercase">
+                            [[ (v.name || 'V').substring(0, 2) ]]
+                        </div>
+                        <div>
+                            <div class="font-mono font-bold text-[11px] text-emerald-600 tracking-wider">
+                                [[ v.code ]]
+                            </div>
+                            <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-black"
+                                  :class="v.vendor_type === 'INDIVIDUAL' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-blue-50 text-blue-700 border border-blue-200'">
+                                [[ v.vendor_type === 'INDIVIDUAL' ? (isArabic ? 'فرد' : 'Individual') : (isArabic ? 'شركة' : 'Company') ]]
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Supplier Group Pill -->
+                    <span v-if="v.vendor_group" class="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                        [[ v.vendor_group ]]
+                    </span>
+                </div>
+
+                <!-- Vendor Name (Clickable to Ledger) -->
+                <h3 @click="fetchVendorLedger(v)" 
+                    class="font-black text-slate-800 text-base mb-1.5 hover:text-emerald-600 cursor-pointer transition-colors line-clamp-1"
+                    :title="v.name">
+                    [[ v.name ]]
+                </h3>
+
+                <!-- Contact Person -->
+                <div v-if="v.contact_name" class="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
+                    <i class="fas fa-user-tie text-[10px] text-slate-400"></i>
+                    <span class="font-bold">[[ v.contact_name ]]</span>
+                </div>
+
+                <!-- Tax ID -->
+                <div v-if="v.tax_id" class="flex items-center gap-1.5 text-xs text-slate-500 mb-2.5">
+                    <i class="fas fa-hashtag text-[10px] text-slate-400"></i>
+                    <span class="font-mono text-[11px]">[[ v.tax_id ]]</span>
+                </div>
+
+                <!-- Quick Contact Direct Links -->
+                <div class="flex items-center flex-wrap gap-2 pt-2 border-t border-slate-100 text-xs">
+                    <a v-if="v.phone" :href="'tel:' + v.phone" 
+                       class="text-slate-600 hover:text-emerald-600 font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/60"
+                       :title="v.phone">
+                        <i class="fas fa-phone text-emerald-500 text-[10px]"></i>
+                        <span class="font-mono text-[11px]">[[ v.phone ]]</span>
+                    </a>
+                    <a v-if="v.email" :href="'mailto:' + v.email" 
+                       class="text-slate-600 hover:text-blue-600 font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/60"
+                       :title="v.email">
+                        <i class="fas fa-envelope text-blue-500 text-[10px]"></i>
+                        <span class="text-[11px] truncate max-w-[120px]">[[ v.email ]]</span>
+                    </a>
+                    <span v-if="v.city || v.country" class="text-slate-500 text-[11px] flex items-center gap-1">
+                        <i class="fas fa-map-pin text-rose-500 text-[10px]"></i>
+                        <span>[[ v.city || v.country ]]</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Card Financial Terms & Balance Strip -->
+            <div class="bg-slate-50/80 border-t border-slate-100 p-3 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block" v-text="isArabic ? 'الرصيد المستحق' : 'Balance'"></span>
+                    <span class="font-mono font-black text-xs" 
+                          :class="parseFloat(v.balance || 0) > 0 ? 'text-amber-600' : 'text-emerald-600'">
+                        [[ formatNumber(v.balance) ]] SAR
+                    </span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block" v-text="isArabic ? 'شروط السداد' : 'Terms'"></span>
+                    <span class="text-[11px] font-bold text-slate-700">
+                        [[ v.payment_terms || 'Immediate' ]]
+                    </span>
+                </div>
+            </div>
+
+            <!-- Card Bottom Smart Actions -->
+            <div class="bg-white border-t border-slate-100 p-2.5 flex items-center justify-between gap-1.5">
+                <!-- Ledger Button -->
+                <button @click="fetchVendorLedger(v)"
+                        class="flex-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white py-1.5 px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1">
+                    <i class="fas fa-file-invoice text-[10px]"></i>
+                    <span v-text="isArabic ? 'كشف حساب' : 'Ledger'"></span>
+                </button>
+
+                <!-- New PO Button -->
+                <button @click="openModal('po', { vendor: v.id })"
+                        class="bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white p-1.5 rounded-xl text-xs font-bold transition-all"
+                        :title="isArabic ? 'إنشاء أمر شراء للمورد' : 'Create Purchase Order'">
+                    <i class="fas fa-cart-plus"></i>
+                </button>
+
+                <!-- Edit Vendor Button -->
+                <button @click="openVendorModal(v)"
+                        class="bg-slate-100 hover:bg-slate-800 text-slate-600 hover:text-white p-1.5 rounded-xl text-xs font-bold transition-all"
+                        :title="isArabic ? 'تعديل بيانات المورد' : 'Edit Vendor'">
+                    <i class="fas fa-edit"></i>
+                </button>
+
+                <!-- Delete Vendor Button -->
+                <button @click="deleteItem('vendor', v.id)"
+                        class="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white p-1.5 rounded-xl text-xs font-bold transition-all"
+                        :title="isArabic ? 'حذف المورد' : 'Delete Vendor'">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. VIEW 2: ERPNEXT-STYLE DETAILED MASTER TABLE -->
+    <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right" :dir="isArabic ? 'rtl' : 'ltr'">
+                <thead class="bg-slate-50/80 border-b border-slate-200 text-xs font-black text-slate-500 uppercase tracking-wider">
+                    <tr>
+                        <th class="p-3.5" v-text="isArabic ? 'الكود' : 'Code'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'اسم المورد' : 'Supplier Name'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'النوع والتصنيف' : 'Type & Group'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'الرقم الضريبي' : 'VAT / Tax ID'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'بيانات التواصل' : 'Contact Details'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'شروط السداد والائتمان' : 'Terms & Limit'"></th>
+                        <th class="p-3.5" v-text="isArabic ? 'الرصيد المستحق' : 'Balance (SAR)'"></th>
+                        <th class="p-3.5 text-center" v-text="isArabic ? 'الإجراءات' : 'Actions'"></th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-slate-100">
+                    <tr v-for="v in filteredVendors" :key="v.id"
+                        class="hover:bg-slate-50/70 transition-colors group">
+                        
+                        <!-- Code -->
+                        <td class="p-3.5 font-mono font-black text-emerald-600 cursor-pointer" @click="fetchVendorLedger(v)">
+                            [[ v.code ]]
+                        </td>
+
+                        <!-- Name & Contact Person -->
+                        <td class="p-3.5 cursor-pointer" @click="fetchVendorLedger(v)">
+                            <div class="font-black text-slate-800 text-sm group-hover:text-emerald-600 transition-colors">
+                                [[ v.name ]]
+                            </div>
+                            <div v-if="v.contact_name" class="text-slate-400 text-[11px] font-bold flex items-center gap-1 mt-0.5">
+                                <i class="fas fa-user-circle text-[10px]"></i>
+                                <span>[[ v.contact_name ]]</span>
+                            </div>
+                        </td>
+
+                        <!-- Type & Group -->
+                        <td class="p-3.5">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-black"
+                                      :class="v.vendor_type === 'INDIVIDUAL' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-blue-50 text-blue-700 border border-blue-200'">
+                                    [[ v.vendor_type === 'INDIVIDUAL' ? (isArabic ? 'فرد' : 'Individual') : (isArabic ? 'شركة' : 'Company') ]]
+                                </span>
+                                <span v-if="v.vendor_group" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
+                                    [[ v.vendor_group ]]
+                                </span>
+                            </div>
+                        </td>
+
+                        <!-- VAT ID -->
+                        <td class="p-3.5 font-mono font-bold text-slate-600">
+                            [[ v.tax_id || '---' ]]
+                        </td>
+
+                        <!-- Contact Details -->
+                        <td class="p-3.5">
+                            <div class="space-y-0.5">
+                                <div v-if="v.phone" class="font-mono text-slate-700 font-bold flex items-center gap-1">
+                                    <i class="fas fa-phone text-emerald-500 text-[10px]"></i>
+                                    <span>[[ v.phone ]]</span>
+                                </div>
+                                <div v-if="v.email" class="text-slate-500 text-[11px] truncate max-w-[150px]">
+                                    [[ v.email ]]
+                                </div>
+                                <div v-if="v.city" class="text-slate-400 text-[10px]">
+                                    [[ v.city ]], [[ v.country || 'Saudi Arabia' ]]
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Terms & Credit Limit -->
+                        <td class="p-3.5">
+                            <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-700 mb-0.5">
+                                [[ v.payment_terms || 'Immediate' ]]
+                            </span>
+                            <div v-if="parseFloat(v.credit_limit || 0) > 0" class="text-[10px] text-slate-500 font-mono">
+                                [[ isArabic ? 'حد ائتماني:' : 'Limit:' ]] [[ formatNumber(v.credit_limit) ]] SAR
+                            </div>
+                        </td>
+
+                        <!-- Balance -->
+                        <td class="p-3.5 font-mono font-black text-sm"
+                            :class="parseFloat(v.balance || 0) > 0 ? 'text-amber-600' : 'text-emerald-600'">
+                            [[ formatNumber(v.balance) ]] <span class="text-[10px] text-slate-400">SAR</span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="p-3.5 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <!-- Ledger -->
+                                <button @click="fetchVendorLedger(v)"
+                                        class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white font-black text-xs transition-all flex items-center gap-1"
+                                        :title="isArabic ? 'كشف الحساب' : 'Ledger'">
+                                    <i class="fas fa-file-invoice"></i>
+                                    <span class="hidden sm:inline" v-text="isArabic ? 'كشف' : 'Ledger'"></span>
+                                </button>
+
+                                <!-- New PO -->
+                                <button @click="openModal('po', { vendor: v.id })"
+                                        class="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition-all text-xs"
+                                        :title="isArabic ? 'أمر شراء جديد' : 'New PO'">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+
+                                <!-- Edit -->
+                                <button @click="openVendorModal(v)"
+                                        class="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white transition-all text-xs"
+                                        :title="isArabic ? 'تعديل' : 'Edit'">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+
+                                <!-- Delete -->
+                                <button @click="deleteItem('vendor', v.id)"
+                                        class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all text-xs"
+                                        :title="isArabic ? 'حذف' : 'Delete'">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 6. EMPTY STATE (When no results found) -->
+    <div v-if="filteredVendors.length === 0" 
+         class="my-auto py-16 flex flex-col items-center justify-center text-center">
+        <div class="w-20 h-20 rounded-3xl bg-slate-100 text-slate-400 flex items-center justify-center text-3xl mb-4 border border-slate-200">
+            <i class="fas fa-truck-loading"></i>
+        </div>
+        <h3 class="text-base font-black text-slate-700 mb-1" v-text="isArabic ? 'لا توجد نتائج مطابقة' : 'No Vendors Found'"></h3>
+        <p class="text-xs text-slate-400 max-w-sm mb-5" v-text="isArabic ? 'لم يتم العثور على أي موردين يطابقون معايير البحث أو الفلترة المحددة.' : 'No vendors match your search and filter criteria.'"></p>
+        <button @click="openVendorModal()" 
+                class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-md transition-all flex items-center gap-2">
+            <i class="fas fa-plus"></i>
+            <span v-text="isArabic ? 'إضافة مورد جديد الآن' : 'Add New Vendor Now'"></span>
+        </button>
+    </div>
+
 </div>

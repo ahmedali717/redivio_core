@@ -179,6 +179,9 @@ createApp({
             paySearch: '',
             payTypeFilter: 'ALL',
             activeReportTab: 'trial_balance',
+            vendorSearch: '',
+            vendorTypeFilter: 'ALL',
+            vendorViewMode: 'cards',
             customers: [],
             salesOrders: [],
             salesInvoices: [],
@@ -361,7 +364,8 @@ createApp({
                 account: { ar: 'بطاقة حساب مالي (Account)', en: 'Financial Account' },
                 journal_entry: { ar: 'سند قيد محاسبي مزدوج (Journal Entry)', en: 'Journal Entry Voucher' },
                 purchase_invoice: { ar: 'فاتورة شراء ومطالبة مورد (Purchase Invoice)', en: 'Purchase Invoice' },
-                payment_entry: { ar: 'سند قبض / صرف نقدية (Payment Entry)', en: 'Payment Entry' }
+                payment_entry: { ar: 'سند قبض / صرف نقدية (Payment Entry)', en: 'Payment Entry' },
+                vendor: { ar: 'بيانات المورد (Vendor Profile)', en: 'Vendor Profile' }
             },
 
             forms: {
@@ -479,6 +483,12 @@ createApp({
                     transfer_quantity: 1
                 },
                 customer: { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' },
+                vendor: {
+                    id: null, code: '', name: '', vendor_type: 'COMPANY', vendor_group: 'Local',
+                    tax_id: '', email: '', phone: '', contact_name: '', website: '', address: '',
+                    city: '', country: 'Saudi Arabia', credit_limit: 0, payment_terms: 'NET 30',
+                    currency: 'SAR', balance: 0, extra_data: {}
+                },
                 salesorder: {
                     id: null,
                     customer: '',
@@ -525,6 +535,63 @@ createApp({
     },
 
     computed: {
+        filteredVendors() {
+            let list = this.vendors || [];
+            if (this.vendorTypeFilter && this.vendorTypeFilter !== 'ALL') {
+                if (this.vendorTypeFilter === 'PAYABLE_ONLY') {
+                    list = list.filter(v => parseFloat(v.balance || 0) > 0);
+                } else if (this.vendorTypeFilter === 'COMPANY') {
+                    list = list.filter(v => v.vendor_type === 'COMPANY' || !v.vendor_type);
+                } else if (this.vendorTypeFilter === 'INDIVIDUAL') {
+                    list = list.filter(v => v.vendor_type === 'INDIVIDUAL');
+                } else if (this.vendorTypeFilter === 'LOCAL') {
+                    list = list.filter(v => (v.vendor_group || '').toLowerCase().includes('local') || (v.country || '').includes('Saudi') || (v.country || '').includes('السعود'));
+                }
+            }
+            if (this.vendorSearch) {
+                const q = this.vendorSearch.trim().toLowerCase();
+                list = list.filter(v =>
+                    (v.name && v.name.toLowerCase().includes(q)) ||
+                    (v.code && v.code.toLowerCase().includes(q)) ||
+                    (v.tax_id && v.tax_id.toLowerCase().includes(q)) ||
+                    (v.phone && v.phone.toLowerCase().includes(q)) ||
+                    (v.email && v.email.toLowerCase().includes(q)) ||
+                    (v.city && v.city.toLowerCase().includes(q)) ||
+                    (v.contact_name && v.contact_name.toLowerCase().includes(q))
+                );
+            }
+            return list;
+        },
+
+        vendorStats() {
+            const list = this.vendors || [];
+            let totalPayable = 0;
+            let vendorsWithDebt = 0;
+            let companiesCount = 0;
+            let individualsCount = 0;
+
+            list.forEach(v => {
+                const bal = parseFloat(v.balance || 0);
+                if (bal > 0) {
+                    totalPayable += bal;
+                    vendorsWithDebt++;
+                }
+                if (v.vendor_type === 'INDIVIDUAL') {
+                    individualsCount++;
+                } else {
+                    companiesCount++;
+                }
+            });
+
+            return {
+                totalCount: list.length,
+                totalPayable: totalPayable,
+                vendorsWithDebt: vendorsWithDebt,
+                companiesCount: companiesCount,
+                individualsCount: individualsCount
+            };
+        },
+
         flatOrgList() {
             let list = [];
             if (!this.opcos || this.opcos.length === 0) return [];
@@ -7128,9 +7195,62 @@ createApp({
                             notes: '',
                             extra_data: {}
                         };
+                    } else if (type === 'vendor') {
+                        this.isEditing = !!(data && data.id);
+                        this.forms.vendor = data ? JSON.parse(JSON.stringify(data)) : {
+                            id: null,
+                            code: `V-${Date.now().toString().slice(-4)}`,
+                            name: '',
+                            vendor_type: 'COMPANY',
+                            vendor_group: 'Local',
+                            tax_id: '',
+                            email: '',
+                            phone: '',
+                            contact_name: '',
+                            website: '',
+                            address: '',
+                            city: '',
+                            country: 'Saudi Arabia',
+                            credit_limit: 0,
+                            payment_terms: 'NET 30',
+                            currency: 'SAR',
+                            balance: 0,
+                            extra_data: {}
+                        };
                     }
                 }
             }
+        },
+
+        openVendorModal(vendor = null) {
+            this.modalType = 'vendor';
+            if (vendor) {
+                this.isEditing = true;
+                this.forms.vendor = JSON.parse(JSON.stringify(vendor));
+            } else {
+                this.isEditing = false;
+                this.forms.vendor = {
+                    id: null,
+                    code: `V-${Date.now().toString().slice(-4)}`,
+                    name: '',
+                    vendor_type: 'COMPANY',
+                    vendor_group: 'Local',
+                    tax_id: '',
+                    email: '',
+                    phone: '',
+                    contact_name: '',
+                    website: '',
+                    address: '',
+                    city: '',
+                    country: 'Saudi Arabia',
+                    credit_limit: 0,
+                    payment_terms: 'NET 30',
+                    currency: 'SAR',
+                    balance: 0,
+                    extra_data: {}
+                };
+            }
+            this.showModal = true;
         },
 
         createPOFromLowStock() {

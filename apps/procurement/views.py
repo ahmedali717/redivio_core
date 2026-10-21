@@ -26,9 +26,20 @@ class OpcoAwareMixin:
     ربط وتصفية السجلات للشركة النشطة فقط
     """
     def _get_opco_id(self):
-        return (self.request.query_params.get('opco') or 
-                (self.request.data.get('opco') if hasattr(self.request, 'data') and isinstance(self.request.data, dict) else None) or 
-                self.request.session.get('active_opco_id'))
+        opco_id = (
+            self.request.query_params.get('opco') or 
+            self.request.query_params.get('opco_id') or
+            (self.request.data.get('opco') if hasattr(self.request, 'data') and isinstance(self.request.data, dict) else None) or 
+            (self.request.data.get('opco_id') if hasattr(self.request, 'data') and isinstance(self.request.data, dict) else None) or
+            (self.request.tenant.id if hasattr(self.request, 'tenant') and self.request.tenant else None) or
+            self.request.session.get('active_opco_id')
+        )
+        if opco_id and str(opco_id).lower() not in ['null', 'undefined', '', 'none', 'all']:
+            try:
+                return int(opco_id)
+            except (ValueError, TypeError):
+                return opco_id
+        return None
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -49,8 +60,8 @@ class OpcoAwareMixin:
 
 
 class VendorViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    """ إدارة الموردين (Suppliers) """
-    queryset = Vendor.objects.all()
+    """ إدارة الموردين (Suppliers) - دمج Odoo & ERPNext """
+    queryset = Vendor.objects.all().order_by('-id')
     serializer_class = VendorSerializer
 
     @action(detail=True, methods=['get'])
@@ -72,13 +83,47 @@ class VendorViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             for receipt in po.receipts.all():
                 history.append({
                     'id': receipt.id,
-                    'date': receipt.date.date(),
+                    'date': receipt.date.date() if hasattr(receipt.date, 'date') else receipt.date,
                     'type': 'STOCK_RECEIPT',
                     'number': receipt.receipt_number,
                     'status': 'RECEIVED',
                     'amount': 0,
                     'doc_type': 'GRN'
                 })
+
+        # فواتير المشتريات (Purchase Invoices / Bills)
+        try:
+            from apps.accounting.models import PurchaseInvoice
+            invoices = PurchaseInvoice.objects.filter(vendor=vendor).order_by('-posting_date')
+            for inv in invoices:
+                history.append({
+                    'id': inv.id,
+                    'date': inv.posting_date,
+                    'type': 'PURCHASE_INVOICE',
+                    'number': inv.invoice_number,
+                    'status': inv.status,
+                    'amount': float(inv.grand_total),
+                    'doc_type': 'BILL'
+                })
+        except Exception:
+            pass
+
+        # سندات الصرف والدفع للمورد (Payment Entries)
+        try:
+            from apps.accounting.models import PaymentEntry
+            payments = PaymentEntry.objects.filter(party_type='VENDOR', party_id=vendor.id).order_by('-posting_date')
+            for pay in payments:
+                history.append({
+                    'id': pay.id,
+                    'date': pay.posting_date,
+                    'type': 'PAYMENT_ENTRY',
+                    'number': pay.entry_number,
+                    'status': pay.status,
+                    'amount': float(pay.paid_amount),
+                    'doc_type': 'PAYMENT'
+                })
+        except Exception:
+            pass
 
         from apps.wms.models import StockMove
         import datetime

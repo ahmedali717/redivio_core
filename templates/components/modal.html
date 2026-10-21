@@ -4,11 +4,11 @@
         {% include "components/item_master_modal.html" %}
     </template>
 
-    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]']">
+    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : (modalType === 'vendor' ? 'w-full max-w-3xl rounded-3xl shadow-2xl p-6 md:p-8 max-h-[92vh]' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]')]">
         
         <div class="flex justify-between items-center mb-6 border-b pb-4">
             <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <i :class="modalType === 'stock_entry' ? 'fas fa-exchange-alt text-emerald-500' : 'fas fa-plus-circle text-indigo-500'"></i>
+                <i :class="modalType === 'vendor' ? 'fas fa-truck text-emerald-500' : (modalType === 'stock_entry' ? 'fas fa-exchange-alt text-emerald-500' : 'fas fa-plus-circle text-indigo-500')"></i>
                 <span v-text="isArabic ? modalTitles[modalType]?.ar : modalTitles[modalType]?.en"></span>
             </h3>
             <div class="flex items-center gap-3">
@@ -1493,6 +1493,204 @@
                 <div>
                     <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'البيان وملاحظات' : 'Remarks' ]]</label>
                     <textarea v-model="forms.payment_entry.notes" rows="2" class="w-full border p-2.5 rounded-xl text-xs font-bold"></textarea>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 5. VENDOR MASTER MODAL (بطاقة المورد - دمج Odoo & ERPNext) -->
+            <!-- ========================================== -->
+            <div v-if="modalType === 'vendor'" class="space-y-6">
+                <!-- Identity & Classification Banner -->
+                <div class="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-indigo-500/10 border border-emerald-500/20 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-emerald-500/20">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-black text-emerald-700 uppercase tracking-widest">
+                                [[ isArabic ? 'ملف المورد الذكي' : 'Smart Vendor Master' ]]
+                            </div>
+                            <div class="text-xs text-slate-500 font-medium">
+                                [[ isArabic ? 'دمج مالي وتشغيلي متكامل (Odoo Contacts + ERPNext Supplier)' : 'Integrated Commercial & Financial Profile' ]]
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-slate-400">[[ isArabic ? 'الكود:' : 'Code:' ]]</span>
+                        <span class="font-mono font-black text-sm bg-white px-3 py-1 rounded-xl border border-slate-200 text-slate-800 shadow-sm">
+                            [[ forms.vendor.code || 'Auto-generated' ]]
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Basic Info: Name, Type, Group -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'اسم المورد / الشركة *' : 'Vendor / Company Name *' ]]
+                        </label>
+                        <input type="text" v-model="forms.vendor.name" required
+                               placeholder="e.g. Al-Marai Supplies Co." 
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'كود المورد' : 'Vendor Code' ]]
+                        </label>
+                        <input type="text" v-model="forms.vendor.code"
+                               placeholder="V-1001" 
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'نوع الكيان (Entity Type)' : 'Entity Type' ]]
+                        </label>
+                        <select v-model="forms.vendor.vendor_type" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-sm">
+                            <option value="COMPANY">[[ isArabic ? 'شركة / مؤسسة (Company)' : 'Company' ]]</option>
+                            <option value="INDIVIDUAL">[[ isArabic ? 'فرد / تاجر حر (Individual)' : 'Individual' ]]</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                            [[ isArabic ? 'تصنيف المورد (Supplier Group)' : 'Supplier Group' ]]
+                        </label>
+                        <select v-model="forms.vendor.vendor_group" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-sm">
+                            <option value="Local">[[ isArabic ? 'مورد محلي (Local)' : 'Local' ]]</option>
+                            <option value="International">[[ isArabic ? 'مورد دولي / استيراد (International)' : 'International' ]]</option>
+                            <option value="Raw Material">[[ isArabic ? 'مواد خام وإنتاج (Raw Material)' : 'Raw Material' ]]</option>
+                            <option value="Services">[[ isArabic ? 'خدمات وصيانة (Services)' : 'Services' ]]</option>
+                            <option value="Distributor">[[ isArabic ? 'موزع معتمد (Distributor)' : 'Distributor' ]]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tax & Contact Info -->
+                <div class="border-t border-slate-100 pt-4">
+                    <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <i class="fas fa-address-book text-emerald-500"></i>
+                        <span>[[ isArabic ? 'الضرائب وبيانات التواصل' : 'Tax & Contact Information' ]]</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                                [[ isArabic ? 'الرقم الضريبي (VAT / Tax ID)' : 'VAT / Tax ID' ]]
+                            </label>
+                            <input type="text" v-model="forms.vendor.tax_id"
+                                   placeholder="300000000000003"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                                [[ isArabic ? 'الشخص المسؤول (Contact Person)' : 'Contact Person' ]]
+                            </label>
+                            <input type="text" v-model="forms.vendor.contact_name"
+                                   placeholder="e.g. John Doe"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                                [[ isArabic ? 'الهاتف / الجوال' : 'Phone / Mobile' ]]
+                            </label>
+                            <input type="tel" v-model="forms.vendor.phone"
+                                   placeholder="+966 50 000 0000"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                                [[ isArabic ? 'البريد الإلكتروني' : 'Email' ]]
+                            </label>
+                            <input type="email" v-model="forms.vendor.email"
+                                   placeholder="supplier@company.com"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                                [[ isArabic ? 'الموقع الإلكتروني' : 'Website' ]]
+                            </label>
+                            <input type="url" v-model="forms.vendor.website"
+                                   placeholder="https://vendor.com"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address & Country -->
+                <div class="border-t border-slate-100 pt-4">
+                    <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <i class="fas fa-map-marker-alt text-rose-500"></i>
+                        <span>[[ isArabic ? 'العنوان والموقع الجغرافي' : 'Address & Location' ]]</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">[[ isArabic ? 'الدولة' : 'Country' ]]</label>
+                            <input type="text" v-model="forms.vendor.country" placeholder="Saudi Arabia"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">[[ isArabic ? 'المدينة' : 'City' ]]</label>
+                            <input type="text" v-model="forms.vendor.city" placeholder="Riyadh"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">[[ isArabic ? 'العنوان التفصيلي' : 'Address' ]]</label>
+                            <input type="text" v-model="forms.vendor.address" placeholder="King Fahd Rd, Bldg 12"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial & Credit Terms -->
+                <div class="border-t border-slate-100 pt-4 bg-slate-50/70 -mx-6 -mb-6 p-6 rounded-b-3xl">
+                    <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <i class="fas fa-file-invoice-dollar text-indigo-500"></i>
+                        <span>[[ isArabic ? 'الشروط المالية والمحاسبية (ERPNext Terms)' : 'Financial & Credit Terms' ]]</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                                [[ isArabic ? 'شروط السداد (Payment Terms)' : 'Payment Terms' ]]
+                            </label>
+                            <select v-model="forms.vendor.payment_terms" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
+                                <option value="IMMEDIATE">[[ isArabic ? 'فوري عند الاستلام (Immediate)' : 'Immediate' ]]</option>
+                                <option value="NET 15">NET 15 Days</option>
+                                <option value="NET 30">NET 30 Days</option>
+                                <option value="NET 60">NET 60 Days</option>
+                                <option value="NET 90">NET 90 Days</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                                [[ isArabic ? 'الحد الائتماني (Credit Limit)' : 'Credit Limit' ]]
+                            </label>
+                            <input type="number" step="0.01" v-model.number="forms.vendor.credit_limit"
+                                   placeholder="0.00"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono font-bold text-slate-800 focus:border-emerald-500 outline-none bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                                [[ isArabic ? 'عملة التعامل الافتراضية' : 'Default Currency' ]]
+                            </label>
+                            <select v-model="forms.vendor.currency" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
+                                <option value="SAR">SAR - ريال سعودي</option>
+                                <option value="USD">USD - دولار أمريكي</option>
+                                <option value="EUR">EUR - يورو</option>
+                                <option value="AED">AED - درهم إماراتي</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
