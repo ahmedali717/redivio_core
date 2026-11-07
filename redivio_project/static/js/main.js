@@ -182,6 +182,7 @@ createApp({
             vendorSearch: '',
             vendorTypeFilter: 'ALL',
             vendorViewMode: 'cards',
+            expandedCategoryNodes: {},
             // 📦 المجموعات المخزنية والأصناف (دمج Odoo & ERPNext)
             categorySearch: '',
             categoryFilter: 'ALL',
@@ -1055,7 +1056,10 @@ createApp({
         availableRoles() {
             const roles = [
                 { value: 'admin', label: this.isArabic ? 'Admin (كل الصلاحيات)' : 'Admin' },
-                { value: 'manager', label: this.isArabic ? 'Manager (الإدارة والتقارير)' : 'Manager' }
+                { value: 'manager', label: this.isArabic ? 'Manager (الإدارة والتقارير)' : 'Manager' },
+                { value: 'buyer', label: this.isArabic ? 'Buyer (مشتريات وأوامر الشراء)' : 'Buyer' },
+                { value: 'vma', label: this.isArabic ? 'VMA (مسؤول ماستر الموردين)' : 'Vendor Master Admin (VMA)' },
+                { value: 'mma', label: this.isArabic ? 'MMA (مسؤول ماستر المواد)' : 'Material Master Admin (MMA)' }
             ];
 
             const isWmsActive = this.isModulePurchased('inventory_module');
@@ -1070,6 +1074,126 @@ createApp({
             }
 
             return roles;
+        },
+
+        canManageVendors() {
+            if (!this.user) return true;
+            if (this.user.is_superuser) return true;
+            const role = (this.user.role || '').toLowerCase();
+            return ['admin', 'manager', 'vma'].includes(role) || !role;
+        },
+
+        canManageMaterials() {
+            if (!this.user) return true;
+            if (this.user.is_superuser) return true;
+            const role = (this.user.role || '').toLowerCase();
+            return ['admin', 'manager', 'mma'].includes(role) || !role;
+        },
+
+        canCreatePO() {
+            if (!this.user) return true;
+            if (this.user.is_superuser) return true;
+            const role = (this.user.role || '').toLowerCase();
+            return ['admin', 'manager', 'buyer'].includes(role) || !role;
+        },
+
+        hierarchicalCategories() {
+            const rawList = this.categories || [];
+            if (!rawList.length) return [];
+
+            const nodeMap = new Map();
+            const childrenMap = new Map();
+            const rootNodes = [];
+
+            rawList.forEach(c => {
+                nodeMap.set(c.id, c);
+                childrenMap.set(c.id, []);
+            });
+
+            rawList.forEach(c => {
+                const parentId = (c.parent && typeof c.parent === 'object') ? c.parent.id : c.parent;
+                if (parentId && nodeMap.has(parentId)) {
+                    childrenMap.get(parentId).push(c);
+                } else {
+                    rootNodes.push(c);
+                }
+            });
+
+            const sortFn = (x, y) => (x.name || '').localeCompare(y.name || '');
+            rootNodes.sort(sortFn);
+            childrenMap.forEach(arr => arr.sort(sortFn));
+
+            const q = (this.categorySearch || '').trim().toLowerCase();
+            const catFilter = this.categoryFilter;
+
+            const matchesQuery = (cat) => {
+                if (!q) return true;
+                return (cat.name && cat.name.toLowerCase().includes(q)) ||
+                       (cat.code && cat.code.toLowerCase().includes(q));
+            };
+
+            const hasMatchingDescendant = (catId) => {
+                const children = childrenMap.get(catId) || [];
+                for (const child of children) {
+                    if (matchesQuery(child) || hasMatchingDescendant(child.id)) return true;
+                }
+                return false;
+            };
+
+            const result = [];
+            const traverse = (node, level, ancestors) => {
+                if (catFilter === 'ROOT' && level > 0) return;
+                if (catFilter === 'SUB' && level === 0 && !nodeMap.get(node.parent)) return;
+                if (catFilter === 'fixed' && node.default_putaway_strategy !== 'fixed') return;
+                if (catFilter === 'fifo' && node.default_putaway_strategy !== 'fifo') return;
+
+                const children = childrenMap.get(node.id) || [];
+                const hasChildren = children.length > 0;
+                const isMatch = matchesQuery(node);
+                const hasMatchBelow = q ? hasMatchingDescendant(node.id) : false;
+
+                const isExpanded = q 
+                    ? (hasMatchBelow || !!this.expandedCategoryNodes[node.id]) 
+                    : (this.expandedCategoryNodes[node.id] !== undefined ? !!this.expandedCategoryNodes[node.id] : true);
+
+                let isVisible = true;
+                if (q) {
+                    isVisible = isMatch || hasMatchBelow;
+                } else {
+                    for (const ancId of ancestors) {
+                        const ancExpanded = (this.expandedCategoryNodes[ancId] !== undefined) 
+                            ? !!this.expandedCategoryNodes[ancId] 
+                            : true;
+                        if (!ancExpanded) {
+                            isVisible = false;
+                            break;
+                        }
+                    }
+                }
+
+                result.push({
+                    ...node,
+                    level,
+                    hasChildren,
+                    isExpanded,
+                    isVisible,
+                    childrenCount: children.length
+                });
+
+                for (const child of children) {
+                    traverse(child, level + 1, [...ancestors, node.id]);
+                }
+            };
+
+            for (const root of rootNodes) {
+                traverse(root, 0, []);
+            }
+
+            return result;
+        },
+
+        visibleHierarchicalCategories() {
+            return this.hierarchicalCategories.filter(c => c.isVisible);
         },
         activeFloorTables() {
             return (this.posTables || []).filter(t => t.floor === this.activeFloorId);
@@ -6676,10 +6800,26 @@ createApp({
                     let errorMessage = errorText;
                     try {
                         const errJson = JSON.parse(errorText);
+                        const fieldLabels = {
+                            name: this.isArabic ? 'اسم المورد / العنصر' : 'Name',
+                            tax_id: this.isArabic ? 'الرقم الضريبي (Tax ID)' : 'Tax ID',
+                            country: this.isArabic ? 'الدولة' : 'Country',
+                            currency: this.isArabic ? 'العملة' : 'Currency',
+                            vendor_type: this.isArabic ? 'نوع الكيان' : 'Entity Type',
+                            code: this.isArabic ? 'الكود' : 'Code',
+                            sku: this.isArabic ? 'رمز الصنف (SKU)' : 'SKU',
+                            category: this.isArabic ? 'المجموعة' : 'Category',
+                            base_uom: this.isArabic ? 'وحدة القياس' : 'Base UOM',
+                            opco: this.isArabic ? 'الشركة' : 'OpCo'
+                        };
                         const firstKey = Object.keys(errJson)[0];
                         if (firstKey) {
                             const val = errJson[firstKey];
-                            errorMessage = Array.isArray(val) ? val[0] : (typeof val === 'object' ? JSON.stringify(val) : val);
+                            const rawMsg = Array.isArray(val) ? val[0] : (typeof val === 'object' ? JSON.stringify(val) : val);
+                            const label = fieldLabels[firstKey] || firstKey;
+                            errorMessage = (firstKey === 'non_field_errors' || firstKey === 'detail' || firstKey === 'error')
+                                ? rawMsg
+                                : `[${label}]: ${rawMsg}`;
                         }
                     } catch (e) {
                         // Keep text as is
@@ -7801,6 +7941,162 @@ createApp({
                 };
             }
             this.showModal = true;
+        },
+
+        // Item 1: Auto-set/propose currency when vendor country changes
+        onVendorCountryChange() {
+            if (!this.forms.vendor) return;
+            const c = (this.forms.vendor.country || '').trim().toLowerCase();
+            if (c === 'egypt' || c === 'مصر') {
+                this.forms.vendor.currency = 'EGP';
+            } else if (c.includes('saudi') || c.includes('سعود')) {
+                this.forms.vendor.currency = 'SAR';
+            } else if (c.includes('emirates') || c.includes('إمارات')) {
+                this.forms.vendor.currency = 'AED';
+            } else if (c.includes('kuwait') || c.includes('كويت')) {
+                this.forms.vendor.currency = 'KWD';
+            } else if (c.includes('usa') || c.includes('united states')) {
+                this.forms.vendor.currency = 'USD';
+            }
+        },
+
+        // Item 10: Toggle, Expand & Collapse Category Hierarchy
+        toggleCategoryNode(catId) {
+            const current = this.expandedCategoryNodes[catId];
+            this.expandedCategoryNodes = {
+                ...this.expandedCategoryNodes,
+                [catId]: current !== undefined ? !current : false
+            };
+        },
+        expandAllCategories() {
+            const map = {};
+            (this.categories || []).forEach(c => { map[c.id] = true; });
+            this.expandedCategoryNodes = map;
+        },
+        collapseAllCategories() {
+            const map = {};
+            (this.categories || []).forEach(c => { map[c.id] = false; });
+            this.expandedCategoryNodes = map;
+        },
+
+        // Item 11: Download Category & UOM Bulk Import Templates
+        downloadCategoryTemplate() {
+            const headers = ['Code', 'Name', 'Parent_Code', 'Putaway_Strategy'];
+            const rows = [
+                ['CAT-001', 'Food & Beverage', '', 'fixed'],
+                ['CAT-002', 'Packaging Materials', '', 'fifo'],
+                ['CAT-003', 'Dairy Products', 'CAT-001', 'fifo'],
+                ['CAT-004', 'Raw Ingredients', 'CAT-001', 'fixed']
+            ];
+            let csv = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
+            const link = document.createElement("a");
+            link.href = encodeURI(csv);
+            link.download = "item_categories_template.csv";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            this.showToast(this.isArabic ? "تم تحميل قالب استيراد المجموعات" : "Category template downloaded", "success");
+        },
+
+        downloadUOMTemplate() {
+            const headers = ['UOM_Code', 'UOM_Name', 'Base_Unit', 'Conversion_Factor', 'Category'];
+            const rows = [
+                ['PCS', 'Piece (حبة / قطعة)', 'PCS', '1.0', 'Count'],
+                ['BOX', 'Box (كرتونة 12 حبة)', 'PCS', '12.0', 'Packaging'],
+                ['KG', 'Kilogram (كيلوجرام)', 'KG', '1.0', 'Weight'],
+                ['G', 'Gram (جرام)', 'KG', '0.001', 'Weight'],
+                ['LTR', 'Liter (لتر)', 'LTR', '1.0', 'Volume']
+            ];
+            let csv = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
+            const link = document.createElement("a");
+            link.href = encodeURI(csv);
+            link.download = "units_of_measure_template.csv";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            this.showToast(this.isArabic ? "تم تحميل قالب استيراد وحدات القياس" : "UOM template downloaded", "success");
+        },
+
+        // Item 8: File Upload & Template Download for Material Master
+        triggerFileUpload() {
+            if (this.$refs.importFileInput) {
+                this.$refs.importFileInput.click();
+            } else {
+                const el = document.querySelector('input[type="file"][ref="importFileInput"]');
+                if (el) el.click();
+                else this.triggerImport();
+            }
+        },
+
+        handleImportFile(event) {
+            return this.handleExcelImport(event);
+        },
+
+        downloadTemplate() {
+            const headers = ['SKU', 'Name', 'Category_Code', 'Base_UOM', 'Sales_Price', 'Cost_Price', 'Barcode', 'Reorder_Level'];
+            const rows = [
+                ['ITEM-1001', 'Al-Marai Milk 1L', 'CAT-003', 'PCS', '12.50', '9.00', '6281007010015', '50'],
+                ['ITEM-1002', 'White Sugar 1KG', 'CAT-004', 'KG', '35.00', '28.00', '6281007010022', '100']
+            ];
+            let csv = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
+            const link = document.createElement("a");
+            link.href = encodeURI(csv);
+            link.download = "item_master_import_template.csv";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            this.showToast(this.isArabic ? "تم تحميل نموذج استيراد الأصناف" : "Item template downloaded", "success");
+        },
+
+        // Items 12 & 13: PO Sourcing from PR & RFQ
+        onPOPRSelect() {
+            if (!this.forms.po.pr) return;
+            const pr = (this.purchase_requisitions || []).find(p => p.id === parseInt(this.forms.po.pr));
+            if (!pr) return;
+            if (pr.lines && pr.lines.length > 0) {
+                this.forms.po.lines = pr.lines.map(line => {
+                    const mat = (this.materials_list || []).find(m => m.id === line.material);
+                    return {
+                        material: line.material,
+                        sku: line.material_sku || (mat ? mat.sku : ''),
+                        uom: mat ? (mat.base_uom || 'Unit') : 'Unit',
+                        quantity: parseFloat(line.quantity || 1),
+                        unit_price: mat ? parseFloat(mat.standard_price || 0) : 0,
+                        discount_rate: 0,
+                        tax_rate: 15,
+                        pr_reference: pr.requisition_number
+                    };
+                });
+                this.showToast(
+                    this.isArabic ? `تم سحب ${pr.lines.length} بنود من طلب الشراء ${pr.requisition_number}` : `Imported ${pr.lines.length} lines from PR ${pr.requisition_number}`,
+                    'success'
+                );
+            }
+        },
+
+        onPORFQSelect() {
+            if (!this.forms.po.rfq) return;
+            const rfq = (this.rfqs || []).find(r => r.id === parseInt(this.forms.po.rfq));
+            if (!rfq) return;
+            if (rfq.lines && rfq.lines.length > 0) {
+                this.forms.po.lines = rfq.lines.map(line => {
+                    const mat = (this.materials_list || []).find(m => m.id === line.material);
+                    return {
+                        material: line.material,
+                        sku: mat ? mat.sku : '',
+                        uom: mat ? (mat.base_uom || 'Unit') : 'Unit',
+                        quantity: parseFloat(line.quantity || 1),
+                        unit_price: parseFloat(line.target_price || 0),
+                        discount_rate: 0,
+                        tax_rate: 15,
+                        pr_reference: rfq.rfq_number
+                    };
+                });
+                this.showToast(
+                    this.isArabic ? `تم سحب ${rfq.lines.length} بنود من طلب الأسعار ${rfq.rfq_number}` : `Imported ${rfq.lines.length} lines from RFQ ${rfq.rfq_number}`,
+                    'success'
+                );
+            }
         },
 
         createPOFromLowStock() {

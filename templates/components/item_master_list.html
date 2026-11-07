@@ -38,13 +38,13 @@
                 <i class="fas fa-folder-tree"></i> [[ isArabic ? 'المجموعات المخزنية' : 'Item Groups' ]]
             </button>
 
-            <!-- Import / Upload -->
-            <button @click="triggerFileUpload" class="bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 px-3.5 py-2 rounded-xl transition-all font-bold text-xs flex items-center gap-1.5 shadow-sm">
+            <!-- Import / Upload (Item 8: Fixed trigger) -->
+            <button type="button" @click="$refs.importFileInput ? $refs.importFileInput.click() : triggerImport()" class="bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 px-3.5 py-2 rounded-xl transition-all font-bold text-xs flex items-center gap-1.5 shadow-sm">
                 <i class="fas fa-file-upload text-indigo-500"></i> [[ isArabic ? 'استيراد' : 'Import' ]]
             </button>
-            <input type="file" ref="importFileInput" @change="handleImportFile" class="hidden" accept=".csv">
+            <input type="file" ref="importFileInput" @change="handleImportFile" class="hidden" accept=".csv,.xlsx,.xls">
 
-            <button @click="downloadTemplate" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1">
+            <button type="button" @click="downloadTemplate" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1">
                 <i class="fas fa-download"></i> [[ isArabic ? 'القالب' : 'Template' ]]
             </button>
             
@@ -281,20 +281,23 @@
                         </div>
                     </div>
 
-                    <!-- Card Bottom Action Buttons -->
+                    <!-- Card Bottom Action Buttons (Item 9: Role-based permissions) -->
                     <div class="flex items-center justify-between gap-1 pt-2 border-t border-slate-100/60" @click.stop>
-                        <button @click="editMaterial(item, $root)" class="flex-1 bg-slate-100 hover:bg-slate-800 text-slate-700 hover:text-white py-1 px-2 rounded-lg text-[10px] font-bold transition-all text-center">
-                            <i class="fas fa-edit ml-1"></i> [[ isArabic ? 'تعديل' : 'Edit' ]]
+                        <!-- Edit: Restricted to MMA / Admin -->
+                        <button v-if="canManageMaterials" @click="editMaterial(item, $root)" class="flex-1 bg-slate-100 hover:bg-slate-800 text-slate-700 hover:text-white py-1 px-2 rounded-lg text-[10px] font-bold transition-all text-center">
+                            <i class="fas fa-edit ml-1"></i> [[ isArabic ? 'تعديل (MMA)' : 'Edit (MMA)' ]]
                         </button>
 
-                        <!-- Quick PO -->
-                        <button @click="openModal('po', { items: [{ material: item.id, uom: item.base_uom, quantity: 1, unit_price: item.standard_price || 0 }], vendor: item.default_vendor })"
+                        <!-- Quick PO: Restricted to Buyer / Admin -->
+                        <button v-if="canCreatePO" @click="openModal('po', { items: [{ material: item.id, uom: item.base_uom, quantity: 1, unit_price: item.standard_price || 0 }], vendor: item.default_vendor })"
                                 class="bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white p-1 rounded-lg text-[10px] font-bold transition-all"
-                                :title="isArabic ? 'إنشاء أمر شراء للصنف (+ PO)' : 'New Purchase Order'">
+                                :title="isArabic ? 'إنشاء أمر شراء (Buyer)' : 'New PO (Buyer)'">
                             <i class="fas fa-cart-plus"></i>
                         </button>
 
-                        <button @click="deleteItem('material', item.id)" class="text-rose-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition-all text-[10px]">
+                        <!-- Delete: Restricted to MMA / Admin -->
+                        <button v-if="canManageMaterials" @click="deleteItem('material', item.id)" class="text-rose-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition-all text-[10px]"
+                                :title="isArabic ? 'حذف (MMA)' : 'Delete (MMA)'">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -363,15 +366,18 @@
                         </td>
                         <td class="p-3 text-center" @click.stop>
                             <div class="flex items-center justify-center gap-1">
-                                <button @click="openModal('po', { items: [{ material: item.id, uom: item.base_uom, quantity: 1, unit_price: item.standard_price || 0 }], vendor: item.default_vendor })"
+                                <!-- Quick PO (Restricted to Buyer / Admin - Item 9) -->
+                                <button v-if="canCreatePO" @click="openModal('po', { items: [{ material: item.id, uom: item.base_uom, quantity: 1, unit_price: item.standard_price || 0 }], vendor: item.default_vendor })"
                                         class="p-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all text-xs"
-                                        :title="isArabic ? 'أمر شراء (+ PO)' : 'New PO'">
+                                        :title="isArabic ? 'أمر شراء (Buyer)' : 'New PO (Buyer)'">
                                     <i class="fas fa-cart-plus"></i>
                                 </button>
-                                <button @click="editMaterial(item, $root)" class="p-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-all text-xs" :title="isArabic ? 'تعديل' : 'Edit'">
+                                <!-- Edit (Restricted to MMA / Admin - Item 9) -->
+                                <button v-if="canManageMaterials" @click="editMaterial(item, $root)" class="p-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-all text-xs" :title="isArabic ? 'تعديل (MMA)' : 'Edit (MMA)'">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button @click="deleteItem('material', item.id)" class="p-1 rounded bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all text-xs" :title="isArabic ? 'حذف' : 'Delete'">
+                                <!-- Delete (Restricted to MMA / Admin - Item 9) -->
+                                <button v-if="canManageMaterials" @click="deleteItem('material', item.id)" class="p-1 rounded bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all text-xs" :title="isArabic ? 'حذف (MMA)' : 'Delete (MMA)'">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>

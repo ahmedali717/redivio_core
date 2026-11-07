@@ -23,7 +23,7 @@
             </div>
         </div>
 
-        <form @submit.prevent="submitForm" class="space-y-5">
+        <form @submit.prevent="submitForm" @keydown.enter="$event.target.tagName !== 'TEXTAREA' && $event.preventDefault()" class="space-y-5">
             
             <div v-if="['plant', 'material', 'stock_entry'].includes(modalType) && opcos.length > 1" class="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
                 <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1" v-text="isArabic ? 'الشركة المشغلة' : 'Operating Company'"></label>
@@ -310,24 +310,44 @@
 
             <div v-if="modalType === 'po'" class="space-y-6 animate-in zoom-in-95 duration-300">
                 
-                <!-- Odoo-Style Control & Smart Buttons Bar -->
+                <!-- Odoo-Style Control & Smart Buttons Bar (Item 14: Save -> Confirm -> Release Workflow) -->
                 <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap items-center gap-2">
+                        <!-- Stage 1 to 2: Confirm Order (Buyer action) -->
                         <button type="button" 
                                 v-if="(forms.po.status === 'draft' || forms.po.status === 'DRAFT') && forms.po.id"
                                 @click="updatePOStatus(forms.po.id, 'CONFIRMED')"
-                                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
-                            <i class="fas fa-check-circle"></i>
-                            <span>[[ isArabic ? 'اعتماد أمر التوريد' : 'Confirm Order' ]]</span>
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
+                            <i class="fas fa-check-double"></i>
+                            <span>[[ isArabic ? 'تأكيد الطلب (Confirm Order)' : 'Confirm Order' ]]</span>
                         </button>
 
+                        <!-- Stage 2 to 3: Release / Final Approval (Procurement Manager / Admin action) -->
                         <button type="button" 
-                                v-if="['CONFIRMED', 'confirmed', 'RECEIVED', 'received'].includes(forms.po.status) && forms.po.id"
+                                v-if="['CONFIRMED', 'confirmed'].includes(forms.po.status) && forms.po.id"
+                                @click="updatePOStatus(forms.po.id, 'RELEASED')"
+                                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs shadow-sm transition-all flex items-center gap-2">
+                            <i class="fas fa-stamp"></i>
+                            <span>[[ isArabic ? 'اعتماد وإطلاق أمر الشراء (Release PO)' : 'Release & Authorize' ]]</span>
+                        </button>
+
+                        <!-- Back to Draft button if needed -->
+                        <button type="button" 
+                                v-if="['CONFIRMED', 'confirmed'].includes(forms.po.status) && forms.po.id"
+                                @click="updatePOStatus(forms.po.id, 'DRAFT')"
+                                class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5">
+                            <i class="fas fa-undo"></i>
+                            <span>[[ isArabic ? 'إعادة لمسودة' : 'Reset to Draft' ]]</span>
+                        </button>
+
+                        <!-- Stage 3 to Inbound Receipt: Available after Released / Approved -->
+                        <button type="button" 
+                                v-if="['RELEASED', 'released', 'APPROVED', 'approved', 'RECEIVED', 'received'].includes(forms.po.status) && forms.po.id"
                                 @click="showModal = false; openModal('stock_entry', { receipt_type: 'PURCHASE', po: forms.po.id });"
-                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
+                                class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
                             <i class="fas fa-box-open"></i>
-                            <span>[[ isArabic ? 'إنشاء إذن استلام' : 'Receive Products' ]]</span>
+                            <span>[[ isArabic ? 'إنشاء إذن استلام مخزني' : 'Receive Products' ]]</span>
                         </button>
 
                         <button type="button" 
@@ -339,31 +359,33 @@
                         </button>
                     </div>
 
-                    <!-- Right Side: Smart Buttons & Status Pipeline -->
+                    <!-- Right Side: Smart Buttons & Status Pipeline (3-stage: Draft -> Confirmed -> Released -> Received) -->
                     <div class="flex flex-wrap items-center gap-3">
-                        <!-- Smart Buttons (Stat Boxes) -->
-                        <div class="flex items-center gap-2">
-                            <div class="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center gap-2 text-xs font-bold text-slate-700 shadow-2xs">
-                                <i class="fas fa-boxes text-emerald-500 text-[11px]"></i>
-                                <span>[[ forms.po.receipts_count || (forms.po.receipts ? forms.po.receipts.length : 0) ]] [[ isArabic ? 'شحنات استلام' : 'Receipts' ]]</span>
-                            </div>
+                        <div class="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center gap-2 text-xs font-bold text-slate-700 shadow-2xs">
+                            <i class="fas fa-boxes text-emerald-500 text-[11px]"></i>
+                            <span>[[ forms.po.receipts_count || (forms.po.receipts ? forms.po.receipts.length : 0) ]] [[ isArabic ? 'شحنات استلام' : 'Receipts' ]]</span>
                         </div>
 
-                        <!-- Status Pipeline Breadcrumb -->
+                        <!-- Status Pipeline Breadcrumb (Item 14) -->
                         <div class="flex items-center bg-slate-100 p-1 rounded-2xl text-[10px] font-black uppercase tracking-wider">
-                            <span :class="(!forms.po.status || forms.po.status === 'draft' || forms.po.status === 'DRAFT') ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-400'"
-                                  class="px-3 py-1 rounded-xl transition-all">
-                                [[ isArabic ? 'مسودة' : 'Draft' ]]
+                            <span :class="(!forms.po.status || forms.po.status === 'draft' || forms.po.status === 'DRAFT') ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-400'"
+                                  class="px-2.5 py-1 rounded-xl transition-all">
+                                [[ isArabic ? '1. مسودة' : 'Draft' ]]
                             </span>
                             <i class="fas fa-chevron-left text-[8px] text-slate-300 mx-1"></i>
                             <span :class="['CONFIRMED', 'confirmed'].includes(forms.po.status) ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-400'"
-                                  class="px-3 py-1 rounded-xl transition-all">
-                                [[ isArabic ? 'معتمد' : 'Confirmed' ]]
+                                  class="px-2.5 py-1 rounded-xl transition-all">
+                                [[ isArabic ? '2. مؤكد' : 'Confirmed' ]]
                             </span>
                             <i class="fas fa-chevron-left text-[8px] text-slate-300 mx-1"></i>
-                            <span :class="['RECEIVED', 'received'].includes(forms.po.status) ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-400'"
-                                  class="px-3 py-1 rounded-xl transition-all">
-                                [[ isArabic ? 'تم الاستلام' : 'Received' ]]
+                            <span :class="['RELEASED', 'released', 'APPROVED', 'approved'].includes(forms.po.status) ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-400'"
+                                  class="px-2.5 py-1 rounded-xl transition-all">
+                                [[ isArabic ? '3. معتمد ومطلق' : 'Released' ]]
+                            </span>
+                            <i class="fas fa-chevron-left text-[8px] text-slate-300 mx-1"></i>
+                            <span :class="['RECEIVED', 'received'].includes(forms.po.status) ? 'bg-white text-teal-600 shadow-xs' : 'text-slate-400'"
+                                  class="px-2.5 py-1 rounded-xl transition-all">
+                                [[ isArabic ? 'مستلم' : 'Received' ]]
                             </span>
                         </div>
                     </div>
@@ -371,6 +393,39 @@
 
                 <!-- Odoo Form Header Card -->
                 <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
+                    <!-- Sourcing & PR / RFQ Reference Selection (Items 12 & 13) -->
+                    <div class="bg-indigo-50/70 p-3.5 rounded-2xl border border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="font-black text-indigo-800 flex items-center gap-1.5">
+                                <i class="fas fa-sitemap text-indigo-600"></i>
+                                <span>[[ isArabic ? 'مصدر أمر الشراء (Sourcing / PR / RFQ):' : 'Sourcing Reference:' ]]</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center flex-wrap gap-3 w-full sm:w-auto">
+                            <!-- Select PR -->
+                            <div class="flex items-center gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-600">[[ isArabic ? 'طلب شراء (PR):' : 'PR:' ]]</label>
+                                <select v-model="forms.po.pr" @change="onPOPRSelect()" class="bg-white border border-indigo-200 rounded-xl px-2.5 py-1 text-xs font-bold text-indigo-900 outline-none">
+                                    <option :value="null">[[ isArabic ? '-- اختياري: سحب من PR --' : '-- None --' ]]</option>
+                                    <option v-for="pr in (purchase_requisitions || [])" :key="pr.id" :value="pr.id">
+                                        [[ pr.requisition_number ]]
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Select RFQ -->
+                            <div class="flex items-center gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-600">[[ isArabic ? 'طلب أسعار (RFQ):' : 'RFQ:' ]]</label>
+                                <select v-model="forms.po.rfq" @change="onPORFQSelect()" class="bg-white border border-indigo-200 rounded-xl px-2.5 py-1 text-xs font-bold text-indigo-900 outline-none">
+                                    <option :value="null">[[ isArabic ? '-- اختياري: سحب من RFQ --' : '-- None --' ]]</option>
+                                    <option v-for="rfq in (rfqs || [])" :key="rfq.id" :value="rfq.id">
+                                        [[ rfq.rfq_number ]]
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="space-y-1.5">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">[[ isArabic ? 'المورد (Vendor)' : 'Vendor' ]]</label>
@@ -379,7 +434,7 @@
                                     <option value="">[[ isArabic ? 'اختر المورد...' : 'Select Vendor...' ]]</option>
                                     <option v-for="v in vendors" :key="v.id" :value="v.id" v-text="v.name"></option>
                                 </select>
-                                <button type="button" @click.prevent="quickAddVendor" class="bg-slate-50 border border-slate-200 text-slate-500 w-9 h-9 rounded-xl hover:text-emerald-600 hover:border-emerald-200 flex items-center justify-center transition-all">
+                                <button type="button" @click.prevent="openVendorModal()" class="bg-slate-50 border border-slate-200 text-slate-500 w-9 h-9 rounded-xl hover:text-emerald-600 hover:border-emerald-200 flex items-center justify-center transition-all">
                                     <i class="fas fa-plus text-xs"></i>
                                 </button>
                             </div>
@@ -483,9 +538,13 @@
                                             <option value="">[[ isArabic ? 'اختر الصنف...' : 'Select item...' ]]</option>
                                             <option v-for="m in selectableMaterials" :key="m.id" :value="m.id" v-text="getMaterialDisplayName(m)"></option>
                                         </select>
-                                        <div v-if="getSelectedMaterial(line.material)" class="mt-1 px-2 py-0.5 bg-slate-50 rounded text-[10px] text-slate-400 flex items-center gap-2">
+                                        <div v-if="getSelectedMaterial(line.material)" class="mt-1 px-2 py-0.5 bg-slate-50 rounded text-[10px] text-slate-500 flex flex-wrap items-center gap-2">
+                                            <span v-if="getSelectedMaterial(line.material).sku" class="font-mono text-indigo-700 font-bold bg-indigo-50 px-1 rounded">
+                                                SKU: [[ getSelectedMaterial(line.material).sku ]]
+                                            </span>
                                             <span v-if="getSelectedMaterial(line.material).barcode"><i class="fas fa-barcode mr-1"></i>[[ getSelectedMaterial(line.material).barcode ]]</span>
                                             <span v-if="getSelectedMaterial(line.material).category_name"><i class="fas fa-tag mr-1"></i>[[ getSelectedMaterial(line.material).category_name ]]</span>
+                                            <span v-if="line.pr_reference" class="text-amber-700 font-black bg-amber-50 px-1 rounded"><i class="fas fa-link mr-1"></i>[[ line.pr_reference ]]</span>
                                         </div>
                                     </td>
                                     <td class="p-2.5 text-center">
@@ -1578,11 +1637,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">
-                                [[ isArabic ? 'الرقم الضريبي (VAT / Tax ID)' : 'VAT / Tax ID' ]]
+                                [[ isArabic ? 'الرقم الضريبي (VAT / Tax ID)' : 'VAT / Tax ID' ]] <span class="text-rose-500 font-black">*</span>
                             </label>
-                            <input type="text" v-model="forms.vendor.tax_id"
-                                   placeholder="300000000000003"
+                            <input type="text" v-model="forms.vendor.tax_id" required
+                                   placeholder="e.g. 300000000000003"
                                    class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                            <span class="text-[10px] text-slate-400 block mt-1">[[ isArabic ? 'حقل مفتاح فريد لمنع تكرار الموردين' : 'Unique key to prevent duplicate suppliers' ]]</span>
                         </div>
 
                         <div>
@@ -1633,18 +1693,31 @@
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">[[ isArabic ? 'الدولة' : 'Country' ]]</label>
-                            <input type="text" v-model="forms.vendor.country" placeholder="Saudi Arabia"
-                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                                [[ isArabic ? 'الدولة' : 'Country' ]] <span class="text-rose-500 font-black">*</span>
+                            </label>
+                            <select v-model="forms.vendor.country" @change="onVendorCountryChange()" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 bg-white focus:border-emerald-500 outline-none">
+                                <option value="Saudi Arabia">[[ isArabic ? 'المملكة العربية السعودية (Saudi Arabia)' : 'Saudi Arabia' ]]</option>
+                                <option value="Egypt">[[ isArabic ? 'مصر (Egypt)' : 'Egypt' ]]</option>
+                                <option value="United Arab Emirates">[[ isArabic ? 'الإمارات العربية المتحدة (UAE)' : 'United Arab Emirates' ]]</option>
+                                <option value="Kuwait">[[ isArabic ? 'الكويت (Kuwait)' : 'Kuwait' ]]</option>
+                                <option value="Qatar">[[ isArabic ? 'قطر (Qatar)' : 'Qatar' ]]</option>
+                                <option value="Bahrain">[[ isArabic ? 'البحرين (Bahrain)' : 'Bahrain' ]]</option>
+                                <option value="Oman">[[ isArabic ? 'سلطنة عمان (Oman)' : 'Oman' ]]</option>
+                                <option value="Jordan">[[ isArabic ? 'الأردن (Jordan)' : 'Jordan' ]]</option>
+                                <option value="China">[[ isArabic ? 'الصين (China)' : 'China' ]]</option>
+                                <option value="USA">[[ isArabic ? 'الولايات المتحدة (USA)' : 'USA' ]]</option>
+                                <option value="Other">[[ isArabic ? 'دولة أخرى (Other)' : 'Other' ]]</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">[[ isArabic ? 'المدينة' : 'City' ]]</label>
-                            <input type="text" v-model="forms.vendor.city" placeholder="Riyadh"
+                            <input type="text" v-model="forms.vendor.city" placeholder="e.g. Cairo / Riyadh"
                                    class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">[[ isArabic ? 'العنوان التفصيلي' : 'Address' ]]</label>
-                            <input type="text" v-model="forms.vendor.address" placeholder="King Fahd Rd, Bldg 12"
+                            <input type="text" v-model="forms.vendor.address" placeholder="e.g. Industrial Zone, Street 10"
                                    class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
                         </div>
                     </div>
@@ -1681,13 +1754,19 @@
 
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">
-                                [[ isArabic ? 'عملة التعامل الافتراضية' : 'Default Currency' ]]
+                                [[ isArabic ? 'عملة التعامل الافتراضية' : 'Default Currency' ]] <span class="text-rose-500 font-black">*</span>
                             </label>
-                            <select v-model="forms.vendor.currency" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
+                            <select v-model="forms.vendor.currency" required class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 bg-white focus:border-emerald-500 outline-none">
                                 <option value="SAR">SAR - ريال سعودي</option>
+                                <option value="EGP">EGP - جنيه مصري</option>
                                 <option value="USD">USD - دولار أمريكي</option>
                                 <option value="EUR">EUR - يورو</option>
                                 <option value="AED">AED - درهم إماراتي</option>
+                                <option value="KWD">KWD - دينار كويتي</option>
+                                <option value="QAR">QAR - ريال قطري</option>
+                                <option value="BHD">BHD - دينار بحريني</option>
+                                <option value="OMR">OMR - ريال عماني</option>
+                                <option value="JOD">JOD - دينار أردني</option>
                             </select>
                         </div>
                     </div>

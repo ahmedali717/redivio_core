@@ -220,9 +220,10 @@ class QuotationComparison(models.Model):
 
 class PurchaseOrder(models.Model):
     STATUS_CHOICES = [
-        ('DRAFT', 'مسودة'),
-        ('PENDING_APPROVAL', 'بانتظار الاعتماد'),
-        ('APPROVED', 'معتمد'),
+        ('DRAFT', 'مسودة (Draft)'),
+        ('CONFIRMED', 'مؤكد من المشتري (Confirmed)'),
+        ('RELEASED', 'معتمد ومطلق (Released)'),
+        ('APPROVED', 'معتمد (Approved)'),
         ('PARTIAL_RECEIVED', 'استلام جزئي'),
         ('RECEIVED', 'تم الاستلام بالكامل'),
         ('CANCELLED', 'ملغى')

@@ -12,6 +12,51 @@ class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
         fields = '__all__'
+        extra_kwargs = {
+            'name': {'required': True, 'error_messages': {'required': 'حقل اسم المورد إلزامي (Vendor Name is required)'}},
+            'tax_id': {'required': True, 'error_messages': {'required': 'حقل الرقم الضريبي إلزامي (Tax ID is required)'}},
+            'country': {'required': True, 'error_messages': {'required': 'حقل الدولة إلزامي (Country is required)'}},
+            'currency': {'required': True, 'error_messages': {'required': 'حقل العملة إلزامي (Currency is required)'}},
+        }
+
+    def validate_name(self, value):
+        if not value or not str(value).strip():
+            raise serializers.ValidationError("حقل اسم المورد إلزامي ولا يمكن تركه فارغاً.")
+        return value.strip()
+
+    def validate_tax_id(self, value):
+        if not value or not str(value).strip():
+            raise serializers.ValidationError("حقل الرقم الضريبي (TAX ID) إلزامي لمنع ازدواجية الموردين في النظام.")
+        tax_id = str(value).strip()
+        
+        # فحص عدم تكرار الرقم الضريبي في نفس الشركة المشغلة (OpCo)
+        opco_id = None
+        if self.context.get('request'):
+            req = self.context['request']
+            opco_id = (
+                req.query_params.get('opco') or 
+                req.query_params.get('opco_id') or
+                (req.data.get('opco') if hasattr(req, 'data') and isinstance(req.data, dict) else None) or
+                (req.data.get('opco_id') if hasattr(req, 'data') and isinstance(req.data, dict) else None) or
+                (getattr(req, 'tenant', None) and getattr(req.tenant, 'id', None)) or
+                req.session.get('active_opco_id')
+            )
+            
+        qs = Vendor.objects.filter(tax_id=tax_id)
+        if opco_id:
+            try:
+                qs = qs.filter(opco_id=int(opco_id))
+            except (ValueError, TypeError):
+                pass
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if qs.exists():
+            existing = qs.first()
+            raise serializers.ValidationError(
+                f"الرقم الضريبي '{tax_id}' مسجل بالفعل للمورد: '{existing.name}' (كود: {existing.code}). يرجى منع تكرار الموردين في قاعدة البيانات."
+            )
+        return tax_id
 
     def get_supplied_items_count(self, obj):
         try:

@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>وثيقة المواصفات والتحليل التنفيذي | ERPNext POS & Retail</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.8);
+            --bg-card-hover: rgba(31, 41, 55, 0.9);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(99, 102, 241, 0.5);
+            
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            
+            /* 4-Tier Color Standard */
+            --color-covered: #10b981;      /* أخضر: جاهز مدمج ولا يحتاج تدخل */
+            --color-covered-bg: rgba(16, 185, 129, 0.12);
+            --color-covered-border: rgba(16, 185, 129, 0.3);
+            
+            --color-config: #eab308;       /* أصفر: موجود مدمج ومحتاج Config فقط */
+            --color-config-bg: rgba(234, 179, 8, 0.12);
+            --color-config-border: rgba(234, 179, 8, 0.3);
+            
+            --color-minor: #f97316;        /* برتقالي: برمجة بسيطة Script / Hook */
+            --color-minor-bg: rgba(249, 115, 22, 0.12);
+            --color-minor-border: rgba(249, 115, 22, 0.3);
+            
+            --color-full: #ef4444;         /* أحمر: برمجة وتطوير كامل من الصفر */
+            --color-full-bg: rgba(239, 68, 68, 0.12);
+            --color-full-border: rgba(239, 68, 68, 0.3);
+            
+            --accent-primary: #6366f1;
+            --accent-secondary: #4f46e5;
+            
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.07) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.04) 0%, transparent 60%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 24px;
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .badge-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 999px;
+            color: #818cf8;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            font-family: inherit;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffffff 40%, #9ca3af 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 950px;
+        }
+
+        /* Status Summary Cards & Breakdown */
+        .summary-dashboard {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+
+        .summary-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .status-card {
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid transparent;
+            transition: var(--transition);
+        }
+
+        .status-card.covered {
+            background: var(--color-covered-bg);
+            border-color: var(--color-covered-border);
+        }
+        .status-card.config {
+            background: var(--color-config-bg);
+            border-color: var(--color-config-border);
+        }
+        .status-card.minor {
+            background: var(--color-minor-bg);
+            border-color: var(--color-minor-border);
+        }
+        .status-card.full {
+            background: var(--color-full-bg);
+            border-color: var(--color-full-border);
+        }
+
+        .status-card-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .status-card.covered .status-card-icon { background: rgba(16, 185, 129, 0.25); color: var(--color-covered); }
+        .status-card.config .status-card-icon { background: rgba(234, 179, 8, 0.25); color: var(--color-config); }
+        .status-card.minor .status-card-icon { background: rgba(249, 115, 22, 0.25); color: var(--color-minor); }
+        .status-card.full .status-card-icon { background: rgba(239, 68, 68, 0.25); color: var(--color-full); }
+
+        .status-card-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.1;
+        }
+
+        .status-card.covered .status-card-val { color: var(--color-covered); }
+        .status-card.config .status-card-val { color: var(--color-config); }
+        .status-card.minor .status-card-val { color: var(--color-minor); }
+        .status-card.full .status-card-val { color: var(--color-full); }
+
+        .status-card-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .status-card-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Stacked Visual Bar */
+        .stacked-bar-container {
+            margin-top: 10px;
+        }
+
+        .stacked-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .stacked-bar {
+            height: 14px;
+            border-radius: 999px;
+            overflow: hidden;
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .bar-seg {
+            height: 100%;
+            transition: width 0.6s ease;
+        }
+
+        .bar-seg.covered { background: var(--color-covered); }
+        .bar-seg.config { background: var(--color-config); }
+        .bar-seg.minor { background: var(--color-minor); }
+        .bar-seg.full { background: var(--color-full); }
+
+        /* Badges */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .badge-status.covered {
+            background: var(--color-covered-bg);
+            color: var(--color-covered);
+            border: 1px solid var(--color-covered-border);
+        }
+        .badge-status.config {
+            background: var(--color-config-bg);
+            color: var(--color-config);
+            border: 1px solid var(--color-config-border);
+        }
+        .badge-status.minor {
+            background: var(--color-minor-bg);
+            color: var(--color-minor);
+            border: 1px solid var(--color-minor-border);
+        }
+        .badge-status.full {
+            background: var(--color-full-bg);
+            color: var(--color-full);
+            border: 1px solid var(--color-full-border);
+        }
+
+        /* Tabs */
+        .tabs-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            background: var(--bg-secondary);
+            padding: 8px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 13px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: inherit;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(79, 70, 229, 0.9));
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Grids & Cards */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 22px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+            gap: 20px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .card-icon.blue { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+        .card-icon.amber { background: rgba(234, 179, 8, 0.15); color: #facc15; }
+        .card-icon.purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+        .card-icon.green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .card-icon.rose { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+        .card-icon.cyan { background: rgba(6, 182, 212, 0.15); color: #22d3ee; }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .feature-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .feature-info {
+            flex: 1;
+        }
+
+        .feature-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+
+        .feature-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+
+        /* Stat Metrics */
+        .stat-card {
+            background: linear-gradient(145deg, rgba(17, 24, 39, 0.8), rgba(31, 41, 55, 0.6));
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.6rem;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Checklist Controls & Tasks */
+        .checklist-controls {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .progress-box {
+            width: 100%;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar-bg {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--color-covered), #06b6d4);
+            transition: width 0.4s ease;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--accent-primary);
+            color: #fff;
+            border-color: var(--accent-primary);
+        }
+
+        .phase-section {
+            margin-bottom: 28px;
+        }
+
+        .phase-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #818cf8;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .task-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .task-item:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .task-item.completed {
+            border-color: rgba(16, 185, 129, 0.35);
+            background: rgba(16, 185, 129, 0.04);
+        }
+
+        .task-checkbox {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 3px;
+            transition: var(--transition);
+        }
+
+        .task-item.completed .task-checkbox {
+            background: var(--color-covered);
+            border-color: var(--color-covered);
+        }
+
+        .task-checkbox i {
+            color: #fff;
+            font-size: 0.75rem;
+            display: none;
+        }
+
+        .task-item.completed .task-checkbox i {
+            display: block;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .task-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .task-desc {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        footer {
+            margin-top: 45px;
+            padding-top: 25px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        @media print {
+            body { background: #fff; color: #000; }
+            .tabs-nav, .header-actions, .filter-buttons { display: none !important; }
+            .tab-content { display: block !important; margin-bottom: 30px; page-break-after: always; }
+            .card, .task-item, .summary-dashboard { border: 1px solid #ccc; background: #fff; color: #000; }
+            .feature-desc, .task-desc { color: #444; }
+            h1, .card-title, .task-title, .summary-title { color: #000 !important; -webkit-text-fill-color: #000 !important; }
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .tabs-nav { flex-direction: column; }
+            .tab-btn { min-width: 100%; }
+            h1 { font-size: 1.7rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-top">
+                <span class="badge-tag">
+                    <i class="fa-solid fa-layer-group"></i>
+                    ERPNext POS & Retail Enterprise Architecture
+                </span>
+                <div class="header-actions">
+                    <button class="btn btn-outline" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> طباعة / تصدير PDF
+                    </button>
+                    <button class="btn btn-primary" onclick="resetChecklist()">
+                        <i class="fa-solid fa-rotate-right"></i> تصفير القائمة
+                    </button>
+                </div>
+            </div>
+            <h1>مصفوفة المواصفات التنفيذية والتحليل البرمجي لموديول POS</h1>
+            <p class="subtitle">
+                تصنيف معياري دقيق لجميع وظائف الموديول موضحاً ما هو مدمج كلياً (Covered)، ما يحتاج إلى إعداد فقط (Config)، وما يتطلب برمجة بسيطة أو تطويراً كاملاً مع حساب النسب المئوية.
+            </p>
+        </header>
+
+        <!-- Status Summary Dashboard -->
+        <div class="summary-dashboard">
+            <div class="summary-title">
+                <i class="fa-solid fa-chart-pie"></i> ملخص تصنيف الخصائص والجهد البرمجي المطلوب (إجمالي 30 خاصية ووظيفة)
+            </div>
+
+            <div class="status-grid">
+                <!-- Covered -->
+                <div class="status-card covered">
+                    <div class="status-card-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <div>
+                        <div class="status-card-val">23.3%</div>
+                        <div class="status-card-name">🟢 جاهز ومدمج (Covered)</div>
+                        <div class="status-card-sub">7 خصائص - بدون أي تدخل</div>
+                    </div>
+                </div>
+
+                <!-- Config -->
+                <div class="status-card config">
+                    <div class="status-card-icon"><i class="fa-solid fa-sliders"></i></div>
+                    <div>
+                        <div class="status-card-val">30.0%</div>
+                        <div class="status-card-name">🟡 يحتاج إعداد (Config Only)</div>
+                        <div class="status-card-sub">9 خصائص - إعدادات وسياسات فقط</div>
+                    </div>
+                </div>
+
+                <!-- Minor Dev -->
+                <div class="status-card minor">
+                    <div class="status-card-icon"><i class="fa-solid fa-code"></i></div>
+                    <div>
+                        <div class="status-card-val">26.7%</div>
+                        <div class="status-card-name">🟠 برمجة بسيطة (Minor Dev)</div>
+                        <div class="status-card-sub">8 خصائص - Client Scripts وتطبيقات جاهزة</div>
+                    </div>
+                </div>
+
+                <!-- Full Dev -->
+                <div class="status-card full">
+                    <div class="status-card-icon"><i class="fa-solid fa-laptop-code"></i></div>
+                    <div>
+                        <div class="status-card-val">20.0%</div>
+                        <div class="status-card-name">🔴 برمجة كاملة (Full Dev)</div>
+                        <div class="status-card-sub">6 خصائص - تطوير مخصص من الصفر</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stacked Visual Bar -->
+            <div class="stacked-bar-container">
+                <div class="stacked-bar-label">
+                    <span><strong>مجموع الجاهز بدون كود (Covered + Config):</strong> 53.3% (16 خاصية)</span>
+                    <span><strong>مجموع الكود البرمجي (Minor + Full Dev):</strong> 46.7% (14 خاصية)</span>
+                </div>
+                <div class="stacked-bar">
+                    <div class="bar-seg covered" style="width: 23.3%;" title="Covered: 23.3%"></div>
+                    <div class="bar-seg config" style="width: 30.0%;" title="Config: 30.0%"></div>
+                    <div class="bar-seg minor" style="width: 26.7%;" title="Minor Dev: 26.7%"></div>
+                    <div class="bar-seg full" style="width: 20.0%;" title="Full Dev: 20.0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('tab-features', this)">
+                <i class="fa-solid fa-list-check"></i> 1. تصنيف الخصائص بالتفصيل
+            </button>
+            <button class="tab-btn" onclick="switchTab('tab-value', this)">
+                <i class="fa-solid fa-chart-line"></i> 2. القيمة المضافة وعائد الاستثمار
+            </button>
+            <button class="tab-btn" onclick="switchTab('tab-checklist', this)">
+                <i class="fa-solid fa-tasks"></i> 3. قائمة المتابعة الملونة مع الديفلوبر
+            </button>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 1: الخصائص المتوقعة وتصنيفها الملون -->
+        <!-- ========================================== -->
+        <div id="tab-features" class="tab-content active">
+            <div class="grid-2">
+
+                <!-- Card 1: Hardware -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon blue"><i class="fa-solid fa-cash-register"></i></div>
+                        <div class="card-title">1. أجهزة نقاط البيع والعتاد (Hardware & POS Terminals)</div>
+                    </div>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">ربط نقطة البيع بمستودع افتراضي مخصص</div>
+                                <div class="feature-desc">تخصيص مستودع فرعي ورف لكل جهاز كاشير لتتبع البضاعة المسلوبة لحظياً.</div>
+                            </div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">الطباعة الحرارية المباشرة الصامتة (Direct ESC/POS)</div>
+                                <div class="feature-desc">تخطي نافذة المتصفح العادية وإرسال أوامر RAW مباشرة للطابعة الحرارية.</div>
+                            </div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">الفتح التلقائي لدرج النقدية مع كل فاتورة كاش</div>
+                                <div class="feature-desc">إرسال نبضة إلكترونية لدرج الكاشير بمجرد تأكيد الفاتورة النقدية.</div>
+                            </div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">تفكيك باركود الموازين المتغير (99 / 20)</div>
+                                <div class="feature-desc">قراءة كود الصنف واستخراج الوزن أو السعر الصافي تلقائياً من الباركود.</div>
+                            </div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">شاشة العميل التفاعلية المزدوجة (Customer Display)</div>
+                                <div class="feature-desc">شاشة ثانية للعميل تعرض السلة اللحظية والعروض الترويجية وQR الدفع.</div>
+                            </div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Cash Control -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon amber"><i class="fa-solid fa-vault"></i></div>
+                        <div class="card-title">2. الرقابة النقدية والورديات (Cash & Shift Control)</div>
+                    </div>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">فتح الوردية وإثبات عهدة البداية (Opening Float)</div>
+                                <div class="feature-desc">تسجيل اسم الكاشير وتاريخ ووقت البدء والعهدة النقدية في POS Opening Entry.</div>
+                            </div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">جدول تفقيط فئات العملات (Denominations Breakdown)</div>
+                                <div class="feature-desc">إدخال عدد الأوراق النقدية (200، 100، 50، 20...) لحساب الإجمالي آلياً.</div>
+                            </div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">الجرد الأعمى للنقدية (Blind Cash Reconciliation)</div>
+                                <div class="feature-desc">إخفاء الرصيد الدفتري المتوقع عن الكاشير عند الإغلاق لمنع تكييف الأرقام.</div>
+                            </div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">طباعة تقرير منتصف الوردية (X-Report)</div>
+                                <div class="feature-desc">طباعة ملخص مالي فوري لحركات البيع للمشرفين دون إغلاق الوردية.</div>
+                            </div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">المصروفات النثرية السريعة (Cash Out / Petty Cash)</div>
+                                <div class="feature-desc">تسجيل مصاريف الفرع الطارئة من شاشة البيع وخصمها من رصيد الإغلاق.</div>
+                            </div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Retail Master -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon purple"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <div class="card-title">3. كتالوج التجزئة والأصناف (Retail Catalog & Variants)</div>
+                    </div>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">مصفوفة المقاسات والألوان (Item Variants)</div>
+                                <div class="feature-desc">إدارة متغيرات الملابس والأحذية بباركود ورصيد وسعر مستقل لكل مقاس ولون.</div>
+                            </div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">تتبع الصلاحيات والتشغيلات (Batch & FEFO)</div>
+                                <div class="feature-desc">إدارة تواريخ الصلاحية للأغذية والأدوية وخروج الصنف الأقرب انتهاءً أولاً.</div>
+                            </div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">تتبع الأرقام التسلسلية (Serial Numbers)</div>
+                                <div class="feature-desc">إلزام إدخال أو مسح السيريال نمبر / IMEI لربط فترة الضمان بالفاتورة.</div>
+                            </div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">تعدد وحدات القياس (Multi-UOM per Item)</div>
+                                <div class="feature-desc">البيع بالقطعة، العلبة، أو الكرتونة مع تحويل ومعامل خصم دقيق من المستودع.</div>
+                            </div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">الباقات والأصناف المجمعة (Product Bundle / Combos)</div>
+                                <div class="feature-desc">بيع الوجبات المجمعة وتفكيك مكوناتها تلقائياً من الأرصدة المخزنية.</div>
+                            </div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: POS UX -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon green"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="card-title">4. شاشة الكاشير وسرعة العمليات (Cashier UX & Operations)</div>
+                    </div>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">البيع السريع بالباركود والشاشات اللمسية</div>
+                                <div class="feature-desc">مسح الباركود وإضافة الصنف واحتساب القيمة في أجزاء من الثانية.</div>
+                            </div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">تعليق واسترجاع الفواتير (Hold & Recall Orders)</div>
+                                <div class="feature-desc">تعليق فاتورة العميل المتعثر في الدفع واستدعاؤها لخدمة الطابور دون تعطيل.</div>
+                            </div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">الخصومات على مستوى البند أو الفاتورة</div>
+                                <div class="feature-desc">تطبيق خصم نسبة مئوية أو مبلغ ثابت على صنف محدد أو إجمالي الفاتورة.</div>
+                            </div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">الدفع المقسم والمتعدد (Split Multi-Tender)</div>
+                                <div class="feature-desc">سداد الفاتورة بجزء كاش + جزء فيزا + نقاط ولاء + محفظة إلكترونية.</div>
+                            </div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">منظومة الإرجاع والاستبدال بالفاتورة الأصلية</div>
+                                <div class="feature-desc">مسح باركود الفاتورة الأصلية لإرجاع الأصناف وإصدار إشعار دائن أو رد نقدي.</div>
+                            </div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Hospitality -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon rose"><i class="fa-solid fa-utensils"></i></div>
+                        <div class="card-title">5. موديول المطاعم والكافيهات والشاشات (Hospitality & KDS)</div>
+                    </div>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">خريطة الطاولات التفاعلية (Floor & Table Layout)</div>
+                                <div class="feature-desc">رسم صالة المطعم وتوزيع الطاولات وإظهار حالاتها بالألوان (فارغة، مشغولة).</div>
+                            </div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">عمليات الطاولات (نقل، دمج، وتقسيم الشيك Split Bill)</div>
+                                <div class="feature-desc">نقل الطلب لطاولة أخرى، دمج طاولات، أو تقسيم الحساب بالتساوي أو بالمقاعد.</div>
+                            </div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">شاشات عرض المطبخ الذكية (KDS Engine)</div>
+                                <div class="feature-desc">استقبال الطلبات لحظياً بالمطبخ عبر WebSockets مع مؤشرات الوقت وتنبيهات التأخير.</div>
+                            </div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">توجيه الأصناف للمحطات (Station Routing)</div>
+                                <div class="feature-desc">فرز الأصناف تلقائياً لمحطات التحضير المستقلة (بار، جريل، بيتزا...).</div>
+                            </div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">تفكيك الوصفات اللحظي مع الملاحظات (BOM Engine)</div>
+                                <div class="feature-desc">خصم مكونات الوجبة من المخزن مع استبعاد المكونات المستثناة ("بدون بصل").</div>
+                            </div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Tax & Security -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon cyan"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div class="card-title">6. الامتثال الضريبي والأمان والمزامنة (Tax, Security & Sync)</div>
+                    </div>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">الفوترة الإلكترونية السعودية (ZATCA TLV QR)</div>
+                                <div class="feature-desc">توليد QR Code المتوافق مع الفاتورة المبسطة لهيئة الزكاة والضريبة.</div>
+                            </div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">نافذة موافقة المشرف (Supervisor PIN Override)</div>
+                                <div class="feature-desc">طلب كود المشرف عند إلغاء بند، إلغاء فاتورة، أو فتح الدرج بدون بيع.</div>
+                            </div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">سجل تدقيق العمليات المشبوهة (Fraud Audit Log)</div>
+                                <div class="feature-desc">توثيق محاولات الإلغاء وفتح الدرج مع اسم الكاشير وتوقيت الحركة.</div>
+                            </div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">توليد القيود المحاسبية التلقائية (GL Integration)</div>
+                                <div class="feature-desc">إثبات المبيعات، ضريبة المخرجات، وتكلفة البضاعة المباعة (COGS) آلياً.</div>
+                            </div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-info">
+                                <div class="feature-name">التشغيل دون اتصال والمزامنة الآمنة (Offline Mode)</div>
+                                <div class="feature-desc">مواصلة البيع عند انقطاع الإنترنت والمزامنة التلقائية فور عودة الاتصال.</div>
+                            </div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: القيمة المضافة وعائد الاستثمار -->
+        <!-- ========================================== -->
+        <div id="tab-value" class="tab-content">
+            <div class="grid-4" style="margin-bottom: 25px;">
+                <div class="stat-card">
+                    <div class="stat-number">0%</div>
+                    <div class="stat-label">عجز نقدي غير مبرر</div>
+                    <div class="stat-desc">بفضل الجرد الأعمى وتفقيط العملات الإلزامي</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">&lt; 3s</div>
+                    <div class="stat-label">زمن الفاتورة بالباركود</div>
+                    <div class="stat-desc">القضاء على طوابير الانتظار والازدحام</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">دقة تكلفة الوجبات</div>
+                    <div class="stat-desc">تفكيك آلي للمواد الخام والوصفات لحظياً</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">جاهزية الفوترة الإلكترونية</div>
+                    <div class="stat-desc">امتثال كامل مع ZATCA وهيئة الضرائب</div>
+                </div>
+            </div>
+
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon green"><i class="fa-solid fa-lock"></i></div>
+                        <div class="card-title">إحكام الرقابة ومنع السرقة</div>
+                    </div>
+                    <p class="feature-desc" style="font-size: 0.95rem;">
+                        إخفاء الرصيد المتوقع في إغلاق الوردية يجبر الكاشير على إدخال المبلغ الحقيقي الفعلي، مع توثيق كافة محاولات فتح الدرج بدون بيع أو إلغاء الفواتير بعد طباعتها.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon blue"><i class="fa-solid fa-warehouse"></i></div>
+                        <div class="card-title">انضباط المخزون ومنع الهدر</div>
+                    </div>
+                    <p class="feature-desc" style="font-size: 0.95rem;">
+                        الخصم اللحظي للأرصدة من مستودع نقطة البيع، وحماية تواريخ الصلاحية عبر سياسة FEFO الصارمة، وحساب تكلفة الأغذية بالجرام والسنتيمتر.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon purple"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <div class="card-title">أتمتة الحسابات وتوفير الوقت</div>
+                    </div>
+                    <p class="feature-desc" style="font-size: 0.95rem;">
+                        صفر إدخال يدوي للقيود، واحتساب هوامش أرباح الفروع اللحظية، وإغلاق يومي وتسوية النقدية في أقل من 5 دقائق بدون أي تأخير.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: قائمة المتابعة والمراجعة الملونة -->
+        <!-- ========================================== -->
+        <div id="tab-checklist" class="tab-content">
+
+            <!-- Checklist Controls -->
+            <div class="checklist-controls">
+                <div class="progress-box">
+                    <div class="progress-header">
+                        <span>نسبة الإنجاز الإجمالية لقائمة المتابعة:</span>
+                        <span id="progress-text" style="color: var(--color-covered);">0% (0 / 28 مهمة)</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progress-bar"></div>
+                    </div>
+                </div>
+
+                <!-- Combined Filters -->
+                <div class="filter-buttons">
+                    <span style="font-size: 0.82rem; color: var(--text-muted); align-self: center; margin-left: 5px;">فلترة حسب الحالة:</span>
+                    <button class="filter-btn active" onclick="filterStatus('all', this)">عرض الكل</button>
+                    <button class="filter-btn" onclick="filterStatus('covered', this)">🟢 مدمج (Covered)</button>
+                    <button class="filter-btn" onclick="filterStatus('config', this)">🟡 إعداد (Config)</button>
+                    <button class="filter-btn" onclick="filterStatus('minor', this)">🟠 برمجة بسيطة</button>
+                    <button class="filter-btn" onclick="filterStatus('full', this)">🔴 برمجة كاملة</button>
+                </div>
+            </div>
+
+            <!-- Phase 1 -->
+            <div class="phase-section" data-phase="p1">
+                <div class="phase-title">
+                    <i class="fa-solid fa-sliders"></i> المرحلة 1: التهيئة وقواعد البيانات القياسية (Standard Configuration)
+                </div>
+                
+                <div class="task-item" data-status="config" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">1.1 إعداد ملفات نقاط البيع (POS Profiles) والمستودع</div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="task-desc">ربط كل كاشير بمستودعه الافتراضي، الخزينة النقدية، الحساب البنكي، وتعيين قائمة الأسعار وقالب الطباعة.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="config" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">1.2 مصفوفة متغيرات الأصناف (Item Variants)</div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="task-desc">تعريف صفات المقاسات والألوان لمتاجر الأزياء، وتوليد باركود دولي فريد ورصيد مستقل لكل متغير.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="config" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">1.3 تفعيل تتبع الصلاحيات والتشغيلات (Batch Tracking - FEFO)</div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="task-desc">تفعيل خاصية Has Batch No للأغذية والأدوية وضبط خروج البضاعة تلقائياً بسياسة ما ينتهي أولاً يخرج أولاً.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="config" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">1.4 تفعيل الأرقام التسلسلية (Serial Numbers)</div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="task-desc">إلزام إدخال أو مسح السيريال نمبر / IMEI عند بيع الأجهزة الإلكترونية لربط فترة الضمان بالفاتورة.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="config" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">1.5 قواعد التسعير والعروض الترويجية (Pricing Rules)</div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="task-desc">برمجة عروض BOGO (اشترِ قطعة واحصل على الثانية بخصم)، وعروض خصومات الكميات المتدرجة، والساعات السعيدة.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="config" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">1.6 تفعيل محرك نقاط الولاء (Loyalty Program)</div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="task-desc">تحديد معدل اكتساب النقاط مقابل المشتريات، وتفعيل آلية استبدال النقاط بخصم مباشر في شاشة نقطة البيع.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 2 -->
+            <div class="phase-section" data-phase="p2">
+                <div class="phase-title">
+                    <i class="fa-solid fa-print"></i> المرحلة 2: واجهة البيع والعتاد والهاردوير (POS UI & Peripherals)
+                </div>
+
+                <div class="task-item" data-status="full" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">2.1 الطباعة الحرارية المباشرة الصامتة (Direct ESC/POS)</div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="task-desc">تخطي نافذة الطباعة الافتراضية للمتصفح عبر ربط وسيط طباعة (QZ Tray أو خدمة محلية) وإرسال أوامر RAW مباشرة للطابعة.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="minor" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">2.2 الفتح الآلي لدرج النقدية مع كل فاتورة كاش</div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="task-desc">إرسال كود فتح الدرج الإلكتروني (\x1b\x70\x00\x19\xfa) تلقائياً بمجرد إتمام السداد النقدي.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="minor" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">2.3 فك تشفير باركود الموازين المتغير (Variable Weight Barcode)</div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="task-desc">تفكيك الباركودات ذات البادئة 99 أو 20 واستخراج كود الصنف والوزن أو السعر الصافي تلقائياً وحساب القيمة فورياً.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="covered" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">2.4 دعم تعليق واسترجاع الفواتير (Hold & Recall Orders)</div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                        <div class="task-desc">إتاحة تعليق فاتورة العميل المتعثر في الدفع وحفظها واستدعاؤها بنقرة واحدة لخدمة العميل التالي في الطابور.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="config" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">2.5 دعم السداد المتعدد والمقسم (Split Multi-Tender Payment)</div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="task-desc">إمكانية سداد الفاتورة الواحدة بجزء كاش + جزء فيزا + نقاط ولاء + محفظة إلكترونية مع حساب الباقي التلقائي.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 3 -->
+            <div class="phase-section" data-phase="p3">
+                <div class="phase-title">
+                    <i class="fa-solid fa-coins"></i> المرحلة 3: الرقابة والورديات وإدارة النقدية (Shift & Cash Control)
+                </div>
+
+                <div class="task-item" data-status="minor" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">3.1 إنشاء جدول تفقيط العملات (Denominations Breakdown)</div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="task-desc">إلزام الكاشير بعدّ وإدخال فئات النقدية (200, 100, 50, 20...) في شاشتي فتح وإغلاق الوردية لحساب الإجمالي بدقة.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="minor" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">3.2 تفعيل الجرد الأعمى للنقدية (Blind Cash Reconciliation)</div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="task-desc">إخفاء الرصيد المتوقع دفترياً عن الكاشير عند إغلاق الوردية تماماً لمنع معرفة العجز أو الفائض أثناء العدّ.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="minor" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">3.3 برمجة طباعة تقرير منتصف الوردية (X-Report)</div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="task-desc">إضافة زر للمشرف لطباعة ملخص مرحلي للمبيعات والمدفوعات النقدية والشبكة في أي وقت دون إغلاق الوردية.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="full" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">3.4 تسجيل المصروفات النثرية السريعة (Cash Out / Petty Cash)</div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="task-desc">إتاحة تسجيل المصاريف الطارئة للفرع مباشرة من شاشة البيع مع تحديد مركز التكلفة وخصمها من رصيد الإغلاق.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="minor" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">3.5 الترحيل المحاسبي التلقائي لعجز وفائض الصندوق</div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="task-desc">توليد قيد تلقائي يحمل عجز الصندوق على ذمة الموظف، أو يثبت الفائض في حساب إيرادات أخرى عند اعتماد الوردية.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 4 -->
+            <div class="phase-section" data-phase="p4">
+                <div class="phase-title">
+                    <i class="fa-solid fa-bell-concierge"></i> المرحلة 4: موديول المطاعم والكافيهات (F&B / Hospitality Extensions)
+                </div>
+
+                <div class="task-item" data-status="full" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">4.1 بناء واجهة خريطة الطاولات التفاعلية (Floor & Table Layout)</div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="task-desc">رسم صالة المطعم وتوزيع الطاولات مع تغيير مؤشرات الحالة اللحظية (متاحة، مشغولة، محجوزة، قيد التنظيف).</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="full" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">4.2 دعم نقل ودمج الطاولات وتقسيم الفاتورة (Split Bill)</div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="task-desc">تمكين الكابتن من نقل الطلب لطاولة أخرى، أو دمج طاولتين، أو تقسيم الحساب بالتساوي أو حسب مقاعد الضيوف.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="full" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">4.3 شاشات عرض المطبخ التفاعلية (KDS Engine)</div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="task-desc">استقبال الطلبات لحظياً في المطبخ وتغيير حالاتها (قيد التحضير -> جاهز) مع تنبيهات صوتية للطلبات المتأخرة.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="full" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">4.4 توجيه الأصناف التلقائي لمحطات التحضير (Station Routing)</div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="task-desc">إرسال أصناف الجريل لشاشة الجريل، والمشروبات لشاشة البار، والبيتزا لمحطة المعجنات تلقائياً.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="full" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">4.5 تفكيك الوصفات اللحظي مع معالجة الملاحظات (Recipe BOM)</div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="task-desc">خصم المواد الخام تلقائياً عند بيع الوجبة مع قراءة الملاحظات واستبعاد المكونات المستثناة ("بدون بصل").</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 5 -->
+            <div class="phase-section" data-phase="p5">
+                <div class="phase-title">
+                    <i class="fa-solid fa-receipt"></i> المرحلة 5: الامتثال الضريبي والفوترة الإلكترونية (Tax & E-Invoicing)
+                </div>
+
+                <div class="task-item" data-status="minor" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">5.1 توليد QR Code متوافق مع هيئة الزكاة والضريبة (ZATCA TLV)</div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="task-desc">تضمين التشفير الرقمي والباركود المتوافق مع الفاتورة المبسطة للمملكة العربية السعودية عبر التطبيق الإقليمي.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="full" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">5.2 الربط مع منظومة الإيصال الإلكتروني المصرية (ETA E-Receipt)</div>
+                            <span class="badge-status full"><i class="fa-solid fa-laptop-code"></i> برمجة كاملة</span>
+                        </div>
+                        <div class="task-desc">تشفير إيصالات نقاط البيع وإرسالها اللحظي أو التجميعي لمصلحة الضرائب المصرية في حال العمل داخل مصر.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="config" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">5.3 تصميم وضبط قالب الإيصال الحراري المعتمد</div>
+                            <span class="badge-status config"><i class="fa-solid fa-sliders"></i> يحتاج Config</span>
+                        </div>
+                        <div class="task-desc">تضمين اسم المنشأة، الرقم الضريبي، تفاصيل الأصناف، الضريبة المحتسبة، وسياسة الاستبدال والاسترجاع.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 6 -->
+            <div class="phase-section" data-phase="p6">
+                <div class="phase-title">
+                    <i class="fa-solid fa-shield-virus"></i> المرحلة 6: الأمان ومكافحة التلاعب (Security & Fraud Auditing)
+                </div>
+
+                <div class="task-item" data-status="minor" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">6.1 نافذة موافقة المشرف (Supervisor PIN Override)</div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="task-desc">إلزام إدخال كود المشرف عند إلغاء بند، إلغاء فاتورة، تطبيق خصم استثنائي، أو فتح الدرج بدون بيع.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="minor" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">6.2 سجل تدقيق العمليات المشبوهة (POS Suspicious Action Log)</div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="task-desc">تسجيل كل حركة إلغاء أو فتح درج مع حفظ اسم الكاشير، توقيت الحركة، واسم المشرف المعتمد لإجراء التحقيقات.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 7 -->
+            <div class="phase-section" data-phase="p7">
+                <div class="phase-title">
+                    <i class="fa-solid fa-vial-circle-check"></i> المرحلة 7: الاختبارات الميدانية والتسليم (UAT & Stress Testing)
+                </div>
+
+                <div class="task-item" data-status="covered" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">7.1 اختبار سرعة إنجاز الفاتورة تحت الضغط</div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                        <div class="task-desc">التأكد من أن مسح 10 أصناف وإتمام الدفع والطباعة لا يستغرق أكثر من 5 ثوانٍ إجمالاً.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="minor" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">7.2 اختبار محاكاة انقطاع الإنترنت التام (Offline Simulation)</div>
+                            <span class="badge-status minor"><i class="fa-solid fa-code"></i> برمجة بسيطة</span>
+                        </div>
+                        <div class="task-desc">فصل كابل الإنترنت وإصدار 20 فاتورة وطباعتها، ثم إعادة الاتصال والتحقق من مزامنتها دون فقدان أي سجل.</div>
+                    </div>
+                </div>
+
+                <div class="task-item" data-status="covered" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fa-solid fa-check"></i></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <div class="task-title">7.3 مطابقة الجرد المخزني الفعلي مع أرصدة النظام</div>
+                            <span class="badge-status covered"><i class="fa-solid fa-circle-check"></i> جاهز مدمج</span>
+                        </div>
+                        <div class="task-desc">جرد عينات من الأصناف والمواد الخام في نهاية اليوم ومطابقتها التامة مع الحركات المسجلة بالنظام.</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>تم تحديث ومراجعة الوثيقة بنظام الترميز اللوني الرباعي المعتمد | Redivio ERP & ERPNext © 2026</p>
+        </footer>
+    </div>
+
+    <!-- Interactive Script -->
+    <script>
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function toggleTask(taskEl) {
+            taskEl.classList.toggle('completed');
+            updateProgress();
+            saveChecklistState();
+        }
+
+        function updateProgress() {
+            const allTasks = document.querySelectorAll('.task-item');
+            const completedTasks = document.querySelectorAll('.task-item.completed');
+            
+            const total = allTasks.length;
+            const completed = completedTasks.length;
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            document.getElementById('progress-bar').style.width = percent + '%';
+            document.getElementById('progress-text').innerText = `${percent}% (${completed} / ${total} مهمة)`;
+        }
+
+        function filterStatus(status, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const tasks = document.querySelectorAll('.task-item');
+            tasks.forEach(task => {
+                if (status === 'all' || task.getAttribute('data-status') === status) {
+                    task.style.display = 'flex';
+                } else {
+                    task.style.display = 'none';
+                }
+            });
+
+            // Hide empty phase sections
+            document.querySelectorAll('.phase-section').forEach(phase => {
+                const visibleTasks = phase.querySelectorAll('.task-item[style*="display: flex"], .task-item:not([style*="display"])');
+                let hasVisible = false;
+                phase.querySelectorAll('.task-item').forEach(t => {
+                    if (t.style.display !== 'none') hasVisible = true;
+                });
+                phase.style.display = hasVisible ? 'block' : 'none';
+            });
+        }
+
+        function saveChecklistState() {
+            const state = [];
+            document.querySelectorAll('.task-item').forEach((item, index) => {
+                state.push(item.classList.contains('completed'));
+            });
+            localStorage.setItem('erpnext_pos_checklist_state_v2', JSON.stringify(state));
+        }
+
+        function loadChecklistState() {
+            const saved = localStorage.getItem('erpnext_pos_checklist_state_v2');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    document.querySelectorAll('.task-item').forEach((item, index) => {
+                        if (state[index]) {
+                            item.classList.add('completed');
+                        } else {
+                            item.classList.remove('completed');
+                        }
+                    });
+                } catch(e) {
+                    console.error('Error loading state', e);
+                }
+            }
+            updateProgress();
+        }
+
+        function resetChecklist() {
+            if (confirm('هل أنت متأكد من تصفير كافة علامات الإنجاز بالقائمة؟')) {
+                document.querySelectorAll('.task-item').forEach(item => item.classList.remove('completed'));
+                localStorage.removeItem('erpnext_pos_checklist_state_v2');
+                updateProgress();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadChecklistState();
+        });
+    </script>
+</body>
+</html>

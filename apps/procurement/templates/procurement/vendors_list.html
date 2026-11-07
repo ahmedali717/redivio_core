@@ -95,22 +95,14 @@
         </div>
     </div>
 
-    <!-- 3. SEARCH, FILTERS & VIEW MODE CONTROLS -->
-    <div class="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 mb-6">
-        <!-- Search Input -->
-        <div class="relative flex-1 min-w-[260px]">
-            <i class="fas fa-search absolute inset-y-0 flex items-center text-slate-400 text-xs" :class="isArabic ? 'right-3.5' : 'left-3.5'"></i>
-            <input type="text" v-model="vendorSearch" 
-                   :placeholder="isArabic ? 'بحث بالاسم، الكود، الرقم الضريبي، الهاتف، المدينة...' : 'Search by name, code, VAT, phone, city...'"
-                   :class="isArabic ? 'pr-9 pl-8' : 'pl-9 pr-8'"
-                   class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-800 placeholder-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
-            <button v-if="vendorSearch" @click="vendorSearch = ''" class="absolute inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-xs" :class="isArabic ? 'left-3' : 'right-3'">
-                <i class="fas fa-times-circle"></i>
-            </button>
-        </div>
-
-        <!-- Filter Pills (Odoo/ERPNext style) -->
+    <!-- 3. VENDOR FILTER BAR (Located above search as requested - Item 6) -->
+    <div class="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-sm flex items-center justify-between flex-wrap gap-2 mb-3">
         <div class="flex items-center flex-wrap gap-1.5">
+            <span class="text-xs font-black text-slate-500 mr-2 ml-2 flex items-center gap-1.5">
+                <i class="fas fa-filter text-emerald-600 text-xs"></i>
+                <span v-text="isArabic ? 'تصفية الموردين:' : 'Filter Suppliers:'"></span>
+            </span>
+
             <button @click="vendorTypeFilter = 'ALL'"
                     :class="vendorTypeFilter === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
                     class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
@@ -138,9 +130,24 @@
                     class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
                     v-text="isArabic ? 'محلي' : 'Local'"></button>
         </div>
+    </div>
 
-        <!-- View Mode Switcher -->
-        <div class="flex items-center border border-slate-200 rounded-xl p-0.5 bg-slate-100 self-end lg:self-auto">
+    <!-- 4. SEARCH & ISOLATED VIEW COMMANDS (Item 6) -->
+    <div class="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
+        <!-- Search Input -->
+        <div class="relative flex-1 w-full min-w-[260px]">
+            <i class="fas fa-search absolute inset-y-0 flex items-center text-slate-400 text-xs" :class="isArabic ? 'right-3.5' : 'left-3.5'"></i>
+            <input type="text" v-model="vendorSearch" 
+                   :placeholder="isArabic ? 'بحث بالاسم، الكود، الرقم الضريبي، الهاتف، المدينة...' : 'Search by name, code, VAT, phone, city...'"
+                   :class="isArabic ? 'pr-9 pl-8' : 'pl-9 pr-8'"
+                   class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-800 placeholder-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+            <button v-if="vendorSearch" @click="vendorSearch = ''" class="absolute inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-xs" :class="isArabic ? 'left-3' : 'right-3'">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
+
+        <!-- Isolated View Mode Switcher -->
+        <div class="flex items-center border border-slate-200 rounded-xl p-0.5 bg-slate-100 shrink-0 self-end sm:self-auto">
             <button @click="vendorViewMode = 'cards'"
                     :class="vendorViewMode === 'cards' ? 'bg-white text-emerald-600 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800 font-medium'"
                     class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5"
@@ -268,17 +275,17 @@
                     <i class="fas fa-boxes"></i>
                 </button>
 
-                <!-- Edit Vendor Button -->
-                <button @click="openVendorModal(v)"
+                <!-- Edit Vendor Button (Restricted to VMA / Admin - Item 7) -->
+                <button v-if="canManageVendors" @click="openVendorModal(v)"
                         class="bg-slate-100 hover:bg-slate-800 text-slate-600 hover:text-white p-1.5 rounded-xl text-xs font-bold transition-all"
-                        :title="isArabic ? 'تعديل بيانات المورد' : 'Edit Vendor'">
+                        :title="isArabic ? 'تعديل بيانات المورد (VMA)' : 'Edit Vendor (VMA)'">
                     <i class="fas fa-edit"></i>
                 </button>
 
-                <!-- Delete Vendor Button -->
-                <button @click="deleteItem('vendor', v.id)"
+                <!-- Delete Vendor Button (Restricted to VMA / Admin - Item 7) -->
+                <button v-if="canManageVendors" @click="deleteItem('vendor', v.id)"
                         class="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white p-1.5 rounded-xl text-xs font-bold transition-all"
-                        :title="isArabic ? 'حذف المورد' : 'Delete Vendor'">
+                        :title="isArabic ? 'حذف المورد (VMA)' : 'Delete Vendor (VMA)'">
                     <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
@@ -396,17 +403,17 @@
                                     <i class="fas fa-boxes"></i>
                                 </button>
 
-                                <!-- Edit -->
-                                <button @click="openVendorModal(v)"
+                                <!-- Edit (Restricted to VMA / Admin - Item 7) -->
+                                <button v-if="canManageVendors" @click="openVendorModal(v)"
                                         class="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white transition-all text-xs"
-                                        :title="isArabic ? 'تعديل' : 'Edit'">
+                                        :title="isArabic ? 'تعديل (VMA)' : 'Edit (VMA)'">
                                     <i class="fas fa-edit"></i>
                                 </button>
 
-                                <!-- Delete -->
-                                <button @click="deleteItem('vendor', v.id)"
+                                <!-- Delete (Restricted to VMA / Admin - Item 7) -->
+                                <button v-if="canManageVendors" @click="deleteItem('vendor', v.id)"
                                         class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all text-xs"
-                                        :title="isArabic ? 'حذف' : 'Delete'">
+                                        :title="isArabic ? 'حذف (VMA)' : 'Delete (VMA)'">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>
