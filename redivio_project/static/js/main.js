@@ -6200,6 +6200,7 @@ createApp({
                 if (typeof pModules === 'string') {
                     try { pModules = JSON.parse(pModules); } catch(e) { pModules = []; }
                 }
+                const parsedModules = Array.isArray(pModules) ? pModules : [];
                 this.config = {
                     company_name: active.name || '',
                     is_holding: !!active.is_holding,
@@ -6207,9 +6208,20 @@ createApp({
                     cr_number: active.cr_number || '',
                     logo: finalLogo,
                     system_mode: active.system_mode || 'modular',
-                    purchased_modules: Array.isArray(pModules) ? pModules : []
+                    purchased_modules: parsedModules
                 };
+                this.systemMode = active.system_mode || 'modular';
+                this.purchasedModules = parsedModules;
             }
+        },
+
+        async switchCompany(companyId) {
+            if (!companyId) return;
+            this.activeOpcoId = parseInt(companyId);
+            this.syncGlobalConfig(this.activeOpcoId);
+            await this.onOpcoChange();
+            await this.refreshAllData();
+            this.showToast(this.isArabic ? `تم التبديل إلى: ${this.config.company_name}` : `Switched to: ${this.config.company_name}`, 'success');
         },
 
         getMaterialDisplayName(m) {
@@ -7140,35 +7152,38 @@ createApp({
         },
 
         isModulePurchased(modId) {
-            if (this.systemMode === 'standalone') {
-                if (!this.purchasedModules || this.purchasedModules.length === 0) {
-                    return modId === 'restaurant_pos_module';
-                }
-            } else {
-                if (!this.purchasedModules || this.purchasedModules.length === 0) return true;
-                // Enterprise plan or Superuser gets access to all modules including contracting!
-                const p = (this.license && this.license.plan ? this.license.plan : '').toLowerCase();
-                if (p === 'enterprise' || (this.user && this.user.is_superuser)) {
-                    return true;
-                }
-            }
-            
-            const idMap = {
-                'inventory_module': 'wms',
-                'procurement_module': 'procurement',
-                'sales_module': 'sales',
-                'accounting_module': 'sales',
-                'restaurant_pos_module': 'restaurant_pos',
-                'contracting_module': 'contracting'
+            const aliases = {
+                'inventory_module': ['wms', 'inventory', 'inventory_module'],
+                'procurement_module': ['procurement', 'procurement_module'],
+                'sales_module': ['sales', 'sales_module'],
+                'accounting_module': ['accounting', 'finance', 'accounting_module'],
+                'restaurant_pos_module': ['restaurant_pos', 'pos', 'restaurant_pos_module'],
+                'contracting_module': ['contracting', 'rcms', 'contracting_module']
             };
-            
-            const mappedId = idMap[modId] || modId;
+            const matchKeys = aliases[modId] || [modId];
+
+            if (this.systemMode === 'standalone') {
+                let list = this.purchasedModules;
+                if (typeof list === 'string') {
+                    try { list = JSON.parse(list); } catch(e) { list = []; }
+                }
+                if (Array.isArray(list) && list.length > 0) {
+                    return matchKeys.some(k => list.includes(k));
+                }
+                return modId === 'restaurant_pos_module';
+            }
+
+            // In modular mode, check the configured company purchased modules
             let list = this.purchasedModules;
             if (typeof list === 'string') {
                 try { list = JSON.parse(list); } catch(e) { list = []; }
             }
-            if (!Array.isArray(list)) list = [];
-            return list.includes(mappedId) || list.includes(modId);
+            if (Array.isArray(list) && list.length > 0) {
+                return matchKeys.some(k => list.includes(k));
+            }
+
+            // Fallback: if company has no specific purchased_modules configured yet
+            return true;
         },
 
         isConfigModuleSelected(modId) {
@@ -7179,16 +7194,16 @@ createApp({
             }
             if (!Array.isArray(list)) return false;
             
-            const idMap = {
-                'inventory_module': 'wms',
-                'procurement_module': 'procurement',
-                'sales_module': 'sales',
-                'accounting_module': 'sales',
-                'restaurant_pos_module': 'restaurant_pos',
-                'contracting_module': 'contracting'
+            const aliases = {
+                'inventory_module': ['wms', 'inventory', 'inventory_module'],
+                'procurement_module': ['procurement', 'procurement_module'],
+                'sales_module': ['sales', 'sales_module'],
+                'accounting_module': ['accounting', 'finance', 'accounting_module'],
+                'restaurant_pos_module': ['restaurant_pos', 'pos', 'restaurant_pos_module'],
+                'contracting_module': ['contracting', 'rcms', 'contracting_module']
             };
-            const mappedId = idMap[modId] || modId;
-            return list.includes(mappedId) || list.includes(modId);
+            const matchKeys = aliases[modId] || [modId];
+            return matchKeys.some(k => list.includes(k));
         },
 
         setConfigMode(mode) {
@@ -7226,15 +7241,25 @@ createApp({
                 'inventory_module': 'wms',
                 'procurement_module': 'procurement',
                 'sales_module': 'sales',
-                'accounting_module': 'sales',
+                'accounting_module': 'accounting',
                 'restaurant_pos_module': 'restaurant_pos',
                 'contracting_module': 'contracting'
             };
             const mappedId = idMap[modId] || modId;
+            const aliases = {
+                'inventory_module': ['wms', 'inventory', 'inventory_module'],
+                'procurement_module': ['procurement', 'procurement_module'],
+                'sales_module': ['sales', 'sales_module'],
+                'accounting_module': ['accounting', 'finance', 'accounting_module'],
+                'restaurant_pos_module': ['restaurant_pos', 'pos', 'restaurant_pos_module'],
+                'contracting_module': ['contracting', 'rcms', 'contracting_module']
+            };
+            const matchKeys = aliases[modId] || [mappedId, modId];
+            const isSelected = matchKeys.some(k => list.includes(k));
 
-            if (list.includes(mappedId) || list.includes(modId)) {
+            if (isSelected) {
                 if (list.length > 1) {
-                    this.config.purchased_modules = list.filter(m => m !== mappedId && m !== modId);
+                    this.config.purchased_modules = list.filter(m => !matchKeys.includes(m));
                     this.showToast(this.isArabic ? 'تم إلغاء تحديد الموديول. اضغط حفظ التغييرات للاعتماد' : 'Module unselected. Click Save Settings to apply.', 'info');
                 }
             } else {

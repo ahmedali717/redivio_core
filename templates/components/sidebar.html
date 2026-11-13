@@ -1,13 +1,16 @@
-<aside :class="sidebarCollapsed ? 'w-20' : 'w-64'"
+<aside :class="sidebarCollapsed ? 'w-20 items-center' : 'w-64'"
     @mouseenter="sidebarCollapsed = false"
     @mouseleave="sidebarCollapsed = true"
-    class="sidebar-premium-container text-white flex flex-col h-[calc(100vh-1.5rem)] my-3 mx-3 rounded-[1.5rem] hidden md:flex border border-white/20 z-20 relative overflow-hidden"
+    class="sidebar-premium-container text-white flex flex-col h-[calc(100vh-1.5rem)] my-3 mx-3 rounded-[1.5rem] hidden md:flex border border-white/20 z-20 relative overflow-hidden transition-all duration-300"
     v-cloak>
 
     <div
-        class="h-20 flex items-center gap-3 px-5 border-b border-white/20 overflow-visible text-white relative brand-area-container">
-        <div class="flex items-center gap-3 cursor-pointer group" @click="showBrandDropdown = !showBrandDropdown">
-            <div class="w-9 h-9 bg-white/10 border border-white/15 rounded-xl flex items-center justify-center shrink-0 shadow-md transition-all duration-300 group-hover:bg-white/20 group-hover:border-white/30">
+        class="h-20 flex items-center border-b border-white/20 overflow-visible text-white relative brand-area-container transition-all"
+        :class="sidebarCollapsed ? 'justify-center px-0 w-full' : 'gap-3 px-5'">
+        <div class="flex items-center gap-3 cursor-pointer group"
+             :class="sidebarCollapsed ? 'justify-center mx-auto' : ''"
+             @click="showBrandDropdown = !showBrandDropdown">
+            <div class="w-10 h-10 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center shrink-0 shadow-md transition-all duration-300 group-hover:bg-white/20 group-hover:border-white/30">
                 <img src="/static/brand/logo_r.png" class="w-6 h-6 object-contain filter brightness-0 invert" alt="Redivio Logo">
             </div>
             <span v-show="!sidebarCollapsed"
@@ -66,7 +69,8 @@
         </div>
     </div>
 
-    <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+    <nav class="flex-1 overflow-y-auto py-6 space-y-1 transition-all"
+         :class="sidebarCollapsed ? 'px-0 w-full flex flex-col items-center' : 'px-3'">
 
         <!-- Inventory Context -->
         <template v-if="view === 'inventory_module'">
@@ -653,28 +657,51 @@
         </template>
 
         <template v-else-if="view === 'dashboard'">
-            <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">
+            <div class="px-3 mb-3 mt-2 overflow-hidden flex items-center gap-2" :class="sidebarCollapsed ? 'w-full justify-center px-1' : ''">
                 <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]"
-                    v-text="isArabic ? 'الرئيسية' : 'Main Menu'"></span>
-                <hr class="border-blue-500/20 flex-1">
+                    v-text="isArabic ? 'الرئيسية' : 'Command Center'"></span>
+                <hr class="border-blue-500/20 flex-1" v-show="!sidebarCollapsed">
             </div>
 
+            <!-- Dashboard Button -->
             <a href="#" @click.prevent="view = 'dashboard'"
                 :class="view === 'dashboard' ? 'active' : 'inactive'"
-                class="sidebar-item-premium flex items-center gap-3 rounded-xl group">
+                class="sidebar-item-premium flex items-center rounded-xl group"
+                :title="isArabic ? 'لوحة القيادة التنفيذية' : 'Executive Command Center'">
                 <div class="icon-wrapper">
                     <i class="fas fa-chart-pie"></i>
                 </div>
                 <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
                     <span class="text-sm text-title text-white/90 whitespace-nowrap">[[ isArabic ? 'لوحة التحكم' : 'Dashboard' ]]</span>
-                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'مركز التحكم الرئيسي للنظام' : 'System command center' ]]</span>
+                    <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'مركز القيادة الرئيسي' : 'Command Center' ]]</span>
                 </div>
             </a>
 
-            <div class="mt-8 px-3 text-[10px] text-slate-500 text-center" v-show="!sidebarCollapsed">
-                <p v-text="isArabic ? 'استخدم قائمة REDIVIO بالاعلى للتنقل' : 'Use the top REDIVIO menu to navigate'"></p>
-                <i class="fas fa-arrow-up mt-4 text-xl animate-bounce text-slate-600"></i>
+            <!-- Quick Installed Modules Section in Dashboard -->
+            <div class="px-3 mb-2 mt-5 overflow-hidden flex items-center gap-2" :class="sidebarCollapsed ? 'w-full justify-center px-1' : ''">
+                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-blue-300 uppercase tracking-[0.2em]"
+                    v-text="isArabic ? 'الموديولات النشطة' : 'Installed Modules'"></span>
+                <hr class="border-blue-500/20 flex-1" v-show="!sidebarCollapsed">
             </div>
+
+            <template v-for="mod in sidebarGroups.operations.filter(m => m.id !== 'org_builder')" :key="mod.id">
+                <a v-if="canAccess(mod.id) && isModulePurchased(mod.id)"
+                    href="#"
+                    @click.prevent="view = mod.id; if(mod.id === 'inventory_module') inventoryTab = 'levels';"
+                    class="sidebar-item-premium flex items-center rounded-xl group transition-all"
+                    :class="view === mod.id ? 'active' : 'inactive'"
+                    :title="isArabic ? mod.name.ar : mod.name.en">
+                    <div class="icon-wrapper">
+                        <img v-if="mod.id === 'inventory_module'" src="/static/brand/rims_icon.png" class="w-5 h-5 object-contain brightness-0 invert" alt="RIMS">
+                        <img v-else-if="mod.id === 'procurement_module'" src="/static/brand/rpms_icon.png" class="w-5 h-5 object-contain brightness-0 invert" alt="RPMS">
+                        <i v-else :class="mod.icon"></i>
+                    </div>
+                    <div v-show="!sidebarCollapsed" class="flex flex-col flex-1 min-w-0" :class="isArabic ? 'text-right' : 'text-left'">
+                        <span class="text-sm text-title text-white/90 whitespace-nowrap" v-text="isArabic ? mod.name.ar : mod.name.en"></span>
+                        <span class="text-[10px] text-white/40 truncate text-subtitle">[[ isArabic ? 'تشغيل الموديول' : 'Launch Module' ]]</span>
+                    </div>
+                </a>
+            </template>
         </template>
 
         <!-- Settings Context -->
@@ -726,11 +753,11 @@
 
     <!-- 🚀 Subscription Plan Card/Badge -->
     <div @click.prevent="showSubscriptionModal = true"
-         class="plan-card-premium px-4 py-3 mb-2 mx-2 rounded-2xl relative group/plan cursor-pointer transition-all"
-         :class="sidebarCollapsed ? 'flex justify-center w-10 mx-auto' : ''">
-        <div class="flex items-center justify-between w-full">
-            <div class="flex items-center gap-2" :class="sidebarCollapsed ? 'justify-center w-full' : ''">
-                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0"
+         class="plan-card-premium rounded-2xl relative group/plan cursor-pointer transition-all"
+         :class="sidebarCollapsed ? 'flex justify-center items-center w-11 h-11 mx-auto p-0 mb-3' : 'px-4 py-3 mb-2 mx-2'">
+        <div class="flex items-center justify-between w-full" :class="sidebarCollapsed ? 'justify-center mx-auto' : ''">
+            <div class="flex items-center gap-2" :class="sidebarCollapsed ? 'justify-center mx-auto' : ''">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0 mx-auto"
                      :class="{
                         'bg-indigo-500/80 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]': license.plan === 'starter' || license.plan === 'free',
                         'bg-emerald-500/80 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]': license.plan === 'business',
@@ -863,9 +890,10 @@
         </div>
     </div>
 
-    <div class="p-4 border-t border-white/5 bg-white/5 text-white">
-        <div class="flex items-center gap-3 overflow-hidden">
-            <div class="w-8 h-8 rounded-full bg-brand flex items-center justify-center font-bold text-xs shrink-0 shadow-[0_0_15px_rgba(44,130,240,0.4)]"
+    <div class="border-t border-white/5 bg-white/5 text-white transition-all"
+         :class="sidebarCollapsed ? 'p-2 flex justify-center items-center w-full' : 'p-4'">
+        <div class="flex items-center gap-3 overflow-hidden" :class="sidebarCollapsed ? 'justify-center mx-auto' : ''">
+            <div class="w-9 h-9 rounded-full bg-brand flex items-center justify-center font-bold text-xs shrink-0 shadow-[0_0_15px_rgba(44,130,240,0.4)] mx-auto"
                 v-text="user.name ? user.name.charAt(0).toUpperCase() : 'U'">
             </div>
             <div v-show="!sidebarCollapsed" class="flex-1 min-w-0 animate-in fade-in">
@@ -878,15 +906,17 @@
     </div>
 
     <!-- 🌍 Language Switcher -->
-    <div class="px-4 py-3 border-t border-white/5 bg-white/[0.02]">
-        <form action="{% url 'set_language' %}" method="post" class="w-full">
+    <div class="border-t border-white/5 bg-white/[0.02] transition-all"
+         :class="sidebarCollapsed ? 'p-2 flex justify-center items-center w-full' : 'px-4 py-3'">
+        <form action="{% url 'set_language' %}" method="post" class="w-full flex justify-center">
             {% csrf_token %}
             <input name="next" type="hidden" value="{{ request.get_full_path }}">
             <input name="language" type="hidden"
                 value="{% if LANGUAGE_CODE|slice:':2' == 'ar' %}en{% else %}ar{% endif %}">
             <button type="submit"
-                class="lang-btn-premium w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-[11px] font-bold uppercase tracking-tighter text-slate-400">
-                <i class="fas fa-language w-5 text-center text-lg"></i>
+                :class="sidebarCollapsed ? 'w-10 h-10 p-0 justify-center mx-auto' : 'w-full px-3 py-2'"
+                class="lang-btn-premium flex items-center justify-center gap-3 rounded-xl transition-all text-[11px] font-bold uppercase tracking-tighter text-slate-400 hover:text-white">
+                <i class="fas fa-language text-lg mx-auto"></i>
                 <span v-show="!sidebarCollapsed" v-text="isArabic ? 'Switch to English' : 'التحويل للعربية'"></span>
             </button>
         </form>
