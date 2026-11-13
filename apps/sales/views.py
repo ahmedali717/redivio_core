@@ -182,6 +182,113 @@ class SalesInvoiceViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = SalesInvoice.objects.all().order_by('-date')
     serializer_class = SalesInvoiceSerializer
 
+    @action(detail=True, methods=['post'], url_path='post-gl')
+    def post_gl(self, request, pk=None):
+        """اعتماد وترحيل فاتورة المبيعات آلياً إلى دفتر الأستاذ العام وتوليد قيود اليومية"""
+        invoice = self.get_object()
+        try:
+            from apps.accounting.models import Account, GLEntry
+            
+            with transaction.atomic():
+                # التحقق إذا كانت مرحلة مسبقاً
+                existing_gl = GLEntry.objects.filter(
+                    opco=invoice.opco,
+                    voucher_no=invoice.invoice_number,
+                    is_cancelled=False
+                ).exists()
+                if existing_gl:
+                    if not invoice.extra_data:
+                        invoice.extra_data = {}
+                    invoice.extra_data['is_posted'] = True
+                    invoice.save(update_fields=['extra_data'])
+                    return Response({"message": f"الفاتورة {invoice.invoice_number} مرحلة بالفعل إلى دفتر الأستاذ العام.", "is_posted": True})
+
+                # 1. Accounts Receivable (المدين: حساب العملاء)
+                ar_acc = Account.objects.filter(opco=invoice.opco, account_type='RECEIVABLE').first()
+                if not ar_acc:
+                    ar_acc = Account.objects.filter(opco=invoice.opco, root_type='ASSET', is_group=False).first()
+
+                # 2. Sales Revenue (الدائن: حساب إيرادات المبيعات)
+                sales_acc = Account.objects.filter(opco=invoice.opco, account_type__in=['INCOME', 'DIRECT_INCOME', 'SALES']).first()
+                if not sales_acc:
+                    sales_acc = Account.objects.filter(opco=invoice.opco, root_type='INCOME', is_group=False).first()
+
+                # 3. Tax Account (الدائن: حساب ضريبة القيمة المضافة)
+                tax_acc = Account.objects.filter(opco=invoice.opco, account_type='TAX').first()
+
+                if not ar_acc or not sales_acc:
+                    return Response({
+                        "error": "يرجى تهيئة شجرة الحسابات (حساب العملاء وحساب الإيرادات) أولاً لإتمام الترحيل الآلي."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                # 1. قيد المدين (حساب العملاء بإجمالي الفاتورة)
+                GLEntry.objects.create(
+                    opco=invoice.opco,
+                    posting_date=invoice.date,
+                    account=ar_acc,
+                    party_type='CUSTOMER',
+                    party_id=invoice.customer.id,
+                    party_name=invoice.customer.name,
+                    debit=invoice.total_amount,
+                    credit=0,
+                    voucher_type='Sales Invoice',
+                    voucher_no=invoice.invoice_number,
+                    remarks=invoice.notes or f"فاتورة مبيعات {invoice.invoice_number} - {invoice.customer.name}"
+                )
+                ar_acc.recalculate_balance()
+
+                # 2. قيد الضريبة (إن وجدت)
+                tax_amount = invoice.tax_amount or decimal.Decimal(0)
+                if tax_amount > 0 and tax_acc:
+                    GLEntry.objects.create(
+                        opco=invoice.opco,
+                        posting_date=invoice.date,
+                        account=tax_acc,
+                        party_type='CUSTOMER',
+                        party_id=invoice.customer.id,
+                        party_name=invoice.customer.name,
+                        debit=0,
+                        credit=tax_amount,
+                        voucher_type='Sales Invoice',
+                        voucher_no=invoice.invoice_number,
+                        remarks=f"ضريبة القيمة المضافة - فاتورة {invoice.invoice_number}"
+                    )
+                    tax_acc.recalculate_balance()
+                    net_revenue = invoice.total_amount - tax_amount
+                else:
+                    net_revenue = invoice.total_amount
+
+                # 3. قيد الدائن (حساب إيرادات المبيعات)
+                GLEntry.objects.create(
+                    opco=invoice.opco,
+                    posting_date=invoice.date,
+                    account=sales_acc,
+                    party_type='CUSTOMER',
+                    party_id=invoice.customer.id,
+                    party_name=invoice.customer.name,
+                    debit=0,
+                    credit=net_revenue,
+                    voucher_type='Sales Invoice',
+                    voucher_no=invoice.invoice_number,
+                    remarks=f"إيراد مبيعات - فاتورة {invoice.invoice_number}"
+                )
+                sales_acc.recalculate_balance()
+
+                # تحديث حالة الفاتورة وبياناتها
+                if not invoice.extra_data:
+                    invoice.extra_data = {}
+                invoice.extra_data['is_posted'] = True
+                invoice.save(update_fields=['extra_data'])
+
+            return Response({
+                "message": f"تم اعتماد وترحيل الفاتورة {invoice.invoice_number} بنجاح إلى دفتر الأستاذ العام وتوليد قيود اليومية.",
+                "invoice_number": invoice.invoice_number,
+                "is_posted": True
+            })
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class CustomerPaymentViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = CustomerPayment.objects.all().order_by('-date')
     serializer_class = CustomerPaymentSerializer

@@ -257,6 +257,22 @@ class PurchaseInvoiceViewSet(viewsets.ModelViewSet):
         else:
             serializer.save()
 
+    @action(detail=True, methods=['post'], url_path='post-gl')
+    def post_invoice(self, request, pk=None):
+        """اعتماد وترحيل فاتورة المشتريات إلى دفتر الأستاذ العام"""
+        pi = self.get_object()
+        try:
+            pi.post_gl_entries()
+            pi.docstatus = 1
+            if not pi.extra_data:
+                pi.extra_data = {}
+            pi.extra_data['is_posted'] = True
+            pi.save(update_fields=['docstatus', 'extra_data'])
+            return Response({"message": f"تم ترحيل فاتورة المشتريات {pi.invoice_number} بنجاح إلى دفتر الأستاذ العام."})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class PaymentEntryViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentEntrySerializer

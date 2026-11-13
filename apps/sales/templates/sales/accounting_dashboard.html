@@ -148,26 +148,34 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                        <tr v-for="item in financeQueueItems" :key="item.type + '-' + item.id" class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                             <td class="py-4">
-                                <span class="font-black text-slate-700 font-mono">INV-2023-0091</span>
-                                <p class="text-[10px] text-amber-500 font-bold"><i class="fas fa-file-invoice"></i> [[ isArabic ? 'مسودة فاتورة' : 'Draft Invoice' ]]</p>
+                                <span class="font-black text-slate-700 font-mono">[[ item.docNumber ]]</span>
+                                <p class="text-[10px] font-bold flex items-center gap-1.5 mt-0.5">
+                                    <i :class="item.iconClass"></i>
+                                    <span>[[ item.docType ]]</span>
+                                </p>
                             </td>
-                            <td class="py-4 font-bold text-sm text-slate-600">Alrajhi Bank</td>
-                            <td class="py-4 font-black text-emerald-600">[[ formatCurrency ? formatCurrency(12500) : '12,500' ]]</td>
+                            <td class="py-4 font-bold text-sm text-slate-600">[[ item.partner ]]</td>
+                            <td class="py-4 font-black" :class="item.isNegative ? 'text-rose-600' : 'text-emerald-600'">
+                                <span v-if="item.isNegative">- </span>[[ formatCurrency ? formatCurrency(item.amount) : item.amount ]]
+                            </td>
                             <td class="py-4 text-center">
-                                <button class="opacity-0 group-hover:opacity-100 bg-amber-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-amber-600 transition-all uppercase tracking-wider" v-text="isArabic ? 'ترحيل واعتماد' : 'Post & Validate'"></button>
+                                <button @click="item.action()" 
+                                        :disabled="loading"
+                                        class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all uppercase tracking-wider flex items-center gap-1.5 mx-auto active:scale-95 disabled:opacity-50">
+                                    <i class="fas fa-check-double text-[10px]"></i>
+                                    <span>[[ item.actionLabel ]]</span>
+                                </button>
                             </td>
                         </tr>
-                        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
-                            <td class="py-4">
-                                <span class="font-black text-slate-700 font-mono">PAY-OUT-004</span>
-                                <p class="text-[10px] text-rose-500 font-bold"><i class="fas fa-money-check-dollar"></i> [[ isArabic ? 'دفع معلق' : 'Pending Payment' ]]</p>
-                            </td>
-                            <td class="py-4 font-bold text-sm text-slate-600">Tech Distributors LLC</td>
-                            <td class="py-4 font-black text-rose-600">- [[ formatCurrency ? formatCurrency(4800) : '4,800' ]]</td>
-                            <td class="py-4 text-center">
-                                <button class="opacity-0 group-hover:opacity-100 bg-amber-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-amber-600 transition-all uppercase tracking-wider" v-text="isArabic ? 'اعتماد الدفع' : 'Authorize Pay'"></button>
+                        <tr v-if="financeQueueItems.length === 0">
+                            <td colspan="4" class="py-12 text-center text-slate-400">
+                                <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center mx-auto mb-3 shadow-inner">
+                                    <i class="fas fa-check-circle text-2xl"></i>
+                                </div>
+                                <p class="text-sm font-bold text-slate-600" v-text="isArabic ? 'كافة المستندات والعمليات المالية مرحلة بنجاح!' : 'All financial documents are fully posted!'"></p>
+                                <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest" v-text="isArabic ? 'لا توجد فواتير أو سندات معلقة بحاجة لاعتماد حالياً' : 'No pending drafts in the finance queue'"></p>
                             </td>
                         </tr>
                     </tbody>

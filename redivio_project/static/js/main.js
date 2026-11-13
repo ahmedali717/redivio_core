@@ -764,6 +764,86 @@ createApp({
     },
 
     computed: {
+        financeQueueItems() {
+            const queue = [];
+
+            // 1. سندات الدفع والقبض المعلقة (Draft Payment Entries)
+            (this.paymentEntries || []).forEach(p => {
+                if (p.status === 'DRAFT') {
+                    queue.push({
+                        id: p.id,
+                        type: 'payment',
+                        docType: p.payment_type === 'RECEIVE' ? (this.isArabic ? 'سند قبض معلق' : 'Draft Receipt') : (this.isArabic ? 'سند صرف معلق' : 'Draft Payment'),
+                        docNumber: p.entry_number,
+                        partner: p.party_name || (p.payment_type === 'RECEIVE' ? (this.isArabic ? 'عميل' : 'Customer') : (this.isArabic ? 'مورد' : 'Vendor')),
+                        amount: p.paid_amount,
+                        isNegative: p.payment_type !== 'RECEIVE',
+                        actionLabel: this.isArabic ? 'اعتماد وترحيل' : 'Post & Validate',
+                        iconClass: p.payment_type === 'RECEIVE' ? 'fas fa-arrow-down-left text-emerald-500' : 'fas fa-money-check-dollar text-rose-500',
+                        action: () => this.submitPaymentEntry(p.id)
+                    });
+                }
+            });
+
+            // 2. سندات القيود اليومية المعلقة (Draft Journal Entries)
+            (this.journalEntries || []).forEach(j => {
+                if (j.status === 'DRAFT') {
+                    queue.push({
+                        id: j.id,
+                        type: 'journal',
+                        docType: this.isArabic ? 'قيد تسوية معلق' : 'Draft Journal',
+                        docNumber: j.entry_number,
+                        partner: j.user_remark || (this.isArabic ? 'قيد محاسبي مزدوج' : 'General Journal'),
+                        amount: j.total_debit,
+                        isNegative: false,
+                        actionLabel: this.isArabic ? 'ترحيل القيد' : 'Post Journal',
+                        iconClass: 'fas fa-book text-blue-500',
+                        action: () => this.submitJournalEntry(j.id)
+                    });
+                }
+            });
+
+            // 3. فواتير المبيعات غير المرحلة (Pending Sales Invoices)
+            (this.salesInvoices || []).forEach(inv => {
+                const isPosted = inv.extra_data && inv.extra_data.is_posted;
+                if (!isPosted) {
+                    queue.push({
+                        id: inv.id,
+                        type: 'sales_invoice',
+                        docType: this.isArabic ? 'مسودة فاتورة مبيعات' : 'Draft Sales Invoice',
+                        docNumber: inv.invoice_number,
+                        partner: inv.customer_name || (this.isArabic ? 'عميل' : 'Customer'),
+                        amount: inv.total_amount,
+                        isNegative: false,
+                        actionLabel: this.isArabic ? 'ترحيل واعتماد' : 'Post & Validate',
+                        iconClass: 'fas fa-file-invoice text-amber-500',
+                        action: () => this.postSalesInvoice(inv.id)
+                    });
+                }
+            });
+
+            // 4. فواتير الشراء غير المرحلة (Pending Purchase Invoices)
+            (this.purchaseInvoices || []).forEach(pi => {
+                const isPosted = pi.docstatus === 1 || (pi.extra_data && pi.extra_data.is_posted);
+                if (!isPosted) {
+                    queue.push({
+                        id: pi.id,
+                        type: 'purchase_invoice',
+                        docType: this.isArabic ? 'فاتورة مشتريات معلقة' : 'Pending Bill',
+                        docNumber: pi.invoice_number,
+                        partner: pi.vendor_name || (this.isArabic ? 'مورد' : 'Vendor'),
+                        amount: pi.grand_total,
+                        isNegative: true,
+                        actionLabel: this.isArabic ? 'ترحيل واعتماد' : 'Post & Validate',
+                        iconClass: 'fas fa-file-invoice text-purple-500',
+                        action: () => this.postPurchaseInvoice(pi.id)
+                    });
+                }
+            });
+
+            return queue;
+        },
+
         filteredVendors() {
             let list = this.vendors || [];
             if (this.vendorTypeFilter && this.vendorTypeFilter !== 'ALL') {
@@ -9316,6 +9396,7 @@ createApp({
                     this.fetchGLEntries(),
                     this.fetchPurchaseInvoices(),
                     this.fetchPaymentEntries(),
+                    this.fetchSalesInvoices(),
                     this.fetchCostCenters()
                 ]);
             } catch (err) {
@@ -9675,6 +9756,60 @@ createApp({
                     await this.fetchAccounts();
                 } else {
                     this.showToast(data.error || (this.isArabic ? "فشل إلغاء سند الدفع" : "Cancel failed"), 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "خطأ في الاتصال" : "Network error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async postSalesInvoice(id) {
+            const csrftoken = this.getCookie('csrftoken');
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/sales-invoices/${id}/post-gl/`, {
+                    method: 'POST',
+                    headers: { 
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.showToast(data.message || (this.isArabic ? "تم ترحيل الفاتورة وتوليد قيود اليومية بنجاح" : "Invoice posted successfully"), 'success');
+                    await this.fetchSalesInvoices();
+                    await this.fetchGLEntries();
+                    await this.fetchAccounts();
+                } else {
+                    this.showToast(data.error || (this.isArabic ? "فشل ترحيل الفاتورة" : "Post failed"), 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "خطأ في الاتصال" : "Network error", 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async postPurchaseInvoice(id) {
+            const csrftoken = this.getCookie('csrftoken');
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/accounting/purchase-invoices/${id}/post-gl/`, {
+                    method: 'POST',
+                    headers: { 
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.showToast(data.message || (this.isArabic ? "تم ترحيل فاتورة المشتريات بنجاح" : "Bill posted successfully"), 'success');
+                    await this.fetchPurchaseInvoices();
+                    await this.fetchGLEntries();
+                    await this.fetchAccounts();
+                } else {
+                    this.showToast(data.error || (this.isArabic ? "فشل ترحيل فاتورة المشتريات" : "Post failed"), 'error');
                 }
             } catch (e) {
                 this.showToast(this.isArabic ? "خطأ في الاتصال" : "Network error", 'error');
