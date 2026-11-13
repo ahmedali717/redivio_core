@@ -6,8 +6,11 @@
                 <i class="fas fa-scale-balanced"></i>
             </div>
             <div>
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "دفتر الأستاذ العام (General Ledger)" : "General Ledger" ]]</h2>
-                <p class="text-slate-500 text-xs font-semibold">[[ isArabic ? "سجل الحركات المالية الموحد والمدقق لكافة العمليات، الفواتير والقيود" : "Unified financial transaction log for all invoices, vouchers, and payments" ]]</p>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "دفتر الأستاذ العام (General Ledger)" : "General Ledger" ]]</h2>
+                    <i class="fas fa-circle-info text-slate-400 hover:text-slate-600 text-xs cursor-help"
+                       :title="isArabic ? 'سجل الحركات المالية الموحد والمدقق لكافة العمليات، الفواتير والقيود' : 'Unified financial transaction log for all invoices, vouchers, and payments'"></i>
+                </div>
             </div>
         </div>
 

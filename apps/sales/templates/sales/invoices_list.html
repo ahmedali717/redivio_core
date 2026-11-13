@@ -1,8 +1,9 @@
 <div class="animate-in slide-in-from-bottom-4 duration-500">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
+        <div class="flex items-center gap-2">
             <h2 class="text-2xl font-bold text-slate-800">[[ isArabic ? 'فواتير المبيعات' : 'Sales Invoices' ]]</h2>
-            <p class="text-slate-500 text-sm">[[ isArabic ? 'إدارة التحصيل المالي والمستحقات' : 'Financial collection and receivables management' ]]</p>
+            <i class="fas fa-circle-info text-slate-400 hover:text-slate-600 text-xs cursor-help"
+               :title="isArabic ? 'إدارة التحصيل المالي ومستحقات فواتير المبيعات' : 'Financial collection and receivables management'"></i>
         </div>
     </div>
 

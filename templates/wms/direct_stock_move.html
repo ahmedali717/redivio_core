@@ -7,14 +7,14 @@
     <!-- Header -->
     <div class="flex items-center justify-between px-8 py-6 border-b border-slate-200/60 shrink-0 bg-white/20">
         <div>
-            <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
                 <div class="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-200">
                     <i class="fas fa-exchange-alt text-white"></i>
                 </div>
                 <span v-text="isArabic ? 'الحركات المخزنية' : 'Stock Moves'"></span>
+                <i class="fas fa-circle-info text-slate-400 hover:text-slate-600 text-xs cursor-help"
+                   :title="isArabic ? 'إدارة الإضافة والصرف المخزني اليدوي' : 'Manual stock receipts and issues'"></i>
             </h2>
-            <p class="text-xs text-slate-500 mt-1 font-medium px-13"
-               v-text="isArabic ? 'إدارة الإضافة والصرف اليدوي' : 'Manual stock receipts and issues'"></p>
         </div>
         
         <div class="flex items-center gap-3">

@@ -6,8 +6,11 @@
                 <i class="fas fa-file-invoice-dollar"></i>
             </div>
             <div>
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "فواتير ومطالبات المشتريات (Purchase Invoices)" : "Purchase Invoices & Bills" ]]</h2>
-                <p class="text-slate-500 text-xs font-semibold">[[ isArabic ? "إدارة فواتير الموردين، حسابات الدائنين، وجدولة الاستحقاقات" : "Vendor bills, accounts payable tracking, tax and payment matching" ]]</p>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "فواتير ومطالبات المشتريات (Purchase Invoices)" : "Purchase Invoices & Bills" ]]</h2>
+                    <i class="fas fa-circle-info text-slate-400 hover:text-slate-600 text-xs cursor-help"
+                       :title="isArabic ? 'إدارة فواتير الموردين، حسابات الدائنين، وجدولة الاستحقاقات' : 'Vendor bills, accounts payable tracking, tax and payment matching'"></i>
+                </div>
             </div>
         </div>
 

@@ -11,17 +11,13 @@
             <div>
                 <div class="flex items-center gap-2 flex-wrap">
                     <h2 class="text-xl font-black text-slate-800 tracking-tight">
-                        <span v-if="activeReportTab === 'trial_balance'">[[ isArabic ? "ميزان المراجعة الشجري الهرمي (Trial Balance)" : "Hierarchical Trial Balance" ]]</span>
-                        <span v-else-if="activeReportTab === 'profit_and_loss'">[[ isArabic ? "قائمة الدخل والأرباح والخسائر الشجرية (P&L)" : "Hierarchical Profit & Loss" ]]</span>
-                        <span v-else>[[ isArabic ? "قائمة المركز المالي والميزانية العمومية (Balance Sheet)" : "Hierarchical Balance Sheet" ]]</span>
+                        <span v-if="activeReportTab === 'trial_balance'">[[ isArabic ? "ميزان المراجعة الشجري (Trial Balance)" : "Trial Balance" ]]</span>
+                        <span v-else-if="activeReportTab === 'profit_and_loss'">[[ isArabic ? "قائمة الدخل والأرباح والخسائر (P&L)" : "Profit & Loss" ]]</span>
+                        <span v-else>[[ isArabic ? "قائمة المركز المالي والميزانية العمومية (Balance Sheet)" : "Balance Sheet" ]]</span>
                     </h2>
-                    <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide bg-blue-50 text-blue-700 border border-blue-200">
-                        IFRS & GAAP
-                    </span>
+                    <i class="fas fa-circle-info text-slate-400 hover:text-slate-600 text-xs cursor-help"
+                       :title="isArabic ? 'تقارير مالية هرمية مع إمكانية التوسيع والضم وإخفاء الأرصدة الصفرية وفق معايير IFRS' : 'Hierarchical statements with rollup balances and zero-balance filtering'"></i>
                 </div>
-                <p class="text-slate-500 text-xs font-semibold mt-0.5">
-                    [[ isArabic ? "تقارير مالية هرمية مع إمكانية التوسيع والضم وإخفاء الأرصدة الصفرية" : "Multi-level statements with expand/collapse and non-zero filters" ]]
-                </p>
                 
                 <!-- Quick Summary Stats -->
                 <div class="flex items-center gap-3 mt-2 text-[10px] font-bold text-slate-500 flex-wrap">

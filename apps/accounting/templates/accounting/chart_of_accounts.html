@@ -8,13 +8,9 @@
             <div>
                 <div class="flex items-center gap-2.5 flex-wrap">
                     <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "دليل وشجرة الحسابات المالية (Chart of Accounts)" : "Chart of Accounts" ]]</h2>
-                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-blue-50 text-blue-700 border border-blue-200">
-                        IFRS & GAAP Standard
-                    </span>
+                    <i class="fas fa-circle-info text-slate-400 hover:text-slate-600 text-xs cursor-help"
+                       :title="isArabic ? 'الهيكل المالي الشجري للأصول، الالتزامات، حقوق الملكية، الإيرادات والمصروفات' : 'Multi-level financial tree for Assets, Liabilities, Equity, Income & Expenses'"></i>
                 </div>
-                <p class="text-slate-500 text-xs font-semibold mt-1">
-                    [[ isArabic ? "الهيكل المالي الشجري المعياري المتكامل للأصول، الالتزامات، حقوق الملكية، الإيرادات والمصروفات" : "Multi-level financial tree for Assets, Liabilities, Equity, Income & Expenses" ]]
-                </p>
                 <!-- Quick Stats -->
                 <div class="flex items-center gap-4 mt-2 text-[11px] font-bold text-slate-500 flex-wrap">
                     <span class="flex items-center gap-1.5">

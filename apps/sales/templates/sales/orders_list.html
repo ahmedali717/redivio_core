@@ -6,9 +6,10 @@
                 <div class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-black text-lg shadow-sm border border-rose-100">
                     <i class="fas fa-cart-shopping"></i>
                 </div>
-                <div>
+                <div class="flex items-center gap-2">
                     <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "أوامر وعقود المبيعات" : "Sales Orders & Pipeline" ]]</h2>
-                    <p class="text-slate-500 text-xs font-semibold">[[ isArabic ? "متابعة دورة المبيعات الكاملة، عروض الأسعار، وأوامر التجهيز والتسليم" : "Manage sales pipeline, quotations, fulfillment, and invoices" ]]</p>
+                    <i class="fas fa-circle-info text-slate-400 hover:text-slate-600 text-xs cursor-help"
+                       :title="isArabic ? 'متابعة دورة المبيعات الكاملة، عروض الأسعار، وأوامر التجهيز والتسليم' : 'Manage sales pipeline, quotations, fulfillment, and invoices'"></i>
                 </div>
             </div>
         </div>
