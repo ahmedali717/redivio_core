@@ -1,277 +1,306 @@
-<div class="space-y-6 animate-in slide-in-from-bottom-4 duration-500 pb-12" v-cloak>
+<div class="space-y-5 animate-in slide-in-from-bottom-4 duration-500 pb-12" v-cloak>
     
     <!-- 🏁 Financial Reports Header Banner -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm">
-        <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center text-2xl font-black shadow-md shadow-amber-500/20">
-                <i class="fas fa-chart-pie" v-if="activeReportTab === 'trial_balance'"></i>
-                <i class="fas fa-arrow-trend-up" v-else-if="activeReportTab === 'profit_and_loss'"></i>
-                <i class="fas fa-building-columns" v-else></i>
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+        <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white flex items-center justify-center text-xl font-black shadow-sm ring-2 ring-slate-100">
+                <i class="fas fa-chart-pie text-amber-400" v-if="activeReportTab === 'trial_balance'"></i>
+                <i class="fas fa-arrow-trend-up text-emerald-400" v-else-if="activeReportTab === 'profit_and_loss'"></i>
+                <i class="fas fa-building-columns text-blue-400" v-else></i>
             </div>
             <div>
-                <div class="flex items-center gap-2.5 flex-wrap">
-                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h2 class="text-xl font-black text-slate-800 tracking-tight">
                         <span v-if="activeReportTab === 'trial_balance'">[[ isArabic ? "ميزان المراجعة الشجري الهرمي (Trial Balance)" : "Hierarchical Trial Balance" ]]</span>
-                        <span v-else-if="activeReportTab === 'profit_and_loss'">[[ isArabic ? "قائمة الدخل والأرباح والخسائر الشجرية (P&L)" : "Hierarchical Profit & Loss Statement" ]]</span>
+                        <span v-else-if="activeReportTab === 'profit_and_loss'">[[ isArabic ? "قائمة الدخل والأرباح والخسائر الشجرية (P&L)" : "Hierarchical Profit & Loss" ]]</span>
                         <span v-else>[[ isArabic ? "قائمة المركز المالي والميزانية العمومية (Balance Sheet)" : "Hierarchical Balance Sheet" ]]</span>
                     </h2>
-                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-blue-50 text-blue-700 border border-blue-200">
-                        IFRS & GAAP Standard
+                    <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide bg-blue-50 text-blue-700 border border-blue-200">
+                        IFRS & GAAP
                     </span>
                 </div>
-                <p class="text-slate-500 text-xs font-semibold mt-1">
-                    [[ isArabic ? "تقارير مالية هرمية مع إمكانية التوسيع والضم والتحليل المباشر لجميع مستويات الحسابات" : "Multi-level hierarchical financial statements with expand and collapse analysis" ]]
+                <p class="text-slate-500 text-xs font-semibold mt-0.5">
+                    [[ isArabic ? "تقارير مالية هرمية مع إمكانية التوسيع والضم وإخفاء الأرصدة الصفرية" : "Multi-level statements with expand/collapse and non-zero filters" ]]
                 </p>
                 
                 <!-- Quick Summary Stats -->
-                <div class="flex items-center gap-4 mt-2.5 text-[11px] font-bold text-slate-500 flex-wrap">
+                <div class="flex items-center gap-3 mt-2 text-[10px] font-bold text-slate-500 flex-wrap">
                     <!-- Trial Balance Stats -->
                     <template v-if="activeReportTab === 'trial_balance' && accountingReports.trialBalance">
-                        <span class="flex items-center gap-1.5">
-                            <i class="fas fa-arrow-down-left text-blue-600"></i>
-                            [[ isArabic ? "إجمالي المدين:" : "Total Debit:" ]] 
+                        <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                            <i class="fas fa-arrow-down-left text-blue-600 text-[9px]"></i>
+                            [[ isArabic ? "إجمالي المدين:" : "Debit:" ]] 
                             <span class="text-blue-700 font-mono font-black">$[[ formatNumber(accountingReports.trialBalance.total_debit) ]]</span>
                         </span>
-                        <span class="flex items-center gap-1.5">
-                            <i class="fas fa-arrow-up-right text-emerald-600"></i>
-                            [[ isArabic ? "إجمالي الدائن:" : "Total Credit:" ]] 
+                        <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                            <i class="fas fa-arrow-up-right text-emerald-600 text-[9px]"></i>
+                            [[ isArabic ? "إجمالي الدائن:" : "Credit:" ]] 
                             <span class="text-emerald-700 font-mono font-black">$[[ formatNumber(accountingReports.trialBalance.total_credit) ]]</span>
                         </span>
                         <span :class="accountingReports.trialBalance.is_balanced ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'" 
-                              class="px-2.5 py-0.5 rounded-full font-black border text-[10px] flex items-center gap-1">
+                              class="px-2 py-1 rounded-md font-black border text-[9px] flex items-center gap-1">
                             <i :class="accountingReports.trialBalance.is_balanced ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle'"></i>
-                            [[ accountingReports.trialBalance.is_balanced ? (isArabic ? 'الميزان متطابق ومتوازن' : 'Balanced') : (isArabic ? 'يوجد فرق' : 'Unbalanced') ]]
+                            [[ accountingReports.trialBalance.is_balanced ? (isArabic ? 'الميزان متطابق' : 'Balanced') : (isArabic ? 'يوجد فرق' : 'Unbalanced') ]]
                         </span>
                     </template>
 
                     <!-- P&L Stats -->
                     <template v-else-if="activeReportTab === 'profit_and_loss' && accountingReports.profitAndLoss">
-                        <span class="flex items-center gap-1.5">
-                            <i class="fas fa-wallet text-emerald-600"></i>
-                            [[ isArabic ? "إجمالي الإيرادات:" : "Total Income:" ]] 
+                        <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                            <i class="fas fa-wallet text-emerald-600 text-[9px]"></i>
+                            [[ isArabic ? "الإيرادات:" : "Income:" ]] 
                             <span class="text-emerald-700 font-mono font-black">$[[ formatNumber(accountingReports.profitAndLoss.total_income) ]]</span>
                         </span>
-                        <span class="flex items-center gap-1.5">
-                            <i class="fas fa-receipt text-rose-600"></i>
-                            [[ isArabic ? "إجمالي المصروفات:" : "Total Expenses:" ]] 
+                        <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                            <i class="fas fa-receipt text-rose-600 text-[9px]"></i>
+                            [[ isArabic ? "المصروفات:" : "Expenses:" ]] 
                             <span class="text-rose-700 font-mono font-black">$[[ formatNumber(accountingReports.profitAndLoss.total_expenses) ]]</span>
                         </span>
-                        <span class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-black"
+                        <span class="flex items-center gap-1 px-2 py-1 rounded-md border text-[9px] font-black"
                               :class="accountingReports.profitAndLoss.net_profit >= 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'">
-                            [[ isArabic ? "صافي الدخل / الربح:" : "Net Profit:" ]]
+                            [[ isArabic ? "صافي الربح:" : "Net Profit:" ]]
                             <span class="font-mono font-black">$[[ formatNumber(accountingReports.profitAndLoss.net_profit) ]]</span>
                         </span>
                     </template>
 
                     <!-- Balance Sheet Stats -->
                     <template v-else-if="activeReportTab === 'balance_sheet' && accountingReports.balanceSheet">
-                        <span class="flex items-center gap-1.5">
-                            <i class="fas fa-boxes-packing text-blue-600"></i>
-                            [[ isArabic ? "إجمالي الأصول:" : "Total Assets:" ]] 
+                        <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                            <i class="fas fa-boxes-packing text-blue-600 text-[9px]"></i>
+                            [[ isArabic ? "الأصول:" : "Assets:" ]] 
                             <span class="text-blue-700 font-mono font-black">$[[ formatNumber(accountingReports.balanceSheet.total_assets) ]]</span>
                         </span>
-                        <span class="flex items-center gap-1.5">
-                            <i class="fas fa-hand-holding-dollar text-rose-600"></i>
+                        <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                            <i class="fas fa-hand-holding-dollar text-rose-600 text-[9px]"></i>
                             [[ isArabic ? "الالتزامات والملكية:" : "Liabilities & Equity:" ]] 
                             <span class="text-slate-800 font-mono font-black">$[[ formatNumber(accountingReports.balanceSheet.total_liabilities + accountingReports.balanceSheet.total_equity) ]]</span>
                         </span>
                         <span :class="accountingReports.balanceSheet.is_balanced ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'" 
-                              class="px-2.5 py-0.5 rounded-full font-black border text-[10px] flex items-center gap-1">
+                              class="px-2 py-1 rounded-md font-black border text-[9px] flex items-center gap-1">
                             <i :class="accountingReports.balanceSheet.is_balanced ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle'"></i>
-                            [[ accountingReports.balanceSheet.is_balanced ? (isArabic ? 'الميزانية متطابقة' : 'Balanced') : (isArabic ? 'يوجد فارق' : 'Unbalanced') ]]
+                            [[ accountingReports.balanceSheet.is_balanced ? (isArabic ? 'الميزانية مطابقة' : 'Balanced') : (isArabic ? 'يوجد فارق' : 'Unbalanced') ]]
                         </span>
                     </template>
                 </div>
             </div>
         </div>
 
-        <div class="flex items-center gap-2.5 flex-wrap">
-            <button @click="loadReportData()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-2">
-                <i class="fas fa-sync-alt" :class="{'fa-spin': loading}"></i>
-                <span>[[ isArabic ? "تحديث التقرير" : "Refresh" ]]</span>
+        <div class="flex items-center gap-2 flex-wrap">
+            <button @click="loadReportData()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5">
+                <i class="fas fa-sync-alt text-[10px]" :class="{'fa-spin': loading}"></i>
+                <span>[[ isArabic ? "تحديث" : "Refresh" ]]</span>
             </button>
-            <button @click="printCurrentReport()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2">
-                <i class="fas fa-print"></i>
-                <span>[[ isArabic ? "طباعة القوائم" : "Print Report" ]]</span>
+            <button @click="printCurrentReport()" class="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5">
+                <i class="fas fa-print text-[10px]"></i>
+                <span>[[ isArabic ? "طباعة" : "Print" ]]</span>
             </button>
         </div>
     </div>
 
     <!-- 📑 Report Sub-Tabs Switcher -->
-    <div class="bg-slate-900 p-2 rounded-2xl flex flex-wrap gap-2 text-xs font-bold text-slate-400 border border-slate-800 shadow-sm">
+    <div class="bg-slate-900 p-1.5 rounded-2xl flex flex-wrap gap-1.5 text-xs font-bold text-slate-400 border border-slate-800 shadow-sm">
         <button @click="activeReportTab = 'trial_balance'; loadReportData();"
-            :class="activeReportTab === 'trial_balance' ? 'bg-amber-500 text-white shadow-lg font-black' : 'hover:bg-slate-800 hover:text-slate-200'"
-            class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
-            <i class="fas fa-balance-scale"></i>
+            :class="activeReportTab === 'trial_balance' ? 'bg-amber-500 text-white shadow-md font-black' : 'hover:bg-slate-800 hover:text-slate-200'"
+            class="px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-balance-scale text-[11px]"></i>
             <span>[[ isArabic ? "ميزان المراجعة الشجري (Trial Balance)" : "Trial Balance" ]]</span>
         </button>
         <button @click="activeReportTab = 'profit_and_loss'; loadReportData();"
-            :class="activeReportTab === 'profit_and_loss' ? 'bg-emerald-600 text-white shadow-lg font-black' : 'hover:bg-slate-800 hover:text-slate-200'"
-            class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
-            <i class="fas fa-arrow-trend-up"></i>
+            :class="activeReportTab === 'profit_and_loss' ? 'bg-emerald-600 text-white shadow-md font-black' : 'hover:bg-slate-800 hover:text-slate-200'"
+            class="px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-arrow-trend-up text-[11px]"></i>
             <span>[[ isArabic ? "قائمة الدخل والأرباح والخسائر (P&L)" : "Profit & Loss" ]]</span>
         </button>
         <button @click="activeReportTab = 'balance_sheet'; loadReportData();"
-            :class="activeReportTab === 'balance_sheet' ? 'bg-blue-600 text-white shadow-lg font-black' : 'hover:bg-slate-800 hover:text-slate-200'"
-            class="px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
-            <i class="fas fa-building-columns"></i>
+            :class="activeReportTab === 'balance_sheet' ? 'bg-blue-600 text-white shadow-md font-black' : 'hover:bg-slate-800 hover:text-slate-200'"
+            class="px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-building-columns text-[11px]"></i>
             <span>[[ isArabic ? "الميزانية العمومية وقائمة المركز المالي" : "Balance Sheet" ]]</span>
         </button>
     </div>
 
-    <!-- 🔍 Filter, Search, Date & Tree Controls (Exact COA Styling) -->
-    <div class="bg-white border border-slate-200/90 rounded-2xl p-3.5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 shadow-2xs">
+    <!-- 🔍 Filter & Search Control Panel (Refined Two-Tier Layout) -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-4 space-y-3 shadow-2xs">
         
-        <!-- Search Input -->
-        <div class="relative flex-1 min-w-[220px]">
-            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input type="text" v-model="reportSearch" 
-                :placeholder="isArabic ? 'البحث برقم الحساب أو الاسم أو النوع...' : 'Search by account code, name, or type...'"
-                class="w-full bg-slate-50 border border-slate-200/80 rounded-xl py-2 pl-10 pr-4 text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all">
-        </div>
-
-        <!-- Root Filter Tabs -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
-            <button @click="reportRootFilter = 'ALL'" 
-                :class="reportRootFilter === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-                [[ isArabic ? "الكل" : "All" ]]
-            </button>
-            <button v-if="['trial_balance', 'balance_sheet'].includes(activeReportTab)" @click="reportRootFilter = 'ASSET'" 
-                :class="reportRootFilter === 'ASSET' ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'"
-                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-                [[ isArabic ? "الأصول (1)" : "Assets" ]]
-            </button>
-            <button v-if="['trial_balance', 'balance_sheet'].includes(activeReportTab)" @click="reportRootFilter = 'LIABILITY'" 
-                :class="reportRootFilter === 'LIABILITY' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'"
-                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-                [[ isArabic ? "الالتزامات (2)" : "Liabilities" ]]
-            </button>
-            <button v-if="['trial_balance', 'balance_sheet'].includes(activeReportTab)" @click="reportRootFilter = 'EQUITY'" 
-                :class="reportRootFilter === 'EQUITY' ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'"
-                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-                [[ isArabic ? "حقوق الملكية (3)" : "Equity" ]]
-            </button>
-            <button v-if="['trial_balance', 'profit_and_loss'].includes(activeReportTab)" @click="reportRootFilter = 'INCOME'" 
-                :class="reportRootFilter === 'INCOME' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
-                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-                [[ isArabic ? "الإيرادات (4)" : "Income" ]]
-            </button>
-            <button v-if="['trial_balance', 'profit_and_loss'].includes(activeReportTab)" @click="reportRootFilter = 'EXPENSE'" 
-                :class="reportRootFilter === 'EXPENSE' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'"
-                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-                [[ isArabic ? "المصروفات (5)" : "Expenses" ]]
-            </button>
-        </div>
-
-        <!-- Date Range Filter -->
-        <div class="flex items-center gap-2 border-t lg:border-t-0 lg:border-l border-slate-200/80 pt-2 lg:pt-0 lg:pl-3">
-            <div class="flex items-center gap-1.5 text-xs font-bold text-slate-500">
-                <span>[[ isArabic ? "من:" : "From:" ]]</span>
-                <input type="date" v-model="reportFilters.from_date" @change="loadReportData" class="bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-xs font-semibold outline-none focus:ring-1 focus:ring-amber-500">
+        <!-- Tier 1: Search + Category Filters + Non-Zero Balances Toggle -->
+        <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            <!-- Search Input -->
+            <div class="relative flex-1 min-w-[200px]">
+                <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" v-model="reportSearch" 
+                    :placeholder="isArabic ? 'البحث برقم الحساب أو الاسم أو النوع...' : 'Search by account code, name...'"
+                    class="w-full bg-slate-50 border border-slate-200/90 rounded-xl py-1.5 pl-9 pr-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all">
+                <button v-if="reportSearch" @click="reportSearch = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times-circle text-xs"></i>
+                </button>
             </div>
-            <div class="flex items-center gap-1.5 text-xs font-bold text-slate-500">
-                <span>[[ isArabic ? "إلى:" : "To:" ]]</span>
-                <input type="date" v-model="reportFilters.to_date" @change="loadReportData" class="bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-xs font-semibold outline-none focus:ring-1 focus:ring-amber-500">
+
+            <!-- Root Categories Filter Pills -->
+            <div class="flex items-center gap-1 overflow-x-auto pb-1 lg:pb-0">
+                <button @click="reportRootFilter = 'ALL'" 
+                    :class="reportRootFilter === 'ALL' ? 'bg-slate-900 text-white shadow-xs font-black' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold'"
+                    class="px-2.5 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap">
+                    [[ isArabic ? "الكل" : "All" ]]
+                </button>
+                <button v-if="['trial_balance', 'balance_sheet'].includes(activeReportTab)" @click="reportRootFilter = 'ASSET'" 
+                    :class="reportRootFilter === 'ASSET' ? 'bg-blue-600 text-white shadow-xs font-black' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold'"
+                    class="px-2.5 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                    <span>[[ isArabic ? "الأصول (1)" : "Assets" ]]</span>
+                </button>
+                <button v-if="['trial_balance', 'balance_sheet'].includes(activeReportTab)" @click="reportRootFilter = 'LIABILITY'" 
+                    :class="reportRootFilter === 'LIABILITY' ? 'bg-rose-600 text-white shadow-xs font-black' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold'"
+                    class="px-2.5 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                    <span>[[ isArabic ? "الالتزامات (2)" : "Liabilities" ]]</span>
+                </button>
+                <button v-if="['trial_balance', 'balance_sheet'].includes(activeReportTab)" @click="reportRootFilter = 'EQUITY'" 
+                    :class="reportRootFilter === 'EQUITY' ? 'bg-purple-600 text-white shadow-xs font-black' : 'bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold'"
+                    class="px-2.5 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                    <span>[[ isArabic ? "حقوق الملكية (3)" : "Equity" ]]</span>
+                </button>
+                <button v-if="['trial_balance', 'profit_and_loss'].includes(activeReportTab)" @click="reportRootFilter = 'INCOME'" 
+                    :class="reportRootFilter === 'INCOME' ? 'bg-emerald-600 text-white shadow-xs font-black' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold'"
+                    class="px-2.5 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span>[[ isArabic ? "الإيرادات (4)" : "Income" ]]</span>
+                </button>
+                <button v-if="['trial_balance', 'profit_and_loss'].includes(activeReportTab)" @click="reportRootFilter = 'EXPENSE'" 
+                    :class="reportRootFilter === 'EXPENSE' ? 'bg-amber-600 text-white shadow-xs font-black' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold'"
+                    class="px-2.5 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>[[ isArabic ? "المصروفات (5)" : "Expenses" ]]</span>
+                </button>
             </div>
+
+            <!-- ⭐ Non-Zero Balances Filter Toggle (User's Exact Request!) -->
+            <button @click="reportHideZero = !reportHideZero" 
+                :class="reportHideZero ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-sm ring-2 ring-amber-300 font-black' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold'"
+                class="px-3 py-1.5 rounded-xl text-xs transition-all border border-slate-200 flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                <i :class="reportHideZero ? 'fas fa-check-circle text-white' : 'far fa-circle text-slate-400'"></i>
+                <i class="fas fa-filter-circle-dollar text-xs"></i>
+                <span>[[ isArabic ? "الأرصدة غير الصفرية فقط" : "Non-Zero Balances Only" ]]</span>
+            </button>
         </div>
 
-        <!-- Expand / Collapse Controls -->
-        <div class="flex items-center gap-2 border-t lg:border-t-0 lg:border-l border-slate-200/80 pt-2 lg:pt-0 lg:pl-3 justify-end">
-            <template v-if="reportViewMode === 'tree'">
-                <button @click="expandAllReportNodes()" :title="isArabic ? 'توسيع كافة المجموعات' : 'Expand All'"
-                    class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5">
-                    <i class="fas fa-folder-open text-amber-500"></i>
-                    <span class="hidden sm:inline">[[ isArabic ? "توسيع الكل" : "Expand All" ]]</span>
+        <!-- Tier 2: Date Pickers + Expand / Collapse + View Switcher -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
+            <!-- Date Filter Inputs -->
+            <div class="flex items-center gap-2 flex-wrap text-xs font-bold text-slate-600">
+                <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                    <span class="text-[10px] text-slate-400 uppercase">[[ isArabic ? "من:" : "From:" ]]</span>
+                    <input type="date" v-model="reportFilters.from_date" @change="loadReportData" class="bg-transparent text-xs font-semibold outline-none">
+                </div>
+                <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                    <span class="text-[10px] text-slate-400 uppercase">[[ isArabic ? "إلى:" : "To:" ]]</span>
+                    <input type="date" v-model="reportFilters.to_date" @change="loadReportData" class="bg-transparent text-xs font-semibold outline-none">
+                </div>
+                <button @click="loadReportData" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition-colors">
+                    [[ isArabic ? "تطبيق" : "Apply" ]]
                 </button>
-                <button @click="collapseAllReportNodes()" :title="isArabic ? 'طي كافة المجموعات' : 'Collapse All'"
-                    class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5">
-                    <i class="fas fa-folder text-slate-400"></i>
-                    <span class="hidden sm:inline">[[ isArabic ? "طي الكل" : "Collapse All" ]]</span>
-                </button>
-            </template>
+            </div>
 
-            <!-- Mode Switcher -->
-            <div class="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200/80">
-                <button @click="reportViewMode = 'tree'" 
-                    :class="reportViewMode === 'tree' ? 'bg-white text-slate-800 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
-                    <i class="fas fa-folder-tree text-amber-500"></i>
-                    <span>[[ isArabic ? "عرض شجري" : "Tree View" ]]</span>
-                </button>
-                <button @click="reportViewMode = 'list'" 
-                    :class="reportViewMode === 'list' ? 'bg-white text-slate-800 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
-                    <i class="fas fa-list text-blue-500"></i>
-                    <span>[[ isArabic ? "عرض مسطح" : "List View" ]]</span>
-                </button>
+            <!-- Expand / Collapse Controls & View Switcher -->
+            <div class="flex items-center gap-2 justify-end flex-wrap">
+                <template v-if="reportViewMode === 'tree'">
+                    <button @click="expandAllReportNodes()" :title="isArabic ? 'توسيع كافة المجموعات' : 'Expand All'"
+                        class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1">
+                        <i class="fas fa-folder-open text-amber-500 text-[10px]"></i>
+                        <span>[[ isArabic ? "توسيع الكل" : "Expand All" ]]</span>
+                    </button>
+                    <button @click="collapseAllReportNodes()" :title="isArabic ? 'طي كافة المجموعات' : 'Collapse All'"
+                        class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1">
+                        <i class="fas fa-folder text-slate-400 text-[10px]"></i>
+                        <span>[[ isArabic ? "طي الكل" : "Collapse All" ]]</span>
+                    </button>
+                </template>
+
+                <!-- Mode Switcher -->
+                <div class="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200/80">
+                    <button @click="reportViewMode = 'tree'" 
+                        :class="reportViewMode === 'tree' ? 'bg-white text-slate-800 shadow-xs font-black' : 'text-slate-500 hover:text-slate-800'"
+                        class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                        <i class="fas fa-folder-tree text-amber-500 text-[10px]"></i>
+                        <span>[[ isArabic ? "عرض شجري" : "Tree View" ]]</span>
+                    </button>
+                    <button @click="reportViewMode = 'list'" 
+                        :class="reportViewMode === 'list' ? 'bg-white text-slate-800 shadow-xs font-black' : 'text-slate-500 hover:text-slate-800'"
+                        class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                        <i class="fas fa-list text-blue-500 text-[10px]"></i>
+                        <span>[[ isArabic ? "عرض مسطح" : "List View" ]]</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 🌳 HIERARCHICAL TREE CONTAINER (Match COA Exactly) -->
-    <div class="bg-white border border-slate-200/90 rounded-2xl p-4 md:p-6 shadow-sm min-h-[500px]">
+    <!-- 🌳 HIERARCHICAL TREE CONTAINER (Compact & Professional Icons) -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm min-h-[500px]">
         
         <!-- Empty State -->
-        <div v-if="!currentReportRows || currentReportRows.length === 0" class="text-center py-20 text-slate-400">
-            <div class="w-20 h-20 mx-auto rounded-3xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center text-4xl mb-4 shadow-sm">
+        <div v-if="!currentReportRows || currentReportRows.length === 0" class="text-center py-16 text-slate-400">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center text-3xl mb-3 shadow-xs">
                 <i class="fas fa-file-invoice"></i>
             </div>
-            <h3 class="font-black text-slate-800 text-lg mb-1">[[ isArabic ? "لا توجد قيود أو حركات مسجلة للفترة المحددة" : "No Financial Entries Found" ]]</h3>
-            <p class="font-semibold text-xs text-slate-400 max-w-md mx-auto mb-6">
-                [[ isArabic ? "بإمكانك توسيع نطاق التواريخ أو ترحيل القيود المسودة لتظهر ضمن القوائم والتقارير المالية." : "Expand the date filter or post draft entries to reflect in statements." ]]
+            <h3 class="font-black text-slate-800 text-base mb-1">[[ isArabic ? "لا توجد قيود مسجلة للفترة المحددة" : "No Financial Entries Found" ]]</h3>
+            <p class="font-semibold text-xs text-slate-400 max-w-md mx-auto mb-4">
+                [[ isArabic ? "بإمكانك توسيع نطاق التواريخ أو ترحيل القيود المسودة لتظهر ضمن القوائم والتقارير المالية." : "Expand date filters or post draft entries to reflect in statements." ]]
             </p>
         </div>
 
-        <!-- No search matches -->
-        <div v-else-if="visibleHierarchicalReportAccounts.length === 0" class="text-center py-16 text-slate-400">
-            <i class="fas fa-search text-3xl mb-3 text-slate-300 block"></i>
-            <p class="font-bold text-sm">[[ isArabic ? "لا توجد حسابات أو قيود مطابقة لمعايير البحث الحالية" : "No accounts match current criteria" ]]</p>
+        <!-- No search or non-zero matches -->
+        <div v-else-if="visibleHierarchicalReportAccounts.length === 0" class="text-center py-14 text-slate-400">
+            <i class="fas fa-search text-2xl mb-2 text-slate-300 block"></i>
+            <p class="font-bold text-xs">[[ isArabic ? "لا توجد حسابات مطابقة لمعايير البحث أو فلتر الأرصدة غير الصفرية" : "No accounts match current criteria or non-zero balance filter" ]]</p>
+            <button v-if="reportHideZero" @click="reportHideZero = false" class="mt-3 text-xs font-bold text-amber-600 hover:underline">
+                [[ isArabic ? "إلغاء فلتر الأرصدة غير الصفرية وعرض كافة الحسابات" : "Show all accounts including zero balances" ]]
+            </button>
         </div>
 
-        <!-- 🌳 1. Hierarchical Tree View (Same as COA) -->
+        <!-- 🌳 1. Professional Hierarchical Tree View -->
         <div v-else-if="reportViewMode === 'tree'" class="space-y-1">
             
-            <!-- Table Header for Columns -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900 text-white text-[11px] font-black uppercase tracking-wider mb-2">
+            <!-- Table Column Headers -->
+            <div class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider mb-2 shadow-xs">
                 <div class="flex items-center gap-2">
-                    <i class="fas fa-sitemap text-amber-400"></i>
-                    <span>[[ isArabic ? "الحساب والهيكل المالي" : "Financial Account & Structure" ]]</span>
+                    <i class="fas fa-sitemap text-amber-400 text-xs"></i>
+                    <span>[[ isArabic ? "الحساب والهيكل المالي" : "Financial Account & Hierarchy" ]]</span>
                 </div>
                 
-                <div class="flex items-center gap-6 text-center" :dir="isArabic ? 'rtl' : 'ltr'">
-                    <span v-if="activeReportTab === 'trial_balance'" class="w-28 text-blue-300">[[ isArabic ? "مدين (Debit)" : "Debit" ]]</span>
-                    <span v-if="activeReportTab === 'trial_balance'" class="w-28 text-emerald-300">[[ isArabic ? "دائن (Credit)" : "Credit" ]]</span>
-                    <span class="w-32 text-amber-300">[[ isArabic ? "الرصيد الصافي" : "Net Balance" ]]</span>
+                <div class="flex items-center gap-4 text-center shrink-0" :dir="isArabic ? 'rtl' : 'ltr'">
+                    <span v-if="activeReportTab === 'trial_balance'" class="w-24 text-blue-300 text-center">[[ isArabic ? "مدين (DEBIT)" : "Debit" ]]</span>
+                    <span v-if="activeReportTab === 'trial_balance'" class="w-24 text-emerald-300 text-center">[[ isArabic ? "دائن (CREDIT)" : "Credit" ]]</span>
+                    <span class="w-28 text-amber-300 text-center">[[ isArabic ? "الرصيد الصافي" : "Net Balance" ]]</span>
                 </div>
             </div>
 
-            <!-- Recursive Tree Nodes Loop -->
+            <!-- Recursive Tree Rows Loop -->
             <div v-for="acc in visibleHierarchicalReportAccounts" :key="acc.id"
-                class="flex items-center justify-between p-2.5 rounded-xl transition-all group relative border"
+                class="flex items-center justify-between py-1.5 px-2.5 rounded-xl transition-all group relative border"
                 :class="[
-                    acc.level === 0 ? 'bg-gradient-to-r from-slate-50 to-white border-slate-200 my-2 shadow-2xs font-black' :
-                    (acc.is_group || acc.hasChildren) ? 'bg-slate-50/50 hover:bg-slate-50 border-slate-100 font-bold' :
-                    'bg-white hover:bg-amber-50/30 border-transparent hover:border-amber-200/60 font-semibold'
+                    acc.level === 0 ? 'bg-slate-50/80 border-slate-200/90 my-1.5 shadow-2xs font-black' :
+                    (acc.is_group || acc.hasChildren) ? 'bg-white hover:bg-slate-50/60 border-slate-100 font-bold' :
+                    'bg-white hover:bg-amber-50/20 border-transparent hover:border-amber-100 font-semibold'
                 ]"
-                :style="{ [isArabic ? 'paddingRight' : 'paddingLeft']: (acc.level * 28 + 14) + 'px' }">
+                :style="{ [isArabic ? 'paddingRight' : 'paddingLeft']: (acc.level * 22 + 8) + 'px' }">
                 
-                <!-- Left / Content Block (Tree Icon, Chevron, Title) -->
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <!-- Expand/Collapse Chevron for Group Nodes -->
+                <!-- Left Block: Chevron, Compact Icon, Code, Title, Badges -->
+                <div class="flex items-center gap-2 min-w-0">
+                    <!-- Compact Chevron Button (w-4 h-4, text-[9px]) -->
                     <button v-if="acc.hasChildren" @click="toggleReportNode(acc.id)"
-                        class="w-6 h-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-100/60 transition-all cursor-pointer">
-                        <i class="fas fa-chevron-left text-[11px] transition-transform duration-200"
+                        class="w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-all cursor-pointer shrink-0">
+                        <i class="fas fa-chevron-left text-[9px] transition-transform duration-200"
                             :class="[acc.isExpanded ? '-rotate-90 text-amber-600 font-black' : (isArabic ? '' : 'rotate-180')]"></i>
                     </button>
-                    <span v-else class="w-6 h-6 inline-block"></span>
+                    <span v-else class="w-4 h-4 inline-block shrink-0"></span>
 
-                    <!-- Node Icon (Folder vs Leaf) -->
-                    <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0"
+                    <!-- ⭐ Compact Node Icon (w-5 h-5, text-[10px]) - More Professional -->
+                    <span class="w-5 h-5 rounded flex items-center justify-center text-[10px] shrink-0"
                         :class="[
-                            acc.level === 0 ? 'bg-slate-900 text-white font-black' :
+                            acc.level === 0 ? 'bg-slate-900 text-amber-400 font-black shadow-2xs' :
                             (acc.is_group || acc.hasChildren) ? (acc.isExpanded ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500') :
-                            'bg-slate-50 text-slate-400 border border-slate-200/60'
+                            'bg-slate-50 text-slate-400 border border-slate-200/50'
                         ]">
                         <i v-if="acc.is_group || acc.hasChildren" :class="acc.isExpanded ? 'fas fa-folder-open' : 'fas fa-folder'"></i>
                         <i v-else-if="acc.account_type === 'BANK'" class="fas fa-building-columns text-blue-500"></i>
@@ -286,64 +315,67 @@
                         <i v-else class="fas fa-file-invoice"></i>
                     </span>
 
-                    <!-- Account Number & Title -->
-                    <div class="flex items-center gap-2 flex-wrap min-w-0">
-                        <span class="font-mono text-xs px-2 py-0.5 rounded font-bold shrink-0 shadow-2xs"
-                            :class="[
-                                acc.level === 0 ? 'bg-slate-900 text-white' :
-                                (acc.is_group || acc.hasChildren) ? 'bg-slate-200 text-slate-700' :
-                                'bg-slate-100 text-slate-600'
-                            ]">
-                            [[ acc.account_number ]]
-                        </span>
-                        
-                        <span class="text-sm tracking-tight truncate cursor-pointer hover:text-amber-600"
-                            @click="acc.hasChildren ? toggleReportNode(acc.id) : openAccountLedger(acc)"
-                            :class="[
-                                acc.level === 0 ? 'text-slate-900 font-black text-base' :
-                                (acc.is_group || acc.hasChildren) ? 'text-slate-800 font-bold' :
-                                'text-slate-700'
-                            ]">
-                            [[ acc.account_name ]]
-                        </span>
+                    <!-- Account Number Pill (Compact Micro-Typography) -->
+                    <span class="font-mono text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0 shadow-2xs"
+                        :class="[
+                            acc.level === 0 ? 'bg-slate-900 text-white' :
+                            (acc.is_group || acc.hasChildren) ? 'bg-slate-200 text-slate-700' :
+                            'bg-slate-100 text-slate-600'
+                        ]">
+                        [[ acc.account_number ]]
+                    </span>
 
-                        <!-- Group Badge with children count -->
-                        <span v-if="acc.is_group || acc.hasChildren" class="text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wide shrink-0"
-                            :class="acc.level === 0 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-100 text-slate-600 border border-slate-200'">
-                            [[ isArabic ? "مجموعة" : "Group" ]]
-                            <span v-if="acc.childrenCount" class="font-mono">([[ acc.childrenCount ]])</span>
-                        </span>
+                    <!-- Account Title -->
+                    <span class="truncate cursor-pointer hover:text-amber-600 transition-colors"
+                        @click="acc.hasChildren ? toggleReportNode(acc.id) : openAccountLedger(acc)"
+                        :class="[
+                            acc.level === 0 ? 'text-slate-900 font-black text-xs' :
+                            (acc.is_group || acc.hasChildren) ? 'text-slate-800 font-bold text-xs' :
+                            'text-slate-700 font-medium text-xs'
+                        ]">
+                        [[ acc.account_name ]]
+                    </span>
 
-                        <!-- Account Type Badge -->
-                        <span v-if="!acc.is_group && !acc.hasChildren && acc.account_type && acc.account_type !== 'OTHER'" 
-                            class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase shrink-0 bg-blue-50 text-blue-700 border border-blue-100">
-                            [[ acc.account_type ]]
-                        </span>
-                    </div>
+                    <!-- Group Badge (Micro size) -->
+                    <span v-if="acc.is_group || acc.hasChildren" class="text-[8px] px-1.5 py-0.2 rounded-full font-black uppercase tracking-tight shrink-0"
+                        :class="acc.level === 0 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-100 text-slate-600 border border-slate-200'">
+                        [[ isArabic ? "مجموعة" : "Group" ]]
+                        <span v-if="acc.childrenCount" class="font-mono">([[ acc.childrenCount ]])</span>
+                    </span>
+
+                    <!-- Account Type Badge (Micro size) -->
+                    <span v-if="!acc.is_group && !acc.hasChildren && acc.account_type && acc.account_type !== 'OTHER'" 
+                        class="text-[8px] px-1.5 py-0.2 rounded font-bold uppercase shrink-0 bg-blue-50 text-blue-700 border border-blue-100">
+                        [[ acc.account_type ]]
+                    </span>
                 </div>
 
-                <!-- Right / Financial Numbers Block -->
-                <div class="flex items-center gap-6 shrink-0" :dir="isArabic ? 'rtl' : 'ltr'">
+                <!-- Right Block: Perfectly Aligned Financial Columns -->
+                <div class="flex items-center gap-4 shrink-0" :dir="isArabic ? 'rtl' : 'ltr'">
                     <!-- Trial Balance: Debit & Credit Columns -->
                     <template v-if="activeReportTab === 'trial_balance'">
-                        <div class="w-28 text-center font-mono text-xs font-bold text-blue-600">
+                        <div class="w-24 text-center font-mono text-xs font-bold"
+                             :class="acc.debit > 0 ? 'text-blue-700' : 'text-slate-300 font-normal'">
                             $[[ formatNumber(acc.debit) ]]
                         </div>
-                        <div class="w-28 text-center font-mono text-xs font-bold text-emerald-600">
+                        <div class="w-24 text-center font-mono text-xs font-bold"
+                             :class="acc.credit > 0 ? 'text-emerald-700' : 'text-slate-300 font-normal'">
                             $[[ formatNumber(acc.credit) ]]
                         </div>
                     </template>
 
                     <!-- Net Balance Column -->
-                    <div class="w-32 text-right">
-                        <div class="text-xs font-black font-mono tracking-tight"
+                    <div class="w-28 text-center font-mono">
+                        <div class="text-xs tracking-tight"
                             :class="[
-                                acc.level === 0 ? 'text-base font-black text-slate-900' :
-                                acc.net >= 0 ? 'text-slate-800' : 'text-rose-600'
+                                acc.level === 0 ? 'text-xs font-black text-slate-900' :
+                                acc.net > 0 ? 'font-bold text-slate-800' :
+                                acc.net < 0 ? 'font-bold text-rose-600' :
+                                'text-slate-300 font-normal'
                             ]">
-                            $[[ formatNumber(acc.net) ]]
+                            <span v-if="acc.net < 0">-</span>$[[ formatNumber(Math.abs(acc.net)) ]]
                         </div>
-                        <div class="text-[9px] text-slate-400 font-bold">[[ acc.currency || 'SAR' ]]</div>
+                        <div class="text-[8px] text-slate-400 font-bold uppercase leading-none">[[ acc.currency || 'SAR' ]]</div>
                     </div>
                 </div>
 
@@ -355,25 +387,27 @@
             <table class="w-full text-xs text-right border-collapse">
                 <thead class="bg-slate-900 text-white text-[10px] uppercase font-black border-b">
                     <tr>
-                        <th class="p-3">[[ isArabic ? "كود الحساب" : "Code" ]]</th>
-                        <th class="p-3">[[ isArabic ? "اسم الحساب" : "Account Name" ]]</th>
-                        <th class="p-3">[[ isArabic ? "النوع" : "Root Type" ]]</th>
-                        <th v-if="activeReportTab === 'trial_balance'" class="p-3 text-center text-blue-300">[[ isArabic ? "المدين (Debit)" : "Total Debit" ]]</th>
-                        <th v-if="activeReportTab === 'trial_balance'" class="p-3 text-center text-emerald-300">[[ isArabic ? "الدائن (Credit)" : "Total Credit" ]]</th>
-                        <th class="p-3 text-center text-amber-300">[[ isArabic ? "الرصيد الصافي (Net)" : "Net Balance" ]]</th>
+                        <th class="p-2.5">[[ isArabic ? "كود الحساب" : "Code" ]]</th>
+                        <th class="p-2.5">[[ isArabic ? "اسم الحساب" : "Account Name" ]]</th>
+                        <th class="p-2.5">[[ isArabic ? "النوع" : "Root Type" ]]</th>
+                        <th v-if="activeReportTab === 'trial_balance'" class="p-2.5 text-center text-blue-300 w-24">[[ isArabic ? "المدين" : "Debit" ]]</th>
+                        <th v-if="activeReportTab === 'trial_balance'" class="p-2.5 text-center text-emerald-300 w-24">[[ isArabic ? "الدائن" : "Credit" ]]</th>
+                        <th class="p-2.5 text-center text-amber-300 w-28">[[ isArabic ? "الرصيد الصافي" : "Net Balance" ]]</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    <tr v-for="r in currentReportRows" :key="r.account_id" class="hover:bg-slate-50/80 transition-colors">
-                        <td class="p-3 font-mono font-bold text-slate-600">[[ r.account_number ]]</td>
-                        <td class="p-3 font-bold text-slate-800">
+                    <tr v-for="r in visibleHierarchicalReportAccounts" :key="r.account_id" class="hover:bg-slate-50/80 transition-colors">
+                        <td class="p-2 font-mono font-bold text-slate-600 text-[10px]">[[ r.account_number ]]</td>
+                        <td class="p-2 font-bold text-slate-800 text-xs">
                             [[ r.account_name ]]
-                            <span v-if="r.is_group" class="text-[9px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded ml-1">[[ isArabic ? 'مجموعة' : 'Group' ]]</span>
+                            <span v-if="r.is_group" class="text-[8px] bg-amber-50 text-amber-700 border border-amber-200 px-1 py-0.2 rounded ml-1">[[ isArabic ? 'مجموعة' : 'Group' ]]</span>
                         </td>
-                        <td class="p-3 text-slate-500">[[ r.root_type ]]</td>
-                        <td v-if="activeReportTab === 'trial_balance'" class="p-3 text-center font-mono font-bold text-blue-600">$[[ formatNumber(r.debit) ]]</td>
-                        <td v-if="activeReportTab === 'trial_balance'" class="p-3 text-center font-mono font-bold text-emerald-600">$[[ formatNumber(r.credit) ]]</td>
-                        <td class="p-3 text-center font-mono font-black text-slate-900">$[[ formatNumber(r.net) ]]</td>
+                        <td class="p-2 text-slate-500 text-[10px]">[[ r.root_type ]]</td>
+                        <td v-if="activeReportTab === 'trial_balance'" class="p-2 text-center font-mono font-bold text-xs" :class="r.debit > 0 ? 'text-blue-600' : 'text-slate-300'">$[[ formatNumber(r.debit) ]]</td>
+                        <td v-if="activeReportTab === 'trial_balance'" class="p-2 text-center font-mono font-bold text-xs" :class="r.credit > 0 ? 'text-emerald-600' : 'text-slate-300'">$[[ formatNumber(r.credit) ]]</td>
+                        <td class="p-2 text-center font-mono font-black text-xs" :class="r.net >= 0 ? 'text-slate-900' : 'text-rose-600'">
+                            <span v-if="r.net < 0">-</span>$[[ formatNumber(Math.abs(r.net)) ]]
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -381,28 +415,28 @@
 
         <!-- 🏁 Grand Total Summary Footer Bar -->
         <div v-if="activeReportTab === 'trial_balance' && accountingReports.trialBalance" 
-             class="mt-6 p-4 rounded-xl bg-slate-100 border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 font-black">
-            <div class="flex items-center gap-3">
-                <span class="text-sm uppercase text-slate-800">[[ isArabic ? "الإجمالي الكلي لميزان المراجعة:" : "Total Parity:" ]]</span>
+             class="mt-5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-3 font-black">
+            <div class="flex items-center gap-2">
+                <span class="text-xs uppercase text-slate-800">[[ isArabic ? "الإجمالي الكلي لميزان المراجعة:" : "Total Parity:" ]]</span>
                 <span :class="accountingReports.trialBalance.is_balanced ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
-                      class="px-3 py-1 rounded-full text-xs uppercase flex items-center gap-1.5">
+                      class="px-2.5 py-0.5 rounded-md text-[10px] uppercase flex items-center gap-1">
                     <i :class="accountingReports.trialBalance.is_balanced ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle'"></i>
-                    [[ accountingReports.trialBalance.is_balanced ? (isArabic ? 'الميزان متطابق ومتوازن تماماً' : 'Balanced') : (isArabic ? 'يوجد فرق' : 'Unbalanced') ]]
+                    [[ accountingReports.trialBalance.is_balanced ? (isArabic ? 'الميزان متطابق ومتوازن' : 'Balanced') : (isArabic ? 'يوجد فرق' : 'Unbalanced') ]]
                 </span>
             </div>
             
-            <div class="flex items-center gap-8 font-mono text-sm" :dir="isArabic ? 'rtl' : 'ltr'">
+            <div class="flex items-center gap-6 font-mono text-xs" :dir="isArabic ? 'rtl' : 'ltr'">
                 <div>
-                    <span class="text-xs text-slate-500 font-bold block">[[ isArabic ? "إجمالي المدين" : "Debit" ]]</span>
-                    <span class="text-blue-700 text-base">$[[ formatNumber(accountingReports.trialBalance.total_debit) ]]</span>
+                    <span class="text-[9px] text-slate-500 font-bold block">[[ isArabic ? "إجمالي المدين" : "Debit" ]]</span>
+                    <span class="text-blue-700 text-sm font-black">$[[ formatNumber(accountingReports.trialBalance.total_debit) ]]</span>
                 </div>
                 <div>
-                    <span class="text-xs text-slate-500 font-bold block">[[ isArabic ? "إجمالي الدائن" : "Credit" ]]</span>
-                    <span class="text-emerald-700 text-base">$[[ formatNumber(accountingReports.trialBalance.total_credit) ]]</span>
+                    <span class="text-[9px] text-slate-500 font-bold block">[[ isArabic ? "إجمالي الدائن" : "Credit" ]]</span>
+                    <span class="text-emerald-700 text-sm font-black">$[[ formatNumber(accountingReports.trialBalance.total_credit) ]]</span>
                 </div>
                 <div>
-                    <span class="text-xs text-slate-500 font-bold block">[[ isArabic ? "الفارق" : "Difference" ]]</span>
-                    <span class="text-slate-800 text-base">$[[ formatNumber(accountingReports.trialBalance.total_debit - accountingReports.trialBalance.total_credit) ]]</span>
+                    <span class="text-[9px] text-slate-500 font-bold block">[[ isArabic ? "الفارق" : "Difference" ]]</span>
+                    <span class="text-slate-800 text-sm font-black">$[[ formatNumber(accountingReports.trialBalance.total_debit - accountingReports.trialBalance.total_credit) ]]</span>
                 </div>
             </div>
         </div>

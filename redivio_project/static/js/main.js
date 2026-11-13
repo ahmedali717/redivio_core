@@ -183,6 +183,8 @@ createApp({
             reportRootFilter: 'ALL',
             expandedReportNodes: {},
             reportViewMode: 'tree',
+            reportHideZero: false,
+            coaHideZero: false,
             vendorSearch: '',
             vendorTypeFilter: 'ALL',
             vendorViewMode: 'cards',
@@ -821,10 +823,31 @@ createApp({
                 return false;
             };
 
+            const isNonZero = (acc) => {
+                const d = Math.abs(parseFloat(acc.debit) || 0);
+                const c = Math.abs(parseFloat(acc.credit) || 0);
+                const n = Math.abs(parseFloat(acc.net) || 0);
+                return d > 0.001 || c > 0.001 || n > 0.001;
+            };
+
+            const hasNonZeroDescendant = (accId) => {
+                const children = childrenMap.get(accId) || [];
+                for (const child of children) {
+                    if (isNonZero(child) || hasNonZeroDescendant(child.account_id)) return true;
+                }
+                return false;
+            };
+
             const result = [];
             const traverse = (node, level, ancestors) => {
                 if (rootFilter && rootFilter !== 'ALL' && node.root_type !== rootFilter) {
                     return;
+                }
+
+                if (this.reportHideZero) {
+                    if (!isNonZero(node) && !hasNonZeroDescendant(node.account_id)) {
+                        return;
+                    }
                 }
 
                 const children = childrenMap.get(node.account_id) || [];
@@ -2019,6 +2042,9 @@ createApp({
                     (a.account_name && a.account_name.toLowerCase().includes(q))
                 );
             }
+            if (this.coaHideZero) {
+                list = list.filter(a => Math.abs(parseFloat(a.balance) || 0) > 0.001);
+            }
             return list;
         },
 
@@ -2064,10 +2090,29 @@ createApp({
                 return false;
             };
 
+            const isNonZero = (acc) => {
+                const b = Math.abs(parseFloat(acc.balance) || 0);
+                return b > 0.001;
+            };
+
+            const hasNonZeroDescendant = (accId) => {
+                const children = childrenMap.get(accId) || [];
+                for (const child of children) {
+                    if (isNonZero(child) || hasNonZeroDescendant(child.id)) return true;
+                }
+                return false;
+            };
+
             const result = [];
             const traverse = (node, level, ancestors) => {
                 if (rootFilter && rootFilter !== 'ALL' && node.root_type !== rootFilter) {
                     return;
+                }
+
+                if (this.coaHideZero) {
+                    if (!isNonZero(node) && !hasNonZeroDescendant(node.id)) {
+                        return;
+                    }
                 }
 
                 const children = childrenMap.get(node.id) || [];
