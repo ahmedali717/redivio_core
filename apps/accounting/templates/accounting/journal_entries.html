@@ -193,6 +193,10 @@
                                 <div class="font-black text-slate-900 text-sm">$[[ formatNumber(jv.total_debit) ]]</div>
                             </div>
                             <div class="flex items-center gap-1" @click.stop>
+                                <button v-if="jv.status === 'SUBMITTED'" @click="openJournalEntryGL(jv)" :title="isArabic ? 'عرض حركة القيد في الأستاذ العام' : 'View in GL'"
+                                    class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center text-xs transition-colors">
+                                    <i class="fas fa-scale-balanced"></i>
+                                </button>
                                 <button @click="cancelJournalEntry(jv.id)" :title="isArabic ? 'إلغاء وعكس القيد' : 'Cancel Entry'"
                                     class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center text-xs transition-colors">
                                     <i class="fas fa-undo"></i>
@@ -255,6 +259,11 @@
                         :title="isArabic ? 'ترحيل للأستاذ العام' : 'Post Entry'"
                         class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center text-xs transition-all shadow-sm">
                         <i class="fas fa-check"></i>
+                    </button>
+                    <button v-if="jv.status === 'SUBMITTED'" @click="openJournalEntryGL(jv)"
+                        :title="isArabic ? 'عرض حركة القيد في الأستاذ العام' : 'View in GL'"
+                        class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center text-xs transition-all shadow-sm">
+                        <i class="fas fa-scale-balanced"></i>
                     </button>
                     <button v-if="jv.status === 'SUBMITTED'" @click="cancelJournalEntry(jv.id)"
                         :title="isArabic ? 'إلغاء وعكس القيد' : 'Cancel Entry'"

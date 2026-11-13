@@ -47,7 +47,15 @@
                     <tr v-for="inv in salesInvoices" :key="inv.id" class="hover:bg-slate-50/50 transition-colors group">
                         <td class="px-6 py-4">
                             <span class="font-bold text-slate-700 text-sm underline decoration-rose-200 underline-offset-4">[[ inv.invoice_number ]]</span>
-                            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">SO: #[[ inv.sales_order || '---' ]]</div>
+                            <div class="mt-0.5">
+                                <button v-if="inv.sales_order" @click="openInvoiceSalesOrder(inv.sales_order)" 
+                                    :title="isArabic ? 'الانتقال إلى أمر البيع الأصلي' : 'View Originating Sales Order'"
+                                    class="text-[10px] font-black text-rose-500 hover:text-rose-700 hover:underline uppercase tracking-widest inline-flex items-center gap-1 cursor-pointer">
+                                    <span>SO: #[[ inv.sales_order ]]</span>
+                                    <i class="fas fa-arrow-up-right-from-square text-[8px]"></i>
+                                </button>
+                                <span v-else class="text-[10px] font-black text-slate-400 uppercase tracking-widest">SO: ---</span>
+                            </div>
                         </td>
                         <td class="px-6 py-4 font-bold text-slate-500 text-xs">[[ inv.customer_name ]]</td>
                         <td class="px-6 py-4 font-mono text-xs text-slate-400">[[ inv.due_date ]]</td>
@@ -62,6 +70,10 @@
                             <div class="flex items-center justify-end gap-2">
                                 <button v-if="inv.status !== 'PAID'" @click="openPaymentModal(inv)" class="bg-rose-600 text-white px-3 py-1.5 rounded-lg font-black text-[10px] uppercase shadow-lg shadow-rose-200 hover:bg-rose-700 transition-all">
                                     [[ isArabic ? 'تحصيل دفعة' : 'Record Payment' ]]
+                                </button>
+                                <button @click="openInvoiceGL(inv)" :title="isArabic ? 'عرض القيود المحاسبية في الأستاذ العام' : 'View GL Entries'" 
+                                    class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center text-xs cursor-pointer shadow-xs">
+                                    <i class="fas fa-scale-balanced"></i>
                                 </button>
                                 <button @click="printInvoice(inv.id)" class="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 transition-all flex items-center justify-center">
                                     <i class="fas fa-print text-xs"></i>

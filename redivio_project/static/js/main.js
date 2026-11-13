@@ -45,13 +45,25 @@ createApp({
                 scan_qty: 1
             },
 
-            // 1. جعل الموديول الموحد هو الشاشة الافتراضية (اختياري)
-            view: 'dashboard',
+            // 1. استعادة الشاشة النشطة من الرابط أو التخزين المحلي لمنع الرجوع للداش بورد عند الريفريش
+            view: (() => {
+                try {
+                    const hash = window.location.hash ? window.location.hash.replace(/^#/, '').trim() : '';
+                    if (hash) return hash;
+                    const saved = localStorage.getItem('redivio_active_view');
+                    if (saved) return saved;
+                } catch(e) {}
+                return 'dashboard';
+            })(),
             vendorsListBackView: null,
             inventoryMoves: [],
-            // 🚀 إضافة المتغير الجديد للتبديل بين الأصناف والأرصدة
-            inventoryTab: 'levels',
-            posTab: 'cashier',
+            // 🚀 التبويبات مع استعادة الحالة النشطة
+            inventoryTab: (() => {
+                try { return localStorage.getItem('redivio_inventory_tab') || 'levels'; } catch(e) { return 'levels'; }
+            })(),
+            posTab: (() => {
+                try { return localStorage.getItem('redivio_pos_tab') || 'cashier'; } catch(e) { return 'cashier'; }
+            })(),
             posReportTab: 'detailed_sales',
             posMode: localStorage.getItem('pos_mode') || 'restaurant',
             activePOSSession: null,
@@ -135,13 +147,17 @@ createApp({
             kdsInterval: null,
             kdsCurrentTime: new Date(),
             draggedOrder: null,
-            salesTab: 'dashboard',
+            salesTab: (() => {
+                try { return localStorage.getItem('redivio_sales_tab') || 'dashboard'; } catch(e) { return 'dashboard'; }
+            })(),
             soSearch: '',
             soViewMode: 'list',
             soStatusFilter: 'ALL',
             poViewMode: 'list',
             poSearch: '',
-            accountingTab: 'dashboard',
+            accountingTab: (() => {
+                try { return localStorage.getItem('redivio_accounting_tab') || 'dashboard'; } catch(e) { return 'dashboard'; }
+            })(),
             accounts: [],
             accountsTree: [],
             costCenters: [],
@@ -178,7 +194,9 @@ createApp({
             piStatusFilter: 'ALL',
             paySearch: '',
             payTypeFilter: 'ALL',
-            activeReportTab: 'trial_balance',
+            activeReportTab: (() => {
+                try { return localStorage.getItem('redivio_report_tab') || 'trial_balance'; } catch(e) { return 'trial_balance'; }
+            })(),
             reportSearch: '',
             reportRootFilter: 'ALL',
             expandedReportNodes: {},
@@ -2383,6 +2401,15 @@ createApp({
             }
         },
         view(newView) {
+            try {
+                if (newView) {
+                    localStorage.setItem('redivio_active_view', newView);
+                    const currentHash = window.location.hash ? window.location.hash.replace(/^#/, '').trim() : '';
+                    if (currentHash !== newView) {
+                        window.location.hash = newView;
+                    }
+                }
+            } catch(e) {}
             if (newView === 'users') this.fetchCompanyUsers();
             if (newView === 'org_builder') this.fetchAll();
             if (newView === 'global_config' && this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
@@ -2392,9 +2419,38 @@ createApp({
             if (newView === 'accounting_module') {
                 this.fetchAccountingData();
             }
+            if (newView === 'accounting_reports') {
+                this.loadReportData();
+            }
             if (newView === 'contracting_module') {
                 this.fetchContractingData();
             }
+            if (newView === 'sales_module') {
+                this.fetchSalesOrders();
+                this.fetchSalesInvoices();
+                this.fetchCustomers();
+            }
+        },
+        accountingTab(newTab) {
+            try { if (newTab) localStorage.setItem('redivio_accounting_tab', newTab); } catch(e) {}
+            if (newTab === 'general_ledger') this.fetchGLEntries();
+            if (newTab === 'journal_entries') this.fetchJournalEntries();
+            if (newTab === 'purchase_invoices') this.fetchPurchaseInvoices();
+            if (newTab === 'payment_entries') this.fetchPaymentEntries();
+            if (newTab === 'chart_of_accounts') this.fetchAccounts();
+        },
+        activeReportTab(newTab) {
+            try { if (newTab) localStorage.setItem('redivio_report_tab', newTab); } catch(e) {}
+            this.loadReportData();
+        },
+        salesTab(newTab) {
+            try { if (newTab) localStorage.setItem('redivio_sales_tab', newTab); } catch(e) {}
+        },
+        inventoryTab(newTab) {
+            try { if (newTab) localStorage.setItem('redivio_inventory_tab', newTab); } catch(e) {}
+        },
+        posTab(newTab) {
+            try { if (newTab) localStorage.setItem('redivio_pos_tab', newTab); } catch(e) {}
         },
         posMode: {
             immediate: true,
@@ -2460,6 +2516,35 @@ createApp({
         this.fetchAll();
         this.fetchMaterialsList();
         this.fetchWMSStats();
+
+        // 🔄 استعادة الشاشة النشطة ومزامنة التنقل مع المتصفح
+        window.addEventListener('hashchange', () => {
+            const h = window.location.hash ? window.location.hash.replace(/^#/, '').trim() : '';
+            if (h && h !== this.view) {
+                this.view = h;
+            }
+        });
+
+        const currentHash = window.location.hash ? window.location.hash.replace(/^#/, '').trim() : '';
+        const savedView = currentHash || localStorage.getItem('redivio_active_view');
+        if (savedView && this.view !== savedView) {
+            this.view = savedView;
+        } else if (this.view && !window.location.hash) {
+            window.location.hash = this.view;
+        }
+
+        // جلب بيانات الشاشة النشطة المستعادة فوراً عند إعادة تحميل الصفحة
+        if (this.view === 'accounting_module') {
+            this.fetchAccountingData();
+        } else if (this.view === 'accounting_reports') {
+            this.loadReportData();
+        } else if (this.view === 'sales_module') {
+            this.fetchSalesOrders();
+            this.fetchSalesInvoices();
+            this.fetchCustomers();
+        } else if (this.view === 'contracting_module') {
+            this.fetchContractingData();
+        }
 
         // 🚀 Watch activeOpco to cache logo for preloader white-labeling
         this.$watch('activeOpco', (newOpco) => {
@@ -9685,10 +9770,124 @@ createApp({
         },
 
 
+        // 🔗 ERP Smart Interconnectedness & Reverse Linking (الربط الذكي والربط العكسي بين الحركات)
         openAccountLedger(acc) {
+            this.view = 'accounting_module';
             this.accountingTab = 'general_ledger';
-            this.glFilters.account_id = acc.id;
+            this.glFilters.account_id = acc ? (acc.id || acc.account_id) : '';
+            if (this.reportFilters && this.reportFilters.from_date) {
+                this.glFilters.from_date = this.reportFilters.from_date;
+            }
+            if (this.reportFilters && this.reportFilters.to_date) {
+                this.glFilters.to_date = this.reportFilters.to_date;
+            }
             this.fetchGLEntries();
+            if (acc) {
+                this.showToast(this.isArabic ? `عرض كشف الأستاذ العام: ${acc.account_name}` : `General Ledger: ${acc.account_name}`, 'info');
+            }
+        },
+
+        openGLSourceDocument(gl) {
+            if (!gl || !gl.voucher_no) return;
+            const vNo = (gl.voucher_no || '').trim();
+            const vType = (gl.voucher_type || '').toUpperCase();
+
+            // 1. سند قيد يومية (Journal Entry)
+            if (vType === 'JOURNAL_ENTRY' || vNo.startsWith('JV')) {
+                this.view = 'accounting_module';
+                this.accountingTab = 'journal_entries';
+                this.jvSearch = vNo;
+                this.showToast(this.isArabic ? `الانتقال إلى قيد اليومية: ${vNo}` : `Navigating to Journal Entry: ${vNo}`, 'info');
+            }
+            // 2. فاتورة مبيعات (Sales Invoice)
+            else if (vType === 'SALES_INVOICE' || vNo.startsWith('INV')) {
+                this.view = 'sales_module';
+                this.salesTab = 'invoices';
+                this.showToast(this.isArabic ? `الانتقال إلى فاتورة المبيعات: ${vNo}` : `Navigating to Sales Invoice: ${vNo}`, 'info');
+            }
+            // 3. فاتورة مشتريات (Purchase Invoice / Bill)
+            else if (vType === 'PURCHASE_INVOICE' || vNo.startsWith('PINV') || vNo.startsWith('BILL')) {
+                this.view = 'accounting_module';
+                this.accountingTab = 'purchase_invoices';
+                this.piSearch = vNo;
+                this.showToast(this.isArabic ? `الانتقال إلى فاتورة المشتريات: ${vNo}` : `Navigating to Purchase Bill: ${vNo}`, 'info');
+            }
+            // 4. سند قبض / صرف (Payment Entry)
+            else if (vType === 'PAYMENT_ENTRY' || vNo.startsWith('PAY')) {
+                this.view = 'accounting_module';
+                this.accountingTab = 'payment_entries';
+                this.paySearch = vNo;
+                this.showToast(this.isArabic ? `الانتقال إلى سند القبض/الصرف: ${vNo}` : `Navigating to Payment Entry: ${vNo}`, 'info');
+            }
+            // 5. حركة مخزنية
+            else if (vType === 'STOCK_ENTRY' || vNo.startsWith('MAT-') || vNo.startsWith('STK-')) {
+                this.view = 'inventory_module';
+                this.inventoryTab = 'levels';
+                this.showToast(this.isArabic ? `الانتقال إلى حركة المخزون: ${vNo}` : `Navigating to Stock Move: ${vNo}`, 'info');
+            }
+            else {
+                this.showToast(this.isArabic ? `مستند: ${vNo}` : `Document: ${vNo}`, 'info');
+            }
+        },
+
+        filterGLByParty(partyName) {
+            if (!partyName) return;
+            this.view = 'accounting_module';
+            this.accountingTab = 'general_ledger';
+            this.glFilters.voucher_no = partyName;
+            this.fetchGLEntries();
+            this.showToast(this.isArabic ? `تصفية الأستاذ بالطرف: ${partyName}` : `Filtered GL by party: ${partyName}`, 'info');
+        },
+
+        openInvoiceGL(inv) {
+            if (!inv) return;
+            this.view = 'accounting_module';
+            this.accountingTab = 'general_ledger';
+            this.glFilters.account_id = '';
+            this.glFilters.voucher_no = inv.invoice_number;
+            this.fetchGLEntries();
+            this.showToast(this.isArabic ? `عرض قيود الأستاذ للفاتورة: ${inv.invoice_number}` : `GL entries for invoice: ${inv.invoice_number}`, 'info');
+        },
+
+        openInvoiceSalesOrder(soIdOrNo) {
+            this.view = 'sales_module';
+            this.salesTab = 'orders';
+            const found = (this.salesOrders || []).find(o => o.id === soIdOrNo || o.order_number === soIdOrNo);
+            if (found) {
+                this.selectedSalesOrder = found;
+                this.showSODetailModal = true;
+            }
+            this.showToast(this.isArabic ? `الانتقال إلى أمر البيع #${soIdOrNo}` : `Viewing Sales Order #${soIdOrNo}`, 'info');
+        },
+
+        openCustomerLedger(c) {
+            if (!c) return;
+            this.view = 'accounting_module';
+            this.accountingTab = 'general_ledger';
+            this.glFilters.account_id = '';
+            this.glFilters.voucher_no = c.name;
+            this.fetchGLEntries();
+            this.showToast(this.isArabic ? `كشف حساب العميل: ${c.name}` : `GL Statement for customer: ${c.name}`, 'info');
+        },
+
+        openPurchaseInvoiceGL(inv) {
+            if (!inv) return;
+            this.view = 'accounting_module';
+            this.accountingTab = 'general_ledger';
+            this.glFilters.account_id = '';
+            this.glFilters.voucher_no = inv.invoice_number;
+            this.fetchGLEntries();
+            this.showToast(this.isArabic ? `عرض قيود الأستاذ لفاتورة الشراء: ${inv.invoice_number}` : `GL entries for bill: ${inv.invoice_number}`, 'info');
+        },
+
+        openJournalEntryGL(jv) {
+            if (!jv) return;
+            this.view = 'accounting_module';
+            this.accountingTab = 'general_ledger';
+            this.glFilters.account_id = '';
+            this.glFilters.voucher_no = jv.entry_number;
+            this.fetchGLEntries();
+            this.showToast(this.isArabic ? `عرض حركة القيد ${jv.entry_number} في الأستاذ العام` : `GL entries for ${jv.entry_number}`, 'info');
         },
 
         openNewAccountModal(parentAcc = null) {

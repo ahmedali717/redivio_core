@@ -80,8 +80,23 @@
                         <td class="px-4 py-3 text-slate-600">
                             <span class="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold">[[ gl.voucher_type ]]</span>
                         </td>
-                        <td class="px-4 py-3 font-mono font-bold text-indigo-600">[[ gl.voucher_no ]]</td>
-                        <td class="px-4 py-3 text-slate-600">[[ gl.party_name || '-' ]]</td>
+                        <td class="px-4 py-3 font-mono font-bold">
+                            <button @click="openGLSourceDocument(gl)" 
+                                :title="isArabic ? 'فتح وانتقال إلى المستند الأصلي' : 'Drill-down to source document'"
+                                class="text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1 group/v cursor-pointer">
+                                <span>[[ gl.voucher_no ]]</span>
+                                <i class="fas fa-arrow-up-right-from-square text-[9px] opacity-60 group-hover/v:opacity-100 transition-opacity"></i>
+                            </button>
+                        </td>
+                        <td class="px-4 py-3 text-slate-700">
+                            <button v-if="gl.party_name" @click="filterGLByParty(gl.party_name)"
+                                :title="isArabic ? 'تصفية الأستاذ بالطرف' : 'Filter by party'"
+                                class="hover:text-blue-600 hover:underline inline-flex items-center gap-1 cursor-pointer font-semibold">
+                                <span>[[ gl.party_name ]]</span>
+                                <i class="fas fa-filter text-[8px] text-slate-400"></i>
+                            </button>
+                            <span v-else class="text-slate-400">-</span>
+                        </td>
                         <td class="px-4 py-3 text-center font-mono font-bold" :class="gl.debit > 0 ? 'text-blue-600' : 'text-slate-400'">
                             $[[ formatNumber(gl.debit) ]]
                         </td>

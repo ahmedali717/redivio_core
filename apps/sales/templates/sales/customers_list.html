@@ -48,6 +48,10 @@
                         <td class="px-6 py-4 text-center text-slate-500 font-bold text-xs">[[ c.phone || '---' ]]</td>
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
+                                <button @click="openCustomerLedger(c)" :title="isArabic ? 'كشف حساب العميل في الأستاذ العام' : 'Customer GL Statement'" 
+                                    class="w-8 h-8 rounded-lg text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center cursor-pointer shadow-xs">
+                                    <i class="fas fa-scale-balanced text-xs"></i>
+                                </button>
                                 <button @click="editItem('customer', c)" class="w-8 h-8 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all">
                                     <i class="fas fa-edit"></i>
                                 </button>
