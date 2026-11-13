@@ -402,27 +402,49 @@
                             </span>
                         </div>
                         <div class="flex items-center flex-wrap gap-3 w-full sm:w-auto">
-                            <!-- Select PR -->
-                            <div class="flex items-center gap-1.5">
-                                <label class="text-[10px] font-bold text-slate-600">[[ isArabic ? 'طلب شراء (PR):' : 'PR:' ]]</label>
-                                <select v-model="forms.po.pr" @change="onPOPRSelect()" class="bg-white border border-indigo-200 rounded-xl px-2.5 py-1 text-xs font-bold text-indigo-900 outline-none">
-                                    <option :value="null">[[ isArabic ? '-- اختياري: سحب من PR --' : '-- None --' ]]</option>
-                                    <option v-for="pr in (purchase_requisitions || [])" :key="pr.id" :value="pr.id">
-                                        [[ pr.requisition_number ]]
-                                    </option>
-                                </select>
-                            </div>
+                            <!-- في حالة الاعتماد: عرض المصدر كمرجع مغلق للقراءة فقط لمنع تغيير المصدر بعد الاعتماد -->
+                            <template v-if="forms.po.status && !['DRAFT', 'draft'].includes(forms.po.status)">
+                                <div class="flex items-center gap-2">
+                                    <span v-if="forms.po.pr" class="px-2.5 py-1 bg-white border border-indigo-200 text-indigo-800 rounded-xl font-bold font-mono text-[11px] flex items-center gap-1 shadow-2xs">
+                                        <i class="fas fa-link text-indigo-500 text-[10px]"></i>
+                                        <span>PR:</span>
+                                        <span>[[ (purchase_requisitions || []).find(p => p.id === forms.po.pr)?.requisition_number || ('#' + forms.po.pr) ]]</span>
+                                    </span>
+                                    <span v-if="forms.po.rfq" class="px-2.5 py-1 bg-white border border-indigo-200 text-indigo-800 rounded-xl font-bold font-mono text-[11px] flex items-center gap-1 shadow-2xs">
+                                        <i class="fas fa-link text-indigo-500 text-[10px]"></i>
+                                        <span>RFQ:</span>
+                                        <span>[[ (rfqs || []).find(r => r.id === forms.po.rfq)?.rfq_number || ('#' + forms.po.rfq) ]]</span>
+                                    </span>
+                                    <span v-if="!forms.po.pr && !forms.po.rfq" class="text-slate-400 font-bold text-[11px] italic">
+                                        [[ isArabic ? 'أمر شراء مباشر (بدون PR/RFQ)' : 'Direct PO' ]]
+                                    </span>
+                                </div>
+                            </template>
 
-                            <!-- Select RFQ -->
-                            <div class="flex items-center gap-1.5">
-                                <label class="text-[10px] font-bold text-slate-600">[[ isArabic ? 'طلب أسعار (RFQ):' : 'RFQ:' ]]</label>
-                                <select v-model="forms.po.rfq" @change="onPORFQSelect()" class="bg-white border border-indigo-200 rounded-xl px-2.5 py-1 text-xs font-bold text-indigo-900 outline-none">
-                                    <option :value="null">[[ isArabic ? '-- اختياري: سحب من RFQ --' : '-- None --' ]]</option>
-                                    <option v-for="rfq in (rfqs || [])" :key="rfq.id" :value="rfq.id">
-                                        [[ rfq.rfq_number ]]
-                                    </option>
-                                </select>
-                            </div>
+                            <!-- في حالة المسودة (Draft): إتاحة سحب وربط طلب الشراء أو عرض السعر -->
+                            <template v-else>
+                                <!-- Select PR -->
+                                <div class="flex items-center gap-1.5">
+                                    <label class="text-[10px] font-bold text-slate-600">[[ isArabic ? 'طلب شراء (PR):' : 'PR:' ]]</label>
+                                    <select v-model="forms.po.pr" @change="onPOPRSelect()" class="bg-white border border-indigo-200 rounded-xl px-2.5 py-1 text-xs font-bold text-indigo-900 outline-none">
+                                        <option :value="null">[[ isArabic ? '-- اختياري: سحب من PR --' : '-- None --' ]]</option>
+                                        <option v-for="pr in (purchase_requisitions || [])" :key="pr.id" :value="pr.id">
+                                            [[ pr.requisition_number ]]
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <!-- Select RFQ -->
+                                <div class="flex items-center gap-1.5">
+                                    <label class="text-[10px] font-bold text-slate-600">[[ isArabic ? 'طلب أسعار (RFQ):' : 'RFQ:' ]]</label>
+                                    <select v-model="forms.po.rfq" @change="onPORFQSelect()" class="bg-white border border-indigo-200 rounded-xl px-2.5 py-1 text-xs font-bold text-indigo-900 outline-none">
+                                        <option :value="null">[[ isArabic ? '-- اختياري: سحب من RFQ --' : '-- None --' ]]</option>
+                                        <option v-for="rfq in (rfqs || [])" :key="rfq.id" :value="rfq.id">
+                                            [[ rfq.rfq_number ]]
+                                        </option>
+                                    </select>
+                                </div>
+                            </template>
                         </div>
                     </div>
 

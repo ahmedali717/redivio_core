@@ -92,6 +92,17 @@ class PurchaseRequisitionSerializer(serializers.ModelSerializer):
             PurchaseRequisitionLine.objects.create(requisition=pr, **line)
         return pr
 
+    def update(self, instance, validated_data):
+        lines_data = validated_data.pop('lines', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if lines_data is not None:
+            instance.lines.all().delete()
+            for line in lines_data:
+                PurchaseRequisitionLine.objects.create(requisition=instance, **line)
+        return instance
+
 
 # --- 2. RFQ & Supplier Quotation Serializers ---
 class RFQLineSerializer(serializers.ModelSerializer):
@@ -122,6 +133,20 @@ class RequestForQuotationSerializer(serializers.ModelSerializer):
         for line in lines_data:
             RFQLine.objects.create(rfq=rfq, **line)
         return rfq
+
+    def update(self, instance, validated_data):
+        lines_data = validated_data.pop('lines', None)
+        vendors = validated_data.pop('vendors', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if vendors is not None:
+            instance.vendors.set(vendors)
+        if lines_data is not None:
+            instance.lines.all().delete()
+            for line in lines_data:
+                RFQLine.objects.create(rfq=instance, **line)
+        return instance
 
 
 class SupplierQuotationLineSerializer(serializers.ModelSerializer):
@@ -299,6 +324,18 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         for line_data in lines_data:
             PurchaseOrderLine.objects.create(po=purchase_order, **line_data)
         return purchase_order
+
+    def update(self, instance, validated_data):
+        lines_data = validated_data.pop('lines', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if lines_data is not None and instance.status in ['DRAFT', 'draft']:
+            instance.lines.all().delete()
+            for line_data in lines_data:
+                PurchaseOrderLine.objects.create(po=instance, **line_data)
+        return instance
 
 
 # --- 5. Purchase Return (RTV) Serializers ---
