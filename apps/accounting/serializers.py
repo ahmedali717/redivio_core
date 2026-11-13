@@ -33,6 +33,14 @@ class JournalEntryLineSerializer(serializers.ModelSerializer):
             'party_type', 'party_id', 'party_name', 'debit', 'credit',
             'cost_center', 'cost_center_name', 'remark', 'extra_data'
         ]
+        read_only_fields = ['id', 'journal_entry']
+        extra_kwargs = {
+            'party_id': {'required': False, 'allow_null': True},
+            'party_name': {'required': False, 'allow_blank': True},
+            'cost_center': {'required': False, 'allow_null': True},
+            'remark': {'required': False, 'allow_blank': True},
+            'extra_data': {'required': False}
+        }
 
 
 class JournalEntrySerializer(serializers.ModelSerializer):
@@ -56,16 +64,34 @@ class JournalEntrySerializer(serializers.ModelSerializer):
 
         journal_entry = JournalEntry.objects.create(**validated_data)
         for line in lines_data:
+            party_id = line.get('party_id')
+            if party_id == '' or party_id == 'null' or party_id is None:
+                party_id = None
+            else:
+                try:
+                    party_id = int(party_id)
+                except (ValueError, TypeError):
+                    party_id = None
+
+            cost_center_id = line.get('cost_center')
+            if cost_center_id == '' or cost_center_id == 'null' or cost_center_id is None:
+                cost_center_id = None
+            else:
+                try:
+                    cost_center_id = int(cost_center_id)
+                except (ValueError, TypeError):
+                    cost_center_id = None
+
             JournalEntryLine.objects.create(
                 journal_entry=journal_entry,
                 account_id=line.get('account'),
-                party_type=line.get('party_type', 'NONE'),
-                party_id=line.get('party_id'),
-                party_name=line.get('party_name', ''),
-                debit=line.get('debit', 0),
-                credit=line.get('credit', 0),
-                cost_center_id=line.get('cost_center'),
-                remark=line.get('remark', '')
+                party_type=line.get('party_type') or 'NONE',
+                party_id=party_id,
+                party_name=line.get('party_name') or '',
+                debit=line.get('debit') or 0,
+                credit=line.get('credit') or 0,
+                cost_center_id=cost_center_id,
+                remark=line.get('remark') or ''
             )
         journal_entry.validate_and_compute_totals()
         return journal_entry
@@ -82,19 +108,38 @@ class JournalEntrySerializer(serializers.ModelSerializer):
         if lines_data is not None:
             instance.lines.all().delete()
             for line in lines_data:
+                party_id = line.get('party_id')
+                if party_id == '' or party_id == 'null' or party_id is None:
+                    party_id = None
+                else:
+                    try:
+                        party_id = int(party_id)
+                    except (ValueError, TypeError):
+                        party_id = None
+
+                cost_center_id = line.get('cost_center')
+                if cost_center_id == '' or cost_center_id == 'null' or cost_center_id is None:
+                    cost_center_id = None
+                else:
+                    try:
+                        cost_center_id = int(cost_center_id)
+                    except (ValueError, TypeError):
+                        cost_center_id = None
+
                 JournalEntryLine.objects.create(
                     journal_entry=instance,
                     account_id=line.get('account'),
-                    party_type=line.get('party_type', 'NONE'),
-                    party_id=line.get('party_id'),
-                    party_name=line.get('party_name', ''),
-                    debit=line.get('debit', 0),
-                    credit=line.get('credit', 0),
-                    cost_center_id=line.get('cost_center'),
-                    remark=line.get('remark', '')
+                    party_type=line.get('party_type') or 'NONE',
+                    party_id=party_id,
+                    party_name=line.get('party_name') or '',
+                    debit=line.get('debit') or 0,
+                    credit=line.get('credit') or 0,
+                    cost_center_id=cost_center_id,
+                    remark=line.get('remark') or ''
                 )
         instance.validate_and_compute_totals()
         return instance
+
 
 
 class GLEntrySerializer(serializers.ModelSerializer):

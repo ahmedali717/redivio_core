@@ -6863,6 +6863,18 @@ createApp({
                             this.loading = false;
                             return;
                         }
+                        if (Array.isArray(finalData.lines)) {
+                            finalData.lines = finalData.lines.map(l => ({
+                                account: l.account ? parseInt(l.account) : null,
+                                party_type: l.party_type || 'NONE',
+                                party_id: l.party_id ? parseInt(l.party_id) : null,
+                                party_name: l.party_name || '',
+                                debit: parseFloat(l.debit) || 0,
+                                credit: parseFloat(l.credit) || 0,
+                                cost_center: l.cost_center ? parseInt(l.cost_center) : null,
+                                remark: l.remark || ''
+                            })).filter(l => l.account);
+                        }
                     }
 
                     payload = JSON.stringify(finalData);
@@ -6902,12 +6914,26 @@ createApp({
                             sku: this.isArabic ? 'رمز الصنف (SKU)' : 'SKU',
                             category: this.isArabic ? 'المجموعة' : 'Category',
                             base_uom: this.isArabic ? 'وحدة القياس' : 'Base UOM',
-                            opco: this.isArabic ? 'الشركة' : 'OpCo'
+                            opco: this.isArabic ? 'الشركة' : 'OpCo',
+                            lines: this.isArabic ? 'سطور القيد' : 'Lines'
                         };
                         const firstKey = Object.keys(errJson)[0];
                         if (firstKey) {
                             const val = errJson[firstKey];
-                            const rawMsg = Array.isArray(val) ? val[0] : (typeof val === 'object' ? JSON.stringify(val) : val);
+                            let rawMsg = '';
+                            if (Array.isArray(val)) {
+                                if (val[0] && typeof val[0] === 'object') {
+                                    const subKey = Object.keys(val[0])[0];
+                                    const subVal = val[0][subKey];
+                                    rawMsg = `${subKey}: ${Array.isArray(subVal) ? subVal[0] : subVal}`;
+                                } else {
+                                    rawMsg = val[0];
+                                }
+                            } else if (typeof val === 'object' && val !== null) {
+                                rawMsg = JSON.stringify(val);
+                            } else {
+                                rawMsg = val;
+                            }
                             const label = fieldLabels[firstKey] || firstKey;
                             errorMessage = (firstKey === 'non_field_errors' || firstKey === 'detail' || firstKey === 'error')
                                 ? rawMsg
