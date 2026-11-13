@@ -179,6 +179,10 @@ createApp({
             paySearch: '',
             payTypeFilter: 'ALL',
             activeReportTab: 'trial_balance',
+            reportSearch: '',
+            reportRootFilter: 'ALL',
+            expandedReportNodes: {},
+            reportViewMode: 'tree',
             vendorSearch: '',
             vendorTypeFilter: 'ALL',
             vendorViewMode: 'cards',
@@ -764,6 +768,115 @@ createApp({
     },
 
     computed: {
+        currentReportRows() {
+            if (this.activeReportTab === 'trial_balance') {
+                return (this.accountingReports.trialBalance && this.accountingReports.trialBalance.rows) || [];
+            } else if (this.activeReportTab === 'profit_and_loss') {
+                return (this.accountingReports.profitAndLoss && this.accountingReports.profitAndLoss.rows) || [];
+            } else if (this.activeReportTab === 'balance_sheet') {
+                return (this.accountingReports.balanceSheet && this.accountingReports.balanceSheet.rows) || [];
+            }
+            return [];
+        },
+
+        hierarchicalReportAccounts() {
+            const rawList = this.currentReportRows;
+            if (!rawList || rawList.length === 0) return [];
+
+            const nodeMap = new Map();
+            const childrenMap = new Map();
+            const rootNodes = [];
+
+            rawList.forEach(a => {
+                nodeMap.set(a.account_id, a);
+                childrenMap.set(a.account_id, []);
+            });
+
+            rawList.forEach(a => {
+                if (a.parent_id && nodeMap.has(a.parent_id)) {
+                    childrenMap.get(a.parent_id).push(a);
+                } else {
+                    rootNodes.push(a);
+                }
+            });
+
+            const sortFn = (x, y) => (x.account_number || '').localeCompare(y.account_number || '', undefined, { numeric: true });
+            rootNodes.sort(sortFn);
+            childrenMap.forEach(arr => arr.sort(sortFn));
+
+            const q = (this.reportSearch || '').trim().toLowerCase();
+            const rootFilter = this.reportRootFilter;
+
+            const matchesQuery = (acc) => {
+                if (!q) return true;
+                return (acc.account_number && acc.account_number.toLowerCase().includes(q)) ||
+                       (acc.account_name && acc.account_name.toLowerCase().includes(q));
+            };
+
+            const hasMatchingDescendant = (accId) => {
+                const children = childrenMap.get(accId) || [];
+                for (const child of children) {
+                    if (matchesQuery(child) || hasMatchingDescendant(child.account_id)) return true;
+                }
+                return false;
+            };
+
+            const result = [];
+            const traverse = (node, level, ancestors) => {
+                if (rootFilter && rootFilter !== 'ALL' && node.root_type !== rootFilter) {
+                    return;
+                }
+
+                const children = childrenMap.get(node.account_id) || [];
+                const hasChildren = children.length > 0;
+                const isMatch = matchesQuery(node);
+                const hasMatchBelow = q ? hasMatchingDescendant(node.account_id) : false;
+
+                const isExpanded = q
+                    ? (hasMatchBelow || !!this.expandedReportNodes[node.account_id])
+                    : (this.expandedReportNodes[node.account_id] !== undefined ? !!this.expandedReportNodes[node.account_id] : (level < 2));
+
+                let isVisible = true;
+                if (q) {
+                    isVisible = isMatch || hasMatchBelow;
+                } else {
+                    for (const ancId of ancestors) {
+                        const ancExpanded = (this.expandedReportNodes[ancId] !== undefined)
+                            ? !!this.expandedReportNodes[ancId]
+                            : true;
+                        if (!ancExpanded) {
+                            isVisible = false;
+                            break;
+                        }
+                    }
+                }
+
+                result.push({
+                    ...node,
+                    id: node.account_id,
+                    level,
+                    hasChildren,
+                    isExpanded,
+                    isVisible,
+                    childrenCount: children.length
+                });
+
+                for (const child of children) {
+                    traverse(child, level + 1, [...ancestors, node.account_id]);
+                }
+            };
+
+            for (const root of rootNodes) {
+                traverse(root, 0, []);
+            }
+
+            return result;
+        },
+
+        visibleHierarchicalReportAccounts() {
+            return this.hierarchicalReportAccounts.filter(a => a.isVisible);
+        },
+
         financeQueueItems() {
             const queue = [];
 
@@ -9501,6 +9614,31 @@ createApp({
             });
             this.expandedAccountNodes = newMap;
         },
+
+        toggleReportNode(nodeId) {
+            const current = this.expandedReportNodes[nodeId];
+            this.expandedReportNodes = {
+                ...this.expandedReportNodes,
+                [nodeId]: current !== undefined ? !current : false
+            };
+        },
+
+        expandAllReportNodes() {
+            const newMap = {};
+            (this.currentReportRows || []).forEach(a => {
+                if (a.is_group || a.has_children) newMap[a.account_id] = true;
+            });
+            this.expandedReportNodes = newMap;
+        },
+
+        collapseAllReportNodes() {
+            const newMap = {};
+            (this.currentReportRows || []).forEach(a => {
+                if (a.is_group || a.has_children) newMap[a.account_id] = false;
+            });
+            this.expandedReportNodes = newMap;
+        },
+
 
         openAccountLedger(acc) {
             this.accountingTab = 'general_ledger';

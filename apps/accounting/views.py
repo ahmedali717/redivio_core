@@ -320,13 +320,65 @@ class PaymentEntryViewSet(viewsets.ModelViewSet):
 
 class FinancialReportsViewSet(viewsets.ViewSet):
     """
-    محرك التقارير المالية المتطورة المستوحى من ERPNext:
-    - ميزان المراجعة (Trial Balance)
-    - قائمة الدخل / الأرباح والخسائر (Profit and Loss)
-    - الميزانية العمومية (Balance Sheet)
-    - كشف حساب الأستاذ العام (General Ledger Statement)
+    محرك التقارير المالية المتطورة المستوحى من ERPNext و Odoo:
+    - ميزان المراجعة الشجري الهرمي (Hierarchical Trial Balance)
+    - قائمة الدخل / الأرباح والخسائر الشجرية (Profit and Loss Statement)
+    - الميزانية العمومية وقائمة المركز المالي الشجرية (Balance Sheet)
+    - دعم التوسيع والضم التلقائي واليدوي لجميع مستويات الحسابات
     """
     permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def _build_account_tree(accounts_qs, gl_qs):
+        import collections
+        accounts = list(accounts_qs.order_by('account_number'))
+        account_map = {acc.id: acc for acc in accounts}
+        children_map = collections.defaultdict(list)
+        for acc in accounts:
+            if acc.parent_id and acc.parent_id in account_map:
+                children_map[acc.parent_id].append(acc.id)
+
+        agg = gl_qs.values('account_id').annotate(d=Sum('debit'), c=Sum('credit'))
+        leaf_debits = {row['account_id']: (row['d'] or decimal.Decimal('0.00')) for row in agg}
+        leaf_credits = {row['account_id']: (row['c'] or decimal.Decimal('0.00')) for row in agg}
+
+        # حساب المجاميع التراكمية للمجموعات والأصول والفروع (Rollup)
+        memo = {}
+        def get_rollup(acc_id):
+            if acc_id in memo:
+                return memo[acc_id]
+            d = leaf_debits.get(acc_id, decimal.Decimal('0.00'))
+            c = leaf_credits.get(acc_id, decimal.Decimal('0.00'))
+            for child_id in children_map.get(acc_id, []):
+                cd, cc = get_rollup(child_id)
+                d += cd
+                c += cc
+            memo[acc_id] = (d, c)
+            return d, c
+
+        rows = []
+        for acc in accounts:
+            d, c = get_rollup(acc.id)
+            rows.append({
+                'account_id': acc.id,
+                'parent_id': acc.parent_id,
+                'is_group': acc.is_group,
+                'account_number': acc.account_number,
+                'account_name': acc.account_name,
+                'root_type': acc.root_type,
+                'account_type': acc.account_type,
+                'currency': acc.currency or 'SAR',
+                'has_children': len(children_map.get(acc.id, [])) > 0,
+                'children_count': len(children_map.get(acc.id, [])),
+                'debit': float(d),
+                'credit': float(c),
+                'net': float(d - c)
+            })
+
+        total_debit = sum(leaf_debits.values(), decimal.Decimal('0.00'))
+        total_credit = sum(leaf_credits.values(), decimal.Decimal('0.00'))
+
+        return rows, total_debit, total_credit
 
     @action(detail=False, methods=['get'], url_path='trial-balance')
     def trial_balance(self, request):
@@ -334,40 +386,19 @@ class FinancialReportsViewSet(viewsets.ViewSet):
         from_date = request.query_params.get('from_date')
         to_date = request.query_params.get('to_date', datetime.date.today().isoformat())
 
-        accounts = Account.objects.filter(is_group=False)
+        accounts_qs = Account.objects.all()
         if opco_id:
-            accounts = accounts.filter(opco_id=opco_id)
+            accounts_qs = accounts_qs.filter(opco_id=opco_id)
 
-        rows = []
-        total_debit = decimal.Decimal('0.00')
-        total_credit = decimal.Decimal('0.00')
+        gl_qs = GLEntry.objects.filter(is_cancelled=False)
+        if opco_id:
+            gl_qs = gl_qs.filter(opco_id=opco_id)
+        if from_date:
+            gl_qs = gl_qs.filter(posting_date__gte=from_date)
+        if to_date:
+            gl_qs = gl_qs.filter(posting_date__lte=to_date)
 
-        for acc in accounts:
-            gl_qs = GLEntry.objects.filter(account=acc, is_cancelled=False)
-            if opco_id:
-                gl_qs = gl_qs.filter(opco_id=opco_id)
-            if from_date:
-                gl_qs = gl_qs.filter(posting_date__gte=from_date)
-            if to_date:
-                gl_qs = gl_qs.filter(posting_date__lte=to_date)
-
-            totals = gl_qs.aggregate(d=Sum('debit'), c=Sum('credit'))
-            debit = totals['d'] or decimal.Decimal('0.00')
-            credit = totals['c'] or decimal.Decimal('0.00')
-
-            if debit > 0 or credit > 0:
-                net = debit - credit
-                total_debit += debit
-                total_credit += credit
-                rows.append({
-                    'account_id': acc.id,
-                    'account_number': acc.account_number,
-                    'account_name': acc.account_name,
-                    'root_type': acc.root_type,
-                    'debit': float(debit),
-                    'credit': float(credit),
-                    'net': float(net)
-                })
+        rows, total_debit, total_credit = self._build_account_tree(accounts_qs, gl_qs)
 
         return Response({
             'from_date': from_date,
@@ -384,48 +415,23 @@ class FinancialReportsViewSet(viewsets.ViewSet):
         from_date = request.query_params.get('from_date')
         to_date = request.query_params.get('to_date', datetime.date.today().isoformat())
 
-        # حساب الإيرادات (Income)
-        income_accs = Account.objects.filter(root_type='INCOME', is_group=False)
+        accounts_qs = Account.objects.filter(root_type__in=['INCOME', 'EXPENSE'])
         if opco_id:
-            income_accs = income_accs.filter(opco_id=opco_id)
-        
-        income_rows = []
-        total_income = decimal.Decimal('0.00')
-        for acc in income_accs:
-            gl = GLEntry.objects.filter(account=acc, is_cancelled=False)
-            if opco_id:
-                gl = gl.filter(opco_id=opco_id)
-            if from_date:
-                gl = gl.filter(posting_date__gte=from_date)
-            if to_date:
-                gl = gl.filter(posting_date__lte=to_date)
-            t = gl.aggregate(d=Sum('debit'), c=Sum('credit'))
-            amt = (t['c'] or 0) - (t['d'] or 0)
-            if amt != 0:
-                total_income += amt
-                income_rows.append({'account_name': acc.account_name, 'amount': float(amt)})
+            accounts_qs = accounts_qs.filter(opco_id=opco_id)
 
-        # حساب المصروفات (Expenses)
-        expense_accs = Account.objects.filter(root_type='EXPENSE', is_group=False)
+        gl_qs = GLEntry.objects.filter(is_cancelled=False)
         if opco_id:
-            expense_accs = expense_accs.filter(opco_id=opco_id)
-        
-        expense_rows = []
-        total_expenses = decimal.Decimal('0.00')
-        for acc in expense_accs:
-            gl = GLEntry.objects.filter(account=acc, is_cancelled=False)
-            if opco_id:
-                gl = gl.filter(opco_id=opco_id)
-            if from_date:
-                gl = gl.filter(posting_date__gte=from_date)
-            if to_date:
-                gl = gl.filter(posting_date__lte=to_date)
-            t = gl.aggregate(d=Sum('debit'), c=Sum('credit'))
-            amt = (t['d'] or 0) - (t['c'] or 0)
-            if amt != 0:
-                total_expenses += amt
-                expense_rows.append({'account_name': acc.account_name, 'amount': float(amt)})
+            gl_qs = gl_qs.filter(opco_id=opco_id)
+        if from_date:
+            gl_qs = gl_qs.filter(posting_date__gte=from_date)
+        if to_date:
+            gl_qs = gl_qs.filter(posting_date__lte=to_date)
 
+        rows, _, _ = self._build_account_tree(accounts_qs, gl_qs)
+
+        # حساب الإيرادات والمصروفات وصافي الربح
+        total_income = sum(r['credit'] - r['debit'] for r in rows if r['root_type'] == 'INCOME' and not r['has_children'])
+        total_expenses = sum(r['debit'] - r['credit'] for r in rows if r['root_type'] == 'EXPENSE' and not r['has_children'])
         net_profit = total_income - total_expenses
 
         return Response({
@@ -434,8 +440,7 @@ class FinancialReportsViewSet(viewsets.ViewSet):
             'total_income': float(total_income),
             'total_expenses': float(total_expenses),
             'net_profit': float(net_profit),
-            'income_rows': income_rows,
-            'expense_rows': expense_rows
+            'rows': rows
         })
 
     @action(detail=False, methods=['get'], url_path='balance-sheet')
@@ -443,43 +448,39 @@ class FinancialReportsViewSet(viewsets.ViewSet):
         opco_id = get_request_opco_id(request)
         as_of_date = request.query_params.get('as_of_date', datetime.date.today().isoformat())
 
-        def get_root_total(root_type):
-            accs = Account.objects.filter(root_type=root_type, is_group=False)
-            if opco_id:
-                accs = accs.filter(opco_id=opco_id)
-            total = decimal.Decimal('0.00')
-            items = []
-            for acc in accs:
-                gl = GLEntry.objects.filter(account=acc, is_cancelled=False, posting_date__lte=as_of_date)
-                if opco_id:
-                    gl = gl.filter(opco_id=opco_id)
-                t = gl.aggregate(d=Sum('debit'), c=Sum('credit'))
-                d = t['d'] or decimal.Decimal('0.00')
-                c = t['c'] or decimal.Decimal('0.00')
-                val = (d - c) if root_type in ['ASSET', 'EXPENSE'] else (c - d)
-                if val != 0:
-                    total += val
-                    items.append({'account_name': acc.account_name, 'amount': float(val)})
-            return total, items
+        accounts_qs = Account.objects.filter(root_type__in=['ASSET', 'LIABILITY', 'EQUITY'])
+        if opco_id:
+            accounts_qs = accounts_qs.filter(opco_id=opco_id)
 
-        total_assets, asset_items = get_root_total('ASSET')
-        total_liabilities, liability_items = get_root_total('LIABILITY')
-        total_equity, equity_items = get_root_total('EQUITY')
+        gl_qs = GLEntry.objects.filter(is_cancelled=False, posting_date__lte=as_of_date)
+        if opco_id:
+            gl_qs = gl_qs.filter(opco_id=opco_id)
 
-        # أرباح الفترة تضاف إلى حقوق الملكية
-        inc, _ = get_root_total('INCOME')
-        exp, _ = get_root_total('EXPENSE')
+        rows, _, _ = self._build_account_tree(accounts_qs, gl_qs)
+
+        total_assets = sum(r['debit'] - r['credit'] for r in rows if r['root_type'] == 'ASSET' and not r['has_children'])
+        total_liabilities = sum(r['credit'] - r['debit'] for r in rows if r['root_type'] == 'LIABILITY' and not r['has_children'])
+        total_equity = sum(r['credit'] - r['debit'] for r in rows if r['root_type'] == 'EQUITY' and not r['has_children'])
+
+        # أرباح الفترة
+        pnl_accs = Account.objects.filter(root_type__in=['INCOME', 'EXPENSE'])
+        if opco_id:
+            pnl_accs = pnl_accs.filter(opco_id=opco_id)
+        pnl_rows, _, _ = self._build_account_tree(pnl_accs, gl_qs)
+        inc = sum(r['credit'] - r['debit'] for r in pnl_rows if r['root_type'] == 'INCOME' and not r['has_children'])
+        exp = sum(r['debit'] - r['credit'] for r in pnl_rows if r['root_type'] == 'EXPENSE' and not r['has_children'])
         period_profit = inc - exp
-        total_equity_and_reserves = total_equity + period_profit
+
+        total_equity_with_profit = total_equity + period_profit
+        is_balanced = abs(total_assets - (total_liabilities + total_equity_with_profit)) < 0.01
 
         return Response({
             'as_of_date': as_of_date,
             'total_assets': float(total_assets),
             'total_liabilities': float(total_liabilities),
-            'total_equity': float(total_equity_and_reserves),
+            'total_equity': float(total_equity_with_profit),
             'period_profit': float(period_profit),
-            'is_balanced': abs(total_assets - (total_liabilities + total_equity_and_reserves)) < decimal.Decimal('0.01'),
-            'asset_items': asset_items,
-            'liability_items': liability_items,
-            'equity_items': equity_items
+            'is_balanced': is_balanced,
+            'rows': rows
         })
+
