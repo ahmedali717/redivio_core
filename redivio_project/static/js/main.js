@@ -7160,23 +7160,29 @@ createApp({
                             opco: this.isArabic ? 'الشركة' : 'OpCo',
                             lines: this.isArabic ? 'سطور القيد' : 'Lines'
                         };
+                        const formatErrorVal = (v) => {
+                            if (!v) return '';
+                            if (typeof v === 'string') return v;
+                            if (Array.isArray(v)) {
+                                return v.map(item => formatErrorVal(item)).filter(Boolean).join(' | ');
+                            }
+                            if (typeof v === 'object') {
+                                return Object.entries(v)
+                                    .map(([k, val]) => {
+                                        const sub = formatErrorVal(val);
+                                        const kLabel = fieldLabels[k] || k;
+                                        return sub ? `${kLabel}: ${sub}` : '';
+                                    })
+                                    .filter(Boolean)
+                                    .join(' ، ');
+                            }
+                            return String(v);
+                        };
+
                         const firstKey = Object.keys(errJson)[0];
                         if (firstKey) {
                             const val = errJson[firstKey];
-                            let rawMsg = '';
-                            if (Array.isArray(val)) {
-                                if (val[0] && typeof val[0] === 'object') {
-                                    const subKey = Object.keys(val[0])[0];
-                                    const subVal = val[0][subKey];
-                                    rawMsg = `${subKey}: ${Array.isArray(subVal) ? subVal[0] : subVal}`;
-                                } else {
-                                    rawMsg = val[0];
-                                }
-                            } else if (typeof val === 'object' && val !== null) {
-                                rawMsg = JSON.stringify(val);
-                            } else {
-                                rawMsg = val;
-                            }
+                            const rawMsg = formatErrorVal(val);
                             const label = fieldLabels[firstKey] || firstKey;
                             errorMessage = (firstKey === 'non_field_errors' || firstKey === 'detail' || firstKey === 'error')
                                 ? rawMsg
@@ -7908,13 +7914,23 @@ createApp({
             this.forms.stock_entry.filterType = 'ALL';
         },
 
-        // 🚀 وظائف لوحة التحكم الحية (WMS Dashboard Actions)
+        // 🚀 وظائف لوحة التحكم الحية وربط استلام أمر الشراء مع شاشة المخازن الرسمية
         openReceiptModal(poId) {
-            this.modalType = 'stock_entry';
-            this.activeOperation = 'po_receipt'; // وضع الاستلام من أمر شراء
+            this.showModal = false;
+            this.view = 'inventory_module';
+            this.inventoryTab = 'moves';
+            this.activeOperation = 'po_receipt';
+            if (!this.forms.stock_entry) {
+                this.forms.stock_entry = { items: [], po_id: '', so_id: '', move_type: 'IN' };
+            }
             this.forms.stock_entry.po_id = poId;
-            this.showModal = true;
-            this.fetchPODetailsForReceipt(); // جلب بيانات الأصناف للأمر
+            if (typeof this.fetchPendingPOs === 'function') {
+                this.fetchPendingPOs().then(() => {
+                    this.fetchPODetails();
+                });
+            } else {
+                this.fetchPODetails();
+            }
         },
 
         openDeliveryModal(soId) {

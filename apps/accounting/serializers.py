@@ -35,6 +35,7 @@ class JournalEntryLineSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'journal_entry']
         extra_kwargs = {
+            'party_type': {'required': False, 'allow_blank': True},
             'party_id': {'required': False, 'allow_null': True},
             'party_name': {'required': False, 'allow_blank': True},
             'cost_center': {'required': False, 'allow_null': True},
@@ -44,7 +45,7 @@ class JournalEntryLineSerializer(serializers.ModelSerializer):
 
 
 class JournalEntrySerializer(serializers.ModelSerializer):
-    lines = JournalEntryLineSerializer(many=True, required=False)
+    lines = JournalEntryLineSerializer(many=True, required=False, allow_null=True)
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
 
     class Meta:
@@ -56,6 +57,29 @@ class JournalEntrySerializer(serializers.ModelSerializer):
             'extra_data', 'created_at', 'updated_at', 'lines'
         ]
         read_only_fields = ['entry_number', 'total_debit', 'total_credit', 'difference', 'docstatus']
+
+    def to_internal_value(self, data):
+        # تنظيف أسطر القيد لضمان عدم حدوث أخطاء تحويل أو قيم نصية فارغة
+        if 'lines' in data and isinstance(data['lines'], list):
+            cleaned_lines = []
+            for line in data['lines']:
+                if not isinstance(line, dict):
+                    continue
+                c_line = dict(line)
+                if not c_line.get('party_type'):
+                    c_line['party_type'] = 'NONE'
+                if c_line.get('party_id') in ['', 'null', None, 0]:
+                    c_line['party_id'] = None
+                if c_line.get('cost_center') in ['', 'null', None, 0]:
+                    c_line['cost_center'] = None
+                if c_line.get('debit') in ['', None]:
+                    c_line['debit'] = 0
+                if c_line.get('credit') in ['', None]:
+                    c_line['credit'] = 0
+                cleaned_lines.append(c_line)
+            data = dict(data)
+            data['lines'] = cleaned_lines
+        return super().to_internal_value(data)
 
     def create(self, validated_data):
         lines_data = self.context.get('request').data.get('lines', []) if self.context.get('request') else []

@@ -211,10 +211,12 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
 class StockReceiptLineSerializer(serializers.ModelSerializer):
     material_id = serializers.IntegerField(required=False)
     material_name = serializers.CharField(source='material.name', read_only=True)
+    material_sku = serializers.CharField(source='material.sku', read_only=True)
+    storage_bin_code = serializers.CharField(source='storage_bin.code', read_only=True)
     
     class Meta:
         model = StockReceiptLine
-        fields = ['material', 'material_id', 'material_name', 'quantity', 'storage_bin']
+        fields = ['material', 'material_id', 'material_name', 'material_sku', 'quantity', 'storage_bin', 'storage_bin_code']
         extra_kwargs = {
             'material': {'required': False, 'allow_null': True},
             'storage_bin': {'required': False, 'allow_null': True},
