@@ -187,8 +187,34 @@
 
         /* 🌟 Ultra-Crisp Dark Mode Normalization & Contrast Rules (WCAG AAA) */
         .theme-dark h1, .theme-dark h2, .theme-dark h3, .theme-dark h4, .theme-dark h5, .theme-dark h6 {
-            color: #FFFFFF !important;
+            color: #FFFFFF;
             font-weight: 800 !important;
+        }
+
+        /* Preserve Intentional Accent Colors for Badges and KPI Numbers */
+        .theme-dark .text-rose-400, .theme-dark .text-rose-500, .theme-dark .text-red-400, .theme-dark .text-red-500, .theme-dark .text-red-600 {
+            color: #F43F5E !important;
+        }
+        .theme-dark .text-amber-400, .theme-dark .text-amber-500, .theme-dark .text-yellow-400, .theme-dark .text-amber-600 {
+            color: #F59E0B !important;
+        }
+        .theme-dark .text-emerald-400, .theme-dark .text-emerald-500, .theme-dark .text-green-400, .theme-dark .text-emerald-600 {
+            color: #10B981 !important;
+        }
+        .theme-dark .text-cyan-400, .theme-dark .text-cyan-300 {
+            color: #00D2FF !important;
+        }
+        .theme-dark .text-blue-400, .theme-dark .text-blue-500 {
+            color: #38BDF8 !important;
+        }
+        .theme-dark .text-indigo-400, .theme-dark .text-indigo-300 {
+            color: #818CF8 !important;
+        }
+
+        /* Prevent Leaking White Background Gradients in Dark Mode */
+        .theme-dark [class*="to-white"],
+        .theme-dark [class*="from-white"] {
+            background-image: none !important;
         }
 
         .theme-dark .text-slate-800,

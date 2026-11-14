@@ -57,16 +57,19 @@
         </div>
     </div>
 
-    <div v-else class="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden flex-1 flex flex-col animate-in zoom-in-95 duration-500">
-        
-        <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
+    <div v-else class="liquid-glass-card rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex-1 flex flex-col animate-in zoom-in-95 duration-500 relative">
+        <div class="glass-sheen"></div>
+        <div class="p-6 border-b border-white/10 flex items-center justify-between bg-white/[0.03] backdrop-blur-xl relative z-10">
             <div class="flex items-center gap-4">
-                <button @click="activeOperation = null" class="w-11 h-11 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-500 hover:bg-slate-900 hover:text-white hover:rotate-12 transition-all shadow-sm">
+                <button @click="activeOperation = null" class="w-11 h-11 liquid-glass-btn rounded-2xl flex items-center justify-center text-slate-300 hover:text-white border border-white/10 hover:border-cyan-400/40 transition-all shadow-sm">
                     <i class="fas fa-arrow-right"></i>
                 </button>
                 <div>
-                    <h3 class="font-black text-slate-800 text-lg">[[ getOperationTitle() ]]</h3>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Draft • [[ activeOperation ]]</p>
+                    <h3 class="font-black text-white text-lg tracking-tight">[[ getOperationTitle() ]]</h3>
+                    <p class="text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                        Draft • [[ activeOperation ]]
+                    </p>
                 </div>
             </div>
         </div>
