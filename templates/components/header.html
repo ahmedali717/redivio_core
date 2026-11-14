@@ -16,20 +16,20 @@
         </h2>
 
         <div v-if="!['global_config', 'org_builder', 'users'].includes(view)" class="flex items-center gap-4 mt-1">
-            <div class="flex flex-col border-l-2 border-cyan-400 pl-3">
-                <span class="text-xs font-bold text-slate-200" v-text="licenseStatus.companyName"></span>
-                <span class="text-[10px] text-slate-400 font-medium">
+            <div class="flex flex-col border-l-2 border-blue-500 dark:border-cyan-400 pl-3">
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200" v-text="licenseStatus.companyName"></span>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                     <span v-text="isArabic ? 'تاريخ الإنشاء:' : 'Created:'"></span>
-                    <span class="text-slate-300 font-mono" v-text="licenseStatus.createdAt ? new Date(licenseStatus.createdAt).toLocaleDateString('en-GB') : '...'"></span>
+                    <span class="text-slate-700 dark:text-slate-300 font-mono" v-text="licenseStatus.createdAt ? new Date(licenseStatus.createdAt).toLocaleDateString('en-GB') : '...'"></span>
                 </span>
             </div>
 
             <div class="flex flex-col gap-1 w-32 ml-2">
-                <div class="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-tighter">
+                <div class="flex justify-between text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
                     <span><span v-text="licenseStatus.daysRemaining"></span> <span v-text="isArabic ? 'يوم متبقي' : 'Days'"></span></span>
                     <span v-text="Math.round((licenseStatus.daysRemaining / 15) * 100) + '%'"></span>
                 </div>
-                <div class="h-1.5 w-full bg-slate-800/80 rounded-full overflow-hidden shadow-inner backdrop-blur-sm border border-white/5">
+                <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800/80 rounded-full overflow-hidden shadow-inner backdrop-blur-sm border border-slate-300/40 dark:border-white/5">
                     <div class="h-full transition-all duration-1000 ease-out" 
                          :class="licenseStatus.daysRemaining <= 3 ? 'bg-red-500' : 'bg-gradient-to-r from-blue-600 to-cyan-400'"
                          :style="{ width: (licenseStatus.daysRemaining / 15 * 100) + '%' }">
@@ -41,8 +41,8 @@
 
     <div class="flex items-center gap-6">
         <div v-if="!['global_config', 'org_builder', 'users'].includes(view)" class="hidden lg:flex items-center gap-2 px-3 py-1.5 glass-kpi-pill rounded-xl">
-            <i class="fas fa-hourglass-half text-cyan-400 text-xs animate-pulse"></i>
-            <span class="text-xs font-bold text-cyan-300">
+            <i class="fas fa-hourglass-half text-blue-600 dark:text-cyan-400 text-xs animate-pulse"></i>
+            <span class="text-xs font-bold text-slate-800 dark:text-cyan-300">
                 <span v-text="licenseStatus.daysRemaining"></span> / 15 <span v-text="isArabic ? 'يوم متبقي' : 'Days Left'"></span>
             </span>
         </div>
@@ -51,10 +51,10 @@
         <div class="relative group">
             <button class="flex items-center gap-3 px-4 py-2 liquid-glass-btn rounded-xl">
                 <div class="text-right">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase leading-none mb-1" v-text="isArabic ? 'المنشأة الحالية' : 'Current Entity'"></p>
-                    <p class="text-xs font-bold text-slate-100 leading-none" v-text="opcos.find(o => o.id === parseInt(activeOpcoId))?.name || '...'"></p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase leading-none mb-1" v-text="isArabic ? 'المنشأة الحالية' : 'Current Entity'"></p>
+                    <p class="text-xs font-bold text-slate-800 dark:text-slate-100 leading-none" v-text="opcos.find(o => o.id === parseInt(activeOpcoId))?.name || '...'"></p>
                 </div>
-                <i class="fas fa-shuffle text-cyan-400 text-xs transition-transform group-hover:rotate-180"></i>
+                <i class="fas fa-shuffle text-blue-600 dark:text-cyan-400 text-xs transition-transform group-hover:rotate-180"></i>
             </button>
 
             <div class="absolute top-full right-0 mt-2 w-64 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden ring-1 ring-white/10">

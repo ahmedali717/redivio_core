@@ -1,18 +1,18 @@
 <div class="wms-dashboard-wrapper space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-10">
     
     <!-- Header Control Bar -->
-    <div class="liquid-glass-card rounded-[2.5rem] p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center border border-white/10 shadow-2xl gap-6 relative overflow-hidden">
+    <div class="liquid-glass-card rounded-[2rem] p-6 md:p-7 flex flex-col md:flex-row justify-between items-start md:items-center border border-slate-200/80 dark:border-white/10 shadow-xl gap-6 relative overflow-hidden">
         <div class="glass-sheen"></div>
-        <div class="relative z-10 flex items-center gap-5">
-            <div class="w-16 h-16 bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 border border-white/20 rotate-3 hover:rotate-0 transition-transform">
-                <i class="fas fa-warehouse text-2xl"></i>
+        <div class="relative z-10 flex items-center gap-4">
+            <div class="w-13 h-13 md:w-14 md:h-14 bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 border border-white/20 shrink-0">
+                <i class="fas fa-warehouse text-xl md:text-2xl"></i>
             </div>
             <div>
-                <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight" v-text="isArabic ? 'RIMS - لوحة التحكم والمستودعات' : 'RIMS Command Center'"></h1>
-                <p class="text-cyan-400 text-xs font-bold uppercase tracking-wider flex items-center gap-2 mt-1">
+                <h1 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight" v-text="isArabic ? 'RIMS - لوحة التحكم والمستودعات' : 'RIMS Command Center'"></h1>
+                <p class="text-blue-600 dark:text-cyan-400 text-xs font-bold uppercase tracking-wider flex items-center gap-2 mt-1">
                     <span class="flex h-2 w-2 relative">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 dark:bg-cyan-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600 dark:bg-cyan-500"></span>
                     </span>
                     <span v-text="isArabic ? 'نظام إدارة المخزون وسلاسل الإمداد الذكي' : 'Redivio Inventory Management System'"></span>
                 </p>
@@ -20,15 +20,18 @@
         </div>
         
         <!-- Quick Control Actions -->
-        <div class="relative z-10 flex flex-wrap gap-3">
-            <button @click="openModal('stock_entry')" class="liquid-glass-btn px-5 py-3 rounded-xl flex items-center gap-2 font-bold tracking-wide text-cyan-400 border border-cyan-500/20 bg-cyan-500/10 hover:bg-cyan-500/20 transition-all">
-                <i class="fas fa-truck-loading"></i> <span v-text="isArabic ? 'إذن مخزني' : 'Stock Move'"></span>
+        <div class="relative z-10 flex flex-wrap gap-2.5">
+            <button @click="openModal('stock_entry')" class="liquid-glass-btn px-4 py-2.5 rounded-xl flex items-center gap-2 font-bold text-xs tracking-wide">
+                <i class="fas fa-truck-loading text-blue-600 dark:text-cyan-400 text-sm"></i>
+                <span v-text="isArabic ? 'إذن مخزني' : 'Stock Move'"></span>
             </button>
-            <button @click="openModal('material')" class="liquid-glass-btn px-5 py-3 rounded-xl flex items-center gap-2 font-bold tracking-wide text-blue-400 border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 transition-all">
-                <i class="fas fa-barcode"></i> <span v-text="isArabic ? 'تعريف صنف' : 'New SKU'"></span>
+            <button @click="openModal('material')" class="liquid-glass-btn px-4 py-2.5 rounded-xl flex items-center gap-2 font-bold text-xs tracking-wide">
+                <i class="fas fa-barcode text-blue-600 dark:text-cyan-400 text-sm"></i>
+                <span v-text="isArabic ? 'تعريف صنف' : 'New SKU'"></span>
             </button>
-            <button @click="printInventoryReport()" class="liquid-glass-btn px-5 py-3 rounded-xl flex items-center gap-2 font-bold tracking-wide text-slate-200 border border-white/10 bg-white/5 hover:bg-white/10 transition-all shadow-lg">
-                <i class="fas fa-print"></i> <span v-text="isArabic ? 'طباعة تقرير الجرد' : 'Print Audit'"></span>
+            <button @click="printInventoryReport()" class="liquid-glass-btn px-4 py-2.5 rounded-xl flex items-center gap-2 font-bold text-xs tracking-wide">
+                <i class="fas fa-print text-slate-600 dark:text-slate-300 text-sm"></i>
+                <span v-text="isArabic ? 'طباعة تقرير الجرد' : 'Print Audit'"></span>
             </button>
         </div>
     </div>
@@ -37,54 +40,52 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         <!-- Critical Alert: Low Stock -->
-        <div class="liquid-glass-card p-6 rounded-[2rem] border relative overflow-hidden group border-rose-500/30 bg-rose-950/20 shadow-xl transition-all">
-            <div class="glass-sheen"></div>
-            <div class="absolute right-0 top-0 w-28 h-28 bg-rose-500/10 rounded-bl-full z-0 transition-transform group-hover:scale-125 blur-xl pointer-events-none"></div>
-            <div class="relative z-10 flex justify-between items-start mb-2">
-                <div class="w-10 h-10 bg-rose-500/20 text-rose-400 rounded-xl flex items-center justify-center animate-pulse border border-rose-500/30"><i class="fas fa-triangle-exclamation"></i></div>
-                <span class="text-[10px] font-black text-rose-400 uppercase tracking-widest bg-rose-500/10 px-2.5 py-1 rounded-md border border-rose-500/30">Action Required</span>
+        <div class="kpi-alert-card kpi-alert-critical shadow-lg group">
+            <div class="relative z-10 flex justify-between items-start mb-3">
+                <div class="kpi-icon-box w-9 h-9 rounded-xl flex items-center justify-center text-sm shadow-sm"><i class="fas fa-triangle-exclamation"></i></div>
+                <span class="kpi-badge text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">Action Required</span>
             </div>
-            <div class="relative z-10 mt-4">
-                <h3 class="text-4xl font-black text-rose-400 tech-font tracking-tight" style="color: #F43F5E !important;" v-text="wms_stats.low_stock || 0"></h3>
-                <p class="text-sm font-bold text-slate-200 mt-1" v-text="isArabic ? 'أصناف تجاوزت حد إعادة الطلب' : 'SKUs below reorder point'"></p>
-                <button @click="createPOFromLowStock()" class="mt-4 text-xs font-black text-rose-400 hover:text-rose-300 uppercase flex items-center gap-1 group/btn transition-colors">
-                    <span v-text="isArabic ? 'إنشاء أمر شراء الآن' : 'Create PO Now'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
+            <div class="relative z-10 mt-3">
+                <h3 class="kpi-num text-3xl md:text-4xl font-black tech-font tracking-tight" v-text="wms_stats.low_stock || 0"></h3>
+                <p class="kpi-desc text-xs md:text-sm font-bold mt-1" v-text="isArabic ? 'أصناف تجاوزت حد إعادة الطلب' : 'SKUs below reorder point'"></p>
+                <button @click="createPOFromLowStock()" class="kpi-action mt-3 text-xs font-black uppercase flex items-center gap-1.5 group/btn">
+                    <span v-text="isArabic ? 'إنشاء أمر شراء الآن' : 'Create PO Now'"></span>
+                    <i class="fas fa-arrow-right text-[11px] transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
             </div>
         </div>
 
         <!-- Warning: Stagnant Stock -->
-        <div class="liquid-glass-card p-6 rounded-[2rem] border relative overflow-hidden group border-amber-500/30 bg-amber-950/20 shadow-xl transition-all">
-            <div class="glass-sheen"></div>
-            <div class="absolute right-0 top-0 w-28 h-28 bg-amber-500/10 rounded-bl-full z-0 transition-transform group-hover:scale-125 blur-xl pointer-events-none"></div>
-            <div class="relative z-10 flex justify-between items-start mb-2">
-                <div class="w-10 h-10 bg-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center border border-amber-500/30"><i class="fas fa-hourglass-half"></i></div>
-                <span class="text-[10px] font-black text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/30">Review</span>
+        <div class="kpi-alert-card kpi-alert-warning shadow-lg group">
+            <div class="relative z-10 flex justify-between items-start mb-3">
+                <div class="kpi-icon-box w-9 h-9 rounded-xl flex items-center justify-center text-sm shadow-sm"><i class="fas fa-hourglass-half"></i></div>
+                <span class="kpi-badge text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">Review</span>
             </div>
-            <div class="relative z-10 mt-4">
-                <h3 class="text-4xl font-black text-amber-400 tech-font tracking-tight" style="color: #F59E0B !important;" v-text="wms_stats.stagnant_count || 0"></h3>
-                <p class="text-sm font-bold text-slate-200 mt-1" v-text="isArabic ? 'أصناف راكدة لأكثر من 90 يوم' : 'Stagnant items > 90 days'"></p>
-                <button @click="viewStagnantStock()" class="mt-4 text-xs font-black text-amber-400 hover:text-amber-300 uppercase flex items-center gap-1 group/btn transition-colors">
-                    <span v-text="isArabic ? 'مراجعة الأصناف الراكدة' : 'Review Stagnant SKUs'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
+            <div class="relative z-10 mt-3">
+                <h3 class="kpi-num text-3xl md:text-4xl font-black tech-font tracking-tight" v-text="wms_stats.stagnant_count || 0"></h3>
+                <p class="kpi-desc text-xs md:text-sm font-bold mt-1" v-text="isArabic ? 'أصناف راكدة لأكثر من 90 يوم' : 'Stagnant items > 90 days'"></p>
+                <button @click="viewStagnantStock()" class="kpi-action mt-3 text-xs font-black uppercase flex items-center gap-1.5 group/btn">
+                    <span v-text="isArabic ? 'مراجعة الأصناف الراكدة' : 'Review Stagnant SKUs'"></span>
+                    <i class="fas fa-arrow-right text-[11px] transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
             </div>
         </div>
 
         <!-- Good: Fulfillment Rate -->
-        <div class="liquid-glass-card p-6 rounded-[2rem] border relative overflow-hidden group border-emerald-500/30 bg-emerald-950/20 shadow-xl transition-all">
-            <div class="glass-sheen"></div>
-            <div class="absolute right-0 top-0 w-28 h-28 bg-emerald-500/10 rounded-bl-full z-0 transition-transform group-hover:scale-125 blur-xl pointer-events-none"></div>
-            <div class="relative z-10 flex justify-between items-start mb-2">
-                <div class="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center border border-emerald-500/30"><i class="fas fa-bullseye"></i></div>
-                <span class="text-[10px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/30">Optimal</span>
+        <div class="kpi-alert-card kpi-alert-optimal shadow-lg group">
+            <div class="relative z-10 flex justify-between items-start mb-3">
+                <div class="kpi-icon-box w-9 h-9 rounded-xl flex items-center justify-center text-sm shadow-sm"><i class="fas fa-bullseye"></i></div>
+                <span class="kpi-badge text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">Optimal</span>
             </div>
-            <div class="relative z-10 mt-4">
+            <div class="relative z-10 mt-3">
                 <div class="flex items-end gap-1">
-                    <h3 class="text-4xl font-black text-emerald-400 tech-font tracking-tight" style="color: #10B981 !important;" v-text="wms_stats.fulfillment_rate || 0"></h3><span class="text-xl font-bold text-emerald-400 mb-1" style="color: #10B981 !important;">%</span>
+                    <h3 class="kpi-num text-3xl md:text-4xl font-black tech-font tracking-tight" v-text="wms_stats.fulfillment_rate || 0"></h3>
+                    <span class="kpi-num text-lg md:text-xl font-black mb-1">%</span>
                 </div>
-                <p class="text-sm font-bold text-slate-200 mt-1" v-text="isArabic ? 'معدل تلبية أوامر المبيعات' : 'Order Fulfillment Rate'"></p>
-                <p class="mt-4 text-xs font-black text-emerald-400 uppercase flex items-center gap-1">
-                    <i class="fas fa-arrow-trend-up text-emerald-400"></i> <span v-text="isArabic ? '+2.1% عن الشهر الماضي' : '+2.1% than last month'"></span>
+                <p class="kpi-desc text-xs md:text-sm font-bold mt-1" v-text="isArabic ? 'معدل تلبية أوامر المبيعات' : 'Order Fulfillment Rate'"></p>
+                <p class="kpi-action mt-3 text-xs font-black uppercase flex items-center gap-1.5">
+                    <i class="fas fa-arrow-trend-up text-xs"></i>
+                    <span v-text="isArabic ? '+2.1% عن الشهر الماضي' : '+2.1% than last month'"></span>
                 </p>
             </div>
         </div>
@@ -93,95 +94,95 @@
     <!-- Bottlenecks & Operational Health Flow -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        <!-- Warehouse Capacity Visualizer -->
-        <div class="lg:col-span-1 bg-slate-900 rounded-[2.5rem] p-8 relative overflow-hidden shadow-2xl flex flex-col justify-between group">
-            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+        <!-- Warehouse Capacity Visualizer (Theme-Adaptive) -->
+        <div class="lg:col-span-1 liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden shadow-xl flex flex-col justify-between border border-slate-200/80 dark:border-white/10 group">
+            <div class="glass-sheen"></div>
             <div class="relative z-10">
-                <h3 class="font-black text-white text-lg flex items-center gap-2 mb-1">
-                    <i class="fas fa-warehouse text-indigo-400"></i>
+                <h3 class="font-black text-slate-800 dark:text-white text-base md:text-lg flex items-center gap-2 mb-1">
+                    <i class="fas fa-warehouse text-blue-600 dark:text-cyan-400 text-sm"></i>
                     <span v-text="isArabic ? 'إشغال المستودعات' : 'Capacity Load'"></span>
                 </h3>
-                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold" v-text="isArabic ? 'سعة التخزين الحالية' : 'Current Storage Utilization'"></p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold" v-text="isArabic ? 'سعة التخزين الحالية' : 'Current Storage Utilization'"></p>
             </div>
             
-            <div class="relative z-10 flex flex-col items-center justify-center my-8">
+            <div class="relative z-10 flex flex-col items-center justify-center my-6">
                 <!-- Circular Capacity Meter -->
-                <div class="relative w-40 h-40 flex items-center justify-center rounded-full border-8 border-slate-800">
+                <div class="relative w-36 h-36 flex items-center justify-center rounded-full border-8 border-slate-100 dark:border-slate-800 shadow-inner">
                     <svg class="absolute inset-0 w-full h-full -rotate-90">
-                        <circle cx="50%" cy="50%" r="48%" class="stroke-amber-500 transition-all duration-1000" stroke-width="12" fill="none" 
+                        <circle cx="50%" cy="50%" r="48%" class="stroke-blue-600 dark:stroke-cyan-400 transition-all duration-1000" stroke-width="10" fill="none" 
                                 :stroke-dasharray="301" :stroke-dashoffset="301 - (301 * (wms_stats.capacity || 0) / 100)" stroke-linecap="round"></circle>
                     </svg>
                     <div class="text-center">
-                        <span class="text-4xl font-black text-white tech-font">[[ wms_stats.capacity || 0 ]]%</span>
+                        <span class="text-3xl font-black text-slate-800 dark:text-white tech-font">[[ wms_stats.capacity || 0 ]]%</span>
                     </div>
                 </div>
             </div>
             
-            <div class="relative z-10 space-y-3">
-                <div class="flex justify-between text-xs font-bold text-slate-300">
-                    <span v-text="isArabic ? 'مواقع مشغولة' : 'Occupied Bins'"></span> <span>[[ wms_stats.occupied_bins || 0 ]]</span>
+            <div class="relative z-10 space-y-2.5 pt-2 border-t border-slate-100 dark:border-white/10">
+                <div class="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
+                    <span v-text="isArabic ? 'مواقع مشغولة' : 'Occupied Bins'"></span> <span class="font-black text-slate-800 dark:text-white">[[ wms_stats.occupied_bins || 0 ]]</span>
                 </div>
-                <div class="flex justify-between text-xs font-bold text-slate-300">
-                    <span v-text="isArabic ? 'مواقع شاغرة' : 'Available Bins'"></span> <span class="text-emerald-400">[[ (wms_stats.total_bins - wms_stats.occupied_bins) || 0 ]]</span>
+                <div class="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
+                    <span v-text="isArabic ? 'مواقع شاغرة' : 'Available Bins'"></span> <span class="text-emerald-600 dark:text-emerald-400 font-black">[[ (wms_stats.total_bins - wms_stats.occupied_bins) || 0 ]]</span>
                 </div>
             </div>
         </div>
 
         <!-- Operations Queue Control -->
-        <div class="lg:col-span-3 liquid-glass-card rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative overflow-hidden">
+        <div class="lg:col-span-3 liquid-glass-card rounded-[2rem] p-6 md:p-7 border border-slate-200/80 dark:border-white/10 shadow-xl relative overflow-hidden">
             <div class="glass-sheen"></div>
-            <div class="relative z-10 flex justify-between items-center mb-6">
+            <div class="relative z-10 flex justify-between items-center mb-5">
                 <div>
-                    <h3 class="font-black text-xl text-white" v-text="isArabic ? 'طابور العمليات (Operations Queue)' : 'Pending Operations Queue'"></h3>
-                    <p class="text-xs font-bold text-cyan-400 mt-1 uppercase tracking-wider" v-text="isArabic ? 'الحركات المعلقة التي تحتاج اعتماد' : 'Moves pending validation'"></p>
+                    <h3 class="font-black text-lg md:text-xl text-slate-800 dark:text-white" v-text="isArabic ? 'طابور العمليات (Operations Queue)' : 'Pending Operations Queue'"></h3>
+                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5 uppercase tracking-wider" v-text="isArabic ? 'الحركات المعلقة التي تحتاج اعتماد' : 'Moves pending validation'"></p>
                 </div>
-                <button class="w-10 h-10 liquid-glass-btn text-slate-300 hover:text-cyan-400 rounded-xl flex items-center justify-center transition-colors">
-                    <i class="fas fa-ellipsis-v"></i>
+                <button class="w-9 h-9 liquid-glass-btn text-slate-500 hover:text-blue-600 dark:text-slate-300 dark:hover:text-cyan-400 rounded-xl flex items-center justify-center transition-colors">
+                    <i class="fas fa-ellipsis-v text-xs"></i>
                 </button>
             </div>
             
             <div class="relative z-10 w-full overflow-x-auto">
                 <table class="w-full text-left border-collapse" :dir="isArabic ? 'rtl' : 'ltr'">
                     <thead>
-                        <tr class="border-b border-white/10 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            <th class="pb-4 w-1/4" v-text="isArabic ? 'رقم الإذن' : 'Reference'"></th>
-                            <th class="pb-4 w-1/4" v-text="isArabic ? 'نوع الحركة' : 'Operation Type'"></th>
-                            <th class="pb-4 w-1/4" v-text="isArabic ? 'المسؤول' : 'Assigned To'"></th>
-                            <th class="pb-4 w-1/4 text-center" v-text="isArabic ? 'التحكم' : 'Action'"></th>
+                        <tr class="border-b border-slate-200 dark:border-white/10 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-50/60 dark:bg-white/[0.02]">
+                            <th class="py-3 px-3 w-1/4" v-text="isArabic ? 'رقم الإذن' : 'Reference'"></th>
+                            <th class="py-3 px-3 w-1/4" v-text="isArabic ? 'نوع الحركة' : 'Operation Type'"></th>
+                            <th class="py-3 px-3 w-1/4" v-text="isArabic ? 'المسؤول' : 'Assigned To'"></th>
+                            <th class="py-3 px-3 w-1/4 text-center" v-text="isArabic ? 'التحكم' : 'Action'"></th>
                         </tr>
                     </thead>
                     <tbody>
                         <!-- Live Operations Data -->
-                        <tr v-for="op in wms_stats.pending_operations" :key="op.ref" class="border-b border-white/[0.05] hover:bg-white/[0.03] transition-colors group">
-                            <td class="py-4">
-                                <span class="font-black text-white font-mono">[[ op.ref ]]</span>
-                                <p class="text-[10px] text-slate-400 font-bold" v-text="op.type_label"></p>
+                        <tr v-for="op in wms_stats.pending_operations" :key="op.ref" class="border-b border-slate-100 dark:border-white/[0.05] hover:bg-slate-50/80 dark:hover:bg-white/[0.03] transition-colors group">
+                            <td class="py-3.5 px-3">
+                                <span class="font-black text-slate-800 dark:text-white font-mono text-xs">[[ op.ref ]]</span>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold" v-text="op.type_label"></p>
                             </td>
-                            <td class="py-4">
-                                <span :class="op.type === 'IN' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'" 
-                                      class="px-3 py-1 rounded-lg text-[10px] font-black uppercase inline-flex items-center gap-1.5">
-                                    <i :class="op.type === 'IN' ? 'fas fa-arrow-down' : 'fas fa-arrow-up'"></i> 
+                            <td class="py-3.5 px-3">
+                                <span :class="op.type === 'IN' ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/20' : 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'" 
+                                      class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase inline-flex items-center gap-1.5">
+                                    <i :class="op.type === 'IN' ? 'fas fa-arrow-down' : 'fas fa-arrow-up'" class="text-[9px]"></i> 
                                     [[ op.type === 'IN' ? 'Inbound' : 'Outbound' ]]
                                 </span>
                             </td>
-                            <td class="py-4">
-                                <span class="font-bold text-sm text-slate-200 flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-full bg-blue-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-[10px] font-bold">[[ (op.owner || 'U')[0] ]]</div> [[ op.owner ]]
+                            <td class="py-3.5 px-3">
+                                <span class="font-bold text-xs text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-cyan-400 border border-blue-200 dark:border-cyan-500/30 flex items-center justify-center text-[10px] font-black">[[ (op.owner || 'U')[0] ]]</div> [[ op.owner ]]
                                 </span>
                             </td>
-                            <td class="py-4 text-center">
+                            <td class="py-3.5 px-3 text-center">
                                 <button @click="op.type === 'IN' ? openReceiptModal(op.id) : openDeliveryModal(op.id)"
-                                        class="opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-lg shadow-cyan-500/20 transition-all uppercase tracking-wider" 
+                                        class="opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-md shadow-blue-500/20 transition-all uppercase tracking-wider" 
                                         v-text="isArabic ? 'اعتماد' : 'Validate'"></button>
                             </td>
                         </tr>
                         <tr v-if="!wms_stats.pending_operations || wms_stats.pending_operations.length === 0">
-                            <td colspan="4" class="py-10 text-center text-slate-400 font-bold" v-text="isArabic ? 'لا توجد عمليات معلقة حالياً' : 'No pending operations'"></td>
+                            <td colspan="4" class="py-8 text-center text-slate-500 dark:text-slate-400 font-bold text-xs" v-text="isArabic ? 'لا توجد عمليات معلقة حالياً' : 'No pending operations'"></td>
                         </tr>
                     </tbody>
                 </table>
-                <div class="mt-4 text-center">
-                     <button class="text-[10px] font-black text-cyan-400 hover:text-cyan-300 uppercase tracking-widest transition-colors" v-text="isArabic ? 'عرض كافة العمليات' : 'View All Operations'"></button>
+                <div class="mt-3.5 text-center">
+                     <button class="text-[10px] font-black text-blue-600 dark:text-cyan-400 hover:text-blue-700 dark:hover:text-cyan-300 uppercase tracking-widest transition-colors" v-text="isArabic ? 'عرض كافة العمليات' : 'View All Operations'"></button>
                 </div>
             </div>
         </div>
