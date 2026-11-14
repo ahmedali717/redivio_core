@@ -6415,27 +6415,39 @@ createApp({
             return bin ? bin.code : '...';
         },
 
-        // 🚀 نظام التنبيهات الاحترافي في منتصف الشاشة
+        // 🚀 نظام التنبيهات الاحترافي (Item 15: رسائل الخطأ والتحذيرات لا تختفي إلا بعد الإقرار Acknowledgment)
         showToast(message, type = 'success') {
             console.log("Toast Triggered:", message, type);
+            const isPersistent = (type === 'error' || type === 'warning');
             const toast = document.createElement('div');
             toast.className = `custom-toast ${type}`;
-            toast.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:9999; padding:20px; color:white; border-radius:10px; text-align:center; min-width:200px; box-shadow: 0 15px 35px rgba(0,0,0,0.3);";
-            toast.style.backgroundColor = type === 'success' ? '#28a745' : '#dc3545';
+            toast.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:99999; padding:22px 28px; color:white; border-radius:16px; text-align:center; min-width:280px; max-width:480px; box-shadow: 0 20px 45px rgba(0,0,0,0.35); font-family:inherit;";
+            toast.style.backgroundColor = type === 'success' ? '#059669' : (type === 'warning' ? '#d97706' : '#dc2626');
+
+            const ackButtonHtml = isPersistent ? `
+                <div style="margin-top:16px;">
+                    <button onclick="this.closest('.custom-toast').remove()" style="background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.6); color:white; padding:7px 20px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 6px rgba(0,0,0,0.15);" onmouseover="this.style.background='rgba(255,255,255,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'">
+                        <i class="fas fa-check" style="margin-left:5px;"></i> ${this.isArabic ? 'إقرار / إغلاق' : 'Acknowledge'}
+                    </button>
+                </div>
+            ` : '';
 
             toast.innerHTML = `
                 <div class="toast-content">
-                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}" style="font-size: 2.5rem;"></i>
-                    <div style="margin-top:10px; font-weight:600;">${message}</div>
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}" style="font-size: 2.5rem; margin-bottom:8px; display:inline-block;"></i>
+                    <div style="margin-top:6px; font-weight:700; font-size:13px; line-height:1.6; word-break:break-word;">${message}</div>
+                    ${ackButtonHtml}
                 </div>
             `;
             document.body.appendChild(toast);
 
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.5s ease';
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
+            if (!isPersistent) {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.4s ease';
+                    setTimeout(() => toast.remove(), 400);
+                }, 3000);
+            }
         },
 
         async switchCompany(companyId) {
