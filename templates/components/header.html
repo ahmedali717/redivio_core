@@ -1,37 +1,37 @@
-<header class="h-20 bg-white/70 backdrop-blur-xl border-b border-white/60 shadow-[0_4px_30px_rgba(0,0,0,0.03)] flex items-center justify-between px-8 sticky top-0 z-50 transition-all duration-300" v-cloak>
+<header class="h-20 bg-slate-950/60 backdrop-blur-2xl border-b border-white/[0.08] shadow-[0_10px_35px_rgba(0,0,0,0.4)] flex items-center justify-between px-8 sticky top-0 z-50 transition-all duration-300 text-slate-100" v-cloak>
     <div>
-        <h2 class="text-2xl font-black text-slate-800 capitalize tracking-tight flex items-center gap-2.5">
-            <span class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 flex items-center justify-center text-sm shadow-sm" v-if="view === 'dashboard'"><i class="fas fa-chart-pie"></i></span>
-            <span class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 flex items-center justify-center text-sm shadow-sm" v-if="view === 'org_builder'"><i class="fas fa-sitemap"></i></span>
-            <span v-if="['inventory', 'wms', 'inventory_module'].includes(view)" class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shadow-sm">
+        <h2 class="text-2xl font-black text-white capitalize tracking-tight flex items-center gap-2.5">
+            <span class="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-400/30 flex items-center justify-center text-sm shadow-sm" v-if="view === 'dashboard'"><i class="fas fa-chart-pie"></i></span>
+            <span class="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-400/30 flex items-center justify-center text-sm shadow-sm" v-if="view === 'org_builder'"><i class="fas fa-sitemap"></i></span>
+            <span v-if="['inventory', 'wms', 'inventory_module'].includes(view)" class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center shadow-sm">
                 <img src="/static/brand/rims_icon.png" class="w-5 h-5 object-contain" alt="RIMS">
             </span>
-            <span v-if="['procurement_module', 'vendors_list', 'vendor_ledger'].includes(view)" class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-sm">
+            <span v-if="['procurement_module', 'vendors_list', 'vendor_ledger'].includes(view)" class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center shadow-sm">
                 <img src="/static/brand/rpms_icon.png" class="w-5 h-5 object-contain" alt="RPMS">
             </span>
-            <span class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 flex items-center justify-center text-sm shadow-sm" v-if="view === 'item_master'"><i class="fas fa-barcode"></i></span>
-            <span class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 flex items-center justify-center text-sm shadow-sm" v-if="view === 'global_config'"><i class="fas fa-cogs"></i></span>
+            <span class="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-400/30 flex items-center justify-center text-sm shadow-sm" v-if="view === 'item_master'"><i class="fas fa-barcode"></i></span>
+            <span class="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-400/30 flex items-center justify-center text-sm shadow-sm" v-if="view === 'global_config'"><i class="fas fa-cogs"></i></span>
             
             <span v-text="localizedViewName"></span>
         </h2>
 
         <div v-if="!['global_config', 'org_builder', 'users'].includes(view)" class="flex items-center gap-4 mt-1">
-            <div class="flex flex-col border-l-2 border-blue-500 pl-3">
-                <span class="text-xs font-bold text-slate-700" v-text="licenseStatus.companyName"></span>
+            <div class="flex flex-col border-l-2 border-cyan-400 pl-3">
+                <span class="text-xs font-bold text-slate-200" v-text="licenseStatus.companyName"></span>
                 <span class="text-[10px] text-slate-400 font-medium">
                     <span v-text="isArabic ? 'تاريخ الإنشاء:' : 'Created:'"></span>
-                    <span class="text-slate-600" v-text="licenseStatus.createdAt ? new Date(licenseStatus.createdAt).toLocaleDateString('en-GB') : '...'"></span>
+                    <span class="text-slate-300 font-mono" v-text="licenseStatus.createdAt ? new Date(licenseStatus.createdAt).toLocaleDateString('en-GB') : '...'"></span>
                 </span>
             </div>
 
             <div class="flex flex-col gap-1 w-32 ml-2">
-                <div class="flex justify-between text-[9px] font-black text-slate-500 uppercase tracking-tighter">
+                <div class="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-tighter">
                     <span><span v-text="licenseStatus.daysRemaining"></span> <span v-text="isArabic ? 'يوم متبقي' : 'Days'"></span></span>
                     <span v-text="Math.round((licenseStatus.daysRemaining / 15) * 100) + '%'"></span>
                 </div>
-                <div class="h-1.5 w-full bg-slate-200/80 rounded-full overflow-hidden shadow-inner backdrop-blur-sm">
+                <div class="h-1.5 w-full bg-slate-800/80 rounded-full overflow-hidden shadow-inner backdrop-blur-sm border border-white/5">
                     <div class="h-full transition-all duration-1000 ease-out" 
-                         :class="licenseStatus.daysRemaining <= 3 ? 'bg-red-500' : 'bg-blue-500'"
+                         :class="licenseStatus.daysRemaining <= 3 ? 'bg-red-500' : 'bg-gradient-to-r from-blue-600 to-cyan-400'"
                          :style="{ width: (licenseStatus.daysRemaining / 15 * 100) + '%' }">
                     </div>
                 </div>
@@ -41,102 +41,102 @@
 
     <div class="flex items-center gap-6">
         <div v-if="!['global_config', 'org_builder', 'users'].includes(view)" class="hidden lg:flex items-center gap-2 px-3 py-1.5 glass-kpi-pill rounded-xl">
-            <i class="fas fa-hourglass-half text-blue-500 text-xs animate-pulse"></i>
-            <span class="text-xs font-bold text-blue-700">
+            <i class="fas fa-hourglass-half text-cyan-400 text-xs animate-pulse"></i>
+            <span class="text-xs font-bold text-cyan-300">
                 <span v-text="licenseStatus.daysRemaining"></span> / 15 <span v-text="isArabic ? 'يوم متبقي' : 'Days Left'"></span>
             </span>
         </div>
 
-        <!-- 🚀 القائمة المنسدلة المحدثة للتبديل بين الشركات (The Dropdown you mentioned) -->
+        <!-- 🚀 القائمة المنسدلة المحدثة للتبديل بين الشركات (Liquid Glass Style) -->
         <div class="relative group">
             <button class="flex items-center gap-3 px-4 py-2 liquid-glass-btn rounded-xl">
                 <div class="text-right">
                     <p class="text-[10px] text-slate-400 font-bold uppercase leading-none mb-1" v-text="isArabic ? 'المنشأة الحالية' : 'Current Entity'"></p>
-                    <p class="text-xs font-bold text-slate-700 leading-none" v-text="opcos.find(o => o.id === parseInt(activeOpcoId))?.name || '...'"></p>
+                    <p class="text-xs font-bold text-slate-100 leading-none" v-text="opcos.find(o => o.id === parseInt(activeOpcoId))?.name || '...'"></p>
                 </div>
-                <i class="fas fa-shuffle text-blue-500 text-xs transition-transform group-hover:rotate-180"></i>
+                <i class="fas fa-shuffle text-cyan-400 text-xs transition-transform group-hover:rotate-180"></i>
             </button>
 
-            <div class="absolute top-full right-0 mt-2 w-64 bg-white/90 backdrop-blur-2xl border border-white/80 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden ring-1 ring-black/5">
-                <div class="p-3 border-b border-white/60 bg-white/40 flex justify-between items-center">
-                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider" v-text="isArabic ? 'اختر منشأة للعمل' : 'Select Work Entity'"></span>
-                    <i class="fas fa-building text-blue-400"></i>
+            <div class="absolute top-full right-0 mt-2 w-64 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden ring-1 ring-white/10">
+                <div class="p-3 border-b border-white/10 bg-white/[0.02] flex justify-between items-center">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider" v-text="isArabic ? 'اختر منشأة للعمل' : 'Select Work Entity'"></span>
+                    <i class="fas fa-building text-cyan-400"></i>
                 </div>
-                <div class="max-h-60 overflow-y-auto divide-y divide-white/40">
+                <div class="max-h-60 overflow-y-auto divide-y divide-white/5">
                     <div v-for="company in allOpcos" 
                          :key="company.id"
                          @click="switchCompany(company.id)"
-                         class="p-3.5 hover:bg-blue-500/10 cursor-pointer flex items-center justify-between transition-colors"
-                         :class="{'bg-blue-500/15 border-r-4 border-blue-500 font-bold': company.id === parseInt(activeOpcoId)}">
+                         class="p-3.5 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between transition-colors"
+                         :class="{'bg-blue-600/20 border-r-4 border-cyan-400 font-bold': company.id === parseInt(activeOpcoId)}">
                         <div>
-                            <p class="text-sm font-bold text-slate-700" v-text="company.name"></p>
+                            <p class="text-sm font-bold text-slate-100" v-text="company.name"></p>
                             <p class="text-[9px] text-slate-400 font-mono" v-text="company.code"></p>
                         </div>
-                        <i v-if="company.id === parseInt(activeOpcoId)" class="fas fa-circle-check text-blue-600"></i>
+                        <i v-if="company.id === parseInt(activeOpcoId)" class="fas fa-circle-check text-cyan-400"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="hidden md:flex flex-col items-end">
-            <span class="text-2xl font-bold text-slate-700 tech-font leading-none" v-text="currentTime"></span>
+            <span class="text-2xl font-bold text-white tech-font leading-none" v-text="currentTime"></span>
             <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1" v-text="currentDate"></span>
         </div>
         
-        <div class="h-8 w-px bg-slate-200/80 mx-2"></div>
+        <div class="h-8 w-px bg-white/10 mx-2"></div>
         
         <!-- 🚀 إشعارات وسجل (Notifications & Logs) -->
         <div class="flex items-center gap-2">
             <!-- Notifications Dropdown -->
             <div class="relative notif-area-container">
-                <button @click="showNotificationsDropdown = !showNotificationsDropdown" class="w-10 h-10 rounded-full bg-white/80 hover:bg-white text-slate-600 transition-all flex items-center justify-center border border-white/80 shadow-sm relative backdrop-blur-md">
+                <button @click="showNotificationsDropdown = !showNotificationsDropdown" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all flex items-center justify-center border border-white/10 shadow-sm relative backdrop-blur-md">
                     <i class="fas fa-bell"></i>
-                    <span class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                    <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-cyan-400 rounded-full border-2 border-slate-900 animate-pulse"></span>
                 </button>
                 
                 <div v-if="showNotificationsDropdown" 
                      :class="isArabic ? 'left-0' : 'right-0'"
-                     class="absolute top-full mt-2 w-80 bg-white/95 backdrop-blur-2xl border border-white/80 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in zoom-in-95 duration-200 ring-1 ring-black/5">
-                    <div class="p-4 border-b border-white/60 bg-white/40 flex justify-between items-center">
-                        <span class="font-bold text-slate-700" v-text="isArabic ? 'الإشعارات' : 'Notifications'"></span>
-                        <span v-if="notifications.length > 0" class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full font-bold uppercase">[[ notifications.length ]] New</span>
+                     class="absolute top-full mt-2 w-80 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in zoom-in-95 duration-200 ring-1 ring-white/10 text-slate-100">
+                    <div class="p-4 border-b border-white/10 bg-white/[0.02] flex justify-between items-center">
+                        <span class="font-bold text-slate-200" v-text="isArabic ? 'الإشعارات' : 'Notifications'"></span>
+                        <span v-if="notifications.length > 0" class="text-xs text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full font-bold uppercase">[[ notifications.length ]] New</span>
                     </div>
                         <div v-for="(n, idx) in notifications" :key="idx" 
-                             class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors flex flex-col gap-2 group/notif" :dir="isArabic ? 'rtl' : 'ltr'">
+                             class="p-4 border-b border-white/5 hover:bg-white/[0.03] transition-colors flex flex-col gap-2 group/notif" :dir="isArabic ? 'rtl' : 'ltr'">
                             <div class="flex gap-3">
                                 <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                                     :class="n.type === 'low_stock' ? 'bg-indigo-50 text-indigo-500' : 'bg-rose-50 text-rose-500'">
+                                     :class="n.type === 'low_stock' ? 'bg-indigo-500/15 text-indigo-400' : 'bg-rose-500/15 text-rose-400'">
                                     <i :class="n.type === 'low_stock' ? 'fas fa-box' : (n.type === 'pos_ready' ? 'fas fa-utensils' : 'fas fa-bell')"></i>
                                 </div>
                                 <div class="flex-1">
                                     <div class="flex justify-between items-start">
-                                        <p class="text-sm text-slate-700 font-bold" v-text="n.title"></p>
+                                        <p class="text-sm text-slate-200 font-bold" v-text="n.title"></p>
                                         <span class="text-[9px] text-slate-400 font-medium" v-text="n.time"></span>
                                     </div>
-                                    <p class="text-xs text-slate-500 mt-0.5 leading-relaxed" v-text="n.message"></p>
+                                    <p class="text-xs text-slate-400 mt-0.5 leading-relaxed" v-text="n.message"></p>
                                 </div>
                             </div>
                             <!-- 🚀 Action Buttons -->
                             <div class="flex gap-2 mt-1 opacity-0 group-hover/notif:opacity-100 transition-opacity">
-                                <button @click.stop="handleNotificationAction('done', idx)" class="flex-1 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-black hover:bg-emerald-600 hover:text-white transition-all">
+                                <button @click.stop="handleNotificationAction('done', idx)" class="flex-1 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black hover:bg-emerald-500 hover:text-white transition-all">
                                     <i class="fas fa-check mr-1"></i> [[ isArabic ? 'تم' : 'Done' ]]
                                 </button>
-                                <button @click.stop="handleNotificationAction('postpone', idx)" class="flex-1 py-1.5 rounded-lg bg-amber-50 text-amber-600 text-[10px] font-black hover:bg-amber-600 hover:text-white transition-all">
+                                <button @click.stop="handleNotificationAction('postpone', idx)" class="flex-1 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black hover:bg-amber-500 hover:text-white transition-all">
                                     <i class="fas fa-clock mr-1"></i> [[ isArabic ? 'تأجيل' : 'Later' ]]
                                 </button>
-                                <button @click.stop="handleNotificationAction('delete', idx)" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-500 text-[10px] font-black hover:bg-red-500 hover:text-white transition-all">
+                                <button @click.stop="handleNotificationAction('delete', idx)" class="px-3 py-1.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
                         <div v-if="notifications.length === 0" class="p-8 text-center text-slate-400 text-xs">
-                             <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <i class="fas fa-check-circle text-emerald-400 text-xl"></i>
+                             <div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 border border-white/5">
+                                <i class="fas fa-check-circle text-cyan-400 text-xl"></i>
                              </div>
-                             <p class="font-bold">[[ isArabic ? 'لا توجد إشعارات جديدة' : 'All clear!' ]]</p>
-                             <p class="text-[10px] mt-1 uppercase tracking-widest opacity-60">You're up to date</p>
+                             <p class="font-bold text-slate-300">[[ isArabic ? 'لا توجد إشعارات جديدة' : 'All clear!' ]]</p>
+                             <p class="text-[10px] mt-1 uppercase tracking-widest text-slate-500">You're up to date</p>
                         </div>
-                    <div class="p-3 text-center border-t border-slate-100 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors text-xs font-bold text-blue-600">
+                    <div class="p-3 text-center border-t border-white/10 bg-white/[0.02] hover:bg-white/[0.05] cursor-pointer transition-colors text-xs font-bold text-cyan-400">
                         <span v-text="isArabic ? 'عرض كل الإشعارات' : 'View All Notifications'"></span>
                     </div>
                 </div>
