@@ -21,6 +21,15 @@ createApp({
             showBrandDropdown: false,
             showActivityLog: false,
             showNotificationsDropdown: false,
+
+            // 🌓 Theme System (Dark / Light Mode)
+            theme: (() => {
+                try {
+                    const saved = localStorage.getItem('redivio_theme');
+                    if (saved) return saved;
+                } catch(e) {}
+                return 'dark';
+            })(),
             
             // Odoo Chatter & Collaboration System
             chatterMode: null,
@@ -2475,6 +2484,9 @@ createApp({
     },
 
     mounted() {
+        // 🌓 مزامنة وتطبيق الثيم (Dark / Light Mode)
+        this.applyTheme();
+
         // إضافة مستمع للنقرات الخارجية لإغلاق القوائم المنسدلة
         document.addEventListener('mousedown', (e) => {
             const brandArea = document.querySelector('.brand-area-container');
@@ -2568,6 +2580,31 @@ createApp({
     },
 
     methods: {
+        // 🌓 Theme System (Dark / Light Mode)
+        toggleTheme() {
+            this.theme = this.theme === 'dark' ? 'light' : 'dark';
+            try { localStorage.setItem('redivio_theme', this.theme); } catch(e) {}
+            this.applyTheme();
+        },
+        applyTheme() {
+            const isDark = this.theme !== 'light';
+            if (isDark) {
+                document.documentElement.classList.remove('theme-light');
+                document.documentElement.classList.add('theme-dark');
+                if (document.body) {
+                    document.body.classList.remove('theme-light');
+                    document.body.classList.add('theme-dark');
+                }
+            } else {
+                document.documentElement.classList.remove('theme-dark');
+                document.documentElement.classList.add('theme-light');
+                if (document.body) {
+                    document.body.classList.remove('theme-dark');
+                    document.body.classList.add('theme-light');
+                }
+            }
+        },
+
         setPOSMode(mode) {
             this.posMode = mode;
             localStorage.setItem('pos_mode', mode);

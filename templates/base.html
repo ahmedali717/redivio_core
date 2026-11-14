@@ -2,6 +2,20 @@
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE|slice:':2' == 'ar' %}rtl{% else %}ltr{% endif %}">
 <script>window.is_arabic = {% if LANGUAGE_CODE|slice:':2' == 'ar' %}true{% else %}false{% endif %};</script>
+<script>
+    (function() {
+        try {
+            var theme = localStorage.getItem('redivio_theme') || 'dark';
+            if (theme === 'light') {
+                document.documentElement.classList.add('theme-light');
+                document.documentElement.classList.remove('theme-dark');
+            } else {
+                document.documentElement.classList.add('theme-dark');
+                document.documentElement.classList.remove('theme-light');
+            }
+        } catch(e) {}
+    })();
+</script>
 <head>
     <meta charset="UTF-8">
     <title>REDIVIO ERP - {% block title %}Dashboard{% endblock %}</title>
@@ -59,62 +73,81 @@
         }
 
         /* =========================================================
-           🌊 REDIVIO LIQUID GLASS SYSTEM & DARK OBSIDIAN CANVASES
+           🌓 THEME ARCHITECTURE: DARK MODE (DEFAULT) & LIGHT MODE
            ========================================================= */
-        :root {
-            --glass-bg-primary: rgba(15, 23, 42, 0.75);
-            --glass-bg-secondary: rgba(11, 17, 30, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-border-specular: rgba(255, 255, 255, 0.18);
-            --glass-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
-            --glass-inner-light: inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
-            --brand-glow: 0 0 35px -5px rgba(0, 102, 255, 0.25);
+        :root,
+        .theme-dark {
+            --canvas-bg: #080C14;
+            --canvas-text: #F1F5F9;
+            --card-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.82) 0%, rgba(11, 17, 30, 0.72) 100%);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-border-top: rgba(255, 255, 255, 0.18);
+            --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65), 0 0 30px -5px rgba(0, 102, 255, 0.08);
+            --subcard-bg: rgba(255, 255, 255, 0.03);
+            --subcard-border: rgba(255, 255, 255, 0.07);
+            --subcard-hover-bg: rgba(255, 255, 255, 0.06);
+            --header-bg: rgba(11, 17, 30, 0.75);
+            --sidebar-bg: rgba(11, 17, 30, 0.85);
+            --heading-color: #FFFFFF;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --input-bg: rgba(255, 255, 255, 0.04);
+            --input-border: rgba(255, 255, 255, 0.10);
+            --pill-inactive-bg: rgba(255, 255, 255, 0.05);
+            --pill-inactive-text: #94A3B8;
+        }
+
+        .theme-light {
+            --canvas-bg: #F8FAFC;
+            --canvas-text: #0F172A;
+            --card-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.90) 100%);
+            --card-border: rgba(226, 232, 240, 0.95);
+            --card-border-top: rgba(255, 255, 255, 1);
+            --card-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.05), 0 0 15px rgba(0, 102, 255, 0.04);
+            --subcard-bg: rgba(255, 255, 255, 0.85);
+            --subcard-border: rgba(226, 232, 240, 0.85);
+            --subcard-hover-bg: rgba(241, 245, 249, 0.95);
+            --header-bg: rgba(255, 255, 255, 0.85);
+            --sidebar-bg: rgba(255, 255, 255, 0.92);
+            --heading-color: #0F172A;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --input-bg: rgba(241, 245, 249, 0.9);
+            --input-border: rgba(203, 213, 225, 0.9);
+            --pill-inactive-bg: rgba(241, 245, 249, 0.9);
+            --pill-inactive-text: #475569;
         }
 
         .liquid-glass-canvas {
             background: radial-gradient(circle at 15% 15%, rgba(0, 102, 255, 0.12) 0%, transparent 45%),
                         radial-gradient(circle at 85% 20%, rgba(0, 210, 255, 0.08) 0%, transparent 50%),
                         radial-gradient(circle at 50% 85%, rgba(15, 23, 42, 0.8) 0%, transparent 60%),
-                        #080C14;
+                        var(--canvas-bg);
             min-height: 100vh;
+            color: var(--canvas-text);
         }
 
-        /* Ambient floating liquid orbs */
-        @keyframes liquid-orb-drift-1 {
-            0%, 100% { transform: translate(0px, 0px) scale(1); }
-            33% { transform: translate(40px, -30px) scale(1.08); }
-            66% { transform: translate(-25px, 20px) scale(0.95); }
-        }
-
-        @keyframes liquid-orb-drift-2 {
-            0%, 100% { transform: translate(0px, 0px) scale(1); }
-            33% { transform: translate(-35px, 35px) scale(1.12); }
-            66% { transform: translate(30px, -20px) scale(0.92); }
-        }
-
-        .liquid-orb-1 {
-            animation: liquid-orb-drift-1 16s ease-in-out infinite alternate;
-        }
-        .liquid-orb-2 {
-            animation: liquid-orb-drift-2 20s ease-in-out infinite alternate-reverse;
+        .theme-light .liquid-glass-canvas {
+            background: radial-gradient(circle at 15% 15%, rgba(0, 102, 255, 0.04) 0%, transparent 45%),
+                        radial-gradient(circle at 85% 20%, rgba(0, 210, 255, 0.03) 0%, transparent 50%),
+                        #F8FAFC !important;
         }
 
         /* 🌊 Dark Liquid Glass Card */
         .liquid-glass-card {
             position: relative;
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.78) 0%, rgba(11, 17, 30, 0.68) 100%) !important;
+            background: var(--card-bg) !important;
             backdrop-filter: blur(28px) saturate(180%) !important;
             -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-top: 1px solid rgba(255, 255, 255, 0.20) !important;
+            border: 1px solid var(--card-border) !important;
+            border-top: 1px solid var(--card-border-top) !important;
             border-radius: 1.75rem !important;
-            box-shadow: 
-                0 25px 50px -12px rgba(0, 0, 0, 0.65),
-                0 0 30px -5px rgba(0, 102, 255, 0.06),
-                inset 0 1px 1px 0 rgba(255, 255, 255, 0.12) !important;
+            box-shadow: var(--card-shadow) !important;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
             overflow: hidden;
-            color: #f1f5f9;
+            color: var(--text-primary);
         }
 
         .liquid-glass-card::before {
@@ -133,11 +166,119 @@
         .liquid-glass-card:hover {
             transform: translateY(-4px) scale(1.008);
             box-shadow: 
-                0 30px 60px -12px rgba(0, 0, 0, 0.75),
+                0 30px 60px -12px rgba(0, 0, 0, 0.5),
                 0 0 35px -5px rgba(0, 102, 255, 0.2),
                 inset 0 1px 1px 0 rgba(255, 255, 255, 0.22) !important;
-            border-color: rgba(255, 255, 255, 0.14) !important;
+            border-color: rgba(255, 255, 255, 0.16) !important;
             border-top-color: rgba(0, 210, 255, 0.4) !important;
+        }
+
+        /* Universal Module Surface for tab containers */
+        .liquid-glass-surface {
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(28px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+            border: 1px solid var(--card-border) !important;
+            border-top: 1px solid var(--card-border-top) !important;
+            border-radius: 2rem !important;
+            box-shadow: var(--card-shadow) !important;
+            color: var(--text-primary);
+        }
+
+        /* 🌟 Universal Dark Mode Normalization across ALL modules:
+           Ensures no screen appears as a blinding white rectangle inside the dark app */
+        .theme-dark .bg-white {
+            background-color: rgba(15, 23, 42, 0.70) !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            color: #F1F5F9 !important;
+        }
+        .theme-dark .bg-slate-50,
+        .theme-dark .bg-slate-50\/50,
+        .theme-dark .bg-slate-50\/80,
+        .theme-dark .bg-slate-100 {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+            border-color: rgba(255, 255, 255, 0.07) !important;
+        }
+        .theme-dark .text-slate-800,
+        .theme-dark .text-slate-900 {
+            color: #FFFFFF !important;
+        }
+        .theme-dark .text-slate-700 {
+            color: #E2E8F0 !important;
+        }
+        .theme-dark .text-slate-600,
+        .theme-dark .text-slate-500 {
+            color: #94A3B8 !important;
+        }
+        .theme-dark .border-slate-200,
+        .theme-dark .border-slate-100,
+        .theme-dark .border-slate-200\/80,
+        .theme-dark .border-slate-200\/90 {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        /* ☀️ Light Mode Refinements */
+        .theme-light body {
+            background: #F8FAFC !important;
+            color: #0F172A !important;
+        }
+        .theme-light header {
+            background: rgba(255, 255, 255, 0.85) !important;
+            border-bottom-color: rgba(226, 232, 240, 0.9) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+            color: #0F172A !important;
+        }
+        .theme-light header h2,
+        .theme-light header .text-white {
+            color: #0F172A !important;
+        }
+        .theme-light header .text-slate-400 {
+            color: #64748B !important;
+        }
+        .theme-light .sidebar-premium-container {
+            background: rgba(255, 255, 255, 0.92) !important;
+            border-color: rgba(226, 232, 240, 0.9) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+        }
+        .theme-light .sidebar-item-premium .text-title {
+            color: #334155 !important;
+        }
+        .theme-light .sidebar-item-premium .text-subtitle {
+            color: #94A3B8 !important;
+        }
+        .theme-light .sidebar-item-premium:hover {
+            background: rgba(0, 102, 255, 0.06) !important;
+            border-color: rgba(0, 102, 255, 0.15) !important;
+        }
+        .theme-light .sidebar-item-premium:hover .text-title {
+            color: #0066FF !important;
+        }
+        .theme-light .sidebar-item-premium.active {
+            background: #0066FF !important;
+            border: 1px solid #0052cc !important;
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.35) !important;
+        }
+        .theme-light .sidebar-item-premium.active .icon-wrapper {
+            background: #FFFFFF !important;
+            color: #0066FF !important;
+            border-color: transparent !important;
+        }
+        .theme-light .sidebar-item-premium.active .text-title {
+            color: #FFFFFF !important;
+        }
+        .theme-light .sidebar-item-premium.active .text-subtitle {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+        .theme-light .liquid-glass-card h1,
+        .theme-light .liquid-glass-card h2,
+        .theme-light .liquid-glass-card h3,
+        .theme-light .liquid-glass-card h4 {
+            color: #0F172A !important;
+        }
+        .theme-light .liquid-glass-btn {
+            background: rgba(241, 245, 249, 0.9) !important;
+            border: 1px solid rgba(203, 213, 225, 0.8) !important;
+            color: #0F172A !important;
         }
 
         .liquid-glass-card h1, .liquid-glass-card h2, .liquid-glass-card h3, .liquid-glass-card h4 {
@@ -348,8 +489,6 @@
         .sidebar-item-premium.active .text-subtitle {
             color: #7dd3fc !important;
         }
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-        }
 
         nav:hover .sidebar-item-premium:hover .icon-wrapper i {
             transform: scale(1.2) rotate(8deg);
@@ -365,30 +504,6 @@
         }
         html[dir="rtl"] .sidebar-item-premium:hover {
             transform: translateX(-6px) !important;
-        }
-
-        /* Active State */
-        .sidebar-item-premium.active {
-            background: rgba(255, 255, 255, 0.95) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(44, 130, 240, 0.2) !important;
-            transform: translateY(-1px);
-        }
-
-        .sidebar-item-premium.active .icon-wrapper {
-            background: #2c82f0 !important;
-            border-color: #5d9ef5 !important;
-            color: #ffffff !important;
-            box-shadow: 0 0 15px rgba(44, 130, 240, 0.35);
-        }
-
-        .sidebar-item-premium.active .text-title {
-            color: #1252aa !important;
-            font-weight: 700 !important;
-        }
-
-        .sidebar-item-premium.active .text-subtitle {
-            color: rgba(18, 82, 170, 0.6) !important;
         }
 
         /* Collapse/Expand styling improvements */

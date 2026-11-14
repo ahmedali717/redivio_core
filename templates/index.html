@@ -2,7 +2,7 @@
 {% load static %} {% block content %}
     {% include "components/sidebar.html" %}
 
-    <main class="flex-1 flex flex-col bg-slate-50/50 relative overflow-hidden">
+    <main class="flex-1 flex flex-col bg-transparent relative overflow-hidden">
         {% include "components/header.html" %}
 
         <!-- Stocktaking Banner -->
@@ -493,38 +493,38 @@
                 </div>
             </div>
 
-            <div v-if="view === 'inventory_module'" class="flex flex-col h-full space-y-4 p-4 bg-slate-100">
+            <div v-if="view === 'inventory_module'" class="flex flex-col h-full space-y-4 p-4">
                 <div class="flex-1 relative min-h-[500px]">
-                    <div v-if="inventoryTab === 'levels'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
+                    <div v-if="inventoryTab === 'levels'" class="absolute inset-0 liquid-glass-surface rounded-[2rem] overflow-y-auto">
                         {% include "wms/dashboard.html" %}
                     </div>
-                    <div v-if="inventoryTab === 'opening_count'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
+                    <div v-if="inventoryTab === 'opening_count'" class="absolute inset-0 liquid-glass-surface rounded-[2rem] overflow-y-auto">
                         {% include "wms/opening_inventory.html" %}
                     </div>
-                    <div v-if="inventoryTab === 'items'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
+                    <div v-if="inventoryTab === 'items'" class="absolute inset-0 liquid-glass-surface rounded-[2rem] overflow-y-auto">
                         {% include "components/item_master_list.html" %}
                     </div>
-                    <div v-if="inventoryTab === 'categories'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
+                    <div v-if="inventoryTab === 'categories'" class="absolute inset-0 liquid-glass-surface rounded-[2rem] overflow-y-auto">
                         {% include "components/categories_list.html" %}
                     </div>
-                    <div v-if="inventoryTab === 'direct_move'" class="absolute inset-0 bg-white rounded-[2rem] overflow-hidden">
+                    <div v-if="inventoryTab === 'direct_move'" class="absolute inset-0 liquid-glass-surface rounded-[2rem] overflow-hidden">
                         {% include "wms/direct_stock_move.html" %}
                     </div>
-                    <div v-if="inventoryTab === 'moves'" class="absolute inset-0 bg-white rounded-[2rem] overflow-y-auto">
+                    <div v-if="inventoryTab === 'moves'" class="absolute inset-0 liquid-glass-surface rounded-[2rem] overflow-y-auto">
                         {% include "wms/inventory_item_report.html" %}
                     </div>
-                    <div v-if="inventoryTab === 'reports'" class="absolute inset-0 bg-purple-50 flex items-center justify-center rounded-[2rem] border-4 border-purple-200">
-                        <h1 class="text-4xl font-black text-rose-700">5. صفحة حركة الصنف (Ledger)</h1>
+                    <div v-if="inventoryTab === 'reports'" class="absolute inset-0 liquid-glass-surface flex items-center justify-center rounded-[2rem] border border-white/10">
+                        <h1 class="text-4xl font-black text-rose-500">5. صفحة حركة الصنف (Ledger)</h1>
                     </div>
-                    <div v-if="inventoryTab === 'item_ledger'" class="absolute inset-0 bg-white rounded-[2rem] p-6 overflow-y-auto z-[999]">
+                    <div v-if="inventoryTab === 'item_ledger'" class="absolute inset-0 liquid-glass-surface rounded-[2rem] p-6 overflow-y-auto z-[999]">
                         {% include "wms/inventory_moves.html" %}
                     </div>
                 </div>
             </div>
         </div>
 
-        <div v-if="view === 'opening_count'" class="flex flex-col h-full space-y-4 p-4 bg-slate-100">
-            <div class="flex-1 relative min-h-[500px] bg-white rounded-[2rem] overflow-y-auto">
+        <div v-if="view === 'opening_count'" class="flex flex-col h-full space-y-4 p-4">
+            <div class="flex-1 relative min-h-[500px] liquid-glass-surface rounded-[2rem] overflow-y-auto">
                 {% include "wms/opening_inventory.html" %}
             </div>
         </div>
