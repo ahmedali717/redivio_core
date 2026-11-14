@@ -1,32 +1,32 @@
-<div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full animate-in fade-in duration-500" :dir="isArabic ? 'rtl' : 'ltr'">
+<div class="liquid-glass-surface rounded-[2rem] overflow-hidden flex flex-col h-full animate-in fade-in duration-500" :dir="isArabic ? 'rtl' : 'ltr'">
     
     <!-- 1. TOP HEADER & MAIN ACTIONS -->
-    <div class="px-6 py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white">
-        <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-blue-500/20">
+    <div class="px-6 py-5 border-b border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-blue-500/25 border border-white/20">
                 <i class="fas fa-boxes"></i>
             </div>
             <div>
                 <div class="flex items-center gap-2">
-                    <h2 class="text-xl md:text-2xl font-black text-slate-800 tracking-tight" v-text="isArabic ? 'سجل الأصناف الرئيسي' : 'Master Item Registry'"></h2>
-                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-100 text-blue-800 border border-blue-200">
+                    <h2 class="text-xl md:text-2xl font-black text-white tracking-tight" v-text="isArabic ? 'سجل الأصناف الرئيسي' : 'Master Item Registry'"></h2>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 backdrop-blur-md">
                         [[ filteredMaterials.length ]]
                     </span>
                 </div>
-                <p class="text-slate-400 text-[11px] font-bold uppercase tracking-widest mt-0.5" v-text="isArabic ? 'كتالوج المنتجات، الأرصدة، شروط الموردين والتسعير المعتمد' : 'Product catalog, pricing, vendor terms & valuation'"></p>
+                <p class="text-slate-300 text-[11px] font-bold uppercase tracking-widest mt-0.5" v-text="isArabic ? 'كتالوج المنتجات، الأرصدة، شروط الموردين والتسعير المعتمد' : 'Product catalog, pricing, vendor terms & valuation'"></p>
             </div>
         </div>
         
         <div class="flex items-center flex-wrap gap-2.5">
             <!-- View Mode Switcher -->
-            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <div class="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/10">
                 <button type="button" @click="materialViewMode = 'cards'" 
-                        :class="materialViewMode === 'cards' ? 'bg-white text-indigo-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" 
+                        :class="materialViewMode === 'cards' ? 'bg-blue-600 text-white shadow-sm font-black' : 'text-slate-400 hover:text-white font-bold'" 
                         class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer border-0">
                     <i class="fas fa-th-large"></i> <span>[[ isArabic ? 'كروت' : 'Cards' ]]</span>
                 </button>
                 <button type="button" @click="materialViewMode = 'list'" 
-                        :class="materialViewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" 
+                        :class="materialViewMode === 'list' ? 'bg-blue-600 text-white shadow-sm font-black' : 'text-slate-400 hover:text-white font-bold'" 
                         class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 cursor-pointer border-0">
                     <i class="fas fa-list"></i> <span>[[ isArabic ? 'جدول' : 'List' ]]</span>
                 </button>
@@ -34,100 +34,103 @@
 
             <!-- Manage Categories Button -->
             <button @click="inventoryTab = 'categories'" 
-                    class="bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-600 hover:text-white px-4 py-2 rounded-xl transition-all font-bold text-xs flex items-center gap-2 shadow-sm">
+                    class="liquid-glass-btn text-cyan-400 hover:text-white px-4 py-2 rounded-xl transition-all font-bold text-xs flex items-center gap-2 shadow-sm">
                 <i class="fas fa-folder-tree"></i> [[ isArabic ? 'المجموعات المخزنية' : 'Item Groups' ]]
             </button>
 
-            <!-- Import / Upload (Item 8: Fixed trigger) -->
-            <button type="button" @click="$refs.importFileInput ? $refs.importFileInput.click() : triggerImport()" class="bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 px-3.5 py-2 rounded-xl transition-all font-bold text-xs flex items-center gap-1.5 shadow-sm">
-                <i class="fas fa-file-upload text-indigo-500"></i> [[ isArabic ? 'استيراد' : 'Import' ]]
+            <!-- Import / Upload -->
+            <button type="button" @click="$refs.importFileInput ? $refs.importFileInput.click() : triggerImport()" 
+                    class="liquid-glass-btn text-slate-300 hover:text-white px-3.5 py-2 rounded-xl transition-all font-bold text-xs flex items-center gap-1.5 shadow-sm">
+                <i class="fas fa-file-upload text-cyan-400"></i> [[ isArabic ? 'استيراد' : 'Import' ]]
             </button>
             <input type="file" ref="importFileInput" @change="handleImportFile" class="hidden" accept=".csv,.xlsx,.xls">
 
-            <button type="button" @click="downloadTemplate" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1">
-                <i class="fas fa-download"></i> [[ isArabic ? 'القالب' : 'Template' ]]
+            <button type="button" @click="downloadTemplate" 
+                    class="liquid-glass-btn text-slate-300 hover:text-white px-3 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-1">
+                <i class="fas fa-download text-emerald-400"></i> [[ isArabic ? 'القالب' : 'Template' ]]
             </button>
             
             <!-- Create Material Button -->
-            <button @click="openModal('material')" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl font-black transition-all flex items-center gap-2 text-xs shadow-md shadow-blue-500/20">
+            <button @click="openModal('material')" 
+                    class="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-5 py-2.5 rounded-xl font-black transition-all flex items-center gap-2 text-xs shadow-md shadow-blue-500/25">
                 <i class="fas fa-plus"></i> [[ isArabic ? 'إضافة صنف' : 'New Item' ]]
             </button>
         </div>
     </div>
 
-    <!-- 2. ODOO-STYLE KPI METRIC CARDS -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-6 pt-5 pb-2">
+    <!-- 2. ENTERPRISE KPI METRIC CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-6 pt-5 pb-3">
         <!-- Metric 1: Total Items -->
-        <div class="bg-slate-50/60 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-blue-300 transition-all">
+        <div class="liquid-glass-card rounded-2xl p-4 border border-white/[0.08] hover:border-cyan-400/40 transition-all flex items-center justify-between">
             <div>
-                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1" v-text="isArabic ? 'إجمالي الأصناف' : 'Total Items'"></span>
-                <div class="text-2xl font-black text-slate-800">[[ itemStats.totalCount ]]</div>
-                <div class="text-[11px] text-slate-500 font-bold mt-1">
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-300 block mb-1" v-text="isArabic ? 'إجمالي الأصناف' : 'Total Items'"></span>
+                <div class="text-2xl font-black text-white">[[ itemStats.totalCount ]]</div>
+                <div class="text-[11px] text-slate-400 font-bold mt-1">
                     [[ itemStats.activeCount ]] [[ isArabic ? 'نشط' : 'Active' ]] • [[ itemStats.totalCount - itemStats.activeCount ]] [[ isArabic ? 'معطل' : 'Inactive' ]]
                 </div>
             </div>
-            <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg border border-blue-100">
+            <div class="w-11 h-11 rounded-2xl bg-blue-500/15 text-cyan-400 flex items-center justify-center text-lg border border-blue-400/30">
                 <i class="fas fa-boxes"></i>
             </div>
         </div>
 
         <!-- Metric 2: Inventory Valuation -->
-        <div class="bg-slate-50/60 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-emerald-300 transition-all">
+        <div class="liquid-glass-card rounded-2xl p-4 border border-white/[0.08] hover:border-emerald-400/40 transition-all flex items-center justify-between">
             <div>
-                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1" v-text="isArabic ? 'قيمة المخزون المقدرة' : 'Estimated Valuation'"></span>
-                <div class="text-2xl font-black text-emerald-600 font-mono">
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-300 block mb-1" v-text="isArabic ? 'قيمة المخزون المقدرة' : 'Estimated Valuation'"></span>
+                <div class="text-2xl font-black text-emerald-400 font-mono">
                     [[ formatNumber(itemStats.totalValuation) ]] <span class="text-xs font-bold text-slate-400">SAR</span>
                 </div>
-                <div class="text-[11px] text-slate-500 font-bold mt-1" v-text="isArabic ? 'محسوبة بمتوسط التكلفة' : 'Valued at standard cost'"></div>
+                <div class="text-[11px] text-slate-400 font-bold mt-1" v-text="isArabic ? 'محسوبة بمتوسط التكلفة' : 'Valued at standard cost'"></div>
             </div>
-            <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg border border-emerald-100">
+            <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-lg border border-emerald-400/30">
                 <i class="fas fa-sack-dollar"></i>
             </div>
         </div>
 
         <!-- Metric 3: Low Stock Alerts -->
-        <div class="bg-slate-50/60 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-rose-300 transition-all"
-             :class="itemStats.lowStockCount > 0 ? 'border-rose-200 bg-rose-50/20' : ''">
+        <div class="liquid-glass-card rounded-2xl p-4 border border-white/[0.08] hover:border-rose-400/40 transition-all flex items-center justify-between"
+             :class="itemStats.lowStockCount > 0 ? 'border-rose-500/40' : ''">
             <div>
-                <span class="text-[11px] font-black uppercase tracking-wider block mb-1" :class="itemStats.lowStockCount > 0 ? 'text-rose-600' : 'text-slate-400'" v-text="isArabic ? 'تنبيهات حد الطلب' : 'Low Stock Alerts'"></span>
-                <div class="text-2xl font-black font-mono" :class="itemStats.lowStockCount > 0 ? 'text-rose-600' : 'text-slate-800'">
+                <span class="text-[11px] font-black uppercase tracking-wider block mb-1" :class="itemStats.lowStockCount > 0 ? 'text-rose-400' : 'text-slate-300'" v-text="isArabic ? 'تنبيهات حد الطلب' : 'Low Stock Alerts'"></span>
+                <div class="text-2xl font-black font-mono" :class="itemStats.lowStockCount > 0 ? 'text-rose-400' : 'text-white'">
                     [[ itemStats.lowStockCount ]]
                 </div>
-                <div class="text-[11px] font-bold mt-1" :class="itemStats.lowStockCount > 0 ? 'text-rose-500' : 'text-slate-500'" v-text="isArabic ? 'أصناف تحتاج إعادة طلب توريد' : 'Items needing reorder'"></div>
+                <div class="text-[11px] font-bold mt-1" :class="itemStats.lowStockCount > 0 ? 'text-rose-400' : 'text-slate-400'" v-text="isArabic ? 'أصناف تحتاج إعادة طلب توريد' : 'Items needing reorder'"></div>
             </div>
             <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-lg border"
-                 :class="itemStats.lowStockCount > 0 ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-slate-100 text-slate-400 border-slate-200'">
+                 :class="itemStats.lowStockCount > 0 ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' : 'bg-white/[0.04] text-slate-400 border-white/10'">
                 <i class="fas fa-triangle-exclamation"></i>
             </div>
         </div>
 
         <!-- Metric 4: Item Groups -->
         <div @click="inventoryTab = 'categories'" 
-             class="bg-slate-50/60 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between hover:border-indigo-300 transition-all cursor-pointer group">
+             class="liquid-glass-card rounded-2xl p-4 border border-white/[0.08] hover:border-cyan-400/40 transition-all flex items-center justify-between cursor-pointer group">
             <div>
-                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1 group-hover:text-indigo-600 transition-colors" v-text="isArabic ? 'المجموعات المخزنية' : 'Item Groups'"></span>
-                <div class="text-2xl font-black text-indigo-600">[[ itemStats.categoriesCount ]]</div>
-                <div class="text-[11px] text-slate-500 font-bold mt-1 flex items-center gap-1">
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-300 block mb-1 group-hover:text-cyan-400 transition-colors" v-text="isArabic ? 'المجموعات المخزنية' : 'Item Groups'"></span>
+                <div class="text-2xl font-black text-cyan-400">[[ itemStats.categoriesCount ]]</div>
+                <div class="text-[11px] text-slate-400 font-bold mt-1 flex items-center gap-1">
                     <span>[[ isArabic ? 'اضغط لإدارة المجموعات' : 'Manage groups' ]]</span>
                     <i class="fas" :class="isArabic ? 'fa-arrow-left text-[9px]' : 'fa-arrow-right text-[9px]'"></i>
                 </div>
             </div>
-            <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+            <div class="w-11 h-11 rounded-2xl bg-blue-500/15 text-cyan-400 flex items-center justify-center text-lg border border-blue-400/30 group-hover:bg-blue-600 group-hover:text-white transition-all">
                 <i class="fas fa-folder-tree"></i>
             </div>
         </div>
     </div>
 
     <!-- 3. SEARCH & QUICK FILTER PILLS -->
-    <div class="px-6 py-3.5 bg-slate-50/40 border-b border-slate-100 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        <!-- Search -->
+    <div class="px-6 py-3.5 border-b border-white/[0.08] flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <!-- Search Input -->
         <div class="relative flex-1 max-w-lg">
             <i class="fas fa-search absolute inset-y-0 flex items-center text-slate-400 text-xs" :class="isArabic ? 'right-3.5' : 'left-3.5'"></i>
             <input type="text" v-model="searchQuery" 
                    :placeholder="isArabic ? 'بحث بالاسم، الكود SKU، الوصف أو الباركود...' : 'Search by Name, SKU, Description, Barcode...'"
                    :class="isArabic ? 'pr-9 pl-8' : 'pl-9 pr-8'"
-                   class="w-full bg-white border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm">
-            <button v-if="searchQuery" @click="searchQuery = ''" class="absolute inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-xs" :class="isArabic ? 'left-3' : 'right-3'">
+                   class="w-full bg-white/[0.04] border border-white/10 rounded-xl py-2 text-xs font-bold text-slate-100 placeholder-slate-400 focus:bg-white/[0.08] focus:ring-2 focus:ring-cyan-400/20 focus:border-cyan-400 outline-none transition-all shadow-sm">
+            <button v-if="searchQuery" @click="searchQuery = ''" class="absolute inset-y-0 flex items-center text-slate-400 hover:text-white text-xs" :class="isArabic ? 'left-3' : 'right-3'">
                 <i class="fas fa-times-circle"></i>
             </button>
         </div>
@@ -135,77 +138,77 @@
         <!-- Filter Pills -->
         <div class="flex items-center flex-wrap gap-1.5">
             <button @click="materialFilter = 'ALL'"
-                    :class="materialFilter === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    :class="materialFilter === 'ALL' ? 'bg-blue-600 text-white shadow-sm font-black' : 'liquid-glass-btn text-slate-300 font-bold'"
+                    class="px-3 py-1.5 rounded-lg text-xs transition-all"
                     v-text="isArabic ? 'الكل' : 'All'"></button>
 
             <button @click="materialFilter = 'IN_STOCK'"
-                    :class="materialFilter === 'IN_STOCK' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    :class="materialFilter === 'IN_STOCK' ? 'bg-emerald-600 text-white shadow-sm font-black' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold'"
+                    class="px-3 py-1.5 rounded-lg text-xs transition-all"
                     v-text="isArabic ? 'متوفر بالمخزن' : 'In Stock'"></button>
 
             <button @click="materialFilter = 'LOW_STOCK'"
-                    :class="materialFilter === 'LOW_STOCK' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                    :class="materialFilter === 'LOW_STOCK' ? 'bg-rose-600 text-white shadow-sm font-black' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold'"
+                    class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1"
                     v-text="isArabic ? 'تحت حد الطلب' : 'Low Stock'"></button>
 
             <button @click="materialFilter = 'HAS_VARIANTS'"
-                    :class="materialFilter === 'HAS_VARIANTS' ? 'bg-fuchsia-600 text-white shadow-sm' : 'bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100 border border-fuchsia-200'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    :class="materialFilter === 'HAS_VARIANTS' ? 'bg-blue-600 text-white shadow-sm font-black' : 'liquid-glass-btn text-cyan-400 font-bold'"
+                    class="px-3 py-1.5 rounded-lg text-xs transition-all"
                     v-text="isArabic ? 'له متغيرات' : 'Variants'"></button>
 
             <button @click="materialFilter = 'POS'"
-                    :class="materialFilter === 'POS' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    :class="materialFilter === 'POS' ? 'bg-amber-600 text-white shadow-sm font-black' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold'"
+                    class="px-3 py-1.5 rounded-lg text-xs transition-all"
                     v-text="isArabic ? 'المطعم (POS)' : 'POS Item'"></button>
 
             <button @click="materialFilter = 'ACTIVE'"
-                    :class="materialFilter === 'ACTIVE' ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    :class="materialFilter === 'ACTIVE' ? 'bg-blue-600 text-white shadow-sm font-black' : 'liquid-glass-btn text-slate-300 font-bold'"
+                    class="px-3 py-1.5 rounded-lg text-xs transition-all"
                     v-text="isArabic ? 'نشط فقط' : 'Active Only'"></button>
 
             <!-- Category Selector Dropdown -->
-            <select v-model="selectedCategoryFilter" class="bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 px-2.5 py-1.5 outline-none focus:border-indigo-500">
-                <option value="">[[ isArabic ? 'جميع الفئات (All Categories)' : 'All Categories' ]]</option>
-                <option v-for="c in categories" :key="c.id" :value="c.id">[[ c.name ]]</option>
+            <select v-model="selectedCategoryFilter" class="liquid-glass-btn border border-white/10 rounded-lg text-xs font-bold text-slate-200 px-2.5 py-1.5 outline-none focus:border-cyan-400">
+                <option value="" class="bg-slate-900 text-white">[[ isArabic ? 'جميع الفئات (All Categories)' : 'All Categories' ]]</option>
+                <option v-for="c in categories" :key="c.id" :value="c.id" class="bg-slate-900 text-white">[[ c.name ]]</option>
             </select>
         </div>
     </div>
 
-    <!-- Active Vendor Filter Alert Strip (If arrived from Vendor Screen) -->
-    <div v-if="selectedVendorFilter" class="px-6 py-2 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between text-xs text-emerald-800 font-bold">
+    <!-- Active Vendor Filter Alert Strip -->
+    <div v-if="selectedVendorFilter" class="px-6 py-2 bg-emerald-500/15 border-b border-emerald-500/30 flex items-center justify-between text-xs text-emerald-300 font-bold">
         <div class="flex items-center gap-2">
-            <i class="fas fa-truck text-emerald-600"></i>
+            <i class="fas fa-truck text-emerald-400"></i>
             <span>[[ isArabic ? 'يتم الآن تصفية الأصناف الموردة بواسطة:' : 'Showing items supplied by:' ]]</span>
-            <span class="bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-700 font-black">
+            <span class="bg-white/10 px-2 py-0.5 rounded border border-emerald-400/40 text-emerald-300 font-black">
                 [[ (vendors.find(v => v.id === selectedVendorFilter) || {}).name || selectedVendorFilter ]]
             </span>
         </div>
-        <button @click="selectedVendorFilter = ''" class="text-emerald-700 hover:text-rose-600 flex items-center gap-1 font-bold">
+        <button @click="selectedVendorFilter = ''" class="text-emerald-300 hover:text-rose-400 flex items-center gap-1 font-bold">
             <i class="fas fa-times"></i> [[ isArabic ? 'إلغاء التصفية' : 'Clear Filter' ]]
         </button>
     </div>
 
-    <!-- 4. VIEW 1: ODOO-STYLE KANBAN CARDS -->
-    <div v-if="filteredMaterials && filteredMaterials.length && materialViewMode !== 'list'" class="flex-1 overflow-y-auto p-6 bg-slate-50/10">
+    <!-- 4. VIEW 1: LIQUID GLASS KANBAN CARDS -->
+    <div v-if="filteredMaterials && filteredMaterials.length && materialViewMode !== 'list'" class="flex-1 overflow-y-auto p-6">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <div v-for="item in filteredMaterials" :key="item.id" @click="editMaterial(item, $root)"
-                 class="group bg-white rounded-[1.8rem] border border-slate-200 p-4 hover:border-indigo-400 hover:shadow-2xl hover:shadow-indigo-100 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between active:scale-95 duration-300">
+                 class="group liquid-glass-card rounded-[1.8rem] border border-white/[0.08] p-4 hover:border-cyan-400/40 hover:shadow-cyan-500/10 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between active:scale-95 duration-300">
                 
                 <div>
                     <!-- Active/Inactive & Variants Status Badge -->
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-1">
-                            <span v-if="item.is_active !== false" class="text-[8px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-200">
+                            <span v-if="item.is_active !== false" class="text-[8px] bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-full font-black border border-emerald-500/30">
                                 <i class="fas fa-check-circle"></i> [[ isArabic ? 'نشط' : 'Active' ]]
                             </span>
-                            <span v-else class="text-[8px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-black border border-rose-200">
+                            <span v-else class="text-[8px] bg-rose-500/15 text-rose-400 px-2 py-0.5 rounded-full font-black border border-rose-500/30">
                                 <i class="fas fa-ban"></i> [[ isArabic ? 'معطل' : 'Deactivated' ]]
                             </span>
                             
                             <span v-if="item.has_variants || (item.variants && item.variants.length > 0)" 
                                   @click.stop="openVariantsManagerModal(item)"
-                                  class="text-[8px] bg-fuchsia-50 text-fuchsia-600 hover:bg-fuchsia-600 hover:text-white transition-all cursor-pointer shadow-sm px-2 py-0.5 rounded-full font-black border border-fuchsia-200"
+                                  class="text-[8px] bg-blue-500/15 text-cyan-400 hover:bg-blue-600 hover:text-white transition-all cursor-pointer shadow-sm px-2 py-0.5 rounded-full font-black border border-blue-400/30"
                                   :title="isArabic ? 'إدارة التنوعات والألوان والمقاسات والصور' : 'Manage variants, sizes, colors and photos'">
                                 <i class="fas fa-tags"></i> [[ item.variants ? item.variants.length : 0 ]]
                             </span>
@@ -213,7 +216,7 @@
 
                         <!-- Low Stock Indicator -->
                         <span v-if="parseFloat(item.reorder_level || 0) > 0 && getItemTotalStock(item) <= parseFloat(item.reorder_level || 0)"
-                              class="text-[8px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-black border border-rose-200 flex items-center gap-1 animate-pulse"
+                              class="text-[8px] bg-rose-500/15 text-rose-400 px-2 py-0.5 rounded-full font-black border border-rose-500/30 flex items-center gap-1 animate-pulse"
                               :title="isArabic ? 'الرصيد تحت حد الطلب' : 'Low Stock Reorder Alert'">
                             <i class="fas fa-triangle-exclamation"></i> [[ isArabic ? 'إعادة طلب' : 'Reorder' ]]
                         </span>
@@ -222,12 +225,12 @@
                     <div class="flex gap-4">
                         <!-- Image -->
                         <div @click.stop="item.image ? openLightbox(fixImagePath(item.image), item.name) : editMaterial(item, $root)" 
-                             class="relative group/img w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border border-slate-100 overflow-hidden bg-slate-50 shrink-0 group-hover:scale-105 transition-transform duration-500 cursor-pointer shadow-sm">
+                             class="relative group/img w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border border-white/10 overflow-hidden bg-white/[0.04] shrink-0 group-hover:scale-105 transition-transform duration-500 cursor-pointer shadow-sm">
                             <img v-if="item.image" :src="fixImagePath(item.image)" class="w-full h-full object-cover">
-                            <div v-else class="w-full h-full flex items-center justify-center text-slate-200">
+                            <div v-else class="w-full h-full flex items-center justify-center text-slate-500">
                                 <i class="fas fa-box text-3xl"></i>
                             </div>
-                            <div v-if="item.image" class="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
+                            <div v-if="item.image" class="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
                                 <i class="fas fa-expand text-xs"></i>
                             </div>
                         </div>
@@ -235,24 +238,24 @@
                         <!-- Info -->
                         <div class="flex-1 min-w-0" :dir="isArabic ? 'rtl' : 'ltr'">
                             <div class="flex items-center justify-between mb-1">
-                                <span class="text-[9px] font-black text-indigo-600 uppercase tracking-widest truncate max-w-[120px] bg-indigo-50 px-2 py-0.5 rounded"
+                                <span class="text-[9px] font-black text-cyan-400 uppercase tracking-widest truncate max-w-[120px] bg-blue-500/15 border border-blue-400/30 px-2 py-0.5 rounded"
                                       :title="item.category_name">
                                     [[ item.category_name || 'Generic' ]]
                                 </span>
                             </div>
 
-                            <h4 class="font-black text-slate-800 text-sm mb-1 truncate group-hover:text-indigo-600 transition-colors" :title="item.name">
+                            <h4 class="font-black text-white text-sm mb-1 truncate group-hover:text-cyan-400 transition-colors" :title="item.name">
                                 [[ item.name ]]
                             </h4>
-                            <p v-if="item.description" class="text-[10px] text-slate-500 line-clamp-1 mb-1">[[ item.description ]]</p>
+                            <p v-if="item.description" class="text-[10px] text-slate-300 line-clamp-1 mb-1">[[ item.description ]]</p>
                             
                             <div class="flex items-center gap-1.5 justify-start mt-1">
-                                <div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-                                <span class="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-tighter">REF: [[ item.sku ]]</span>
+                                <div class="w-1.5 h-1.5 rounded-full bg-cyan-400"></div>
+                                <span class="text-[10px] font-mono font-bold text-slate-300 uppercase tracking-tighter">REF: [[ item.sku ]]</span>
                             </div>
 
-                            <!-- Default Vendor Badge (Odoo & ERPNext Integration) -->
-                            <div v-if="item.default_vendor_name" class="flex items-center gap-1 mt-1 text-[10px] text-emerald-700 font-bold truncate">
+                            <!-- Default Vendor Badge -->
+                            <div v-if="item.default_vendor_name" class="flex items-center gap-1 mt-1 text-[10px] text-emerald-400 font-bold truncate">
                                 <i class="fas fa-truck text-[9px]"></i>
                                 <span class="truncate">[[ item.default_vendor_name ]]</span>
                             </div>
@@ -261,12 +264,12 @@
                 </div>
 
                 <!-- Footer Stats & Actions -->
-                <div class="mt-4 pt-3 border-t border-slate-100">
+                <div class="mt-4 pt-3 border-t border-white/[0.08]">
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex flex-col" :dir="isArabic ? 'rtl' : 'ltr'">
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">[[ isArabic ? 'إجمالي الرصيد' : 'Total Stock' ]]</span>
+                            <span class="text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1">[[ isArabic ? 'إجمالي الرصيد' : 'Total Stock' ]]</span>
                             <div class="flex items-center gap-1.5">
-                                <span :class="getItemTotalStock(item) > 0 ? 'text-emerald-700' : 'text-rose-400'" class="text-sm font-black font-mono">
+                                <span :class="getItemTotalStock(item) > 0 ? 'text-emerald-400' : 'text-rose-400'" class="text-sm font-black font-mono">
                                     [[ getItemTotalStock(item).toLocaleString() ]]
                                 </span>
                                 <span class="text-[8px] font-bold text-slate-400">[[ item.base_uom ]]</span>
@@ -275,28 +278,28 @@
 
                         <div class="flex flex-col text-right" :dir="isArabic ? 'rtl' : 'ltr'">
                             <span class="text-[9px] font-black text-rose-400 uppercase tracking-widest leading-none mb-1">[[ isArabic ? 'سعر البيع' : 'Price' ]]</span>
-                            <span class="text-sm font-black font-mono text-rose-600">
+                            <span class="text-sm font-black font-mono text-rose-400">
                                 [[ formatCurrency(item.sales_price || 0) ]]
                             </span>
                         </div>
                     </div>
 
-                    <!-- Card Bottom Action Buttons (Item 9: Role-based permissions) -->
-                    <div class="flex items-center justify-between gap-1 pt-2 border-t border-slate-100/60" @click.stop>
-                        <!-- Edit: Restricted to MMA / Admin -->
-                        <button v-if="canManageMaterials" @click="editMaterial(item, $root)" class="flex-1 bg-slate-100 hover:bg-slate-800 text-slate-700 hover:text-white py-1 px-2 rounded-lg text-[10px] font-bold transition-all text-center">
+                    <!-- Card Bottom Action Buttons -->
+                    <div class="flex items-center justify-between gap-1 pt-2 border-t border-white/[0.08]" @click.stop>
+                        <!-- Edit Button -->
+                        <button v-if="canManageMaterials" @click="editMaterial(item, $root)" class="flex-1 liquid-glass-btn text-cyan-400 hover:text-white py-1 px-2 rounded-lg text-[10px] font-bold transition-all text-center">
                             <i class="fas fa-edit ml-1"></i> [[ isArabic ? 'تعديل (MMA)' : 'Edit (MMA)' ]]
                         </button>
 
-                        <!-- Quick PO: Restricted to Buyer / Admin -->
+                        <!-- Quick PO -->
                         <button v-if="canCreatePO" @click="openModal('po', { items: [{ material: item.id, uom: item.base_uom, quantity: 1, unit_price: item.standard_price || 0 }], vendor: item.default_vendor })"
-                                class="bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white p-1 rounded-lg text-[10px] font-bold transition-all"
+                                class="bg-emerald-500/15 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 p-1 rounded-lg text-[10px] font-bold transition-all"
                                 :title="isArabic ? 'إنشاء أمر شراء (Buyer)' : 'New PO (Buyer)'">
                             <i class="fas fa-cart-plus"></i>
                         </button>
 
-                        <!-- Delete: Restricted to MMA / Admin -->
-                        <button v-if="canManageMaterials" @click="deleteItem('material', item.id)" class="text-rose-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition-all text-[10px]"
+                        <!-- Delete -->
+                        <button v-if="canManageMaterials" @click="deleteItem('material', item.id)" class="text-rose-400 hover:text-rose-300 p-1 rounded-lg hover:bg-rose-500/20 transition-all text-[10px]"
                                 :title="isArabic ? 'حذف (MMA)' : 'Delete (MMA)'">
                             <i class="fas fa-trash-alt"></i>
                         </button>
@@ -306,11 +309,11 @@
         </div>
     </div>
 
-    <!-- 5. VIEW 2: ERPNEXT-STYLE DETAILED MASTER TABLE -->
-    <div v-else-if="filteredMaterials && filteredMaterials.length && materialViewMode === 'list'" class="flex-1 overflow-auto p-4 bg-slate-50/10">
+    <!-- 5. VIEW 2: LIQUID GLASS DETAILED MASTER TABLE -->
+    <div v-else-if="filteredMaterials && filteredMaterials.length && materialViewMode === 'list'" class="flex-1 overflow-auto p-4">
         <table class="w-full text-right border-collapse text-xs" :dir="isArabic ? 'rtl' : 'ltr'">
             <thead>
-                <tr class="border-b border-slate-200 bg-slate-100/50 text-slate-500 font-black text-[10px] uppercase">
+                <tr class="border-b border-white/[0.08] bg-white/[0.03] text-slate-300 font-black text-[10px] uppercase">
                     <th class="p-3 w-8"></th>
                     <th class="p-3">[[ isArabic ? 'الصنف' : 'Item' ]]</th>
                     <th class="p-3">SKU</th>
@@ -324,60 +327,60 @@
                     <th class="p-3 text-center">[[ isArabic ? 'إجراءات' : 'Actions' ]]</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-white/5">
                 <template v-for="item in filteredMaterials" :key="item.id">
                     <!-- Parent Row -->
-                    <tr @click="editMaterial(item, $root)" class="border-b border-slate-100 hover:bg-indigo-50/30 transition-all cursor-pointer">
+                    <tr @click="editMaterial(item, $root)" class="border-b border-white/[0.06] hover:bg-white/[0.04] transition-all cursor-pointer">
                         <td class="p-3 text-center" @click.stop="toggleItemExpand(item.id)">
-                            <button v-if="item.variants && item.variants.length > 0" class="w-6 h-6 rounded-lg bg-fuchsia-50 text-fuchsia-600 hover:bg-fuchsia-600 hover:text-white transition-all flex items-center justify-center text-[10px]">
+                            <button v-if="item.variants && item.variants.length > 0" class="w-6 h-6 rounded-lg bg-blue-500/15 text-cyan-400 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center text-[10px] border border-blue-400/30">
                                 <i :class="isItemExpanded(item.id) ? 'fas fa-chevron-down' : 'fas fa-chevron-left'"></i>
                             </button>
                         </td>
-                        <td class="p-3 font-bold text-slate-800 flex items-center gap-2">
+                        <td class="p-3 font-bold text-white flex items-center gap-2">
                             <img v-if="item.image" :src="fixImagePath(item.image)" class="w-7 h-7 rounded-lg object-cover">
                             <span>[[ item.name ]]</span>
                         </td>
-                        <td class="p-3 font-mono text-slate-600">[[ item.sku ]]</td>
+                        <td class="p-3 font-mono text-cyan-400 font-bold">[[ item.sku ]]</td>
                         <td class="p-3">
-                            <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">
+                            <span class="bg-blue-500/15 text-cyan-400 border border-blue-400/30 px-2 py-0.5 rounded text-[10px] font-bold">
                                 [[ item.category_name || '-' ]]
                             </span>
                         </td>
-                        <td class="p-3 font-bold text-emerald-700">
+                        <td class="p-3 font-bold text-emerald-400">
                             <span v-if="item.default_vendor_name" class="flex items-center gap-1">
                                 <i class="fas fa-truck text-[9px]"></i>
                                 [[ item.default_vendor_name ]]
                             </span>
-                            <span v-else class="text-slate-400">---</span>
+                            <span v-else class="text-slate-500">---</span>
                         </td>
-                        <td class="p-3 text-slate-600">[[ item.base_uom ]]</td>
+                        <td class="p-3 text-slate-300">[[ item.base_uom ]]</td>
                         <td class="p-3">
-                            <span v-if="item.is_active !== false" class="text-[9px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                            <span v-if="item.is_active !== false" class="text-[9px] bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-500/30">
                                 [[ isArabic ? 'نشط' : 'Active' ]]
                             </span>
-                            <span v-else class="text-[9px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-bold border border-rose-200">
+                            <span v-else class="text-[9px] bg-rose-500/15 text-rose-400 px-2 py-0.5 rounded-full font-bold border border-rose-500/30">
                                 [[ isArabic ? 'معطل' : 'Deactivated' ]]
                             </span>
                         </td>
-                        <td class="p-3 font-mono text-slate-500">[[ formatCurrency(item.standard_price || 0) ]]</td>
-                        <td class="p-3 font-mono font-bold text-rose-600">[[ formatCurrency(item.sales_price || 0) ]]</td>
-                        <td class="p-3 font-mono font-bold text-emerald-600">
+                        <td class="p-3 font-mono text-slate-300">[[ formatCurrency(item.standard_price || 0) ]]</td>
+                        <td class="p-3 font-mono font-bold text-rose-400">[[ formatCurrency(item.sales_price || 0) ]]</td>
+                        <td class="p-3 font-mono font-bold text-emerald-400">
                             [[ getItemTotalStock(item).toLocaleString() ]]
                         </td>
                         <td class="p-3 text-center" @click.stop>
                             <div class="flex items-center justify-center gap-1">
-                                <!-- Quick PO (Restricted to Buyer / Admin - Item 9) -->
+                                <!-- Quick PO -->
                                 <button v-if="canCreatePO" @click="openModal('po', { items: [{ material: item.id, uom: item.base_uom, quantity: 1, unit_price: item.standard_price || 0 }], vendor: item.default_vendor })"
-                                        class="p-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all text-xs"
+                                        class="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all text-xs border border-emerald-500/30"
                                         :title="isArabic ? 'أمر شراء (Buyer)' : 'New PO (Buyer)'">
                                     <i class="fas fa-cart-plus"></i>
                                 </button>
-                                <!-- Edit (Restricted to MMA / Admin - Item 9) -->
-                                <button v-if="canManageMaterials" @click="editMaterial(item, $root)" class="p-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-all text-xs" :title="isArabic ? 'تعديل (MMA)' : 'Edit (MMA)'">
+                                <!-- Edit -->
+                                <button v-if="canManageMaterials" @click="editMaterial(item, $root)" class="p-1.5 rounded-lg liquid-glass-btn text-cyan-400 hover:text-white transition-all text-xs" :title="isArabic ? 'تعديل (MMA)' : 'Edit (MMA)'">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <!-- Delete (Restricted to MMA / Admin - Item 9) -->
-                                <button v-if="canManageMaterials" @click="deleteItem('material', item.id)" class="p-1 rounded bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all text-xs" :title="isArabic ? 'حذف (MMA)' : 'Delete (MMA)'">
+                                <!-- Delete -->
+                                <button v-if="canManageMaterials" @click="deleteItem('material', item.id)" class="p-1.5 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-600 hover:text-white transition-all text-xs border border-rose-500/30" :title="isArabic ? 'حذف (MMA)' : 'Delete (MMA)'">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>
@@ -388,24 +391,24 @@
                     <tr v-if="isItemExpanded(item.id) && item.variants && item.variants.length > 0" 
                         v-for="variant in item.variants" :key="'var-' + variant.id"
                         @click="editMaterial(variant, $root)"
-                        class="bg-fuchsia-50/30 border-b border-fuchsia-100 hover:bg-fuchsia-100/50 transition-colors cursor-pointer">
+                        class="bg-blue-950/20 border-b border-white/[0.06] hover:bg-blue-900/30 transition-colors cursor-pointer">
                         <td class="p-3"></td>
-                        <td class="p-3 pr-8 font-bold text-fuchsia-900 flex items-center gap-2">
-                            <i class="fas fa-level-down-alt text-fuchsia-400 rotate-90"></i>
+                        <td class="p-3 pr-8 font-bold text-cyan-300 flex items-center gap-2">
+                            <i class="fas fa-level-down-alt text-cyan-400 rotate-90"></i>
                             <span>[[ variant.variant_name || variant.name ]]</span>
                         </td>
-                        <td class="p-3 font-mono text-fuchsia-800">[[ variant.sku ]]</td>
+                        <td class="p-3 font-mono text-cyan-400">[[ variant.sku ]]</td>
                         <td class="p-3 text-slate-400 italic text-[10px]">[[ isArabic ? 'متغير فرعي' : 'Variant Item' ]]</td>
                         <td class="p-3 text-slate-400 font-mono text-[10px]">[[ variant.barcode || '-' ]]</td>
-                        <td class="p-3 text-slate-600">[[ variant.base_uom || item.base_uom ]]</td>
+                        <td class="p-3 text-slate-300">[[ variant.base_uom || item.base_uom ]]</td>
                         <td class="p-3">
-                            <span class="text-[8px] bg-fuchsia-100 text-fuchsia-800 px-1.5 py-0.5 rounded font-bold">Variant</span>
+                            <span class="text-[8px] bg-blue-500/20 text-cyan-400 px-1.5 py-0.5 rounded font-bold border border-blue-400/30">Variant</span>
                         </td>
-                        <td class="p-3 font-mono text-slate-500">[[ formatCurrency(variant.standard_price || item.standard_price) ]]</td>
-                        <td class="p-3 font-mono font-bold text-rose-600">[[ formatCurrency(variant.sales_price || item.sales_price) ]]</td>
-                        <td class="p-3 font-mono font-black text-emerald-700">[[ parseFloat(variant.on_hand || 0).toLocaleString() ]]</td>
+                        <td class="p-3 font-mono text-slate-300">[[ formatCurrency(variant.standard_price || item.standard_price) ]]</td>
+                        <td class="p-3 font-mono font-bold text-rose-400">[[ formatCurrency(variant.sales_price || item.sales_price) ]]</td>
+                        <td class="p-3 font-mono font-black text-emerald-400">[[ parseFloat(variant.on_hand || 0).toLocaleString() ]]</td>
                         <td class="p-3 text-center" @click.stop>
-                            <button @click="deleteItem('material', variant.id)" class="text-rose-400 hover:text-rose-600 p-1">
+                            <button @click="deleteItem('material', variant.id)" class="text-rose-400 hover:text-rose-300 p-1">
                                 <i class="fas fa-trash-alt text-[10px]"></i>
                             </button>
                         </td>
@@ -416,17 +419,17 @@
     </div>
 
     <!-- 6. EMPTY STATE -->
-    <div v-else class="flex-1 flex flex-col items-center justify-center py-32 text-slate-300">
-        <i class="fas fa-boxes text-6xl mb-4 opacity-20"></i>
-        <p class="font-bold">[[ isArabic ? 'لا توجد أصناف مطابقة للبحث' : 'No matching items found' ]]</p>
-        <button @click="openModal('material')" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-bold text-xs transition-all">
+    <div v-else class="flex-1 flex flex-col items-center justify-center py-32 text-slate-400">
+        <i class="fas fa-boxes text-6xl mb-4 text-cyan-400 opacity-30"></i>
+        <p class="font-bold text-white text-base">[[ isArabic ? 'لا توجد أصناف مطابقة للبحث' : 'No matching items found' ]]</p>
+        <button @click="openModal('material')" class="mt-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-5 py-2 rounded-xl font-bold text-xs transition-all shadow-md shadow-blue-500/25">
             + [[ isArabic ? 'إضافة صنف جديد الآن' : 'Create Item' ]]
         </button>
     </div>
 
     <!-- Footer Counter -->
-    <div class="px-6 py-4 bg-white border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-        <span>[[ isArabic ? 'إجمالي الأصناف المعروضة:' : 'Count:' ]] [[ filteredMaterials.length ]]</span>
-        <span>[[ isArabic ? 'نظام إدارة الأصناف الموحد - Redivio' : 'Unified Item Master' ]]</span>
+    <div class="px-6 py-4 border-t border-white/[0.08] flex items-center justify-between text-[10px] text-slate-300 font-bold uppercase tracking-widest">
+        <span>[[ isArabic ? 'إجمالي الأصناف المعروضة:' : 'Count:' ]] <strong class="text-white">[[ filteredMaterials.length ]]</strong></span>
+        <span class="text-cyan-400 font-bold">[[ isArabic ? 'نظام إدارة الأصناف الموحد - Redivio' : 'Unified Item Master' ]]</span>
     </div>
 </div>
