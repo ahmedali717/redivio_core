@@ -355,6 +355,8 @@ createApp({
             purchase_orders: [],
             procTab: 'pos',
             purchase_requisitions: [],
+            selectedPR: null,
+            showPRModal: false,
             rfqs: [],
             supplier_quotations: [],
             quotation_comparisons: [],
@@ -8631,6 +8633,27 @@ createApp({
             this.editItem('po', po);
         },
 
+        openPRDetails(pr) {
+            this.selectedPR = JSON.parse(JSON.stringify(pr));
+            this.showPRModal = true;
+        },
+
+        closePRDetails() {
+            this.selectedPR = null;
+            this.showPRModal = false;
+        },
+
+        createPOFromPR(pr) {
+            this.closePRDetails();
+            this.openModal('po');
+            this.$nextTick(() => {
+                if (this.forms.po) {
+                    this.forms.po.pr = pr.id;
+                    this.onPRSelected();
+                }
+            });
+        },
+
         async approvePR(prId) {
             try {
                 this.loading = true;
@@ -8640,6 +8663,9 @@ createApp({
                 });
                 if (res.ok) {
                     this.showToast(this.isArabic ? "تم اعتماد طلب الشراء بنجاح" : "PR Approved", 'success');
+                    if (this.selectedPR && this.selectedPR.id === prId) {
+                        this.selectedPR.status = 'APPROVED';
+                    }
                     await this.fetchEnterpriseProcurementData();
                 }
             } catch (e) {
@@ -8658,6 +8684,10 @@ createApp({
                 });
                 if (res.ok) {
                     this.showToast(this.isArabic ? "تم تحويل طلب الشراء إلى طلب أسعار (RFQ)" : "Converted to RFQ", 'success');
+                    if (this.selectedPR && this.selectedPR.id === prId) {
+                        this.selectedPR.status = 'CONVERTED';
+                    }
+                    this.closePRDetails();
                     this.procTab = 'rfqs';
                     await this.fetchEnterpriseProcurementData();
                 } else {

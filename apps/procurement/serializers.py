@@ -69,21 +69,28 @@ class VendorSerializer(serializers.ModelSerializer):
 class PurchaseRequisitionLineSerializer(serializers.ModelSerializer):
     material_name = serializers.CharField(source='material.name', read_only=True)
     material_sku = serializers.CharField(source='material.sku', read_only=True)
+    uom = serializers.CharField(source='material.base_uom', read_only=True)
 
     class Meta:
         model = PurchaseRequisitionLine
-        fields = ['id', 'material', 'material_name', 'material_sku', 'quantity', 'notes']
+        fields = ['id', 'material', 'material_name', 'material_sku', 'uom', 'quantity', 'notes']
 
 
 class PurchaseRequisitionSerializer(serializers.ModelSerializer):
-    lines = PurchaseRequisitionLineSerializer(many=True)
+    lines = PurchaseRequisitionLineSerializer(many=True, required=False)
+    pr_number = serializers.CharField(source='requisition_number', read_only=True)
     requested_by_name = serializers.CharField(source='requested_by.username', read_only=True)
     plant_name = serializers.CharField(source='plant.name', read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = PurchaseRequisition
-        fields = ['id', 'opco', 'requisition_number', 'plant', 'plant_name', 'requested_by', 'requested_by_name', 'date', 'required_date', 'status', 'notes', 'lines']
-        read_only_fields = ['id', 'requisition_number', 'date']
+        fields = [
+            'id', 'opco', 'requisition_number', 'pr_number', 'plant', 'plant_name',
+            'requested_by', 'requested_by_name', 'date', 'required_date', 'status',
+            'notes', 'created_at', 'lines'
+        ]
+        read_only_fields = ['id', 'requisition_number', 'pr_number', 'date', 'created_at']
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines', [])
