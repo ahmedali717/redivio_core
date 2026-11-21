@@ -1313,6 +1313,16 @@
             <img src="{% static 'brand/logo_r.png' %}" class="preloader-logo" alt="REDIVIO Logo">
         </div>
     </div>
+    <script>
+        // Fail-safe to dismiss preloader in all cases after max 1.5s
+        setTimeout(function() {
+            var pl = document.getElementById('global-preloader');
+            if (pl) {
+                pl.classList.add('fade-out');
+                setTimeout(function() { try { pl.remove(); } catch(e){} }, 400);
+            }
+        }, 1500);
+    </script>
 
 
     <div id="app" class="flex-1 flex h-full" v-cloak>

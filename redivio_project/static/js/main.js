@@ -40,6 +40,7 @@ createApp({
             activeChatterMessages: [],
             activeActivities: [],
             newActivity: { type: 'todo', due_date: '', summary: '', note: '', assigned_to: null },
+            notifications: [],
             myPendingActivities: [],
             activeNotificationTab: 'tasks',
 
@@ -810,6 +811,11 @@ createApp({
     },
 
     computed: {
+        totalNotificationsCount() {
+            const tasksCount = (this.myPendingActivities && Array.isArray(this.myPendingActivities)) ? this.myPendingActivities.length : 0;
+            const notifCount = (this.notifications && Array.isArray(this.notifications)) ? this.notifications.length : 0;
+            return tasksCount + notifCount;
+        },
         filteredReceivablePOs() {
             let list = (this.pending_pos || []).filter(po => {
                 const st = (po.status || '').toUpperCase();

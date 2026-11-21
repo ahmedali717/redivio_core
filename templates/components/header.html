@@ -93,9 +93,9 @@
                         :title="isArabic ? 'المهام والإشعارات' : 'Tasks & Notifications'"
                         class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all flex items-center justify-center border border-white/10 shadow-sm relative backdrop-blur-md">
                     <i class="fas fa-bell"></i>
-                    <span v-if="(myPendingActivities.length + notifications.length) > 0" 
+                    <span v-if="totalNotificationsCount > 0" 
                           class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-[#0066FF] text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-slate-900 shadow-lg animate-pulse">
-                        [[ myPendingActivities.length + notifications.length ]]
+                        [[ totalNotificationsCount ]]
                     </span>
                     <span v-else class="absolute top-0 right-0 w-2 h-2 bg-slate-500 rounded-full border border-slate-900"></span>
                 </button>
@@ -112,7 +112,7 @@
                                     :class="activeNotificationTab === 'tasks' ? 'bg-[#0066FF] text-white shadow-sm' : 'text-slate-400 hover:text-white'">
                                 <i class="fas fa-tasks text-[10px]"></i>
                                 <span>[[ isArabic ? 'مهامي والأنشطة' : 'My Tasks' ]]</span>
-                                <span v-if="myPendingActivities.length > 0" class="text-[9px] px-1.5 py-0.2 rounded-full font-black"
+                                <span v-if="myPendingActivities && myPendingActivities.length > 0" class="text-[9px] px-1.5 py-0.2 rounded-full font-black"
                                       :class="activeNotificationTab === 'tasks' ? 'bg-white/20 text-white' : 'bg-[#0066FF] text-white'">
                                     [[ myPendingActivities.length ]]
                                 </span>
@@ -122,7 +122,7 @@
                                     :class="activeNotificationTab === 'system' ? 'bg-[#0066FF] text-white shadow-sm' : 'text-slate-400 hover:text-white'">
                                 <i class="fas fa-bell text-[10px]"></i>
                                 <span>[[ isArabic ? 'تنبيهات النظام' : 'Alerts' ]]</span>
-                                <span v-if="notifications.length > 0" class="text-[9px] px-1.5 py-0.2 rounded-full font-black"
+                                <span v-if="notifications && notifications.length > 0" class="text-[9px] px-1.5 py-0.2 rounded-full font-black"
                                       :class="activeNotificationTab === 'system' ? 'bg-white/20 text-white' : 'bg-slate-700 text-white'">
                                     [[ notifications.length ]]
                                 </span>
@@ -245,7 +245,7 @@
                     class="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-[#0066FF] transition-all flex items-center justify-center border border-white/10 shadow-sm relative group backdrop-blur-md" 
                     :class="{'bg-[#0066FF]/20 text-[#0066FF] border-[#0066FF]/40': showNotificationsDropdown && activeNotificationTab === 'tasks'}">
                 <i class="fas fa-tasks group-hover:scale-110 transition-transform text-sm"></i>
-                <span v-if="myPendingActivities.length > 0" 
+                <span v-if="myPendingActivities && myPendingActivities.length > 0" 
                       class="absolute -top-1 -right-1 w-4 h-4 bg-[#0066FF] text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-slate-900 shadow">
                     [[ myPendingActivities.length ]]
                 </span>
