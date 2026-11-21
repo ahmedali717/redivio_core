@@ -92,7 +92,7 @@
                 <div v-if="activeOperation === 'po_receipt'" class="space-y-3">
                     <div class="flex items-center justify-between px-1">
                         <label class="text-[10px] font-black text-blue-600 dark:text-cyan-400 uppercase tracking-widest">
-                            [[ isArabic ? 'اختيار أمر التوريد (PO) - الأوامر المتبقية فقط' : 'Select PO (Pending Balance Only)' ]]
+                            [[ isArabic ? 'أمر التوريد' : 'Purchase Order' ]]
                         </label>
                         <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                             [[ filteredReceivablePOs.length ]] [[ isArabic ? 'أمر متاح' : 'available' ]]
@@ -103,7 +103,7 @@
                     <div class="relative">
                         <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                         <input type="text" v-model="poSearchQuery"
-                            :placeholder="isArabic ? 'ابحث برقم الأمر أو المورد (اكتب جزء من الرقم)...' : 'Type part of PO# or vendor to filter...'"
+                            :placeholder="isArabic ? 'بحث برقم أمر التوريد أو المورد...' : 'Search by PO# or vendor...'"
                             class="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                         <button v-if="poSearchQuery" @click="poSearchQuery = ''" type="button" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs">
                             <i class="fas fa-times"></i>
@@ -114,7 +114,7 @@
                         class="w-full bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 rounded-2xl py-3.5 px-4 font-bold text-slate-800 dark:text-white focus:border-blue-500 dark:focus:border-cyan-400 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm">
                         <option value="" class="bg-white dark:bg-slate-900 text-slate-400">[[ isArabic ? '-- اختر أمر التوريد --' : '-- Select PO --' ]]</option>
                         <option v-for="po in filteredReceivablePOs" :key="po.id" :value="po.id" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-white">
-                            [[ po.po_number ]] — [[ po.vendor_name ]] ([[ isArabic ? 'به متبقي استلام' : 'Pending Qty' ]])
+                            [[ po.po_number ]] — [[ po.vendor_name ]]
                         </option>
                     </select>
                 </div>

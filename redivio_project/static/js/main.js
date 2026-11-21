@@ -828,6 +828,16 @@ createApp({
 
         filteredPurchaseOrdersForInvoice() {
             let list = this.purchase_orders && this.purchase_orders.length > 0 ? this.purchase_orders : (this.pending_pos || []);
+            
+            // 🎯 لما اختار مورد معين يجيب لي أوامر الشراء المرتبطة بيه فقط
+            const selectedVendorId = this.forms.purchase_invoice.vendor;
+            if (selectedVendorId) {
+                list = list.filter(po => {
+                    const vId = po.vendor && (typeof po.vendor === 'object' ? po.vendor.id : po.vendor);
+                    return String(vId) === String(selectedVendorId);
+                });
+            }
+
             if (this.accountingPOSearchQuery && this.accountingPOSearchQuery.trim()) {
                 const q = this.accountingPOSearchQuery.trim().toLowerCase();
                 list = list.filter(po => 
@@ -6238,6 +6248,24 @@ createApp({
             }
         },
 
+        onPurchaseInvoiceVendorChange() {
+            const selectedVendorId = this.forms.purchase_invoice.vendor;
+            const currentPoId = this.forms.purchase_invoice.purchase_order;
+            if (selectedVendorId && currentPoId) {
+                const po = (this.purchase_orders || []).find(p => p.id === currentPoId) || (this.pending_pos || []).find(p => p.id === currentPoId);
+                if (po) {
+                    const vId = po.vendor && (typeof po.vendor === 'object' ? po.vendor.id : po.vendor);
+                    if (String(vId) !== String(selectedVendorId)) {
+                        this.forms.purchase_invoice.purchase_order = null;
+                        this.forms.purchase_invoice.items = [];
+                        this.forms.purchase_invoice.subtotal = 0;
+                        this.forms.purchase_invoice.tax_amount = 0;
+                        this.forms.purchase_invoice.grand_total = 0;
+                    }
+                }
+            }
+        },
+
         recalcInvoiceTotals() {
             const sub = parseFloat(this.forms.purchase_invoice.subtotal) || 0;
             const tax = parseFloat((sub * 0.15).toFixed(2));
@@ -6266,10 +6294,11 @@ createApp({
                 }
 
                 if (po && po.vendor) {
-                    this.forms.purchase_invoice.vendor = po.vendor;
+                    const vId = po.vendor && (typeof po.vendor === 'object' ? po.vendor.id : po.vendor);
+                    this.forms.purchase_invoice.vendor = vId || po.vendor;
                 }
 
-                // 🌟 ODOO 3-WAY MATCHING RULE: Billed quantity = Received Quantity in Warehouse!
+                // حساب الكميات المستلمة فعلياً فقط
                 const mappedItems = lines.map(l => {
                     const ordered = parseFloat(l.quantity || 0);
                     const received = parseFloat(l.received_qty !== undefined ? l.received_qty : (l.received_quantity !== undefined ? l.received_quantity : 0));
@@ -6281,7 +6310,7 @@ createApp({
                         material_name: l.material_name || (this.materials_list && this.materials_list.find(m => m.id === l.material)?.name) || 'Unknown Item',
                         sku: l.material_sku || (this.materials_list && this.materials_list.find(m => m.id === l.material)?.sku) || 'N/A',
                         ordered_qty: ordered,
-                        received_qty: received, // THIS IS THE BILLED QUANTITY!
+                        received_qty: received,
                         unit_price: unitPrice,
                         line_total: billedTotal
                     };
@@ -6289,27 +6318,25 @@ createApp({
 
                 this.forms.purchase_invoice.items = mappedItems;
 
-                // Subtotal is strictly sum of received quantities * unit price
                 const subtotal = mappedItems.reduce((acc, curr) => acc + curr.line_total, 0);
                 this.forms.purchase_invoice.subtotal = parseFloat(subtotal.toFixed(2));
                 this.recalcInvoiceTotals();
 
-                // Save items in extra_data so backend persists the breakdown
                 this.forms.purchase_invoice.extra_data = this.forms.purchase_invoice.extra_data || {};
                 this.forms.purchase_invoice.extra_data.items = mappedItems;
 
                 if (mappedItems.every(i => i.received_qty <= 0)) {
                     this.showToast(
                         this.isArabic 
-                            ? "تنبيه نظام Odoo: أمر الشراء المحدد لم يستلم منه أي كميات بالمستودع بعد (الكميات المستلمة = 0)" 
-                            : "Odoo Alert: No items have been received in the warehouse yet for this PO (Received = 0)", 
+                            ? "تنبيه: لم يتم تسجيل استلام مخزني لهذا الأمر بعد (الكميات المستلمة = 0)" 
+                            : "Notice: No items have been received in the warehouse yet for this PO (Received = 0)", 
                         "warning"
                     );
                 } else {
                     this.showToast(
                         this.isArabic 
-                            ? `تم تحميل بيانات الأمر واحتساب الفاتورة على الكميات المستلمة فقط ($${this.forms.purchase_invoice.grand_total})` 
-                            : `PO loaded: Invoice billed strictly on received quantities ($${this.forms.purchase_invoice.grand_total})`, 
+                            ? `تم تحميل بيانات الأمر واحتساب الفاتورة على الكميات المستلمة ($${this.forms.purchase_invoice.grand_total})` 
+                            : `PO loaded: Invoice calculated on received quantities ($${this.forms.purchase_invoice.grand_total})`, 
                         "success"
                     );
                 }
