@@ -1,5 +1,6 @@
 import datetime
 import decimal
+from django.db import transaction
 from django.db.models import Sum, Q
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -251,11 +252,33 @@ class PurchaseInvoiceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         opco_id = get_request_opco_id(self.request)
+        extra = {}
+        if self.request.data and isinstance(self.request.data, dict):
+            if 'items' in self.request.data and self.request.data['items']:
+                extra['items'] = self.request.data['items']
+            if 'extra_data' in self.request.data and isinstance(self.request.data['extra_data'], dict):
+                extra.update(self.request.data['extra_data'])
+
+        # ربط تلقائي بأمر الشراء إن وجد
+        po_id = self.request.data.get('purchase_order') if hasattr(self.request, 'data') else None
+        po_obj = None
+        if po_id:
+            from apps.procurement.models import PurchaseOrder
+            try:
+                po_obj = PurchaseOrder.objects.filter(id=int(po_id)).first()
+            except (ValueError, TypeError):
+                po_obj = PurchaseOrder.objects.filter(po_number=str(po_id).strip()).first()
+
+        save_kwargs = {}
+        if extra:
+            save_kwargs['extra_data'] = extra
+        if po_obj:
+            save_kwargs['purchase_order'] = po_obj
         if 'opco' not in serializer.validated_data and opco_id:
             from apps.core.models import OpCo
-            serializer.save(opco=OpCo.objects.filter(id=opco_id).first())
-        else:
-            serializer.save()
+            save_kwargs['opco'] = OpCo.objects.filter(id=opco_id).first()
+
+        serializer.save(**save_kwargs)
 
     @action(detail=True, methods=['post'], url_path='post-gl')
     def post_invoice(self, request, pk=None):
@@ -271,6 +294,56 @@ class PurchaseInvoiceViewSet(viewsets.ModelViewSet):
             return Response({"message": f"تم ترحيل فاتورة المشتريات {pi.invoice_number} بنجاح إلى دفتر الأستاذ العام."})
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path='cancel')
+    def cancel_invoice(self, request, pk=None):
+        """إلغاء فاتورة المشتريات وعكس قيودها المحاسبية في الأستاذ العام وتعديل رصيد المورد"""
+        pi = self.get_object()
+        if pi.status == 'CANCELLED':
+            return Response({"error": "الفاتورة ملغاة بالفعل."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            # 1. إيجاد القيود المحاسبية الأصلية لهذه الفاتورة وعكسها
+            original_gls = GLEntry.objects.filter(
+                voucher_no=pi.invoice_number,
+                is_cancelled=False
+            )
+            for gl in original_gls:
+                GLEntry.objects.create(
+                    opco=gl.opco,
+                    posting_date=datetime.date.today(),
+                    account=gl.account,
+                    party_type=gl.party_type,
+                    party_id=gl.party_id,
+                    party_name=gl.party_name,
+                    debit=gl.credit,   # عكس الدائن والمدين
+                    credit=gl.debit,
+                    voucher_type='Purchase Invoice Reversal',
+                    voucher_no=f"REV-{pi.invoice_number}",
+                    remarks=f"عكس وإلغاء قيد الفاتورة: {pi.invoice_number}"
+                )
+                gl.account.recalculate_balance()
+
+            original_gls.update(is_cancelled=True)
+
+            # 2. تعديل رصيد المورد
+            if hasattr(pi.vendor, 'balance') and pi.vendor.balance is not None:
+                pi.vendor.balance = max(0, float(pi.vendor.balance) - float(pi.grand_total))
+                pi.vendor.save(update_fields=['balance'])
+
+            # 3. تحديث حالة الفاتورة إلى CANCELLED
+            pi.status = 'CANCELLED'
+            pi.docstatus = 2
+            if not pi.extra_data:
+                pi.extra_data = {}
+            pi.extra_data['cancelled_at'] = datetime.datetime.now().isoformat()
+            pi.save(update_fields=['status', 'docstatus', 'extra_data'])
+
+            return Response({
+                "message": f"تم إلغاء فاتورة الشراء {pi.invoice_number} وعكس كافة قيودها المحاسبية في الأستاذ العام بنجاح.",
+                "invoice_number": pi.invoice_number,
+                "status": "CANCELLED"
+            })
 
 
 

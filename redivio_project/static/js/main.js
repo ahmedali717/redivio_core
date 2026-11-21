@@ -201,6 +201,9 @@ createApp({
             jvStatusFilter: 'ALL',
             piSearch: '',
             piStatusFilter: 'ALL',
+            selectedPurchaseInvoice: null,
+            showInvoiceDetailsModal: false,
+            invoiceDetailsTab: 'items',
             paySearch: '',
             payTypeFilter: 'ALL',
             activeReportTab: (() => {
@@ -6326,6 +6329,11 @@ createApp({
 
                 this.forms.purchase_invoice.extra_data = this.forms.purchase_invoice.extra_data || {};
                 this.forms.purchase_invoice.extra_data.items = mappedItems;
+                if (po) {
+                    this.forms.purchase_invoice.extra_data.po_number = po.po_number;
+                    this.forms.purchase_invoice.extra_data.po_id = po.id;
+                    this.forms.purchase_invoice.po_number = po.po_number;
+                }
 
                 if (mappedItems.every(i => i.received_qty <= 0)) {
                     this.showToast(
@@ -6347,6 +6355,10 @@ createApp({
             } finally {
                 this.loading = false;
             }
+        },
+
+        onPurchaseInvoicePOSelect() {
+            return this.onPurchaseInvoicePOSelected();
         },
 
         async fetchPendingPOs() {
@@ -7318,6 +7330,19 @@ createApp({
                                 cost_center: l.cost_center ? parseInt(l.cost_center) : null,
                                 remark: l.remark || ''
                             })).filter(l => l.account);
+                        }
+                    } else if (type === 'purchase_invoice') {
+                        if (!finalData.extra_data) finalData.extra_data = {};
+                        if (finalData.items && finalData.items.length) {
+                            finalData.extra_data.items = finalData.items;
+                        }
+                        if (finalData.purchase_order) {
+                            const po = (this.purchase_orders || []).find(p => p.id == finalData.purchase_order);
+                            if (po) {
+                                finalData.extra_data.po_number = po.po_number;
+                                finalData.extra_data.po_id = po.id;
+                                finalData.po_id = po.id;
+                            }
                         }
                     }
 
@@ -8743,6 +8768,8 @@ createApp({
                 this.warehouse_transfers = Array.isArray(transfers) ? transfers : (transfers.results || []);
                 this.stock_scraps = Array.isArray(scraps) ? scraps : (scraps.results || []);
                 this.sales_returns = Array.isArray(salesRet) ? salesRet : (salesRet.results || []);
+                // مزامنة فواتير المشتريات لضمان ربطها بأوامر الشراء في الأزرار الذكية
+                await this.fetchPurchaseInvoices();
             } catch (e) {
                 console.error("Error fetching Enterprise procurement data:", e);
             }
@@ -8840,13 +8867,23 @@ createApp({
             return (this.purchase_orders || []).filter(p => p.rfq == rfqId);
         },
 
-        getPOInvoices(poId) {
-            if (!poId) return [];
-            return (this.purchase_invoices || []).filter(inv => inv.purchase_order == poId);
+        getPOInvoices(poRef) {
+            if (!poRef) return [];
+            const poId = typeof poRef === 'object' ? (poRef.id || poRef.po_number) : poRef;
+            const allInvoices = (this.purchaseInvoices && this.purchaseInvoices.length) ? this.purchaseInvoices : (this.purchase_invoices || []);
+            const targetPO = (this.purchase_orders || []).find(p => p.id == poId || p.po_number === poId) || (typeof poRef === 'object' ? poRef : null);
+            const poNumber = targetPO ? targetPO.po_number : (typeof poId === 'string' ? poId : '');
+
+            return allInvoices.filter(inv => {
+                if (inv.purchase_order && (inv.purchase_order == poId || (targetPO && inv.purchase_order == targetPO.id))) return true;
+                if (inv.po_id && (inv.po_id == poId || (targetPO && inv.po_id == targetPO.id))) return true;
+                if (poNumber && (inv.po_number === poNumber || (inv.extra_data && (inv.extra_data.po_number === poNumber || inv.extra_data.po_id == poId)))) return true;
+                return false;
+            });
         },
 
-        getPOInvoicesCount(poId) {
-            return this.getPOInvoices(poId).length;
+        getPOInvoicesCount(poRef) {
+            return this.getPOInvoices(poRef).length;
         },
 
         openPurchaseInvoiceForPO(po) {
@@ -8861,10 +8898,71 @@ createApp({
                 this.forms.purchase_invoice.purchase_order = po.id;
                 this.forms.purchase_invoice.bill_date = new Date().toISOString().substring(0, 10);
                 this.forms.purchase_invoice.due_date = new Date().toISOString().substring(0, 10);
-                if (typeof this.onPurchaseInvoicePOSelect === 'function') {
+                if (typeof this.onPurchaseInvoicePOSelected === 'function') {
+                    this.onPurchaseInvoicePOSelected();
+                } else if (typeof this.onPurchaseInvoicePOSelect === 'function') {
                     this.onPurchaseInvoicePOSelect();
                 }
             });
+        },
+
+        async openPurchaseInvoiceDetails(inv) {
+            if (!inv) return;
+            this.selectedPurchaseInvoice = inv;
+            this.showInvoiceDetailsModal = true;
+            this.invoiceDetailsTab = 'items';
+
+            try {
+                const res = await fetch(`/api/accounting/purchase-invoices/${inv.id}/`);
+                if (res.ok) {
+                    const detailed = await res.json();
+                    this.selectedPurchaseInvoice = detailed;
+                }
+            } catch (err) {
+                console.error("openPurchaseInvoiceDetails error:", err);
+            }
+        },
+
+        closePurchaseInvoiceDetails() {
+            this.showInvoiceDetailsModal = false;
+            this.selectedPurchaseInvoice = null;
+        },
+
+        async cancelAndReversePurchaseInvoice(inv) {
+            if (!inv) return;
+            const confirmMsg = this.isArabic 
+                ? `هل أنت متأكد من إلغاء وعكس فاتورة المشتريات رقم ${inv.invoice_number}؟\nسيتم إنشاء قيود عكسية بالأستاذ العام (Debit/Credit Reversal) وتعديل رصيد المورد.` 
+                : `Are you sure you want to cancel and reverse bill ${inv.invoice_number}? Counter GL entries will be created and vendor debt adjusted.`;
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/accounting/purchase-invoices/${inv.id}/cancel/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.showToast(data.message || (this.isArabic ? "تم عكس وإلغاء الفاتورة والقيود بنجاح" : "Bill cancelled and GL reversed successfully"), 'success');
+                    if (data.invoice) {
+                        this.selectedPurchaseInvoice = data.invoice;
+                    } else {
+                        inv.status = 'CANCELLED';
+                    }
+                    await this.fetchPurchaseInvoices();
+                    await this.fetchGLEntries();
+                    await this.fetchAccounts();
+                } else {
+                    this.showToast(data.error || (this.isArabic ? "فشل إلغاء وعكس الفاتورة" : "Failed to cancel bill"), 'error');
+                }
+            } catch (e) {
+                this.showToast(this.isArabic ? "خطأ في الاتصال بالسيرفر" : "Network error", 'error');
+            } finally {
+                this.loading = false;
+            }
         },
 
         createPOFromPR(pr) {

@@ -182,6 +182,9 @@ class GLEntrySerializer(serializers.ModelSerializer):
 class PurchaseInvoiceSerializer(serializers.ModelSerializer):
     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
     po_number = serializers.CharField(source='purchase_order.po_number', read_only=True)
+    items = serializers.SerializerMethodField()
+    gl_entries = serializers.SerializerMethodField()
+    payment_entries = serializers.SerializerMethodField()
 
     class Meta:
         model = PurchaseInvoice
@@ -190,9 +193,60 @@ class PurchaseInvoiceSerializer(serializers.ModelSerializer):
             'purchase_order', 'po_number', 'receipt', 'posting_date', 'due_date',
             'currency', 'exchange_rate', 'subtotal', 'discount_amount', 'tax_amount',
             'grand_total', 'paid_amount', 'status', 'docstatus',
-            'credit_to_account', 'expense_account', 'notes', 'extra_data', 'created_at'
+            'credit_to_account', 'expense_account', 'notes', 'extra_data', 'created_at',
+            'items', 'gl_entries', 'payment_entries'
         ]
         read_only_fields = ['invoice_number', 'paid_amount']
+
+    def get_items(self, obj):
+        if obj.extra_data and isinstance(obj.extra_data, dict) and 'items' in obj.extra_data:
+            return obj.extra_data['items']
+        if obj.purchase_order:
+            lines = []
+            for l in obj.purchase_order.lines.all():
+                lines.append({
+                    'material': l.material_id,
+                    'material_name': l.material.name if l.material else '',
+                    'material_sku': l.material.sku if l.material else '',
+                    'quantity': float(l.quantity),
+                    'received_qty': float(getattr(l, 'received_qty', l.quantity)),
+                    'unit_price': float(l.unit_price),
+                    'line_total': float(l.quantity * l.unit_price)
+                })
+            return lines
+        return []
+
+    def get_gl_entries(self, obj):
+        from .models import GLEntry
+        gls = GLEntry.objects.filter(voucher_no__in=[obj.invoice_number, f"REV-{obj.invoice_number}"]).select_related('account')
+        return [{
+            'id': g.id,
+            'posting_date': str(g.posting_date),
+            'account_number': g.account.account_number if g.account else '',
+            'account_name': g.account.account_name if g.account else '',
+            'party_name': g.party_name or '',
+            'debit': float(g.debit),
+            'credit': float(g.credit),
+            'remarks': g.remarks,
+            'voucher_type': g.voucher_type,
+            'voucher_no': g.voucher_no,
+            'is_cancelled': getattr(g, 'is_cancelled', False)
+        } for g in gls]
+
+    def get_payment_entries(self, obj):
+        from .models import PaymentEntry
+        pays = PaymentEntry.objects.filter(purchase_invoice=obj).select_related('paid_from_account', 'paid_to_account')
+        return [{
+            'id': p.id,
+            'entry_number': p.entry_number,
+            'posting_date': str(p.posting_date),
+            'paid_amount': float(p.paid_amount),
+            'payment_method': p.payment_method,
+            'reference_no': p.reference_no,
+            'status': p.status,
+            'paid_from_name': p.paid_from_account.account_name if p.paid_from_account else '',
+            'paid_to_name': p.paid_to_account.account_name if p.paid_to_account else ''
+        } for p in pays]
 
 
 class PaymentEntrySerializer(serializers.ModelSerializer):
