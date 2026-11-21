@@ -1,0 +1,378 @@
+<!-- ===================================================================== -->
+<!-- 🌟 نافذة استعراض الفاتورة الشاملة كـ FULL SCREEN (أصناف + قيم + قيود) -->
+<!-- ===================================================================== -->
+<div v-if="showInvoiceDetailsModal && selectedPurchaseInvoice" 
+     class="fixed inset-0 z-[80] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-200">
+    
+    <div class="w-full h-full max-w-7xl max-h-[96vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+        
+        <!-- Modal Header -->
+        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-black shadow-md shadow-blue-500/20">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xl font-black text-slate-900 font-mono">[[ selectedPurchaseInvoice.invoice_number ]]</h3>
+                        <span :class="{
+                            'bg-rose-100 text-rose-800 border-rose-200': selectedPurchaseInvoice.status === 'UNPAID',
+                            'bg-amber-100 text-amber-800 border-amber-200': selectedPurchaseInvoice.status === 'PARTIAL',
+                            'bg-emerald-100 text-emerald-800 border-emerald-200': selectedPurchaseInvoice.status === 'PAID',
+                            'bg-slate-200 text-slate-700 border-slate-300 line-through': selectedPurchaseInvoice.status === 'CANCELLED'
+                        }" class="px-3 py-0.5 rounded-full text-xs font-black uppercase border">
+                            [[ selectedPurchaseInvoice.status ]]
+                        </span>
+                        <span v-if="selectedPurchaseInvoice.po_number || (selectedPurchaseInvoice.extra_data && selectedPurchaseInvoice.extra_data.po_number)" 
+                              class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200 font-mono">
+                            <i class="fas fa-link mr-1"></i>[[ selectedPurchaseInvoice.po_number || selectedPurchaseInvoice.extra_data.po_number ]]
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        [[ isArabic ? 'المورد:' : 'Vendor:' ]] <span class="font-bold text-slate-800">[[ selectedPurchaseInvoice.vendor_name || ('Vendor #' + selectedPurchaseInvoice.vendor) ]]</span>
+                        <span class="mx-2 text-slate-300">|</span>
+                        [[ isArabic ? 'تاريخ الفاتورة:' : 'Posting Date:' ]] <span class="font-mono text-slate-700">[[ selectedPurchaseInvoice.posting_date ]]</span>
+                        <span class="mx-2 text-slate-300">|</span>
+                        [[ isArabic ? 'تاريخ الاستحقاق:' : 'Due Date:' ]] <span class="font-mono text-slate-700">[[ selectedPurchaseInvoice.due_date ]]</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-2">
+                <button v-if="selectedPurchaseInvoice.status !== 'PAID' && selectedPurchaseInvoice.status !== 'CANCELLED'"
+                        @click="openPaymentForInvoice('purchase', selectedPurchaseInvoice)"
+                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all">
+                    <i class="fas fa-hand-holding-dollar"></i>
+                    <span>[[ isArabic ? 'سداد دفعة' : 'Register Payment' ]]</span>
+                </button>
+
+                <button v-if="selectedPurchaseInvoice.status !== 'CANCELLED'"
+                        @click="cancelAndReversePurchaseInvoice(selectedPurchaseInvoice)"
+                        class="px-4 py-2 bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-rose-300 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all">
+                    <i class="fas fa-rotate-left"></i>
+                    <span>[[ isArabic ? 'عكس وإلغاء الفاتورة والقيود' : 'Cancel & Reverse GL' ]]</span>
+                </button>
+
+                <button @click="openPurchaseInvoiceGL(selectedPurchaseInvoice)"
+                        class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-2 transition-all">
+                    <i class="fas fa-scale-balanced text-blue-600"></i>
+                    <span>[[ isArabic ? 'عرض بالأستاذ العام' : 'GL Statement' ]]</span>
+                </button>
+
+                <button @click="closePurchaseInvoiceDetails()" 
+                        class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Metrics Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-slate-50/50 border-b border-slate-200">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+                <span class="text-[11px] font-bold text-slate-400 block uppercase">[[ isArabic ? 'إجمالي الفاتورة' : 'Grand Total' ]]</span>
+                <span class="text-xl font-black text-slate-900 font-mono mt-1 block">$[[ formatNumber(selectedPurchaseInvoice.grand_total) ]]</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+                <span class="text-[11px] font-bold text-slate-400 block uppercase">[[ isArabic ? 'المبلغ المسدد' : 'Paid Amount' ]]</span>
+                <span class="text-xl font-black text-emerald-600 font-mono mt-1 block">$[[ formatNumber(selectedPurchaseInvoice.paid_amount) ]]</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+                <span class="text-[11px] font-bold text-slate-400 block uppercase">[[ isArabic ? 'الرصيد المتبقي' : 'Outstanding Balance' ]]</span>
+                <span class="text-xl font-black font-mono mt-1 block"
+                      :class="(selectedPurchaseInvoice.grand_total - selectedPurchaseInvoice.paid_amount) > 0 ? 'text-rose-600' : 'text-slate-500'">
+                    $[[ formatNumber(Math.max(0, (selectedPurchaseInvoice.grand_total || 0) - (selectedPurchaseInvoice.paid_amount || 0))) ]]
+                </span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+                <span class="text-[11px] font-bold text-slate-400 block uppercase">[[ isArabic ? 'حالة القيود المحاسبية' : 'GL Status' ]]</span>
+                <div class="mt-1 flex items-center gap-1.5">
+                    <span v-if="selectedPurchaseInvoice.status === 'CANCELLED'" class="text-xs font-black text-rose-600 flex items-center gap-1">
+                        <i class="fas fa-ban"></i> [[ isArabic ? 'تم العكس والإلغاء' : 'Reversed & Cancelled' ]]
+                    </span>
+                    <span v-else class="text-xs font-black text-blue-600 flex items-center gap-1">
+                        <i class="fas fa-check-double text-emerald-500"></i> [[ isArabic ? 'مرحلة بالكامل في الأستاذ' : 'Fully Posted to GL' ]]
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="px-6 pt-3 border-b border-slate-200 bg-white flex items-center gap-3">
+            <button @click="invoiceDetailsTab = 'items'" 
+                    :class="invoiceDetailsTab === 'items' ? 'border-blue-600 text-blue-600 font-black' : 'border-transparent text-slate-500 hover:text-slate-800 font-bold'"
+                    class="pb-3 border-b-2 text-xs flex items-center gap-2 transition-all cursor-pointer">
+                <i class="fas fa-boxes-stacked"></i>
+                <span>[[ isArabic ? '1. الأصناف والكميات المفوترة' : '1. Invoiced Line Items' ]]</span>
+                <span v-if="selectedPurchaseInvoice.items && selectedPurchaseInvoice.items.length" 
+                      class="px-2 py-0.5 rounded-full text-[10px] bg-blue-100 text-blue-800 font-black">
+                    [[ selectedPurchaseInvoice.items.length ]]
+                </span>
+            </button>
+
+            <button @click="invoiceDetailsTab = 'values'" 
+                    :class="invoiceDetailsTab === 'values' ? 'border-blue-600 text-blue-600 font-black' : 'border-transparent text-slate-500 hover:text-slate-800 font-bold'"
+                    class="pb-3 border-b-2 text-xs flex items-center gap-2 transition-all cursor-pointer">
+                <i class="fas fa-receipt"></i>
+                <span>[[ isArabic ? '2. القيم المالية وسندات السداد' : '2. Financial Summary & Payments' ]]</span>
+                <span v-if="selectedPurchaseInvoice.payment_entries && selectedPurchaseInvoice.payment_entries.length" 
+                      class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-black">
+                    [[ selectedPurchaseInvoice.payment_entries.length ]]
+                </span>
+            </button>
+
+            <button @click="invoiceDetailsTab = 'gl'" 
+                    :class="invoiceDetailsTab === 'gl' ? 'border-blue-600 text-blue-600 font-black' : 'border-transparent text-slate-500 hover:text-slate-800 font-bold'"
+                    class="pb-3 border-b-2 text-xs flex items-center gap-2 transition-all cursor-pointer">
+                <i class="fas fa-scale-balanced"></i>
+                <span>[[ isArabic ? '3. القيود المحاسبية والأستاذ العام' : '3. GL Double-Entry Journal' ]]</span>
+                <span v-if="selectedPurchaseInvoice.gl_entries && selectedPurchaseInvoice.gl_entries.length" 
+                      class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 font-mono font-black">
+                    [[ selectedPurchaseInvoice.gl_entries.length ]]
+                </span>
+            </button>
+        </div>
+
+        <!-- Tab Content Area -->
+        <div class="flex-1 overflow-y-auto p-6 bg-slate-50/30">
+            
+            <!-- TAB 1: الأصناف والكميات -->
+            <div v-if="invoiceDetailsTab === 'items'" class="space-y-4">
+                <div class="bg-blue-50/50 border border-blue-200 rounded-2xl p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-circle-check text-blue-600 text-lg"></i>
+                        <div>
+                            <h4 class="text-xs font-black text-blue-900">[[ isArabic ? 'مطابقة الفاتورة على الكميات المستلمة فعلياً بالمخازن' : '3-Way Matched on Actual Warehouse Received Quantities' ]]</h4>
+                            <p class="text-[11px] text-blue-700 mt-0.5">[[ isArabic ? 'يتم إصدار الفاتورة فقط على الأصناف والكميات التي تم تأكيد استلامها في المستودع بموجب إذن الاستلام.' : 'Billed quantities strictly mirror verified warehouse receipt notes.' ]]</p>
+                        </div>
+                    </div>
+                    <span v-if="selectedPurchaseInvoice.po_number || (selectedPurchaseInvoice.extra_data && selectedPurchaseInvoice.extra_data.po_number)" 
+                          class="text-xs font-mono font-bold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-blue-200">
+                        [[ isArabic ? 'أمر الشراء المرتبط:' : 'Linked PO:' ]] [[ selectedPurchaseInvoice.po_number || selectedPurchaseInvoice.extra_data.po_number ]]
+                    </span>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+                    <table class="w-full text-xs text-right border-collapse">
+                        <thead class="bg-slate-50 text-[10px] uppercase font-black text-slate-400 border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3 text-center">#</th>
+                                <th class="px-4 py-3">[[ isArabic ? 'رمز الصنف (SKU)' : 'SKU' ]]</th>
+                                <th class="px-4 py-3">[[ isArabic ? 'اسم الصنف والمواصفات' : 'Item Description' ]]</th>
+                                <th class="px-4 py-3 text-center">[[ isArabic ? 'الكمية المطلوبة' : 'Ordered Qty' ]]</th>
+                                <th class="px-4 py-3 text-center bg-blue-50/50 text-blue-800">[[ isArabic ? 'الكمية المستلمة (المفوترة)' : 'Received (Billed)' ]]</th>
+                                <th class="px-4 py-3 text-center">[[ isArabic ? 'سعر الوحدة' : 'Unit Price' ]]</th>
+                                <th class="px-4 py-3 text-center">[[ isArabic ? 'الإجمالي' : 'Total' ]]</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-if="!selectedPurchaseInvoice.items || selectedPurchaseInvoice.items.length === 0">
+                                <td colspan="7" class="py-12 text-center text-slate-400 font-bold">
+                                    <i class="fas fa-boxes-stacked text-3xl mb-2 text-slate-300 block"></i>
+                                    [[ isArabic ? 'تفاصيل الأصناف مسجلة على مستوى أمر الشراء المرتبط' : 'Line items recorded on linked Purchase Order' ]]
+                                </td>
+                            </tr>
+                            <tr v-for="(item, idx) in selectedPurchaseInvoice.items" :key="idx" class="hover:bg-slate-50/80">
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">[[ idx + 1 ]]</td>
+                                <td class="px-4 py-3 font-mono font-bold text-blue-700">[[ item.sku || item.material_sku || '-' ]]</td>
+                                <td class="px-4 py-3 font-bold text-slate-800">[[ item.material_name || item.description || item.name || 'Material Item' ]]</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-600">[[ item.ordered_qty !== undefined ? item.ordered_qty : '-' ]]</td>
+                                <td class="px-4 py-3 text-center font-mono font-black text-blue-700 bg-blue-50/30">[[ item.received_qty !== undefined ? item.received_qty : (item.quantity || 0) ]]</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-700">$[[ formatNumber(item.unit_price) ]]</td>
+                                <td class="px-4 py-3 text-center font-mono font-black text-slate-900">$[[ formatNumber(item.line_total || ((item.received_qty || item.quantity || 0) * (item.unit_price || 0))) ]]</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-slate-50 border-t border-slate-200 font-bold text-slate-700">
+                            <tr>
+                                <td colspan="6" class="px-4 py-3 text-left">[[ isArabic ? 'المجموع الفرعي للأصناف:' : 'Subtotal:' ]]</td>
+                                <td class="px-4 py-3 text-center font-mono font-black text-slate-900">$[[ formatNumber(selectedPurchaseInvoice.subtotal) ]]</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 2: القيم والملخص المالي وسندات السداد -->
+            <div v-if="invoiceDetailsTab === 'values'" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Invoice Financial Breakdown -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+                        <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+                            <i class="fas fa-calculator text-blue-600"></i>
+                            [[ isArabic ? 'الملخص المالي والضريبي' : 'Financial & Tax Breakdown' ]]
+                        </h4>
+                        
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between py-1.5 border-b border-slate-100 text-slate-600">
+                                <span>[[ isArabic ? 'المجموع الفرعي (قبل الضريبة):' : 'Subtotal (Excl. Tax):' ]]</span>
+                                <span class="font-mono font-bold text-slate-900">$[[ formatNumber(selectedPurchaseInvoice.subtotal) ]]</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 border-b border-slate-100 text-slate-600">
+                                <span>[[ isArabic ? 'ضريبة القيمة المضافة (15%):' : 'VAT (15%):' ]]</span>
+                                <span class="font-mono font-bold text-blue-600">+$[[ formatNumber(selectedPurchaseInvoice.tax_amount) ]]</span>
+                            </div>
+                            <div v-if="selectedPurchaseInvoice.discount_amount" class="flex justify-between py-1.5 border-b border-slate-100 text-slate-600">
+                                <span>[[ isArabic ? 'الخصومات المطبقة:' : 'Discounts:' ]]</span>
+                                <span class="font-mono font-bold text-rose-600">-$[[ formatNumber(selectedPurchaseInvoice.discount_amount) ]]</span>
+                            </div>
+                            <div class="flex justify-between py-2.5 text-sm font-black text-slate-900 bg-slate-50 px-3 rounded-xl border border-slate-200">
+                                <span>[[ isArabic ? 'إجمالي الفاتورة النهائي:' : 'Grand Total:' ]]</span>
+                                <span class="font-mono text-blue-700">$[[ formatNumber(selectedPurchaseInvoice.grand_total) ]]</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 text-emerald-700 font-bold">
+                                <span>[[ isArabic ? 'المدفوع من الفاتورة:' : 'Paid to Date:' ]]</span>
+                                <span class="font-mono">$[[ formatNumber(selectedPurchaseInvoice.paid_amount) ]]</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 text-rose-700 font-bold border-t border-slate-100 pt-2">
+                                <span>[[ isArabic ? 'الرصيد المتبقي المستحق:' : 'Balance Due:' ]]</span>
+                                <span class="font-mono">$[[ formatNumber(Math.max(0, (selectedPurchaseInvoice.grand_total || 0) - (selectedPurchaseInvoice.paid_amount || 0))) ]]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Vouchers (سندات الصرف/السداد) -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fas fa-hand-holding-dollar text-emerald-600"></i>
+                                [[ isArabic ? 'سندات الدفع والسداد المرتبطة' : 'Linked Payment Entries' ]]
+                            </h4>
+                            <button v-if="selectedPurchaseInvoice.status !== 'PAID' && selectedPurchaseInvoice.status !== 'CANCELLED'"
+                                    @click="openPaymentForInvoice('purchase', selectedPurchaseInvoice)"
+                                    class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black transition-all cursor-pointer">
+                                <i class="fas fa-plus mr-1"></i>[[ isArabic ? 'إضافة سداد' : 'New Payment' ]]
+                            </button>
+                        </div>
+
+                        <div v-if="!selectedPurchaseInvoice.payment_entries || selectedPurchaseInvoice.payment_entries.length === 0" class="py-8 text-center text-slate-400">
+                            <i class="fas fa-receipt text-2xl mb-2 text-slate-300 block"></i>
+                            <p class="text-xs font-bold">[[ isArabic ? 'لم يتم تسجيل أي سندات سداد لهذه الفاتورة حتى الآن' : 'No payments registered for this bill yet' ]]</p>
+                        </div>
+
+                        <div v-else class="space-y-2">
+                            <div v-for="pay in selectedPurchaseInvoice.payment_entries" :key="pay.id" 
+                                 class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono font-black text-xs text-slate-900">[[ pay.entry_number ]]</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800">[[ pay.payment_method ]]</span>
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 font-mono block mt-0.5">[[ pay.posting_date ]]</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-mono font-black text-emerald-600 block">$[[ formatNumber(pay.paid_amount) ]]</span>
+                                    <span class="text-[10px] text-slate-500 font-bold">[[ pay.paid_from_account_name || 'Bank/Cash' ]]</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: القيود المحاسبية والأستاذ العام -->
+            <div v-if="invoiceDetailsTab === 'gl'" class="space-y-4">
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center font-bold">
+                            <i class="fas fa-scale-balanced"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-black text-slate-900">[[ isArabic ? 'قيود اليومية المزدوجة (Double-Entry General Ledger)' : 'General Ledger Double Entries' ]]</h4>
+                            <p class="text-[11px] text-slate-500">
+                                [[ isArabic ? 'رقم المستند / السند بالأستاذ العام:' : 'GL Voucher Ref:' ]] 
+                                <span class="font-mono font-bold text-blue-700">[[ selectedPurchaseInvoice.invoice_number ]]</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-bold text-slate-500">[[ isArabic ? 'حالة التوازن المحاسبي:' : 'Balance Status:' ]]</span>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                            <i class="fas fa-check"></i> [[ isArabic ? 'متزن (Debit = Credit)' : 'Balanced' ]]
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+                    <table class="w-full text-xs text-right border-collapse">
+                        <thead class="bg-slate-50 text-[10px] uppercase font-black text-slate-400 border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3">[[ isArabic ? 'رقم السند' : 'Voucher No' ]]</th>
+                                <th class="px-4 py-3">[[ isArabic ? 'الحساب المالي (Account)' : 'GL Account' ]]</th>
+                                <th class="px-4 py-3">[[ isArabic ? 'الجهة (Party)' : 'Party' ]]</th>
+                                <th class="px-4 py-3 text-center text-blue-700">[[ isArabic ? 'مدين (Debit)' : 'Debit ($)' ]]</th>
+                                <th class="px-4 py-3 text-center text-rose-700">[[ isArabic ? 'دائن (Credit)' : 'Credit ($)' ]]</th>
+                                <th class="px-4 py-3">[[ isArabic ? 'البيان (Remarks)' : 'Remarks' ]]</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-if="!selectedPurchaseInvoice.gl_entries || selectedPurchaseInvoice.gl_entries.length === 0">
+                                <td colspan="6" class="py-12 text-center text-slate-400 font-bold">
+                                    <i class="fas fa-scale-balanced text-3xl mb-2 text-slate-300 block"></i>
+                                    [[ isArabic ? 'لم يتم العثور على قيود مرحلة لهذا المستند' : 'No GL entries recorded for this bill' ]]
+                                </td>
+                            </tr>
+                            <tr v-for="gl in selectedPurchaseInvoice.gl_entries" :key="gl.id" 
+                                :class="gl.voucher_no.startsWith('REV-') ? 'bg-rose-50/40 text-rose-900 font-bold' : 'hover:bg-slate-50/80'">
+                                <td class="px-4 py-3 font-mono font-bold text-slate-700">
+                                    <span v-if="gl.voucher_no.startsWith('REV-')" class="text-rose-600 font-black mr-1">
+                                        [REV]
+                                    </span>
+                                    [[ gl.voucher_no ]]
+                                </td>
+                                <td class="px-4 py-3 font-bold text-slate-800">
+                                    <span class="font-mono text-slate-400 text-[11px] block">[[ gl.account_number ]]</span>
+                                    [[ gl.account_name ]]
+                                </td>
+                                <td class="px-4 py-3 text-slate-600 font-bold">[[ gl.party_name || '-' ]]</td>
+                                <td class="px-4 py-3 text-center font-mono font-black" :class="gl.debit > 0 ? 'text-blue-700' : 'text-slate-300'">
+                                    [[ gl.debit > 0 ? ('$' + formatNumber(gl.debit)) : '-' ]]
+                                </td>
+                                <td class="px-4 py-3 text-center font-mono font-black" :class="gl.credit > 0 ? 'text-rose-700' : 'text-slate-300'">
+                                    [[ gl.credit > 0 ? ('$' + formatNumber(gl.credit)) : '-' ]]
+                                </td>
+                                <td class="px-4 py-3 text-slate-500 text-[11px]">[[ gl.remarks || '-' ]]</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Explanatory Reversal Info -->
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 flex items-start gap-3">
+                    <i class="fas fa-circle-exclamation text-amber-600 text-base mt-0.5"></i>
+                    <div>
+                        <span class="font-black block">[[ isArabic ? 'كيفية إرجاع الفاتورة وعكس القيود المحاسبية (Reverse & Return):' : 'Reversing & Returning Bill:' ]]</span>
+                        <p class="mt-1 leading-relaxed text-amber-800">
+                            [[ isArabic ? '1. عند الضغط على زر "عكس وإلغاء الفاتورة والقيود" أعلاه: يقوم النظام آلياً بتوليد قيود يومية عكسية (Counter GL Entries) بتبديل المدين والدائن تحت رقم سند REV-' + selectedPurchaseInvoice.invoice_number + '، وتصفير مديونية المورد وتغيير حالة الفاتورة إلى CANCELLED.' : '1. Clicking "Cancel & Reverse GL" generates automatic counter GL entries, clears vendor liability, and sets status to CANCELLED.' ]]
+                        </p>
+                        <p class="mt-1 leading-relaxed text-amber-800">
+                            [[ isArabic ? '2. لإرجاع البضاعة فعلياً من المستودع إلى المورد: يمكنك التوجه إلى شاشة المشتريات والمخازن واختيار "مرتجع مشتريات (RTV)" لخصم الكميات من المخزن.' : '2. To return stock to the vendor physically, navigate to Procurement > Purchase Returns (RTV).' ]]
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+            <div class="text-xs text-slate-500">
+                [[ isArabic ? 'نظام الفوترة والمطابقة الثلاثية المحاسبية الذكية' : 'Smart 3-Way Invoice Matching & Accounting System' ]]
+            </div>
+            <div class="flex items-center gap-3">
+                <button v-if="selectedPurchaseInvoice.status !== 'CANCELLED'"
+                        @click="cancelAndReversePurchaseInvoice(selectedPurchaseInvoice)"
+                        class="px-4 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-rose-300 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer">
+                    <i class="fas fa-rotate-left"></i>
+                    <span>[[ isArabic ? 'عكس وإلغاء الفاتورة والقيود' : 'Cancel & Reverse' ]]</span>
+                </button>
+
+                <button @click="closePurchaseInvoiceDetails()" 
+                        class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
+                    [[ isArabic ? 'إغلاق' : 'Close' ]]
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>

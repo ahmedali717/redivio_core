@@ -191,20 +191,46 @@ class CompanyUserSerializer(serializers.ModelSerializer):
 from apps.core.models import ChatterMessage, ActivitySchedule
 from django.contrib.contenttypes.models import ContentType
 
+def resolve_content_type(model_name):
+    if not model_name:
+        return None
+    m = str(model_name).lower().strip().replace('_', '').replace('-', '')
+    MODEL_MAP = {
+        'purchaseorder': 'purchaseorder',
+        'po': 'purchaseorder',
+        'salesorder': 'salesorder',
+        'so': 'salesorder',
+        'customer': 'customer',
+        'vendor': 'vendor',
+        'material': 'material',
+        'purchaseinvoice': 'purchaseinvoice',
+        'bill': 'purchaseinvoice',
+    }
+    target = MODEL_MAP.get(m, m)
+    return ContentType.objects.filter(model=target).first() or ContentType.objects.filter(model=m).first()
+
+
 class ChatterMessageSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     created_at_formatted = serializers.DateTimeField(source='created_at', format="%Y-%m-%d %H:%M", read_only=True)
+    model = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = ChatterMessage
         fields = [
             'id', 'opco', 'author', 'author_name', 'author_username', 
             'content_type', 'object_id', 'message_type', 'body', 
-            'metadata', 'created_at', 'created_at_formatted'
+            'metadata', 'created_at', 'created_at_formatted', 'model'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'content_type']
 
     def create(self, validated_data):
+        model_name = validated_data.pop('model', None) or self.initial_data.get('model')
+        if not validated_data.get('content_type') and model_name:
+            ct = resolve_content_type(model_name)
+            if ct:
+                validated_data['content_type'] = ct
+
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             validated_data['author'] = request.user
@@ -216,12 +242,25 @@ class ChatterMessageSerializer(serializers.ModelSerializer):
 class ActivityScheduleSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
     assigned_to_name = serializers.CharField(source='assigned_to.username', read_only=True)
+    model = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = ActivitySchedule
         fields = [
             'id', 'opco', 'created_by', 'created_by_name', 'assigned_to', 'assigned_to_name',
             'content_type', 'object_id', 'activity_type', 'summary', 'note', 
-            'due_date', 'status', 'created_at', 'completed_at'
+            'due_date', 'status', 'created_at', 'completed_at', 'model'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'content_type', 'created_by']
+
+    def create(self, validated_data):
+        model_name = validated_data.pop('model', None) or self.initial_data.get('model')
+        if not validated_data.get('content_type') and model_name:
+            ct = resolve_content_type(model_name)
+            if ct:
+                validated_data['content_type'] = ct
+
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['created_by'] = request.user
+        return super().create(validated_data)

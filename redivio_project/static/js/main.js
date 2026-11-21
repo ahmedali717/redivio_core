@@ -5922,8 +5922,11 @@ createApp({
 
         // --- Odoo Chatter & Collaboration Methods ---
         async fetchChatterMessages(model, objectId) {
+            const m = model || this.activeChatterModel || (this.forms.po && this.forms.po.id ? 'purchaseorder' : '');
+            const oid = objectId || this.activeChatterId || (this.forms.po && this.forms.po.id);
+            if (!oid) return;
             try {
-                const res = await fetch(`/api/chatter/?model=${model}&object_id=${objectId}`);
+                const res = await fetch(`/api/chatter/?model=${m}&object_id=${oid}`);
                 if (res.ok) {
                     const data = await res.json();
                     this.activeChatterMessages = Array.isArray(data) ? data : (data.results || []);
@@ -5932,9 +5935,17 @@ createApp({
                 console.error("Error fetching chatter messages:", e);
             }
         },
+
         async postChatterMessage(model, objectId, messageType = 'comment') {
+            const m = model || this.activeChatterModel || (this.forms.po && this.forms.po.id ? 'purchaseorder' : '');
+            const oid = objectId || this.activeChatterId || (this.forms.po && this.forms.po.id);
             if (!this.newChatterNote || this.newChatterNote.trim() === '') return;
+            if (!oid) {
+                this.showToast(this.isArabic ? "يرجى حفظ المستند أولاً قبل تسجيل الملاحظات" : "Please save document first before logging notes", 'warning');
+                return;
+            }
             try {
+                this.loading = true;
                 const csrf = this.getCookie('csrftoken');
                 const res = await fetch('/api/chatter/', {
                     method: 'POST',
@@ -5943,8 +5954,8 @@ createApp({
                         'X-CSRFToken': csrf
                     },
                     body: JSON.stringify({
-                        model: model,
-                        object_id: objectId,
+                        model: m,
+                        object_id: oid,
                         message_type: messageType,
                         body: this.newChatterNote,
                         opco: this.activeOpcoId
@@ -5952,16 +5963,27 @@ createApp({
                 });
                 if (res.ok) {
                     this.newChatterNote = '';
-                    this.showToast(this.isArabic ? "تم تسجيل الملاحظة في المحادثة بنجاح" : "Note logged successfully", 'success');
-                    await this.fetchChatterMessages(model, objectId);
+                    this.showToast(this.isArabic ? "تم تسجيل الملاحظة بنجاح" : "Note logged successfully", 'success');
+                    await this.fetchChatterMessages(m, oid);
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    const msg = err.error || err.detail || Object.values(err)[0] || (this.isArabic ? "فشل تسجيل الملاحظة" : "Failed to log note");
+                    this.showToast(Array.isArray(msg) ? msg[0] : msg, 'error');
                 }
             } catch (e) {
                 console.error("Error posting chatter note:", e);
+                this.showToast(this.isArabic ? "خطأ في الاتصال بالسيرفر" : "Network error", 'error');
+            } finally {
+                this.loading = false;
             }
         },
+
         async fetchActivities(model, objectId) {
+            const m = model || this.activeChatterModel || (this.forms.po && this.forms.po.id ? 'purchaseorder' : '');
+            const oid = objectId || this.activeChatterId || (this.forms.po && this.forms.po.id);
+            if (!oid) return;
             try {
-                const res = await fetch(`/api/activities/?model=${model}&object_id=${objectId}`);
+                const res = await fetch(`/api/activities/?model=${m}&object_id=${oid}`);
                 if (res.ok) {
                     const data = await res.json();
                     this.activeActivities = (Array.isArray(data) ? data : (data.results || [])).filter(a => a.status === 'pending');
@@ -5970,12 +5992,20 @@ createApp({
                 console.error("Error fetching activities:", e);
             }
         },
+
         async scheduleActivity(model, objectId) {
+            const m = model || this.activeChatterModel || (this.forms.po && this.forms.po.id ? 'purchaseorder' : '');
+            const oid = objectId || this.activeChatterId || (this.forms.po && this.forms.po.id);
             if (!this.newActivity.summary || !this.newActivity.due_date) {
                 this.showToast(this.isArabic ? "يرجى تحديد الملخص وتاريخ الاستحقاق" : "Please provide summary and due date", 'error');
                 return;
             }
+            if (!oid) {
+                this.showToast(this.isArabic ? "يرجى حفظ المستند أولاً قبل جدولة الأنشطة" : "Please save document first before scheduling activities", 'warning');
+                return;
+            }
             try {
+                this.loading = true;
                 const csrf = this.getCookie('csrftoken');
                 const res = await fetch('/api/activities/', {
                     method: 'POST',
@@ -5984,9 +6014,9 @@ createApp({
                         'X-CSRFToken': csrf
                     },
                     body: JSON.stringify({
-                        model: model,
-                        object_id: objectId,
-                        activity_type: this.newActivity.type,
+                        model: m,
+                        object_id: oid,
+                        activity_type: this.newActivity.type || 'todo',
                         due_date: this.newActivity.due_date,
                         summary: this.newActivity.summary,
                         opco: this.activeOpcoId
@@ -5996,10 +6026,17 @@ createApp({
                     this.chatterMode = null;
                     this.newActivity = { type: 'todo', due_date: '', summary: '', note: '' };
                     this.showToast(this.isArabic ? "تمت جدولة النشاط بنجاح" : "Activity scheduled", 'success');
-                    await this.fetchActivities(model, objectId);
+                    await this.fetchActivities(m, oid);
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    const msg = err.error || err.detail || Object.values(err)[0] || (this.isArabic ? "فشل جدولة النشاط" : "Failed to schedule activity");
+                    this.showToast(Array.isArray(msg) ? msg[0] : msg, 'error');
                 }
             } catch (e) {
                 console.error("Error scheduling activity:", e);
+                this.showToast(this.isArabic ? "خطأ في الاتصال بالسيرفر" : "Network error", 'error');
+            } finally {
+                this.loading = false;
             }
         },
         async markActivityDone(actId) {

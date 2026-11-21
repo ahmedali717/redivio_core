@@ -41,9 +41,9 @@
                         <i class="fas fa-lock mr-1"></i>[[ isArabic ? 'الملاحظات الداخلية لا تظهر للعميل' : 'Internal notes are private' ]]
                     </span>
                     <button type="button" 
-                            @click="postChatterMessage(activeChatterModel, activeChatterId, 'comment')"
+                            @click="postChatterMessage(activeChatterModel || (forms.po && forms.po.id ? 'purchaseorder' : ''), activeChatterId || (forms.po && forms.po.id), 'comment')"
                             :disabled="!newChatterNote || newChatterNote.trim() === ''"
-                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
+                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2 cursor-pointer">
                         <i class="fas fa-paper-plane text-[10px]"></i>
                         <span>[[ isArabic ? 'تسجيل الملاحظة' : 'Log' ]]</span>
                     </button>
@@ -73,8 +73,8 @@
                 </div>
             </div>
             <div class="flex items-center justify-end gap-2">
-                <button type="button" @click="chatterMode = null" class="px-3.5 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700">[[ isArabic ? 'إلغاء' : 'Cancel' ]]</button>
-                <button type="button" @click="scheduleActivity(activeChatterModel, activeChatterId)" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2">
+                <button type="button" @click="chatterMode = null" class="px-3.5 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 cursor-pointer">[[ isArabic ? 'إلغاء' : 'Cancel' ]]</button>
+                <button type="button" @click="scheduleActivity(activeChatterModel || (forms.po && forms.po.id ? 'purchaseorder' : ''), activeChatterId || (forms.po && forms.po.id))" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2 cursor-pointer">
                     <i class="fas fa-calendar-check text-[10px]"></i>
                     <span>[[ isArabic ? 'جدولة' : 'Schedule' ]]</span>
                 </button>
