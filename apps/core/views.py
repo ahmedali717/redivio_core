@@ -1124,7 +1124,7 @@ class ActivityScheduleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = ActivitySchedule.objects.all()
+        qs = ActivitySchedule.objects.all().select_related('content_type', 'assigned_to', 'created_by')
         model_name = self.request.query_params.get('model')
         object_id = self.request.query_params.get('object_id')
         if model_name and object_id:
@@ -1133,7 +1133,18 @@ class ActivityScheduleViewSet(viewsets.ModelViewSet):
                 qs = qs.filter(content_type=ct, object_id=object_id)
             else:
                 return qs.none()
-        return qs
+
+        my = self.request.query_params.get('my')
+        assigned_to_me = self.request.query_params.get('assigned_to_me')
+        if my or assigned_to_me:
+            user = self.request.user
+            qs = qs.filter(Q(assigned_to=user) | Q(assigned_to__isnull=True, created_by=user))
+
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+
+        return qs.order_by('due_date', '-id')
 
     def perform_create(self, serializer):
         model_name = self.request.data.get('model')

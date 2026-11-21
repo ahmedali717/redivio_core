@@ -40,6 +40,8 @@ createApp({
             activeChatterMessages: [],
             activeActivities: [],
             newActivity: { type: 'todo', due_date: '', summary: '', note: '', assigned_to: null },
+            myPendingActivities: [],
+            activeNotificationTab: 'tasks',
 
             // SaaS Configurations
             systemMode: 'modular',
@@ -2577,7 +2579,8 @@ createApp({
             if (this.view === 'restaurant_pos_module') {
                 this.checkPOSStatusUpdates();
             }
-        }, 3000);
+            this.fetchMyActivities();
+        }, 5000);
 
         // Core Init
         this.checkAuth();
@@ -2585,6 +2588,7 @@ createApp({
         this.fetchAll();
         this.fetchMaterialsList();
         this.fetchWMSStats();
+        this.fetchMyActivities();
 
         // 🔄 استعادة الشاشة النشطة ومزامنة التنقل مع المتصفح
         window.addEventListener('hashchange', () => {
@@ -6042,6 +6046,7 @@ createApp({
                     this.newActivity = { type: 'todo', due_date: '', summary: '', note: '', assigned_to: null };
                     this.showToast(this.isArabic ? "تمت جدولة النشاط بنجاح" : "Activity scheduled", 'success');
                     await this.fetchActivities(m, oid);
+                    await this.fetchMyActivities();
                 } else {
                     const err = await res.json().catch(() => ({}));
                     const msg = err.error || err.detail || Object.values(err)[0] || (this.isArabic ? "فشل جدولة النشاط" : "Failed to schedule activity");
@@ -6069,13 +6074,58 @@ createApp({
                     })
                 });
                 if (res.ok) {
-                    this.showToast(this.isArabic ? "تم إنجاز النشاط" : "Activity marked as done", 'success');
+                    this.showToast(this.isArabic ? "تم إنجاز المهمة بنجاح" : "Activity marked as done", 'success');
+                    await this.fetchMyActivities();
                     if (this.activeChatterModel && this.activeChatterId) {
                         await this.fetchActivities(this.activeChatterModel, this.activeChatterId);
                     }
                 }
             } catch (e) {
                 console.error("Error marking activity done:", e);
+            }
+        },
+
+        async fetchMyActivities() {
+            try {
+                const res = await fetch('/api/activities/?my=1&status=pending');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.myPendingActivities = Array.isArray(data) ? data : (data.results || []);
+                }
+            } catch (e) {
+                console.error("Error fetching my activities:", e);
+            }
+        },
+
+        openActivityDocument(act) {
+            if (!act || !act.object_id) return;
+            this.showNotificationsDropdown = false;
+            const model = (act.model_name || '').toLowerCase();
+            if (model === 'purchaseorder' || model === 'po') {
+                const targetPo = (this.purchase_orders || []).find(p => p.id === act.object_id || p.po_number === act.document_ref);
+                if (targetPo) {
+                    this.view = 'purchases';
+                    this.openEditModal('po', targetPo);
+                } else {
+                    fetch(`/api/purchase-orders/${act.object_id}/`)
+                        .then(r => r.json())
+                        .then(poData => {
+                            this.view = 'purchases';
+                            this.openEditModal('po', poData);
+                        }).catch(() => {
+                            this.showToast(this.isArabic ? "تعذر فتح أمر الشراء" : "Cannot open PO", "error");
+                        });
+                }
+            } else if (model === 'salesorder' || model === 'so') {
+                const targetSo = (this.sales_orders || []).find(s => s.id === act.object_id);
+                if (targetSo) {
+                    this.view = 'sales';
+                    this.openEditModal('salesorder', targetSo);
+                }
+            } else if (model === 'purchaseinvoice' || model === 'bill') {
+                this.view = 'accounting';
+                this.activeAccountingTab = 'purchase_invoices';
+                this.openPurchaseInvoiceDetails({ id: act.object_id, invoice_number: act.document_ref });
             }
         },
 

@@ -243,13 +243,18 @@ class ActivityScheduleSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
     assigned_to_name = serializers.SerializerMethodField()
     model = serializers.CharField(write_only=True, required=False)
+    model_name = serializers.SerializerMethodField()
+    document_ref = serializers.SerializerMethodField()
+    document_title = serializers.SerializerMethodField()
+    is_overdue = serializers.SerializerMethodField()
 
     class Meta:
         model = ActivitySchedule
         fields = [
             'id', 'opco', 'created_by', 'created_by_name', 'assigned_to', 'assigned_to_name',
             'content_type', 'object_id', 'activity_type', 'summary', 'note', 
-            'due_date', 'status', 'created_at', 'completed_at', 'model'
+            'due_date', 'status', 'created_at', 'completed_at', 'model',
+            'model_name', 'document_ref', 'document_title', 'is_overdue'
         ]
         read_only_fields = ['id', 'created_at', 'content_type', 'created_by']
 
@@ -257,6 +262,48 @@ class ActivityScheduleSerializer(serializers.ModelSerializer):
         if obj.assigned_to:
             return obj.assigned_to.get_full_name() or obj.assigned_to.username
         return ''
+
+    def get_model_name(self, obj):
+        return obj.content_type.model if obj.content_type else ''
+
+    def get_document_ref(self, obj):
+        try:
+            target = obj.content_object
+            if not target:
+                return f"#{obj.object_id}"
+            if hasattr(target, 'po_number'):
+                return target.po_number
+            if hasattr(target, 'so_number'):
+                return target.so_number
+            if hasattr(target, 'invoice_number'):
+                return target.invoice_number
+            if hasattr(target, 'bill_number'):
+                return target.bill_number
+            if hasattr(target, 'name'):
+                return target.name
+            return f"#{obj.object_id}"
+        except Exception:
+            return f"#{obj.object_id}"
+
+    def get_document_title(self, obj):
+        model = obj.content_type.model if obj.content_type else ''
+        ref = self.get_document_ref(obj)
+        labels = {
+            'purchaseorder': 'أمر شراء',
+            'salesorder': 'أمر بيع',
+            'purchaseinvoice': 'فاتورة مشتريات',
+            'customer': 'عميل',
+            'vendor': 'مورد',
+            'material': 'صنف'
+        }
+        prefix = labels.get(model, model.title() if model else 'مستند')
+        return f"{prefix} {ref}"
+
+    def get_is_overdue(self, obj):
+        from django.utils import timezone
+        if obj.due_date and obj.status == 'pending':
+            return obj.due_date < timezone.now().date()
+        return False
 
     def create(self, validated_data):
         model_name = validated_data.pop('model', None) or self.initial_data.get('model')
