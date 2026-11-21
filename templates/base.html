@@ -1101,6 +1101,199 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #4338ca !important;
         }
+
+        /* ==========================================================================
+           🌟 FINAL HIGH-CONTRAST THEME NORMALIZATION (LIGHT & DARK MODES)
+           Strict 3-Color Brand Identity: Royal Blue (#0066FF), Slate-Gray (#64748B), Pure White (#FFFFFF)
+           ========================================================================== */
+
+        /* ☀️ 1. LIGHT MODE CONTRAST OVERHAUL */
+        .theme-light body {
+            background-color: #F8FAFC !important;
+            color: #0F172A !important;
+        }
+
+        /* Sidebar Brand & Navigation in Light Mode */
+        .theme-light .sidebar-premium-container {
+            background: rgba(255, 255, 255, 0.96) !important;
+            border: 1px solid #E2E8F0 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06) !important;
+            color: #0F172A !important;
+        }
+        .theme-light .sidebar-premium-container .brand-area-container {
+            border-bottom-color: #E2E8F0 !important;
+            color: #0F172A !important;
+        }
+        .theme-light .sidebar-premium-container .brand-area-container span {
+            color: #0F172A !important;
+            font-weight: 900 !important;
+        }
+        .theme-light .sidebar-premium-container .brand-area-container i {
+            color: #64748B !important;
+        }
+        .theme-light .sidebar-premium-container nav span.font-black {
+            color: #0066FF !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.15em !important;
+            text-shadow: none !important;
+        }
+        .theme-light .sidebar-premium-container nav hr {
+            border-color: #E2E8F0 !important;
+        }
+
+        /* Inactive Sidebar Items in Light Mode */
+        .theme-light .sidebar-item-premium:not(.active) {
+            background: transparent !important;
+            border-color: transparent !important;
+        }
+        .theme-light .sidebar-item-premium:not(.active) .text-title {
+            color: #0F172A !important;
+            font-weight: 700 !important;
+        }
+        .theme-light .sidebar-item-premium:not(.active) .text-subtitle {
+            color: #64748B !important;
+            font-weight: 500 !important;
+        }
+        .theme-light .sidebar-item-premium:not(.active) .icon-wrapper {
+            background: #F1F5F9 !important;
+            border: 1px solid #CBD5E1 !important;
+            color: #475569 !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+        }
+        .theme-light .sidebar-item-premium:not(.active):hover {
+            background: rgba(0, 102, 255, 0.06) !important;
+            border-color: rgba(0, 102, 255, 0.15) !important;
+        }
+        .theme-light .sidebar-item-premium:not(.active):hover .text-title {
+            color: #0066FF !important;
+        }
+        .theme-light .sidebar-item-premium:not(.active):hover .icon-wrapper {
+            background: #EFF6FF !important;
+            border-color: #0066FF !important;
+            color: #0066FF !important;
+        }
+
+        /* Active Sidebar Item in Light Mode */
+        .theme-light .sidebar-item-premium.active {
+            background: #0066FF !important;
+            border: 1px solid #0052cc !important;
+            box-shadow: 0 8px 24px rgba(0, 102, 255, 0.35) !important;
+        }
+        .theme-light .sidebar-item-premium.active .icon-wrapper {
+            background: #FFFFFF !important;
+            border-color: transparent !important;
+            color: #0066FF !important;
+        }
+        .theme-light .sidebar-item-premium.active .text-title {
+            color: #FFFFFF !important;
+            font-weight: 900 !important;
+        }
+        .theme-light .sidebar-item-premium.active .text-subtitle {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        /* Subscription & Profile Card in Light Mode */
+        .theme-light .plan-card-premium {
+            background: #F1F5F9 !important;
+            border: 1px solid #E2E8F0 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+        }
+        .theme-light .plan-card-premium p {
+            color: #0F172A !important;
+        }
+        .theme-light .plan-card-premium p.text-white\/40,
+        .theme-light .plan-card-premium p.text-white\/50,
+        .theme-light .plan-card-premium p.text-white\/60,
+        .theme-light .plan-card-premium p.text-white\/70 {
+            color: #64748B !important;
+        }
+        .theme-light .sidebar-premium-container a[href*="/logout/"] {
+            color: #EF4444 !important;
+        }
+        .theme-light .sidebar-premium-container .border-t {
+            border-top-color: #E2E8F0 !important;
+        }
+        .theme-light .lang-btn-premium {
+            color: #475569 !important;
+        }
+        .theme-light .lang-btn-premium:hover {
+            color: #0066FF !important;
+            background: #F1F5F9 !important;
+        }
+
+        /* Light Mode Card Surfaces & Inputs */
+        .theme-light .liquid-glass-surface,
+        .theme-light .liquid-glass-card {
+            background: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+            color: #0F172A !important;
+        }
+        .theme-light .liquid-glass-surface table,
+        .theme-light .liquid-glass-card table {
+            color: #0F172A !important;
+        }
+        .theme-light .liquid-glass-surface th,
+        .theme-light .liquid-glass-card th {
+            background: #F8FAFC !important;
+            color: #475569 !important;
+            border-bottom: 1px solid #E2E8F0 !important;
+        }
+        .theme-light .liquid-glass-surface td,
+        .theme-light .liquid-glass-card td {
+            color: #1E293B !important;
+            border-color: #F1F5F9 !important;
+        }
+        .theme-light .liquid-glass-surface select,
+        .theme-light .liquid-glass-surface input,
+        .theme-light .liquid-glass-card select,
+        .theme-light .liquid-glass-card input {
+            background-color: #FFFFFF !important;
+            border: 1px solid #CBD5E1 !important;
+            color: #0F172A !important;
+        }
+        .theme-light .liquid-glass-surface select option,
+        .theme-light .liquid-glass-card select option {
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+        }
+
+        /* 🌙 2. DARK MODE OBSIDIAN GLASS CONTRAST OVERHAUL */
+        .theme-dark body {
+            background-color: #080C14 !important;
+            color: #F1F5F9 !important;
+        }
+        .theme-dark .liquid-glass-surface {
+            background: rgba(11, 17, 30, 0.85) !important;
+            border: 1px solid rgba(255, 255, 255, 0.10) !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55) !important;
+            color: #F1F5F9 !important;
+        }
+        .theme-dark .liquid-glass-card {
+            background: rgba(15, 23, 42, 0.85) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
+            color: #F1F5F9 !important;
+        }
+        .theme-dark .liquid-glass-card .text-white,
+        .theme-dark .liquid-glass-surface .text-white {
+            color: #FFFFFF !important;
+        }
+        .theme-dark .liquid-glass-card .text-slate-300,
+        .theme-dark .liquid-glass-card .text-slate-400 {
+            color: #CBD5E1 !important;
+        }
+
+        /* 👑 3. BRAND ICONS: Strictly Royal Blue (#0066FF), Slate-Gray (#64748B), White (#FFFFFF) */
+        .brand-icon-primary {
+            color: #0066FF !important;
+        }
+        .brand-icon-neutral {
+            color: #64748B !important;
+        }
+        .brand-icon-light {
+            color: #FFFFFF !important;
+        }
     </style>
     {% block styles %}{% endblock %}
 </head>

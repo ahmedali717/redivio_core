@@ -5,18 +5,18 @@
     v-cloak>
 
     <div
-        class="h-20 flex items-center border-b border-white/20 overflow-visible text-white relative brand-area-container transition-all"
+        class="h-20 flex items-center border-b border-slate-200 dark:border-white/20 overflow-visible text-slate-800 dark:text-white relative brand-area-container transition-all"
         :class="sidebarCollapsed ? 'justify-center px-0 w-full' : 'gap-3 px-5'">
         <div class="flex items-center gap-3 cursor-pointer group"
              :class="sidebarCollapsed ? 'justify-center mx-auto' : ''"
              @click="showBrandDropdown = !showBrandDropdown">
-            <div class="w-10 h-10 bg-white/[0.04] border border-white/10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-black/50 group-hover:border-cyan-400/40 group-hover:shadow-cyan-500/20 transition-all duration-300">
+            <div class="w-10 h-10 bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-black/50 group-hover:border-blue-500/40 group-hover:shadow-blue-500/20 transition-all duration-300">
                 <img src="/static/brand/logo_r.png" class="w-6 h-6 object-contain" alt="Redivio Logo">
             </div>
             <span v-show="!sidebarCollapsed"
-                class="text-lg font-bold tracking-wider tech-font animate-in fade-in duration-300 text-white">REDIVIO</span>
+                class="text-lg font-bold tracking-wider tech-font animate-in fade-in duration-300 text-slate-900 dark:text-white">REDIVIO</span>
             <i v-show="!sidebarCollapsed"
-                class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform group-hover:text-cyan-400"
+                class="fa-solid fa-chevron-down text-[10px] text-slate-500 dark:text-slate-400 transition-transform group-hover:text-blue-500"
                 :class="{'rotate-180': showBrandDropdown}"></i>
         </div>
 
@@ -75,7 +75,7 @@
         <!-- Inventory Context -->
         <template v-if="view === 'inventory_module'">
             <div class="px-3 mb-4 mt-2 overflow-hidden flex items-center gap-2">
-                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]"
+                <span v-show="!sidebarCollapsed" class="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em]"
                     v-text="isArabic ? 'RIMS (إدارة المستودعات)' : 'RIMS Management'"></span>
                 <hr class="border-blue-500/20 flex-1">
             </div>
@@ -772,13 +772,13 @@
                     }"></i>
                 </div>
                 <div v-show="!sidebarCollapsed" class="text-left animate-in fade-in" :dir="isArabic ? 'rtl' : 'ltr'">
-                    <p class="text-[9px] text-white/40 font-bold uppercase tracking-wider leading-none mb-1">[[ isArabic ? 'الخطة الحالية' : 'Current Plan' ]]</p>
-                    <p class="text-xs font-black tracking-wide leading-none capitalize text-white">
+                    <p class="text-[9px] text-slate-500 dark:text-white/40 font-bold uppercase tracking-wider leading-none mb-1">[[ isArabic ? 'الخطة الحالية' : 'Current Plan' ]]</p>
+                    <p class="text-xs font-black tracking-wide leading-none capitalize text-slate-900 dark:text-white">
                         [[ isArabic ? planLimits.nameAr : planLimits.nameEn ]]
                     </p>
                 </div>
             </div>
-            <i v-show="!sidebarCollapsed" class="fa-solid fa-circle-info text-white/30 hover:text-white transition-colors text-xs"></i>
+            <i v-show="!sidebarCollapsed" class="fa-solid fa-circle-info text-slate-400 dark:text-white/30 hover:text-blue-500 dark:hover:text-white transition-colors text-xs"></i>
         </div>
 
         <!-- 🚀 Hover Popover overlay -->
@@ -890,15 +890,15 @@
         </div>
     </div>
 
-    <div class="border-t border-white/5 bg-white/[0.02] text-white transition-all"
+    <div class="border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] text-slate-900 dark:text-white transition-all"
          :class="sidebarCollapsed ? 'p-2 flex justify-center items-center w-full' : 'p-4'">
         <div class="flex items-center gap-3 overflow-hidden" :class="sidebarCollapsed ? 'justify-center mx-auto' : ''">
             <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 border border-white/20 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-[0_0_15px_rgba(0,210,255,0.4)] mx-auto"
                 v-text="user.name ? user.name.charAt(0).toUpperCase() : 'U'">
             </div>
             <div v-show="!sidebarCollapsed" class="flex-1 min-w-0 animate-in fade-in">
-                <p class="text-xs font-bold truncate tracking-wide" v-text="user.name || 'Admin'"></p>
-                <a href="/logout/" class="text-[10px] text-slate-400 hover:text-red-400 flex items-center gap-1 mt-0.5 transition-colors">
+                <p class="text-xs font-bold truncate tracking-wide text-slate-900 dark:text-white" v-text="user.name || 'Admin'"></p>
+                <a href="/logout/" class="text-[10px] text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-1 mt-0.5 transition-colors">
                     <i class="fas fa-sign-out-alt"></i> <span v-text="isArabic ? 'خروج' : 'Logout'"></span>
                 </a>
             </div>
@@ -906,7 +906,7 @@
     </div>
 
     <!-- 🌍 Language Switcher -->
-    <div class="border-t border-white/5 bg-white/[0.02] transition-all"
+    <div class="border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] transition-all"
          :class="sidebarCollapsed ? 'p-2 flex justify-center items-center w-full' : 'px-4 py-3'">
         <form action="{% url 'set_language' %}" method="post" class="w-full flex justify-center">
             {% csrf_token %}
@@ -915,7 +915,7 @@
                 value="{% if LANGUAGE_CODE|slice:':2' == 'ar' %}en{% else %}ar{% endif %}">
             <button type="submit"
                 :class="sidebarCollapsed ? 'w-10 h-10 p-0 justify-center mx-auto' : 'w-full px-3 py-2'"
-                class="lang-btn-premium flex items-center justify-center gap-3 rounded-xl transition-all text-[11px] font-bold uppercase tracking-tighter text-slate-400 hover:text-white">
+                class="lang-btn-premium flex items-center justify-center gap-3 rounded-xl transition-all text-[11px] font-bold uppercase tracking-tighter text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white">
                 <i class="fas fa-language text-lg mx-auto"></i>
                 <span v-show="!sidebarCollapsed" v-text="isArabic ? 'Switch to English' : 'التحويل للعربية'"></span>
             </button>

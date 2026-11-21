@@ -4,7 +4,7 @@
         {% include "components/item_master_modal.html" %}
     </template>
 
-    <div v-else :class="['bg-white transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50' : (['vendor', 'category', 'contracting_project', 'contracting_contract', 'contracting_abstract', 'contracting_check', 'contracting_custody', 'contracting_payment_request', 'contracting_fabrication', 'contracting_mo', 'contracting_loading_note'].includes(modalType) ? 'w-full max-w-4xl rounded-3xl shadow-2xl p-6 md:p-8 max-h-[92vh]' : 'w-full max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh]')]">
+    <div v-else :class="['bg-white dark:bg-slate-900 transform transition-all scale-100 overflow-y-auto', ['stock_entry', 'po', 'pr', 'rfq', 'sq', 'matrix', 'rtv', 'transfer', 'scrap', 'view_po', 'salesorder', 'delivery', 'receive_goods', 'journal_entry', 'payment_entry', 'purchase_invoice', 'sales_invoice', 'vendor', 'category', 'customer', 'contracting_project', 'contracting_contract', 'contracting_abstract', 'contracting_check', 'contracting_custody', 'contracting_payment_request', 'contracting_fabrication', 'contracting_mo', 'contracting_loading_note'].includes(modalType) ? 'fixed inset-0 w-full h-full min-h-screen max-w-full rounded-none p-6 md:p-10 z-[10000] m-0 border-0 bg-slate-50 dark:bg-slate-950' : 'w-full max-w-4xl rounded-3xl shadow-2xl p-6 md:p-8 max-h-[92vh]']">
         
         <div class="flex justify-between items-center mb-6 border-b pb-4">
             <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -1601,56 +1601,154 @@
             </div>
 
             <!-- ========================================== -->
-            <!-- 3. PURCHASE INVOICE MODAL (فاتورة مشتريات) -->
+            <!-- 3. PURCHASE INVOICE MODAL (فاتورة مشتريات - Odoo 3-Way Matching) -->
             <!-- ========================================== -->
-            <div v-if="modalType === 'purchase_invoice'" class="space-y-4">
+            <div v-if="modalType === 'purchase_invoice'" class="space-y-6">
+                <!-- Odoo Workflow Banner -->
+                <div class="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-blue-500/20">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-black text-sm text-blue-900 dark:text-blue-300">
+                                [[ isArabic ? 'معيار المطابقة الثلاثية الذكي (Odoo 3-Way Matching)' : 'Odoo 3-Way Matching Standard' ]]
+                            </h4>
+                            <p class="text-xs text-blue-700 dark:text-blue-400">
+                                [[ isArabic ? 'تعتمد مبالغ وكميات الفاتورة على ما تم استلامه فعلياً في المستودع (Goods Receipt)' : 'Invoice amounts & quantities are strictly based on warehouse received quantities' ]]
+                            </p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-sm">
+                        Odoo Standard
+                    </span>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'المورد' : 'Vendor' ]]</label>
-                        <select v-model="forms.purchase_invoice.vendor" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500" required>
+                    <!-- PO Reference with Autocomplete / Search -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                                [[ isArabic ? 'أمر الشراء المرتبط (PO) - بحث واختيار' : 'PO Reference (Search & Select)' ]]
+                            </label>
+                            <span class="text-[10px] font-bold text-blue-600 dark:text-cyan-400">
+                                [[ filteredPurchaseOrdersForInvoice.length ]] [[ isArabic ? 'أمر متاح' : 'available' ]]
+                            </span>
+                        </div>
+                        <!-- PO Partial Text Search -->
+                        <div class="relative">
+                            <i class="fas fa-search absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            <input type="text" v-model="accountingPOSearchQuery"
+                                :placeholder="isArabic ? 'اكتب جزء من رقم أمر الشراء أو المورد...' : 'Filter by PO# or vendor...'"
+                                class="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl py-2 pr-9 pl-3 text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 mb-1 transition-all">
+                        </div>
+                        <select v-model="forms.purchase_invoice.purchase_order" @change="onPurchaseInvoicePOSelected" class="w-full border p-3 rounded-xl bg-white dark:bg-slate-900 font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 border-slate-200 dark:border-white/10">
+                            <option :value="null">[[ isArabic ? '-- بدون أمر شراء (فاتورة مباشرة) --' : '-- Direct Bill (No PO) --' ]]</option>
+                            <option v-for="po in filteredPurchaseOrdersForInvoice" :key="po.id" :value="po.id">
+                                [[ po.po_number ]] — [[ po.vendor_name ]]
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Vendor -->
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                            [[ isArabic ? 'المورد' : 'Vendor' ]]
+                        </label>
+                        <select v-model="forms.purchase_invoice.vendor" class="w-full border p-3 rounded-xl bg-white dark:bg-slate-900 font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 border-slate-200 dark:border-white/10 mt-7" required>
                             <option value="">[[ isArabic ? '-- اختر المورد --' : '-- Select Vendor --' ]]</option>
                             <option v-for="v in vendors" :key="v.id" :value="v.id">[[ v.name ]]</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'أمر الشراء المرتبط (اختياري)' : 'PO Reference' ]]</label>
-                        <select v-model="forms.purchase_invoice.purchase_order" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500">
-                            <option :value="null">[[ isArabic ? '-- بدون أمر شراء --' : '-- Direct Bill --' ]]</option>
-                            <option v-for="po in purchase_orders" :key="po.id" :value="po.id">[[ po.po_number ]] — [[ po.vendor_name ]]</option>
-                        </select>
+                </div>
+
+                <!-- 📦 PO Items Table: Ordered vs Received (Odoo Standard) -->
+                <div v-if="forms.purchase_invoice.items && forms.purchase_invoice.items.length > 0" class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-boxes-stacked text-blue-600 dark:text-cyan-400"></i>
+                            [[ isArabic ? 'أصناف أمر الشراء ومطابقة الكميات المستلمة' : 'PO Line Items & Received Quantities Matching' ]]
+                        </h4>
+                        <span class="text-[10px] font-bold text-slate-400">
+                            [[ forms.purchase_invoice.items.length ]] [[ isArabic ? 'أصناف' : 'items' ]]
+                        </span>
+                    </div>
+
+                    <!-- Alert if no items received yet -->
+                    <div v-if="forms.purchase_invoice.items.every(i => (i.received_qty || 0) <= 0)" class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-300 text-xs font-bold flex items-center gap-2">
+                        <i class="fas fa-exclamation-triangle text-amber-500"></i>
+                        <span>[[ isArabic ? 'تنبيه: لم يتم تسجيل أي استلام مخزني في المستودع لهذا الأمر بعد (الكمية المستلمة = 0). وفق سياسة Odoo، لا يمكن إصدار فاتورة إلا بعد استلام البضاعة.' : 'Notice: No quantities have been received in the warehouse yet (Received = 0). Under Odoo 3-way matching, bills require goods receipt first.' ]]</span>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm bg-white dark:bg-slate-900">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-slate-50 dark:bg-white/[0.04] border-b border-slate-200 dark:border-white/10 text-[10px] font-black text-slate-500 uppercase">
+                                <tr>
+                                    <th class="px-4 py-3">[[ isArabic ? 'الصنف' : 'Material' ]]</th>
+                                    <th class="px-4 py-3 text-center">[[ isArabic ? 'كمية أمر الشراء (Ordered)' : 'PO Ordered Qty' ]]</th>
+                                    <th class="px-4 py-3 text-center bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-cyan-300 font-black border-x border-blue-100 dark:border-blue-900/40">
+                                        [[ isArabic ? 'المستلم بالمستودع (Received)' : 'Warehouse Received (Billed)' ]]
+                                    </th>
+                                    <th class="px-4 py-3 text-center">[[ isArabic ? 'سعر الوحدة' : 'Unit Price' ]]</th>
+                                    <th class="px-4 py-3 text-center">[[ isArabic ? 'الإجمالي المفوتر' : 'Billed Total' ]]</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+                                <tr v-for="(item, idx) in forms.purchase_invoice.items" :key="idx" class="hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                                    <td class="px-4 py-3">
+                                        <div class="font-bold text-slate-800 dark:text-white">[[ item.material_name ]]</div>
+                                        <div class="text-[10px] font-mono text-blue-600 dark:text-cyan-400">[[ item.sku ]]</div>
+                                    </td>
+                                    <td class="px-4 py-3 text-center font-bold text-slate-500 dark:text-slate-400">
+                                        [[ item.ordered_qty ]]
+                                    </td>
+                                    <td class="px-4 py-3 text-center font-black bg-blue-50/50 dark:bg-blue-950/20 border-x border-blue-100 dark:border-blue-900/40">
+                                        <span :class="(item.received_qty || 0) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'">
+                                            [[ item.received_qty || 0 ]]
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                                        $[[ formatNumber(item.unit_price) ]]
+                                    </td>
+                                    <td class="px-4 py-3 text-center font-mono font-black text-blue-600 dark:text-cyan-400">
+                                        $[[ formatNumber(item.line_total) ]]
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'تاريخ الفاتورة' : 'Bill Date' ]]</label>
-                        <input type="date" v-model="forms.purchase_invoice.posting_date" class="w-full border p-3 rounded-xl font-bold" required>
+                        <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'تاريخ الفاتورة' : 'Bill Date' ]]</label>
+                        <input type="date" v-model="forms.purchase_invoice.posting_date" class="w-full border p-3 rounded-xl font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'تاريخ الاستحقاق' : 'Due Date' ]]</label>
-                        <input type="date" v-model="forms.purchase_invoice.due_date" class="w-full border p-3 rounded-xl font-bold" required>
+                        <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'تاريخ الاستحقاق' : 'Due Date' ]]</label>
+                        <input type="date" v-model="forms.purchase_invoice.due_date" class="w-full border p-3 rounded-xl font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10" required>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'المبلغ قبل الضريبة' : 'Subtotal' ]]</label>
-                        <input type="number" step="0.01" v-model.number="forms.purchase_invoice.subtotal" @input="forms.purchase_invoice.tax_amount = parseFloat((forms.purchase_invoice.subtotal * 0.15).toFixed(2)); forms.purchase_invoice.grand_total = forms.purchase_invoice.subtotal + forms.purchase_invoice.tax_amount;" class="w-full border p-3 rounded-xl font-mono font-bold" required>
+                        <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'المبلغ قبل الضريبة' : 'Subtotal' ]]</label>
+                        <input type="number" step="0.01" v-model.number="forms.purchase_invoice.subtotal" @input="recalcInvoiceTotals" class="w-full border p-3 rounded-xl font-mono font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)' ]]</label>
-                        <input type="number" step="0.01" v-model.number="forms.purchase_invoice.tax_amount" @input="forms.purchase_invoice.grand_total = forms.purchase_invoice.subtotal + forms.purchase_invoice.tax_amount;" class="w-full border p-3 rounded-xl font-mono font-bold">
+                        <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)' ]]</label>
+                        <input type="number" step="0.01" v-model.number="forms.purchase_invoice.tax_amount" @input="forms.purchase_invoice.grand_total = forms.purchase_invoice.subtotal + forms.purchase_invoice.tax_amount;" class="w-full border p-3 rounded-xl font-mono font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10">
                     </div>
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'الإجمالي الصافي' : 'Grand Total' ]]</label>
-                        <input type="number" step="0.01" v-model.number="forms.purchase_invoice.grand_total" class="w-full border p-3 rounded-xl font-mono font-black text-rose-600 bg-rose-50/50" required>
+                        <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'الإجمالي الصافي' : 'Grand Total' ]]</label>
+                        <input type="number" step="0.01" v-model.number="forms.purchase_invoice.grand_total" class="w-full border p-3 rounded-xl font-mono font-black text-blue-600 bg-blue-50/50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900" required>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'حساب المشتريات / المخزون (مدين)' : 'Expense / Stock Account' ]]</label>
-                        <select v-model="forms.purchase_invoice.expense_account" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none">
+                        <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'حساب المشتريات / المخزون (مدين)' : 'Expense / Stock Account' ]]</label>
+                        <select v-model="forms.purchase_invoice.expense_account" class="w-full border p-3 rounded-xl bg-white dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-200 outline-none border-slate-200 dark:border-white/10">
                             <option :value="null">[[ isArabic ? '-- تلقائي (حساب المخزون / المشتريات) --' : '-- Default Stock/Expense --' ]]</option>
                             <option v-for="a in accounts.filter(x => !x.is_group && (x.root_type === 'EXPENSE' || x.account_type === 'STOCK'))" :key="a.id" :value="a.id">
                                 [[ a.account_number ]] - [[ a.account_name ]]
@@ -1658,8 +1756,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'حساب الموردين (دائن)' : 'Creditors Account' ]]</label>
-                        <select v-model="forms.purchase_invoice.credit_to_account" class="w-full border p-3 rounded-xl bg-white font-bold text-slate-700 outline-none">
+                        <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'حساب الموردين (دائن)' : 'Creditors Account' ]]</label>
+                        <select v-model="forms.purchase_invoice.credit_to_account" class="w-full border p-3 rounded-xl bg-white dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-200 outline-none border-slate-200 dark:border-white/10">
                             <option :value="null">[[ isArabic ? '-- تلقائي (حساب الموردين) --' : '-- Default Accounts Payable --' ]]</option>
                             <option v-for="a in accounts.filter(x => !x.is_group && x.account_type === 'PAYABLE')" :key="a.id" :value="a.id">
                                 [[ a.account_number ]] - [[ a.account_name ]]
@@ -1669,8 +1767,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'ملاحظات' : 'Notes' ]]</label>
-                    <textarea v-model="forms.purchase_invoice.notes" rows="2" class="w-full border p-2.5 rounded-xl text-xs font-bold"></textarea>
+                    <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'ملاحظات' : 'Notes' ]]</label>
+                    <textarea v-model="forms.purchase_invoice.notes" rows="2" class="w-full border p-2.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10"></textarea>
                 </div>
             </div>
 

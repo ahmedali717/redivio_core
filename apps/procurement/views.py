@@ -234,6 +234,20 @@ class PurchaseOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     queryset = PurchaseOrder.objects.all().order_by('-created_at')
     serializer_class = PurchaseOrderSerializer
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+        
+        has_remaining = self.request.query_params.get('has_remaining')
+        if has_remaining in ['1', 'true', 'True']:
+            from django.db.models import F
+            qs = qs.exclude(status__in=['RECEIVED', 'CANCELLED']).filter(
+                lines__received_quantity__lt=F('lines__quantity')
+            ).distinct()
+        return qs
+
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         po = self.get_object()

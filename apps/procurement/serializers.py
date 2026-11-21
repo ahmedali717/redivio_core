@@ -203,6 +203,7 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.CharField(source='material.name', read_only=True)
     material_sku = serializers.CharField(source='material.sku', read_only=True)
     received_qty = serializers.DecimalField(source='received_quantity', max_digits=12, decimal_places=2, read_only=True)
+    remaining_quantity = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     
     class Meta:
         model = PurchaseOrderLine

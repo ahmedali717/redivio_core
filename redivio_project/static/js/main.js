@@ -365,6 +365,8 @@ createApp({
             stock_scraps: [],
             sales_returns: [],
             pending_pos: [],
+            poSearchQuery: '',
+            accountingPOSearchQuery: '',
 
             // --- 🏗️ RCMS Contracting & Construction Module State ---
             contractingTab: 'dashboard',
@@ -512,6 +514,7 @@ createApp({
                     credit_to_account: null,
                     expense_account: null,
                     notes: '',
+                    items: [],
                     extra_data: {}
                 },
                 payment_entry: {
@@ -799,6 +802,42 @@ createApp({
     },
 
     computed: {
+        filteredReceivablePOs() {
+            let list = (this.pending_pos || []).filter(po => {
+                const st = (po.status || '').toUpperCase();
+                if (['RECEIVED', 'CANCELLED'].includes(st)) return false;
+                if (po.lines && po.lines.length > 0) {
+                    const hasRemaining = po.lines.some(l => {
+                        const rem = parseFloat(l.remaining_quantity !== undefined ? l.remaining_quantity : ((l.quantity || 0) - (l.received_qty || 0)));
+                        return rem > 0;
+                    });
+                    if (!hasRemaining) return false;
+                }
+                return true;
+            });
+
+            if (this.poSearchQuery && this.poSearchQuery.trim()) {
+                const q = this.poSearchQuery.trim().toLowerCase();
+                list = list.filter(po => 
+                    ((po.po_number || '').toLowerCase().includes(q)) ||
+                    ((po.vendor_name || '').toLowerCase().includes(q))
+                );
+            }
+            return list;
+        },
+
+        filteredPurchaseOrdersForInvoice() {
+            let list = this.purchase_orders && this.purchase_orders.length > 0 ? this.purchase_orders : (this.pending_pos || []);
+            if (this.accountingPOSearchQuery && this.accountingPOSearchQuery.trim()) {
+                const q = this.accountingPOSearchQuery.trim().toLowerCase();
+                list = list.filter(po => 
+                    ((po.po_number || '').toLowerCase().includes(q)) ||
+                    ((po.vendor_name || '').toLowerCase().includes(q))
+                );
+            }
+            return list;
+        },
+
         currentReportRows() {
             if (this.activeReportTab === 'trial_balance') {
                 return (this.accountingReports.trialBalance && this.accountingReports.trialBalance.rows) || [];
@@ -6199,11 +6238,93 @@ createApp({
             }
         },
 
+        recalcInvoiceTotals() {
+            const sub = parseFloat(this.forms.purchase_invoice.subtotal) || 0;
+            const tax = parseFloat((sub * 0.15).toFixed(2));
+            this.forms.purchase_invoice.tax_amount = tax;
+            this.forms.purchase_invoice.grand_total = parseFloat((sub + tax).toFixed(2));
+        },
+
+        async onPurchaseInvoicePOSelected() {
+            const poId = this.forms.purchase_invoice.purchase_order;
+            if (!poId) {
+                this.forms.purchase_invoice.items = [];
+                return;
+            }
+
+            try {
+                this.loading = true;
+                let po = (this.purchase_orders || []).find(p => p.id === poId) || (this.pending_pos || []).find(p => p.id === poId);
+                
+                let lines = (po && po.lines) || [];
+                if (!lines || lines.length === 0) {
+                    const res = await fetch(`/api/orders/${poId}/`);
+                    if (res.ok) {
+                        po = await res.json();
+                        lines = po.lines || [];
+                    }
+                }
+
+                if (po && po.vendor) {
+                    this.forms.purchase_invoice.vendor = po.vendor;
+                }
+
+                // 🌟 ODOO 3-WAY MATCHING RULE: Billed quantity = Received Quantity in Warehouse!
+                const mappedItems = lines.map(l => {
+                    const ordered = parseFloat(l.quantity || 0);
+                    const received = parseFloat(l.received_qty !== undefined ? l.received_qty : (l.received_quantity !== undefined ? l.received_quantity : 0));
+                    const unitPrice = parseFloat(l.unit_price || 0);
+                    const billedTotal = parseFloat((received * unitPrice).toFixed(2));
+
+                    return {
+                        material: l.material,
+                        material_name: l.material_name || (this.materials_list && this.materials_list.find(m => m.id === l.material)?.name) || 'Unknown Item',
+                        sku: l.material_sku || (this.materials_list && this.materials_list.find(m => m.id === l.material)?.sku) || 'N/A',
+                        ordered_qty: ordered,
+                        received_qty: received, // THIS IS THE BILLED QUANTITY!
+                        unit_price: unitPrice,
+                        line_total: billedTotal
+                    };
+                });
+
+                this.forms.purchase_invoice.items = mappedItems;
+
+                // Subtotal is strictly sum of received quantities * unit price
+                const subtotal = mappedItems.reduce((acc, curr) => acc + curr.line_total, 0);
+                this.forms.purchase_invoice.subtotal = parseFloat(subtotal.toFixed(2));
+                this.recalcInvoiceTotals();
+
+                // Save items in extra_data so backend persists the breakdown
+                this.forms.purchase_invoice.extra_data = this.forms.purchase_invoice.extra_data || {};
+                this.forms.purchase_invoice.extra_data.items = mappedItems;
+
+                if (mappedItems.every(i => i.received_qty <= 0)) {
+                    this.showToast(
+                        this.isArabic 
+                            ? "تنبيه نظام Odoo: أمر الشراء المحدد لم يستلم منه أي كميات بالمستودع بعد (الكميات المستلمة = 0)" 
+                            : "Odoo Alert: No items have been received in the warehouse yet for this PO (Received = 0)", 
+                        "warning"
+                    );
+                } else {
+                    this.showToast(
+                        this.isArabic 
+                            ? `تم تحميل بيانات الأمر واحتساب الفاتورة على الكميات المستلمة فقط ($${this.forms.purchase_invoice.grand_total})` 
+                            : `PO loaded: Invoice billed strictly on received quantities ($${this.forms.purchase_invoice.grand_total})`, 
+                        "success"
+                    );
+                }
+            } catch (err) {
+                console.error("Error loading PO for invoice:", err);
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async fetchPendingPOs() {
             try {
                 const url = this.activeOpcoId
-                    ? `/api/orders/?status=CONFIRMED&opco=${this.activeOpcoId}`
-                    : '/api/orders/?status=CONFIRMED';
+                    ? `/api/orders/?status=CONFIRMED&opco=${this.activeOpcoId}&has_remaining=1`
+                    : '/api/orders/?status=CONFIRMED&has_remaining=1';
                 const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
@@ -8260,6 +8381,7 @@ createApp({
                             credit_to_account: null,
                             expense_account: null,
                             notes: '',
+                            items: [],
                             extra_data: {}
                         };
                     } else if (type === 'payment_entry') {
