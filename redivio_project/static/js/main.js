@@ -34,11 +34,12 @@ createApp({
             // Odoo Chatter & Collaboration System
             chatterMode: null,
             newChatterNote: '',
+            chatterNotifyUserId: '',
             activeChatterModel: '',
             activeChatterId: null,
             activeChatterMessages: [],
             activeActivities: [],
-            newActivity: { type: 'todo', due_date: '', summary: '', note: '' },
+            newActivity: { type: 'todo', due_date: '', summary: '', note: '', assigned_to: null },
 
             // SaaS Configurations
             systemMode: 'modular',
@@ -5947,6 +5948,17 @@ createApp({
             try {
                 this.loading = true;
                 const csrf = this.getCookie('csrftoken');
+
+                let metadata = {};
+                if (this.chatterNotifyUserId) {
+                    const cu = (this.companyUsers || []).find(u => u.user == this.chatterNotifyUserId || u.id == this.chatterNotifyUserId);
+                    const userName = cu ? (cu.user_details ? (cu.user_details.first_name ? (cu.user_details.first_name + ' ' + (cu.user_details.last_name || '')) : cu.user_details.username) : ('User #' + cu.user)) : '';
+                    metadata = {
+                        notified_user_id: this.chatterNotifyUserId,
+                        notified_user_name: userName
+                    };
+                }
+
                 const res = await fetch('/api/chatter/', {
                     method: 'POST',
                     headers: {
@@ -5958,11 +5970,13 @@ createApp({
                         object_id: oid,
                         message_type: messageType,
                         body: this.newChatterNote,
+                        metadata: metadata,
                         opco: this.activeOpcoId
                     })
                 });
                 if (res.ok) {
                     this.newChatterNote = '';
+                    this.chatterNotifyUserId = '';
                     this.showToast(this.isArabic ? "تم تسجيل الملاحظة بنجاح" : "Note logged successfully", 'success');
                     await this.fetchChatterMessages(m, oid);
                 } else {
@@ -6019,12 +6033,13 @@ createApp({
                         activity_type: this.newActivity.type || 'todo',
                         due_date: this.newActivity.due_date,
                         summary: this.newActivity.summary,
+                        assigned_to: this.newActivity.assigned_to || null,
                         opco: this.activeOpcoId
                     })
                 });
                 if (res.ok) {
                     this.chatterMode = null;
-                    this.newActivity = { type: 'todo', due_date: '', summary: '', note: '' };
+                    this.newActivity = { type: 'todo', due_date: '', summary: '', note: '', assigned_to: null };
                     this.showToast(this.isArabic ? "تمت جدولة النشاط بنجاح" : "Activity scheduled", 'success');
                     await this.fetchActivities(m, oid);
                 } else {
@@ -8097,6 +8112,7 @@ createApp({
                 // تحميل الموردين والمشتريات أيضاً
                 this.fetchVendors();
                 this.fetchPurchaseOrders();
+                this.fetchCompanyUsers();
             } catch (e) {
                 console.error("Core Data Fetch Error:", e);
             }

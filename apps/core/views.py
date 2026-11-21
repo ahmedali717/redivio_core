@@ -921,12 +921,16 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        active_id = self.request.session.get('active_opco_id')
+        active_id = self.request.session.get('active_opco_id') or self.request.query_params.get('opco')
         if not active_id:
-            return CompanyUser.objects.none()
+            if self.request.user.is_staff or self.request.user.is_superuser:
+                return CompanyUser.objects.all()
+            return CompanyUser.objects.filter(user=self.request.user)
         
         active_opco = OpCo.all_objects.filter(id=active_id).first()
         if not active_opco:
+            if self.request.user.is_staff or self.request.user.is_superuser:
+                return CompanyUser.objects.all()
             return CompanyUser.objects.none()
 
         # base queryset

@@ -241,7 +241,7 @@ class ChatterMessageSerializer(serializers.ModelSerializer):
 
 class ActivityScheduleSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
-    assigned_to_name = serializers.CharField(source='assigned_to.username', read_only=True)
+    assigned_to_name = serializers.SerializerMethodField()
     model = serializers.CharField(write_only=True, required=False)
 
     class Meta:
@@ -252,6 +252,11 @@ class ActivityScheduleSerializer(serializers.ModelSerializer):
             'due_date', 'status', 'created_at', 'completed_at', 'model'
         ]
         read_only_fields = ['id', 'created_at', 'content_type', 'created_by']
+
+    def get_assigned_to_name(self, obj):
+        if obj.assigned_to:
+            return obj.assigned_to.get_full_name() or obj.assigned_to.username
+        return ''
 
     def create(self, validated_data):
         model_name = validated_data.pop('model', None) or self.initial_data.get('model')
