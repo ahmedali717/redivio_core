@@ -583,31 +583,31 @@
                     </table>
                 </div>
 
-                <!-- 🌟 مودال عرض تفاصيل طلب الشراء الكامل (Purchase Requisition Details Modal) -->
+                <!-- 🌟 مودال عرض تفاصيل طلب الشراء الكامل FULL SCREEN (Purchase Requisition Full Lifecycle Modal) -->
                 <div v-if="showPRModal && selectedPR" 
-                     class="fixed inset-0 z-[250] flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 animate-in fade-in duration-300"
-                     @click.self="closePRDetails">
-                    <div class="liquid-glass-card rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-800 dark:text-white relative animate-in zoom-in-95 duration-300">
-                        <div class="glass-sheen"></div>
+                     class="fixed inset-0 z-[10000] w-full h-full min-h-screen bg-slate-50 dark:bg-slate-950 overflow-y-auto p-4 md:p-8 flex flex-col justify-start animate-in fade-in duration-200"
+                     :dir="isArabic ? 'rtl' : 'ltr'">
+                    
+                    <div class="w-full max-w-7xl mx-auto flex-1 flex flex-col space-y-6">
 
-                        <!-- Modal Header -->
-                        <div class="p-6 md:p-7 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/70 dark:bg-white/[0.03] backdrop-blur-xl relative z-10">
+                        <!-- Top Header Bar with Actions -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-wrap items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0">
-                                    <i class="fas fa-file-invoice text-xl"></i>
+                                <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0">
+                                    <i class="fas fa-file-invoice text-2xl"></i>
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-3">
-                                        <h3 class="text-xl md:text-2xl font-black font-mono tracking-tight text-blue-600 dark:text-cyan-400">
+                                        <h2 class="text-2xl md:text-3xl font-black font-mono tracking-tight text-blue-600 dark:text-cyan-400">
                                             [[ selectedPR.requisition_number || selectedPR.pr_number || ('PR-' + selectedPR.id) ]]
-                                        </h3>
-                                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1.5"
+                                        </h2>
+                                        <span class="px-3.5 py-1 rounded-full text-xs font-black uppercase inline-flex items-center gap-1.5"
                                               :class="{
                                                   'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20': selectedPR.status === 'DRAFT', 
                                                   'bg-blue-100 text-blue-800 border border-blue-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/20': selectedPR.status === 'APPROVED', 
                                                   'bg-purple-100 text-purple-800 border border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20': selectedPR.status === 'CONVERTED'
                                               }">
-                                            <span class="w-1.5 h-1.5 rounded-full"
+                                            <span class="w-2 h-2 rounded-full"
                                                   :class="{
                                                       'bg-amber-500': selectedPR.status === 'DRAFT', 
                                                       'bg-blue-600 dark:bg-cyan-400': selectedPR.status === 'APPROVED', 
@@ -616,133 +616,253 @@
                                             [[ selectedPR.status ]]
                                         </span>
                                     </div>
-                                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1" v-text="isArabic ? 'بطاقة تفاصيل طلب الشراء الداخلي وبنود الاحتياج' : 'Purchase Requisition Specifications & Items'"></p>
-                                </div>
-                            </div>
-                            <button @click="closePRDetails" class="w-10 h-10 liquid-glass-btn rounded-xl flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors">
-                                <i class="fas fa-times text-lg"></i>
-                            </button>
-                        </div>
-
-                        <!-- Modal Body (Scrollable) -->
-                        <div class="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 relative z-10">
-                            
-                            <!-- Key Info Summary Grid -->
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
-                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'تاريخ الطلب' : 'Request Date'"></span>
-                                    <span class="text-sm font-bold text-slate-800 dark:text-white font-mono">[[ selectedPR.date || (selectedPR.created_at ? selectedPR.created_at.substring(0,10) : '-') ]]</span>
-                                </div>
-                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
-                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'تاريخ الاحتياج' : 'Required Date'"></span>
-                                    <span class="text-sm font-bold text-slate-800 dark:text-white font-mono">[[ selectedPR.required_date || (isArabic ? 'عاجل / فوري' : 'Immediate') ]]</span>
-                                </div>
-                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
-                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'الموقع / المخزن' : 'Plant / Location'"></span>
-                                    <span class="text-sm font-bold text-slate-800 dark:text-white">[[ selectedPR.plant_name || selectedPR.requesting_department || (isArabic ? 'المخزن الرئيسي' : 'Main Warehouse') ]]</span>
-                                </div>
-                                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5">
-                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'مقدم الطلب' : 'Requested By'"></span>
-                                    <span class="text-sm font-bold text-slate-800 dark:text-white">[[ selectedPR.requested_by_name || (isArabic ? 'إدارة المستودعات' : 'Warehouse Dept') ]]</span>
+                                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1" v-text="isArabic ? 'دورة المشتريات الكاملة وتفاصيل طلب الشراء وبنود الاحتياج' : 'Full Procurement Lifecycle & Requisition Specifications'"></p>
                                 </div>
                             </div>
 
-                            <!-- Title & Notes Box (If Available) -->
-                            <div v-if="selectedPR.notes || selectedPR.title" class="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20">
-                                <div class="flex items-center gap-2 text-xs font-black text-blue-700 dark:text-cyan-400 uppercase tracking-wider mb-1">
-                                    <i class="fas fa-sticky-note"></i>
-                                    <span v-text="isArabic ? 'بيان ومبررات طلب الشراء' : 'Requisition Statement & Notes'"></span>
-                                </div>
-                                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">[[ selectedPR.notes || selectedPR.title ]]</p>
-                            </div>
+                            <!-- Header Actions -->
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <button type="button" 
+                                        @click="editPR(selectedPR)" 
+                                        class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-xl font-bold text-xs transition-all flex items-center gap-2">
+                                    <i class="fas fa-edit text-blue-600 dark:text-cyan-400"></i>
+                                    <span v-text="isArabic ? 'تعديل بيانات الطلب' : 'Edit PR'"></span>
+                                </button>
 
-                            <!-- Requested Items Table -->
-                            <div>
-                                <div class="flex justify-between items-center mb-3">
-                                    <h4 class="font-black text-sm text-slate-800 dark:text-white flex items-center gap-2">
-                                        <i class="fas fa-boxes-stacked text-blue-600 dark:text-cyan-400"></i>
-                                        <span v-text="isArabic ? 'الأصناف والبنود المطلوبة' : 'Requested Items & Quantities'"></span>
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
-                                            [[ (selectedPR.lines || []).length ]] [[ isArabic ? 'أصناف' : 'items' ]]
-                                        </span>
-                                    </h4>
-                                </div>
-
-                                <div class="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
-                                    <table class="w-full text-right text-sm" :dir="isArabic ? 'rtl' : 'ltr'">
-                                        <thead class="bg-slate-100 dark:bg-white/[0.04] text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
-                                            <tr>
-                                                <th class="py-3 px-4 w-12 text-center">#</th>
-                                                <th class="py-3 px-4" v-text="isArabic ? 'رمز الصنف (SKU)' : 'SKU'"></th>
-                                                <th class="py-3 px-4" v-text="isArabic ? 'اسم الصنف والمواصفات' : 'Item Description'"></th>
-                                                <th class="py-3 px-4 text-center" v-text="isArabic ? 'الكمية المطلوبة' : 'Requested Qty'"></th>
-                                                <th class="py-3 px-4 text-center" v-text="isArabic ? 'الوحدة' : 'UOM'"></th>
-                                                <th class="py-3 px-4" v-text="isArabic ? 'ملاحظات' : 'Notes'"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100 dark:divide-white/[0.05]">
-                                            <tr v-for="(line, idx) in selectedPR.lines" :key="idx" class="hover:bg-slate-50 dark:hover:bg-white/[0.02]">
-                                                <td class="py-3.5 px-4 text-center text-xs font-mono font-bold text-slate-400">[[ idx + 1 ]]</td>
-                                                <td class="py-3.5 px-4 font-mono font-black text-blue-600 dark:text-cyan-400 text-xs">
-                                                    [[ line.material_sku || (materials_list.find(m => m.id === line.material)?.sku) || '-' ]]
-                                                </td>
-                                                <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-white">
-                                                    [[ line.material_name || (materials_list.find(m => m.id === line.material)?.name) || (isArabic ? 'صنف غير محدد' : 'Unknown Material') ]]
-                                                </td>
-                                                <td class="py-3.5 px-4 text-center font-black text-slate-900 dark:text-white text-base">
-                                                    [[ line.quantity ]]
-                                                </td>
-                                                <td class="py-3.5 px-4 text-center">
-                                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
-                                                        [[ line.uom || (materials_list.find(m => m.id === line.material)?.base_uom) || 'Unit' ]]
-                                                    </span>
-                                                </td>
-                                                <td class="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400">
-                                                    [[ line.notes || '-' ]]
-                                                </td>
-                                            </tr>
-                                            <tr v-if="!selectedPR.lines || selectedPR.lines.length === 0">
-                                                <td colspan="6" class="py-8 text-center text-slate-400 font-bold text-xs">
-                                                    <i class="fas fa-box-open text-2xl block mb-1 text-slate-300 dark:text-slate-600"></i>
-                                                    [[ isArabic ? 'لم يتم العثور على سطور مسجلة لهذا الطلب' : 'No line items recorded for this PR' ]]
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Modal Footer -->
-                        <div class="p-6 border-t border-slate-100 dark:border-white/10 flex flex-wrap items-center justify-between gap-4 bg-slate-50/70 dark:bg-white/[0.02] relative z-10">
-                            <div class="flex items-center gap-3">
                                 <button v-if="selectedPR.status === 'DRAFT'" 
                                         @click="approvePR(selectedPR.id)" 
-                                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2">
+                                        class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2">
                                     <i class="fas fa-check-circle"></i>
-                                    <span v-text="isArabic ? 'اعتماد طلب الشراء الآن' : 'Approve Requisition'"></span>
+                                    <span v-text="isArabic ? 'اعتماد طلب الشراء' : 'Approve Requisition'"></span>
                                 </button>
 
                                 <button v-if="selectedPR.status === 'APPROVED'" 
                                         @click="convertPRToRFQ(selectedPR.id)" 
-                                        class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-purple-600/20 transition-all flex items-center gap-2">
+                                        class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs shadow-md shadow-purple-600/20 transition-all flex items-center gap-2">
                                     <i class="fas fa-random"></i>
                                     <span v-text="isArabic ? 'تحويل لطلب عروض أسعار (RFQ)' : 'Convert to RFQ'"></span>
                                 </button>
 
                                 <button v-if="selectedPR.status === 'APPROVED'" 
                                         @click="createPOFromPR(selectedPR)" 
-                                        class="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-blue-500/20 transition-all flex items-center gap-2">
+                                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md shadow-blue-500/20 transition-all flex items-center gap-2">
                                     <i class="fas fa-file-signature"></i>
                                     <span v-text="isArabic ? 'إنشاء أمر توريد مباشر (PO)' : 'Generate PO'"></span>
                                 </button>
+
+                                <button @click="closePRDetails" 
+                                        class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white rounded-xl font-bold text-xs transition-all flex items-center gap-2">
+                                    <i class="fas fa-times"></i>
+                                    <span v-text="isArabic ? 'إغلاق' : 'Close'"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 🌐 FULL PROCUREMENT LIFECYCLE STEPPER (دورة المشتريات الكاملة خطوة بخطوة) -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+                                <i class="fas fa-project-diagram text-blue-600 dark:text-cyan-400"></i>
+                                <span>[[ isArabic ? 'مخطط تتبع دورة المشتريات وسلسلة الإمداد الكاملة' : 'Procurement Cycle Audit & Progression Pipeline' ]]</span>
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                                <!-- Step 1: PR -->
+                                <div class="p-4 rounded-2xl border-2 transition-all"
+                                     :class="selectedPR ? 'bg-blue-50/70 border-blue-500 text-blue-950 dark:bg-blue-900/20 dark:border-blue-500 dark:text-white' : 'bg-slate-50 border-slate-200 text-slate-400'">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">1. [[ isArabic ? 'طلب الشراء' : 'PR' ]]</span>
+                                        <i class="fas fa-check-circle text-blue-600 text-xs"></i>
+                                    </div>
+                                    <div class="font-mono font-black text-sm text-blue-700 dark:text-cyan-300">[[ selectedPR.requisition_number || selectedPR.pr_number ]]</div>
+                                    <span class="text-[10px] font-bold text-slate-500 mt-1 block">[[ selectedPR.status ]]</span>
+                                </div>
+
+                                <!-- Step 2: RFQ -->
+                                <div class="p-4 rounded-2xl border-2 transition-all"
+                                     :class="getLinkedRFQsForPR(selectedPR.id).length > 0 ? 'bg-purple-50/70 border-purple-500 text-purple-950 dark:bg-purple-900/20 dark:border-purple-500 dark:text-white' : 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-white/[0.02] dark:border-white/5'">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">2. [[ isArabic ? 'طلب عروض الأسعار' : 'RFQ' ]]</span>
+                                        <i v-if="getLinkedRFQsForPR(selectedPR.id).length > 0" class="fas fa-check-circle text-purple-600 text-xs"></i>
+                                    </div>
+                                    <div v-if="getLinkedRFQsForPR(selectedPR.id).length > 0">
+                                        <button v-for="r in getLinkedRFQsForPR(selectedPR.id)" :key="r.id" @click="closePRDetails(); openRFQDetails(r)" class="font-mono font-black text-sm text-purple-700 dark:text-purple-300 hover:underline block">
+                                            [[ r.rfq_number ]]
+                                        </button>
+                                        <span class="text-[10px] font-bold text-purple-600 mt-1 block">[[ getLinkedRFQsForPR(selectedPR.id).length ]] [[ isArabic ? 'طلب أسعار مرتبط' : 'Linked RFQs' ]]</span>
+                                    </div>
+                                    <div v-else class="text-xs font-bold text-slate-400 mt-1">[[ isArabic ? 'بانتظار التحويل لـ RFQ' : 'Pending RFQ' ]]</div>
+                                </div>
+
+                                <!-- Step 3: Quotations -->
+                                <div class="p-4 rounded-2xl border-2 transition-all"
+                                     :class="(getLinkedRFQsForPR(selectedPR.id).some(r => (r.quotations && r.quotations.length > 0))) ? 'bg-indigo-50/70 border-indigo-500 text-indigo-950 dark:bg-indigo-900/20 dark:border-indigo-500 dark:text-white' : 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-white/[0.02] dark:border-white/5'">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">3. [[ isArabic ? 'عروض الأسعار' : 'Quotes' ]]</span>
+                                        <i v-if="getLinkedRFQsForPR(selectedPR.id).some(r => (r.quotations && r.quotations.length > 0))" class="fas fa-check-circle text-indigo-600 text-xs"></i>
+                                    </div>
+                                    <div class="font-mono font-black text-sm text-indigo-700 dark:text-indigo-300">
+                                        [[ getLinkedRFQsForPR(selectedPR.id).reduce((acc, r) => acc + (r.quotations ? r.quotations.length : 0), 0) ]] [[ isArabic ? 'عروض موردين' : 'Quotes' ]]
+                                    </div>
+                                    <span class="text-[10px] font-bold text-slate-500 mt-1 block">[[ isArabic ? 'المناقصة والتسعير' : 'Vendor Bidding' ]]</span>
+                                </div>
+
+                                <!-- Step 4: Comparison Matrix -->
+                                <div class="p-4 rounded-2xl border-2 transition-all"
+                                     :class="getLinkedRFQsForPR(selectedPR.id).some(r => (quotation_comparisons || []).some(c => c.rfq === r.id)) ? 'bg-amber-50/70 border-amber-500 text-amber-950 dark:bg-amber-900/20 dark:border-amber-500 dark:text-white' : 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-white/[0.02] dark:border-white/5'">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">4. [[ isArabic ? 'الترسية والمفاضلة' : 'Matrix' ]]</span>
+                                        <i v-if="getLinkedRFQsForPR(selectedPR.id).some(r => (quotation_comparisons || []).some(c => c.rfq === r.id))" class="fas fa-check-circle text-amber-600 text-xs"></i>
+                                    </div>
+                                    <div class="font-bold text-sm text-amber-700 dark:text-amber-300">
+                                        [[ getLinkedRFQsForPR(selectedPR.id).some(r => (quotation_comparisons || []).some(c => c.rfq === r.id)) ? (isArabic ? 'مصفوفة معتمدة' : 'Evaluated') : (isArabic ? 'بانتظار المقارنة' : 'Pending Matrix') ]]
+                                    </div>
+                                    <span class="text-[10px] font-bold text-slate-500 mt-1 block">[[ isArabic ? 'اختيار العرض الأنسب' : 'Best Offer Award' ]]</span>
+                                </div>
+
+                                <!-- Step 5: PO -->
+                                <div class="p-4 rounded-2xl border-2 transition-all"
+                                     :class="getLinkedPOsForPR(selectedPR.id).length > 0 ? 'bg-emerald-50/70 border-emerald-500 text-emerald-950 dark:bg-emerald-900/20 dark:border-emerald-500 dark:text-white' : 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-white/[0.02] dark:border-white/5'">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">5. [[ isArabic ? 'أمر التوريد (PO)' : 'Purchase Order' ]]</span>
+                                        <i v-if="getLinkedPOsForPR(selectedPR.id).length > 0" class="fas fa-check-circle text-emerald-600 text-xs"></i>
+                                    </div>
+                                    <div v-if="getLinkedPOsForPR(selectedPR.id).length > 0">
+                                        <button v-for="po in getLinkedPOsForPR(selectedPR.id)" :key="po.id" @click="closePRDetails(); editItem('po', po)" class="font-mono font-black text-sm text-emerald-700 dark:text-emerald-300 hover:underline block">
+                                            [[ po.po_number ]]
+                                        </button>
+                                        <span class="text-[10px] font-bold text-emerald-600 mt-1 block">[[ getLinkedPOsForPR(selectedPR.id).length ]] [[ isArabic ? 'أمر شراء صادر' : 'Issued POs' ]]</span>
+                                    </div>
+                                    <div v-else class="text-xs font-bold text-slate-400 mt-1">[[ isArabic ? 'لم يصدر أمر شراء بعد' : 'No PO yet' ]]</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Key Info Summary Grid -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'تاريخ طلب الشراء' : 'Request Date'"></span>
+                                <span class="text-base font-bold text-slate-800 dark:text-white font-mono">[[ selectedPR.date || (selectedPR.created_at ? selectedPR.created_at.substring(0,10) : '-') ]]</span>
+                            </div>
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'تاريخ الاحتياج المطلوب' : 'Required Date'"></span>
+                                <span class="text-base font-bold text-slate-800 dark:text-white font-mono">[[ selectedPR.required_date || (isArabic ? 'عاجل / فوري' : 'Immediate') ]]</span>
+                            </div>
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'المنشأة / المخزن المستفيد' : 'Plant / Location'"></span>
+                                <span class="text-base font-bold text-slate-800 dark:text-white">[[ selectedPR.plant_name || selectedPR.requesting_department || (isArabic ? 'المخزن الرئيسي' : 'Main Warehouse') ]]</span>
+                            </div>
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'مقدم ومسؤول الطلب' : 'Requested By'"></span>
+                                <span class="text-base font-bold text-slate-800 dark:text-white">[[ selectedPR.requested_by_name || (isArabic ? 'إدارة المشتريات والمستودعات' : 'Procurement & Warehouse') ]]</span>
+                            </div>
+                        </div>
+
+                        <!-- Linked Documents Section (إذا وجد RFQ أو PO مرتبط) -->
+                        <div v-if="getLinkedRFQsForPR(selectedPR.id).length > 0 || getLinkedPOsForPR(selectedPR.id).length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Linked RFQs -->
+                            <div v-if="getLinkedRFQsForPR(selectedPR.id).length > 0" class="p-5 bg-purple-50/50 dark:bg-purple-950/20 rounded-3xl border border-purple-200 dark:border-purple-800/40">
+                                <h4 class="text-xs font-black uppercase tracking-wider text-purple-800 dark:text-purple-300 mb-3 flex items-center gap-2">
+                                    <i class="fas fa-tags text-purple-600"></i>
+                                    <span>[[ isArabic ? 'طلبات عروض الأسعار المرتبطة (Linked RFQs):' : 'Linked RFQs:' ]]</span>
+                                </h4>
+                                <div class="space-y-2">
+                                    <div v-for="r in getLinkedRFQsForPR(selectedPR.id)" :key="r.id" class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-purple-100 dark:border-purple-900/50 flex items-center justify-between">
+                                        <div>
+                                            <span class="font-mono font-black text-sm text-purple-700 dark:text-purple-400">[[ r.rfq_number ]]</span>
+                                            <span class="text-xs text-slate-600 dark:text-slate-300 block font-bold">[[ r.title || 'طلب تقديم عروض أسعار' ]]</span>
+                                        </div>
+                                        <button type="button" @click="closePRDetails(); openRFQDetails(r)" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all">
+                                            [[ isArabic ? 'فتح RFQ' : 'View RFQ' ]]
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
-                            <button @click="closePRDetails" 
-                                    class="liquid-glass-btn px-6 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
-                                <span v-text="isArabic ? 'إغلاق' : 'Close'"></span>
-                            </button>
+                            <!-- Linked POs -->
+                            <div v-if="getLinkedPOsForPR(selectedPR.id).length > 0" class="p-5 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-3xl border border-emerald-200 dark:border-emerald-800/40">
+                                <h4 class="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 mb-3 flex items-center gap-2">
+                                    <i class="fas fa-file-signature text-emerald-600"></i>
+                                    <span>[[ isArabic ? 'أوامر الشراء والتوريد المصدرة (Linked POs):' : 'Linked Purchase Orders:' ]]</span>
+                                </h4>
+                                <div class="space-y-2">
+                                    <div v-for="po in getLinkedPOsForPR(selectedPR.id)" :key="po.id" class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-emerald-100 dark:border-emerald-900/50 flex items-center justify-between">
+                                        <div>
+                                            <span class="font-mono font-black text-sm text-emerald-700 dark:text-emerald-400">[[ po.po_number ]]</span>
+                                            <span class="text-xs text-slate-600 dark:text-slate-300 block font-bold">[[ po.vendor_name || 'المورد' ]] • [[ formatCurrency ? formatCurrency(getPOTotalAmount(po)) : getPOTotalAmount(po) ]]</span>
+                                        </div>
+                                        <button type="button" @click="closePRDetails(); editItem('po', po)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all">
+                                            [[ isArabic ? 'فتح أمر التوريد' : 'View PO' ]]
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Title & Notes Box (If Available) -->
+                        <div v-if="selectedPR.notes || selectedPR.title" class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm">
+                            <div class="flex items-center gap-2 text-xs font-black text-blue-700 dark:text-cyan-400 uppercase tracking-wider mb-2">
+                                <i class="fas fa-sticky-note"></i>
+                                <span v-text="isArabic ? 'بيان ومبررات طلب الشراء' : 'Requisition Statement & Notes'"></span>
+                            </div>
+                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">[[ selectedPR.notes || selectedPR.title ]]</p>
+                        </div>
+
+                        <!-- Requested Items Table -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 dark:border-white/10 flex justify-between items-center bg-slate-50/50 dark:bg-white/[0.02]">
+                                <h4 class="font-black text-sm text-slate-800 dark:text-white flex items-center gap-2">
+                                    <i class="fas fa-boxes-stacked text-blue-600 dark:text-cyan-400"></i>
+                                    <span v-text="isArabic ? 'الأصناف والبنود المطلوبة' : 'Requested Items & Quantities'"></span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-cyan-500/10 dark:text-cyan-400">
+                                        [[ (selectedPR.lines || []).length ]] [[ isArabic ? 'أصناف' : 'items' ]]
+                                    </span>
+                                </h4>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right text-sm" :dir="isArabic ? 'rtl' : 'ltr'">
+                                    <thead class="bg-slate-100 dark:bg-white/[0.04] text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
+                                        <tr>
+                                            <th class="py-3 px-4 w-12 text-center">#</th>
+                                            <th class="py-3 px-4" v-text="isArabic ? 'رمز الصنف (SKU)' : 'SKU'"></th>
+                                            <th class="py-3 px-4" v-text="isArabic ? 'اسم الصنف والمواصفات' : 'Item Description'"></th>
+                                            <th class="py-3 px-4 text-center" v-text="isArabic ? 'الكمية المطلوبة' : 'Requested Qty'"></th>
+                                            <th class="py-3 px-4 text-center" v-text="isArabic ? 'الوحدة' : 'UOM'"></th>
+                                            <th class="py-3 px-4" v-text="isArabic ? 'ملاحظات' : 'Notes'"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+                                        <tr v-for="(line, idx) in selectedPR.lines" :key="idx" class="hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                                            <td class="py-3.5 px-4 text-center text-xs font-mono font-bold text-slate-400">[[ idx + 1 ]]</td>
+                                            <td class="py-3.5 px-4 font-mono font-black text-blue-600 dark:text-cyan-400 text-xs">
+                                                [[ line.material_sku || (materials_list.find(m => m.id === line.material)?.sku) || '-' ]]
+                                            </td>
+                                            <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-white">
+                                                [[ line.material_name || (materials_list.find(m => m.id === line.material)?.name) || (isArabic ? 'صنف غير محدد' : 'Unknown Material') ]]
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center font-black text-slate-900 dark:text-white text-base">
+                                                [[ line.quantity ]]
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                                                    [[ line.uom || (materials_list.find(m => m.id === line.material)?.base_uom) || 'Unit' ]]
+                                                </span>
+                                            </td>
+                                            <td class="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400">
+                                                [[ line.notes || '-' ]]
+                                            </td>
+                                        </tr>
+                                        <tr v-if="!selectedPR.lines || selectedPR.lines.length === 0">
+                                            <td colspan="6" class="py-8 text-center text-slate-400 font-bold text-xs">
+                                                <i class="fas fa-box-open text-2xl block mb-1 text-slate-300 dark:text-slate-600"></i>
+                                                [[ isArabic ? 'لم يتم العثور على سطور مسجلة لهذا الطلب' : 'No line items recorded for this PR' ]]
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -762,43 +882,278 @@
                 <div class="w-full overflow-x-auto">
                     <table class="w-full text-left border-collapse" :dir="isArabic ? 'rtl' : 'ltr'">
                         <thead>
-                            <tr class="border-b-2 border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                <th class="pb-4" v-text="isArabic ? 'رقم RFQ' : 'RFQ Ref'"></th>
-                                <th class="pb-4" v-text="isArabic ? 'العنوان' : 'Title'"></th>
-                                <th class="pb-4" v-text="isArabic ? 'الموعد النهائي' : 'Deadline'"></th>
-                                <th class="pb-4" v-text="isArabic ? 'العروض المقبولة' : 'Quotes'"></th>
-                                <th class="pb-4 text-center" v-text="isArabic ? 'التحكم' : 'Action'"></th>
+                            <tr class="border-b-2 border-slate-100 dark:border-white/10 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50 dark:bg-white/[0.02]">
+                                <th class="py-3 px-3" v-text="isArabic ? 'رقم RFQ' : 'RFQ Ref'"></th>
+                                <th class="py-3 px-3" v-text="isArabic ? 'العنوان' : 'Title'"></th>
+                                <th class="py-3 px-3" v-text="isArabic ? 'الموعد النهائي' : 'Deadline'"></th>
+                                <th class="py-3 px-3" v-text="isArabic ? 'العروض المقبولة' : 'Quotes'"></th>
+                                <th class="py-3 px-3 text-center" v-text="isArabic ? 'التحكم والتفاصيل' : 'Actions & Details'"></th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="rfq in rfqs" :key="rfq.id" class="hover:bg-slate-50 transition-colors">
-                                <td class="py-4 font-mono font-black text-purple-700 text-sm">[[ rfq.rfq_number ]]</td>
-                                <td class="py-4 font-bold text-slate-800 text-sm">[[ rfq.title || 'طلب تقديم عروض أسعار' ]]</td>
-                                <td class="py-4 text-xs font-bold text-slate-500">[[ rfq.deadline || '-' ]]</td>
-                                <td class="py-4">
-                                    <span class="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-black">
-                                        [[ rfq.quotations ? rfq.quotations.length : 0 ]] عروض
+                        <tbody class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+                            <tr v-for="rfq in rfqs" :key="rfq.id" class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group">
+                                <td class="py-4 px-3 font-mono font-black text-purple-700 dark:text-purple-400 text-sm">
+                                    <button @click="openRFQDetails(rfq)" class="hover:underline flex items-center gap-2 group/ref text-right" :title="isArabic ? 'اضغط لعرض تفاصيل طلب الأسعار والدورة الكاملة' : 'Click to inspect RFQ'">
+                                        <i class="fas fa-tags text-xs text-purple-500 group-hover/ref:scale-110 transition-transform"></i>
+                                        <span>[[ rfq.rfq_number ]]</span>
+                                    </button>
+                                </td>
+                                <td class="py-4 px-3 cursor-pointer" @click="openRFQDetails(rfq)">
+                                    <span class="font-bold text-slate-800 dark:text-white text-sm hover:text-purple-600 transition-colors">[[ rfq.title || (isArabic ? 'طلب تقديم عروض أسعار' : 'Request for Quotation') ]]</span>
+                                    <p v-if="rfq.pr" class="text-[10px] text-slate-400 font-semibold mt-0.5">
+                                        <i class="fas fa-link text-[9px] text-purple-500 mr-1"></i>[[ isArabic ? 'مبني على طلب شراء:' : 'Based on PR:' ]] PR #[[ rfq.pr ]]
+                                    </p>
+                                </td>
+                                <td class="py-4 px-3 text-xs font-bold text-slate-500 font-mono">[[ rfq.deadline || '-' ]]</td>
+                                <td class="py-4 px-3">
+                                    <span class="px-3 py-1 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 rounded-full text-xs font-black">
+                                        [[ getQuotationsForRFQ(rfq.id).length || (rfq.quotations ? rfq.quotations.length : 0) ]] [[ isArabic ? 'عروض موردين' : 'Quotes' ]]
                                     </span>
                                 </td>
-                                <td class="py-4 text-center">
-                                    <div class="flex justify-center gap-2">
+                                <td class="py-4 px-3 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button @click="openRFQDetails(rfq)" class="bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white dark:bg-white/5 dark:text-purple-300 dark:hover:bg-purple-600 dark:hover:text-white px-3 py-1.5 rounded-lg text-xs font-black shadow-sm transition-all flex items-center gap-1.5">
+                                            <i class="fas fa-eye text-xs"></i>
+                                            <span v-text="isArabic ? 'عرض RFQ' : 'View RFQ'"></span>
+                                        </button>
                                         <button @click="openModal('sq', { rfq_id: rfq.id })" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition-all uppercase">
-                                            <i class="fas fa-plus mr-1"></i> [[ isArabic ? 'إضافة عرض مورد' : 'Add Quote' ]]
+                                            <i class="fas fa-plus mr-1"></i> [[ isArabic ? 'إضافة عرض' : 'Add Quote' ]]
                                         </button>
                                         <button @click="openModal('matrix', { rfq_id: rfq.id })" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition-all uppercase">
-                                            <i class="fas fa-balance-scale mr-1"></i> [[ isArabic ? 'إنشاء مصفوفة المقارنة' : 'Compare' ]]
+                                            <i class="fas fa-balance-scale mr-1"></i> [[ isArabic ? 'مقارنة' : 'Compare' ]]
                                         </button>
                                     </div>
                                 </td>
                             </tr>
                             <tr v-if="!rfqs || rfqs.length === 0">
-                                <td colspan="5" class="py-8 text-center text-slate-400 font-bold text-xs">
-                                    <i class="fas fa-tags text-2xl block mb-2 text-slate-300"></i>
-                                    [[ isArabic ? 'لا توجد عروض أسعار مسجلة حالياً' : 'No RFQs recorded yet' ]]
+                                <td colspan="5" class="py-12 text-center text-slate-400 font-bold text-xs">
+                                    <i class="fas fa-tags text-3xl block mb-2 text-slate-300"></i>
+                                    [[ isArabic ? 'لا توجد طلبات عروض أسعار مسجلة حالياً' : 'No RFQs recorded yet' ]]
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- 🌟 مودال عرض تفاصيل طلب الأسعار FULL SCREEN (RFQ Full Lifecycle & Quotes Modal) -->
+                <div v-if="showRFQModal && selectedRFQ" 
+                     class="fixed inset-0 z-[10000] w-full h-full min-h-screen bg-slate-50 dark:bg-slate-950 overflow-y-auto p-4 md:p-8 flex flex-col justify-start animate-in fade-in duration-200"
+                     :dir="isArabic ? 'rtl' : 'ltr'">
+                    
+                    <div class="w-full max-w-7xl mx-auto flex-1 flex flex-col space-y-6">
+
+                        <!-- Top Header Bar with Actions -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/25 shrink-0">
+                                    <i class="fas fa-tags text-2xl"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-3">
+                                        <h2 class="text-2xl md:text-3xl font-black font-mono tracking-tight text-purple-700 dark:text-purple-400">
+                                            [[ selectedRFQ.rfq_number ]]
+                                        </h2>
+                                        <span class="px-3.5 py-1 rounded-full text-xs font-black uppercase inline-flex items-center gap-1.5 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40">
+                                            <span class="w-2 h-2 rounded-full bg-purple-600"></span>
+                                            [[ selectedRFQ.status || 'ACTIVE' ]]
+                                        </span>
+                                    </div>
+                                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">[[ selectedRFQ.title || (isArabic ? 'طلب تقديم عروض الأسعار والمناقصات' : 'Request for Quotation Details') ]]</p>
+                                </div>
+                            </div>
+
+                            <!-- Header Actions -->
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <button type="button" 
+                                        @click="openModal('sq', { rfq_id: selectedRFQ.id })" 
+                                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2">
+                                    <i class="fas fa-plus"></i>
+                                    <span v-text="isArabic ? 'إضافة عرض سعر مورد (Add Quote)' : 'Add Vendor Quote'"></span>
+                                </button>
+
+                                <button type="button" 
+                                        @click="openModal('matrix', { rfq_id: selectedRFQ.id })" 
+                                        class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow-md shadow-amber-600/20 transition-all flex items-center gap-2">
+                                    <i class="fas fa-balance-scale"></i>
+                                    <span v-text="isArabic ? 'إنشاء مصفوفة المقارنة والترسية' : 'Compare Quotes'"></span>
+                                </button>
+
+                                <button @click="closeRFQDetails" 
+                                        class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white rounded-xl font-bold text-xs transition-all flex items-center gap-2">
+                                    <i class="fas fa-times"></i>
+                                    <span v-text="isArabic ? 'إغلاق' : 'Close'"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 🌐 FULL PROCUREMENT LIFECYCLE STEPPER FOR RFQ -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+                                <i class="fas fa-project-diagram text-purple-600"></i>
+                                <span>[[ isArabic ? 'مخطط سير العمل وسلسلة الدورة لطلب الأسعار هذا' : 'RFQ Lifecycle & Procurement Chain' ]]</span>
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                                <!-- Step 1: Parent PR -->
+                                <div class="p-4 rounded-2xl border-2 transition-all"
+                                     :class="selectedRFQ.pr ? 'bg-blue-50/70 border-blue-500 text-blue-950 dark:bg-blue-900/20 dark:border-blue-500 dark:text-white' : 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-white/[0.02] dark:border-white/5'">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">1. [[ isArabic ? 'طلب الشراء الأصلي' : 'Parent PR' ]]</span>
+                                        <i v-if="selectedRFQ.pr" class="fas fa-check-circle text-blue-600 text-xs"></i>
+                                    </div>
+                                    <div v-if="selectedRFQ.pr">
+                                        <span class="font-mono font-black text-sm text-blue-700 dark:text-cyan-300">
+                                            [[ (purchase_requisitions.find(p => p.id === selectedRFQ.pr)?.requisition_number) || ('PR #' + selectedRFQ.pr) ]]
+                                        </span>
+                                        <span class="text-[10px] font-bold text-blue-600 mt-1 block">[[ isArabic ? 'طلب شراء معتمد ومحول' : 'Converted PR' ]]</span>
+                                    </div>
+                                    <div v-else class="text-xs font-bold text-slate-400 mt-1">[[ isArabic ? 'طلب أسعار مباشر (بدون PR)' : 'Direct RFQ' ]]</div>
+                                </div>
+
+                                <!-- Step 2: RFQ (Current) -->
+                                <div class="p-4 rounded-2xl border-2 bg-purple-50/70 border-purple-500 text-purple-950 dark:bg-purple-900/20 dark:border-purple-500 dark:text-white transition-all">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">2. [[ isArabic ? 'طلب عروض الأسعار' : 'RFQ' ]]</span>
+                                        <i class="fas fa-check-circle text-purple-600 text-xs"></i>
+                                    </div>
+                                    <div class="font-mono font-black text-sm text-purple-700 dark:text-purple-300">[[ selectedRFQ.rfq_number ]]</div>
+                                    <span class="text-[10px] font-bold text-purple-600 mt-1 block">[[ isArabic ? 'نشط وبانتظار العروض' : 'Active Bidding' ]]</span>
+                                </div>
+
+                                <!-- Step 3: Quotes -->
+                                <div class="p-4 rounded-2xl border-2 transition-all"
+                                     :class="getQuotationsForRFQ(selectedRFQ.id).length > 0 ? 'bg-indigo-50/70 border-indigo-500 text-indigo-950 dark:bg-indigo-900/20 dark:border-indigo-500 dark:text-white' : 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-white/[0.02] dark:border-white/5'">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">3. [[ isArabic ? 'عروض الأسعار' : 'Quotes' ]]</span>
+                                        <i v-if="getQuotationsForRFQ(selectedRFQ.id).length > 0" class="fas fa-check-circle text-indigo-600 text-xs"></i>
+                                    </div>
+                                    <div class="font-mono font-black text-sm text-indigo-700 dark:text-indigo-300">
+                                        [[ getQuotationsForRFQ(selectedRFQ.id).length ]] [[ isArabic ? 'عروض مستلمة' : 'Quotes Received' ]]
+                                    </div>
+                                    <span class="text-[10px] font-bold text-slate-500 mt-1 block">[[ isArabic ? 'عروض الموردين' : 'Vendor Bids' ]]</span>
+                                </div>
+
+                                <!-- Step 4: Comparison Matrix -->
+                                <div class="p-4 rounded-2xl border-2 transition-all"
+                                     :class="getComparisonsForRFQ(selectedRFQ.id).length > 0 ? 'bg-amber-50/70 border-amber-500 text-amber-950 dark:bg-amber-900/20 dark:border-amber-500 dark:text-white' : 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-white/[0.02] dark:border-white/5'">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">4. [[ isArabic ? 'الترسية والمفاضلة' : 'Matrix' ]]</span>
+                                        <i v-if="getComparisonsForRFQ(selectedRFQ.id).length > 0" class="fas fa-check-circle text-amber-600 text-xs"></i>
+                                    </div>
+                                    <div class="font-bold text-sm text-amber-700 dark:text-amber-300">
+                                        [[ getComparisonsForRFQ(selectedRFQ.id).length > 0 ? (isArabic ? 'مصفوفة منشأة' : 'Evaluated') : (isArabic ? 'بانتظار المقارنة' : 'Pending Matrix') ]]
+                                    </div>
+                                    <span class="text-[10px] font-bold text-slate-500 mt-1 block">[[ isArabic ? 'التقييم الفني والمالي' : 'Technical & Financial' ]]</span>
+                                </div>
+
+                                <!-- Step 5: PO -->
+                                <div class="p-4 rounded-2xl border-2 transition-all"
+                                     :class="getPOsForRFQ(selectedRFQ.id).length > 0 ? 'bg-emerald-50/70 border-emerald-500 text-emerald-950 dark:bg-emerald-900/20 dark:border-emerald-500 dark:text-white' : 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-white/[0.02] dark:border-white/5'">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">5. [[ isArabic ? 'أمر التوريد (PO)' : 'Purchase Order' ]]</span>
+                                        <i v-if="getPOsForRFQ(selectedRFQ.id).length > 0" class="fas fa-check-circle text-emerald-600 text-xs"></i>
+                                    </div>
+                                    <div v-if="getPOsForRFQ(selectedRFQ.id).length > 0">
+                                        <button v-for="po in getPOsForRFQ(selectedRFQ.id)" :key="po.id" @click="closeRFQDetails(); editItem('po', po)" class="font-mono font-black text-sm text-emerald-700 dark:text-emerald-300 hover:underline block">
+                                            [[ po.po_number ]]
+                                        </button>
+                                        <span class="text-[10px] font-bold text-emerald-600 mt-1 block">[[ getPOsForRFQ(selectedRFQ.id).length ]] [[ isArabic ? 'أمر شراء صادر' : 'Issued POs' ]]</span>
+                                    </div>
+                                    <div v-else class="text-xs font-bold text-slate-400 mt-1">[[ isArabic ? 'لم يصدر أمر شراء بعد' : 'No PO yet' ]]</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Key Info Summary Grid -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'تاريخ الإصدار' : 'RFQ Date'"></span>
+                                <span class="text-base font-bold text-slate-800 dark:text-white font-mono">[[ selectedRFQ.date || '-' ]]</span>
+                            </div>
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'آخر موعد لتقديم العروض' : 'Deadline'"></span>
+                                <span class="text-base font-bold text-purple-700 dark:text-purple-400 font-mono">[[ selectedRFQ.deadline || (isArabic ? 'مفتوح' : 'Open') ]]</span>
+                            </div>
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'عدد العروض المقدمة' : 'Quotes Count'"></span>
+                                <span class="text-base font-bold text-indigo-700 dark:text-indigo-400">[[ getQuotationsForRFQ(selectedRFQ.id).length ]] [[ isArabic ? 'عروض موردين' : 'Quotes' ]]</span>
+                            </div>
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1" v-text="isArabic ? 'طلب الشراء المرتبط' : 'Linked PR'"></span>
+                                <span v-if="selectedRFQ.pr" class="text-base font-bold text-blue-600 dark:text-cyan-400 font-mono">
+                                    PR #[[ selectedRFQ.pr ]]
+                                </span>
+                                <span v-else class="text-sm font-bold text-slate-400">[[ isArabic ? 'غير مرتبط بطلب شراء' : 'Direct RFQ' ]]</span>
+                            </div>
+                        </div>
+
+                        <!-- 📋 Supplier Quotations Table (عروض الأسعار المستلمة من الموردين) -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 dark:border-white/10 flex justify-between items-center bg-slate-50/50 dark:bg-white/[0.02]">
+                                <h4 class="font-black text-sm text-slate-800 dark:text-white flex items-center gap-2">
+                                    <i class="fas fa-file-invoice-dollar text-indigo-600"></i>
+                                    <span v-text="isArabic ? 'عروض الأسعار المستلمة من الموردين' : 'Supplier Quotations & Bids'"></span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                        [[ getQuotationsForRFQ(selectedRFQ.id).length ]] [[ isArabic ? 'عروض' : 'quotes' ]]
+                                    </span>
+                                </h4>
+                                <button type="button" @click="openModal('sq', { rfq_id: selectedRFQ.id })" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                                    <i class="fas fa-plus"></i>
+                                    <span v-text="isArabic ? 'إضافة عرض جديد' : 'New Quote'"></span>
+                                </button>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right text-sm" :dir="isArabic ? 'rtl' : 'ltr'">
+                                    <thead class="bg-slate-100 dark:bg-white/[0.04] text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
+                                        <tr>
+                                            <th class="py-3 px-4 w-12 text-center">#</th>
+                                            <th class="py-3 px-4" v-text="isArabic ? 'رقم العرض (SQ Ref)' : 'SQ Ref'"></th>
+                                            <th class="py-3 px-4" v-text="isArabic ? 'المورد مقدم العرض' : 'Vendor'"></th>
+                                            <th class="py-3 px-4 text-center" v-text="isArabic ? 'مدة التوريد' : 'Lead Time'"></th>
+                                            <th class="py-3 px-4 text-center" v-text="isArabic ? 'شروط السداد' : 'Payment Terms'"></th>
+                                            <th class="py-3 px-4 text-left" v-text="isArabic ? 'القيمة الإجمالية' : 'Offered Total'"></th>
+                                            <th class="py-3 px-4 text-center" v-text="isArabic ? 'التحكم' : 'Action'"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+                                        <tr v-for="(q, qIdx) in getQuotationsForRFQ(selectedRFQ.id)" :key="q.id" class="hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                                            <td class="py-3.5 px-4 text-center text-xs font-mono font-bold text-slate-400">[[ qIdx + 1 ]]</td>
+                                            <td class="py-3.5 px-4 font-mono font-black text-indigo-700 dark:text-indigo-400 text-xs">
+                                                [[ q.quotation_number || ('SQ #' + q.id) ]]
+                                            </td>
+                                            <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-white">
+                                                [[ q.vendor_name || (vendors.find(v => v.id === q.vendor)?.name) || 'مورد غير محدد' ]]
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center font-bold text-slate-600 dark:text-slate-300">
+                                                [[ q.delivery_lead_time_days || 1 ]] [[ isArabic ? 'أيام' : 'days' ]]
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                                                    [[ q.payment_terms || 'CASH' ]]
+                                                </span>
+                                            </td>
+                                            <td class="py-3.5 px-4 text-left font-black text-slate-900 dark:text-white text-base font-mono">
+                                                [[ formatCurrency ? formatCurrency(q.total_amount) : q.total_amount ]]
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                <button type="button" @click="openModal('matrix', { rfq_id: selectedRFQ.id })" class="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 rounded-lg text-xs font-bold transition-all">
+                                                    [[ isArabic ? 'مفاضلة وترسية' : 'Award' ]]
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="getQuotationsForRFQ(selectedRFQ.id).length === 0">
+                                            <td colspan="7" class="py-8 text-center text-slate-400 font-bold text-xs">
+                                                <i class="fas fa-inbox text-2xl block mb-1 text-slate-300 dark:text-slate-600"></i>
+                                                [[ isArabic ? 'لم يتم تسجيل أي عروض أسعار لهذا الطلب حتى الآن. اضغط "إضافة عرض جديد" لإدخال عروض الموردين.' : 'No quotes recorded yet for this RFQ.' ]]
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
 

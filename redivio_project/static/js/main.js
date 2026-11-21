@@ -357,6 +357,8 @@ createApp({
             purchase_requisitions: [],
             selectedPR: null,
             showPRModal: false,
+            selectedRFQ: null,
+            showRFQModal: false,
             rfqs: [],
             supplier_quotations: [],
             quotation_comparisons: [],
@@ -8790,6 +8792,79 @@ createApp({
         closePRDetails() {
             this.selectedPR = null;
             this.showPRModal = false;
+        },
+
+        editPR(pr) {
+            this.closePRDetails();
+            this.openModal('pr');
+            this.$nextTick(() => {
+                if (this.forms.pr) {
+                    this.forms.pr = JSON.parse(JSON.stringify(pr));
+                    this.isEditing = true;
+                }
+            });
+        },
+
+        openRFQDetails(rfq) {
+            this.selectedRFQ = JSON.parse(JSON.stringify(rfq));
+            this.showRFQModal = true;
+        },
+
+        closeRFQDetails() {
+            this.selectedRFQ = null;
+            this.showRFQModal = false;
+        },
+
+        getLinkedRFQsForPR(prId) {
+            if (!prId) return [];
+            return (this.rfqs || []).filter(r => r.pr == prId || r.purchase_requisition == prId);
+        },
+
+        getLinkedPOsForPR(prId) {
+            if (!prId) return [];
+            return (this.purchase_orders || []).filter(p => p.pr == prId || p.purchase_requisition == prId);
+        },
+
+        getQuotationsForRFQ(rfqId) {
+            if (!rfqId) return [];
+            return (this.supplier_quotations || []).filter(sq => sq.rfq == rfqId);
+        },
+
+        getComparisonsForRFQ(rfqId) {
+            if (!rfqId) return [];
+            return (this.quotation_comparisons || []).filter(c => c.rfq == rfqId);
+        },
+
+        getPOsForRFQ(rfqId) {
+            if (!rfqId) return [];
+            return (this.purchase_orders || []).filter(p => p.rfq == rfqId);
+        },
+
+        getPOInvoices(poId) {
+            if (!poId) return [];
+            return (this.purchase_invoices || []).filter(inv => inv.purchase_order == poId);
+        },
+
+        getPOInvoicesCount(poId) {
+            return this.getPOInvoices(poId).length;
+        },
+
+        openPurchaseInvoiceForPO(po) {
+            if (!po) return;
+            this.showModal = true;
+            this.modalType = 'purchase_invoice';
+            this.$nextTick(() => {
+                if (!this.forms.purchase_invoice) {
+                    this.forms.purchase_invoice = {};
+                }
+                this.forms.purchase_invoice.vendor = po.vendor || po.vendor_id;
+                this.forms.purchase_invoice.purchase_order = po.id;
+                this.forms.purchase_invoice.bill_date = new Date().toISOString().substring(0, 10);
+                this.forms.purchase_invoice.due_date = new Date().toISOString().substring(0, 10);
+                if (typeof this.onPurchaseInvoicePOSelect === 'function') {
+                    this.onPurchaseInvoicePOSelect();
+                }
+            });
         },
 
         createPOFromPR(pr) {
