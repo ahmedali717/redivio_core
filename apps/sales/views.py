@@ -163,13 +163,16 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def generate_invoice(self, request, pk=None):
-        """ إصدار فاتورة يدوياً بناءً على ما تم صرفه مخزنياً """
+        """ إصدار فاتورة يدوياً بناءً على ما تم صرفه مخزنياً أو بناءً على الكميات المطلوبة (طريقة Odoo) """
         so = self.get_object()
+        policy = request.data.get('policy', 'AUTO')
         try:
-            so.create_invoice()
+            inv = so.create_invoice(policy=policy)
             return Response({
                 'status': 'success',
-                'message': 'Invoice generated successfully for shipped items.'
+                'invoice_id': inv.id if inv else None,
+                'invoice_number': inv.invoice_number if inv else None,
+                'message': f'تم إصدار الفاتورة {inv.invoice_number if inv else ""} بنجاح متوافقة مع دورة عمل Odoo.'
             })
         except Exception as e:
             return Response({'error': str(e)}, status=400)

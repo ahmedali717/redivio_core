@@ -1,30 +1,34 @@
-<div class="space-y-6 animate-in slide-in-from-bottom-4 duration-500 pb-10">
+<div class="space-y-6 animate-in slide-in-from-bottom-4 duration-500 pb-12">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-black shadow-sm border border-emerald-100">
-                <i class="fas fa-scale-balanced"></i>
+    <div class="liquid-glass-card rounded-[2.5rem] p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div class="glass-sheen"></div>
+        <div class="relative z-10 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-blue-600/15 border border-blue-500/30 text-blue-400 flex items-center justify-center text-xl font-black shadow-lg">
+                <i class="fas fa-scale-balanced text-xl text-blue-400"></i>
             </div>
             <div>
                 <div class="flex items-center gap-2">
-                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">[[ isArabic ? "دفتر الأستاذ العام (General Ledger)" : "General Ledger" ]]</h2>
-                    <i class="fas fa-circle-info text-slate-400 hover:text-slate-600 text-xs cursor-help"
-                       :title="isArabic ? 'سجل الحركات المالية الموحد والمدقق لكافة العمليات، الفواتير والقيود' : 'Unified financial transaction log for all invoices, vouchers, and payments'"></i>
+                    <h2 class="text-2xl font-black text-[var(--heading-color)] tracking-tight">[[ isArabic ? "دفتر الأستاذ العام (General Ledger)" : "General Ledger" ]]</h2>
                 </div>
+                <p class="text-xs text-[var(--text-secondary)] font-medium mt-0.5">
+                    [[ isArabic ? 'سجل الحركات المالية الموحد والمدقق لكافة العمليات، الفواتير والقيود' : 'Unified financial transaction log for all invoices, vouchers, and payments' ]]
+                </p>
             </div>
         </div>
 
-        <button @click="fetchGLEntries()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2">
+        <button @click="fetchGLEntries()" class="relative z-10 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-blue-600/25 transition-all flex items-center gap-2">
             <i class="fas fa-sync-alt" :class="loading ? 'fa-spin' : ''"></i>
             <span>[[ isArabic ? "تحديث الحركات" : "Refresh GL" ]]</span>
         </button>
     </div>
 
     <!-- Filters Bar -->
-    <div class="bg-white border border-slate-200/90 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 shadow-2xs">
-        <div>
+    <div class="liquid-glass-card rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 relative overflow-hidden">
+        <div class="glass-sheen"></div>
+        <div class="relative z-10">
             <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">[[ isArabic ? "الحساب المحاسبي" : "Account" ]]</label>
-            <select v-model="glFilters.account_id" @change="fetchGLEntries" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+            <select v-model="glFilters.account_id" @change="fetchGLEntries" 
+                    class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl py-2 px-3 text-xs font-semibold text-[var(--heading-color)] outline-none focus:border-blue-500/60 transition-all">
                 <option value="">[[ isArabic ? "جميع الحسابات" : "All Accounts" ]]</option>
                 <option v-for="a in accounts.filter(x => !x.is_group)" :key="a.id" :value="a.id">
                     [[ a.account_number ]] - [[ a.account_name ]]
@@ -32,78 +36,84 @@
             </select>
         </div>
 
-        <div>
+        <div class="relative z-10">
             <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">[[ isArabic ? "من تاريخ" : "From Date" ]]</label>
-            <input type="date" v-model="glFilters.from_date" @change="fetchGLEntries" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+            <input type="date" v-model="glFilters.from_date" @change="fetchGLEntries" 
+                   class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl py-2 px-3 text-xs font-semibold text-[var(--heading-color)] outline-none focus:border-blue-500/60 transition-all">
         </div>
 
-        <div>
+        <div class="relative z-10">
             <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">[[ isArabic ? "إلى تاريخ" : "To Date" ]]</label>
-            <input type="date" v-model="glFilters.to_date" @change="fetchGLEntries" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+            <input type="date" v-model="glFilters.to_date" @change="fetchGLEntries" 
+                   class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl py-2 px-3 text-xs font-semibold text-[var(--heading-color)] outline-none focus:border-blue-500/60 transition-all">
         </div>
 
-        <div>
+        <div class="relative z-10">
             <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">[[ isArabic ? "رقم المستند / القيد" : "Voucher Ref" ]]</label>
-            <input type="text" v-model="glFilters.voucher_no" @input="fetchGLEntries" :placeholder="isArabic ? 'بحث برقم المستند...' : 'Search voucher#'" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+            <input type="text" v-model="glFilters.voucher_no" @input="fetchGLEntries" 
+                   :placeholder="isArabic ? 'بحث برقم المستند...' : 'Search voucher#'" 
+                   class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl py-2 px-3 text-xs font-semibold text-[var(--heading-color)] outline-none focus:border-blue-500/60 transition-all">
         </div>
     </div>
 
     <!-- GL Entries Table -->
-    <div class="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-sm">
-        <div class="overflow-x-auto">
-            <table class="w-full text-xs text-right border-collapse">
-                <thead class="bg-slate-50 text-[10px] uppercase font-black text-slate-400 border-b border-slate-200">
+    <div class="liquid-glass-card rounded-[2.5rem] p-6 relative overflow-hidden">
+        <div class="glass-sheen"></div>
+        <div class="relative z-10 overflow-x-auto">
+            <table class="w-full text-xs text-right border-separate border-spacing-y-2">
+                <thead class="text-[10px] uppercase font-black text-slate-400 tracking-wider">
                     <tr>
-                        <th class="px-4 py-3.5">[[ isArabic ? "التاريخ" : "Date" ]]</th>
-                        <th class="px-4 py-3.5">[[ isArabic ? "الحساب" : "Account" ]]</th>
-                        <th class="px-4 py-3.5">[[ isArabic ? "نوع المستند" : "Voucher Type" ]]</th>
-                        <th class="px-4 py-3.5">[[ isArabic ? "رقم المستند" : "Voucher No" ]]</th>
-                        <th class="px-4 py-3.5">[[ isArabic ? "الطرف" : "Party" ]]</th>
-                        <th class="px-4 py-3.5 text-center">[[ isArabic ? "مدين (Debit)" : "Debit" ]]</th>
-                        <th class="px-4 py-3.5 text-center">[[ isArabic ? "دائن (Credit)" : "Credit" ]]</th>
-                        <th class="px-4 py-3.5">[[ isArabic ? "البيان" : "Remarks" ]]</th>
+                        <th class="px-4 py-3">[[ isArabic ? "التاريخ" : "Date" ]]</th>
+                        <th class="px-4 py-3">[[ isArabic ? "الحساب" : "Account" ]]</th>
+                        <th class="px-4 py-3">[[ isArabic ? "نوع المستند" : "Voucher Type" ]]</th>
+                        <th class="px-4 py-3">[[ isArabic ? "رقم المستند" : "Voucher No" ]]</th>
+                        <th class="px-4 py-3">[[ isArabic ? "الطرف" : "Party" ]]</th>
+                        <th class="px-4 py-3 text-center">[[ isArabic ? "مدين (Debit)" : "Debit" ]]</th>
+                        <th class="px-4 py-3 text-center">[[ isArabic ? "دائن (Credit)" : "Credit" ]]</th>
+                        <th class="px-4 py-3">[[ isArabic ? "البيان" : "Remarks" ]]</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="text-xs font-medium">
                     <tr v-if="glEntries.length === 0">
                         <td colspan="8" class="text-center py-12 text-slate-400 font-bold">
-                            <i class="fas fa-receipt text-3xl mb-2 text-slate-300 block"></i>
+                            <i class="fas fa-receipt text-3xl mb-2 text-slate-500 block"></i>
                             [[ isArabic ? "لا توجد قيود أستاذ عام مطابقة للفلاتر المحددة" : "No GL entries found" ]]
                         </td>
                     </tr>
-                    <tr v-for="gl in glEntries" :key="gl.id" class="hover:bg-slate-50/80 transition-colors">
-                        <td class="px-4 py-3 font-semibold text-slate-600">[[ gl.posting_date ]]</td>
-                        <td class="px-4 py-3 font-bold text-slate-800">
-                            <span class="font-mono text-slate-500 text-[11px] mr-1">[[ gl.account_number ]]</span>
+                    <tr v-for="gl in glEntries" :key="gl.id" 
+                        class="bg-[var(--subcard-bg)] hover:bg-[var(--subcard-hover-bg)] border border-[var(--subcard-border)] rounded-2xl transition-all">
+                        <td class="px-4 py-3.5 rounded-r-2xl font-mono text-slate-400">[[ gl.posting_date ]]</td>
+                        <td class="px-4 py-3.5 font-bold text-[var(--heading-color)]">
+                            <span class="font-mono text-blue-400 text-[11px] mr-1">[[ gl.account_number ]]</span>
                             [[ gl.account_name ]]
                         </td>
-                        <td class="px-4 py-3 text-slate-600">
-                            <span class="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold">[[ gl.voucher_type ]]</span>
+                        <td class="px-4 py-3.5">
+                            <span class="px-2.5 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold">[[ gl.voucher_type ]]</span>
                         </td>
-                        <td class="px-4 py-3 font-mono font-bold">
+                        <td class="px-4 py-3.5 font-mono font-bold">
                             <button @click="openGLSourceDocument(gl)" 
                                 :title="isArabic ? 'فتح وانتقال إلى المستند الأصلي' : 'Drill-down to source document'"
-                                class="text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1 group/v cursor-pointer">
+                                class="text-blue-400 hover:text-blue-300 hover:underline inline-flex items-center gap-1 group/v cursor-pointer">
                                 <span>[[ gl.voucher_no ]]</span>
-                                <i class="fas fa-arrow-up-right-from-square text-[9px] opacity-60 group-hover/v:opacity-100 transition-opacity"></i>
+                                <i class="fas fa-arrow-up-right-from-square text-[9px] opacity-70 group-hover/v:opacity-100 transition-opacity"></i>
                             </button>
                         </td>
-                        <td class="px-4 py-3 text-slate-700">
+                        <td class="px-4 py-3.5 text-[var(--text-primary)]">
                             <button v-if="gl.party_name" @click="filterGLByParty(gl.party_name)"
                                 :title="isArabic ? 'تصفية الأستاذ بالطرف' : 'Filter by party'"
-                                class="hover:text-blue-600 hover:underline inline-flex items-center gap-1 cursor-pointer font-semibold">
+                                class="hover:text-blue-400 hover:underline inline-flex items-center gap-1 cursor-pointer font-semibold">
                                 <span>[[ gl.party_name ]]</span>
                                 <i class="fas fa-filter text-[8px] text-slate-400"></i>
                             </button>
-                            <span v-else class="text-slate-400">-</span>
+                            <span v-else class="text-slate-500">-</span>
                         </td>
-                        <td class="px-4 py-3 text-center font-mono font-bold" :class="gl.debit > 0 ? 'text-blue-600' : 'text-slate-400'">
+                        <td class="px-4 py-3.5 text-center font-mono font-black" :class="gl.debit > 0 ? 'text-blue-400' : 'text-slate-500'">
                             $[[ formatNumber(gl.debit) ]]
                         </td>
-                        <td class="px-4 py-3 text-center font-mono font-bold" :class="gl.credit > 0 ? 'text-emerald-600' : 'text-slate-400'">
+                        <td class="px-4 py-3.5 text-center font-mono font-black" :class="gl.credit > 0 ? 'text-[var(--heading-color)]' : 'text-slate-500'">
                             $[[ formatNumber(gl.credit) ]]
                         </td>
-                        <td class="px-4 py-3 text-slate-500 max-w-[250px] truncate">[[ gl.remarks || '-' ]]</td>
+                        <td class="px-4 py-3.5 text-slate-400 max-w-[250px] truncate rounded-l-2xl">[[ gl.remarks || '-' ]]</td>
                     </tr>
                 </tbody>
             </table>

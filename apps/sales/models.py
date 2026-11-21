@@ -125,30 +125,30 @@ class SalesOrder(models.Model):
             # إنشاء فاتورة تلقائياً
             self.create_invoice()
 
-    def create_invoice(self, delivery=None):
+    def create_invoice(self, delivery=None, policy='AUTO'):
         """ 
-        Creates a Sales Invoice. 
-        If 'delivery' is provided, it bills only the items in that delivery.
-        Otherwise, it bills all shipped items that haven't been invoiced yet.
+        Creates a Sales Invoice (Odoo 3-way matching standard).
+        - If 'delivery' is provided: bills only the items in that warehouse delivery.
+        - If policy == 'DELIVERED': bills shipped items that haven't been invoiced yet.
+        - If policy == 'ORDERED' or fallback: bills based on ordered items (for advance payments or order-based invoicing).
         """
         import datetime
-        invoice_number = f"INV-{self.so_number}-MAN"
+        timestamp = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
         if delivery:
             invoice_number = f"INV-{delivery.delivery_number}"
         else:
-            # إضافة ختم زمني للفاتورة اليدوية لضمان التفرد
-            timestamp = datetime.datetime.now().strftime("%H%M%S")
             invoice_number = f"INV-{self.so_number}-{timestamp}"
         
         # التأكد من عدم تكرار الفاتورة
-        if SalesInvoice.objects.filter(invoice_number=invoice_number).exists():
-            return
+        existing = SalesInvoice.objects.filter(invoice_number=invoice_number).first()
+        if existing:
+            return existing
         
         total_amount = decimal.Decimal('0.00')
         lines_to_update = []
 
         if delivery:
-            # حساب القيمة بناءً على ما تم صرفه فعلياً في هذا الإذن
+            # 1. فوترة بناءً على إذن الصرف المخزني الفعلي (Delivered Quantities)
             for item in delivery.items.all():
                 so_line = self.lines.filter(material=item.material).first()
                 if so_line:
@@ -156,35 +156,54 @@ class SalesOrder(models.Model):
                     total_amount += qty_to_bill * so_line.unit_price
                     so_line.billed_quantity += qty_to_bill
                     lines_to_update.append(so_line)
+        elif policy == 'ORDERED':
+            # 2. فوترة بناءً على الكميات المطلوبة (Ordered Quantities)
+            for line in self.lines.all():
+                unbilled_qty = line.quantity - line.billed_quantity
+                if unbilled_qty > 0:
+                    total_amount += unbilled_qty * line.unit_price
+                    line.billed_quantity += unbilled_qty
+                    lines_to_update.append(line)
         else:
-            # إصدار فاتورة يدوية بما تم صرفه ولم يُفوتر بعد
+            # 3. الافتراضي (طريقة أودو): فوترة المنصرف أولاً، وإذا لم يُصرف بعد تُفوتر الكمية المطلوبة
             for line in self.lines.all():
                 unbilled_qty = line.shipped_quantity - line.billed_quantity
                 if unbilled_qty > 0:
                     total_amount += unbilled_qty * line.unit_price
                     line.billed_quantity += unbilled_qty
                     lines_to_update.append(line)
+            
+            if total_amount <= 0:
+                for line in self.lines.all():
+                    unbilled_qty = line.quantity - line.billed_quantity
+                    if unbilled_qty > 0:
+                        total_amount += unbilled_qty * line.unit_price
+                        line.billed_quantity += unbilled_qty
+                        lines_to_update.append(line)
 
         if total_amount <= 0:
-            # لا يوجد شيء ليتم فوترته (إما لم يتم الصرف أو تم فوترة كل المنصرف)
-            raise Exception("No shipped items available for invoicing.")
+            raise Exception("جميع بنود هذا الأمر مفوترة بالفعل بالكامل.")
 
         tax_amount = (total_amount * decimal.Decimal('0.15')).quantize(decimal.Decimal('0.01'))
         grand_total = total_amount + tax_amount
 
         with transaction.atomic():
-            SalesInvoice.objects.create(
+            invoice = SalesInvoice.objects.create(
                 opco=self.opco,
                 invoice_number=invoice_number,
                 sales_order=self,
                 customer=self.customer,
                 due_date=datetime.date.today() + datetime.timedelta(days=30),
+                subtotal=total_amount,
+                tax_amount=tax_amount,
                 total_amount=grand_total,
-                status='UNPAID'
+                status='UNPAID',
+                notes=f"فاتورة مبيعات مرتبطة بأمر البيع {self.so_number} - متوافقة مع Odoo"
             )
             # تحديث الكميات المفوترة في سطور الأوردر
             for l in lines_to_update:
                 l.save()
+            return invoice
 
 class SalesOrderLine(models.Model):
     so = models.ForeignKey(SalesOrder, related_name='lines', on_delete=models.CASCADE)
