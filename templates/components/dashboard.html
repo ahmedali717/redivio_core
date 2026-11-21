@@ -71,15 +71,15 @@
                     <i class="fas fa-wallet text-xl text-blue-400"></i>
                 </div>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    <i class="fas fa-arrow-up text-[9px]"></i> 12.5%
+                    <i class="fas fa-arrow-up text-[9px]"></i> LIVE
                 </span>
             </div>
             <div class="relative z-10 mt-5">
                 <span class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider block" v-text="isArabic ? 'إجمالي الإيرادات والمبيعات' : 'Total Revenue'"></span>
                 <h3 class="text-2xl font-black text-[var(--heading-color)] tech-font mt-1 tracking-tight">
-                    [[ formatCurrency(kpis.sales ? kpis.sales.total : 28450) ]]
+                    [[ formatCurrency(executiveKpis.totalRevenue) ]]
                 </h3>
-                <span class="text-[10px] text-slate-400 mt-1 block">[[ isArabic ? 'مقارنة بالشهر السابق' : 'vs last month' ]]</span>
+                <span class="text-[10px] text-slate-400 mt-1 block">[[ isArabic ? 'محدث لحظياً' : 'Live updated' ]]</span>
             </div>
         </div>
 
@@ -91,15 +91,15 @@
                     <i class="fas fa-cart-shopping text-xl text-blue-400"></i>
                 </div>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    <i class="fas fa-arrow-up text-[9px]"></i> 8.4%
+                    <i class="fas fa-arrow-up text-[9px]"></i> LIVE
                 </span>
             </div>
             <div class="relative z-10 mt-5">
                 <span class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider block" v-text="isArabic ? 'إجمالي الأوامر والطلبات' : 'Total Orders'"></span>
                 <h3 class="text-2xl font-black text-[var(--heading-color)] tech-font mt-1 tracking-tight">
-                    [[ (kpis.procurement ? kpis.procurement.total : 0) ? (kpis.procurement.total_pos || 1250) : 1250 ]]
+                    [[ executiveKpis.totalOrdersCount ]]
                 </h3>
-                <span class="text-[10px] text-slate-400 mt-1 block">[[ isArabic ? 'أوامر بيع وتوريد معتمدة' : 'Confirmed POs & SOs' ]]</span>
+                <span class="text-[10px] text-slate-400 mt-1 block">[[ isArabic ? 'أوامر بيع وتوريد مقيدة' : 'Confirmed POs & SOs' ]]</span>
             </div>
         </div>
 
@@ -111,13 +111,13 @@
                     <i class="fas fa-users text-xl text-blue-400"></i>
                 </div>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    <i class="fas fa-arrow-up text-[9px]"></i> 16.2%
+                    <i class="fas fa-arrow-up text-[9px]"></i> LIVE
                 </span>
             </div>
             <div class="relative z-10 mt-5">
                 <span class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider block" v-text="isArabic ? 'إجمالي العملاء والمستخدمين' : 'Total Users & Clients'"></span>
                 <h3 class="text-2xl font-black text-[var(--heading-color)] tech-font mt-1 tracking-tight">
-                    [[ (kpis.customers_count || 0) + (companyUsers ? companyUsers.length : 24) ]]
+                    [[ (customers ? customers.length : 0) + (companyUsers && companyUsers.length ? companyUsers.length : 1) ]]
                 </h3>
                 <span class="text-[10px] text-slate-400 mt-1 block">[[ isArabic ? 'عملاء ومستخدمي الفروع' : 'Across all entities' ]]</span>
             </div>
@@ -131,13 +131,13 @@
                     <i class="fas fa-box-open text-xl text-slate-200"></i>
                 </div>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    <i class="fas fa-arrow-up text-[9px]"></i> 6.8%
+                    <i class="fas fa-arrow-up text-[9px]"></i> LIVE
                 </span>
             </div>
             <div class="relative z-10 mt-5">
                 <span class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider block" v-text="isArabic ? 'إجمالي الأصناف والمنتجات' : 'Total Products & SKUs'"></span>
                 <h3 class="text-2xl font-black text-[var(--heading-color)] tech-font mt-1 tracking-tight">
-                    [[ kpis.inventory ? kpis.inventory.total_items : (materials_list ? materials_list.length : 320) ]]
+                    [[ materials_list ? materials_list.length : 0 ]]
                 </h3>
                 <span class="text-[10px] text-slate-400 mt-1 block">[[ isArabic ? 'أصناف معرفة في الكتالوج' : 'Active catalog items' ]]</span>
             </div>
@@ -162,7 +162,7 @@
                     <!-- Floating Stat Pill -->
                     <div class="px-4 py-2 rounded-2xl bg-blue-600/15 border border-blue-500/30 text-right">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block" v-text="isArabic ? 'تحصيل الشهر الحالي' : 'Current Month'"></span>
-                        <span class="text-sm font-black text-blue-400 tech-font">[[ formatCurrency(kpis.sales ? (kpis.sales.total || 32450) : 32450) ]]</span>
+                        <span class="text-sm font-black text-blue-400 tech-font">[[ formatCurrency(executiveKpis.currentMonthRevenue) ]]</span>
                         <span class="text-[9px] font-black text-blue-300 ml-1">↑ 15.2%</span>
                     </div>
                     <!-- Time range selector -->
@@ -238,52 +238,25 @@
                         [[ isArabic ? 'عرض الكل ←' : 'See All →' ]]
                     </button>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div class="p-3 rounded-2xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] flex items-center justify-between hover:bg-[var(--subcard-hover-bg)] transition-all">
+                <div v-if="recentOrdersList && recentOrdersList.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div v-for="order in recentOrdersList" :key="order.id" class="p-3 rounded-2xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] flex items-center justify-between hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-black text-xs">
-                                <i class="fas fa-file-invoice text-xs"></i>
+                                <i :class="order.type === 'po' ? 'fas fa-file-invoice' : 'fas fa-cart-check'" class="text-xs"></i>
                             </div>
-                            <div>
-                                <span class="text-xs font-bold text-[var(--heading-color)] block">#ORD-8901</span>
-                                <span class="text-[10px] text-slate-400">[[ isArabic ? 'أمر توريد معتمد' : 'Confirmed PO' ]]</span>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-xs font-black text-blue-400 block tech-font">$249.00</span>
-                            <span class="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
-                        </div>
-                    </div>
-                    <div class="p-3 rounded-2xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] flex items-center justify-between hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-xl bg-slate-800/80 text-slate-200 flex items-center justify-center font-black text-xs">
-                                <i class="fas fa-file-lines text-xs"></i>
-                            </div>
-                            <div>
-                                <span class="text-xs font-bold text-[var(--heading-color)] block">#ORD-8900</span>
-                                <span class="text-[10px] text-slate-400">[[ isArabic ? 'إذن استلام مخزن' : 'GRN Receipt' ]]</span>
+                            <div class="truncate max-w-[120px]">
+                                <span class="text-xs font-bold text-[var(--heading-color)] block truncate">[[ order.ref ]]</span>
+                                <span class="text-[10px] text-slate-400 block truncate">[[ order.party_name ]]</span>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <span class="text-xs font-black text-blue-400 block tech-font">$129.00</span>
-                            <span class="inline-block w-2 h-2 rounded-full bg-slate-400"></span>
+                        <div class="text-right flex-shrink-0">
+                            <span class="text-xs font-black text-blue-400 block tech-font">[[ formatCurrency(order.amount) ]]</span>
+                            <span class="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold" :class="order.status === 'RECEIVED' || order.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'">[[ order.status ]]</span>
                         </div>
                     </div>
-                    <div class="p-3 rounded-2xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] flex items-center justify-between hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-black text-xs">
-                                <i class="fas fa-cart-check text-xs"></i>
-                            </div>
-                            <div>
-                                <span class="text-xs font-bold text-[var(--heading-color)] block">#ORD-8899</span>
-                                <span class="text-[10px] text-slate-400">[[ isArabic ? 'أمر بيع مباشر' : 'Sales Order' ]]</span>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-xs font-black text-blue-400 block tech-font">$399.00</span>
-                            <span class="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
-                        </div>
-                    </div>
+                </div>
+                <div v-else class="text-center py-4 text-xs font-bold text-slate-400">
+                    [[ isArabic ? 'لا توجد أوامر مسجلة حتى الآن' : 'No recorded orders yet' ]]
                 </div>
             </div>
         </div>
@@ -302,41 +275,17 @@
                     <span class="text-[10px] font-bold text-blue-400">See All</span>
                 </div>
                 <div class="space-y-3 relative z-10">
-                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
+                    <div v-for="u in activeTeamMembers" :key="u.id" class="flex items-center justify-between p-2.5 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full bg-blue-600 text-white font-black text-xs flex items-center justify-center border border-white/20">
-                                JD
+                                [[ u.initials ]]
                             </div>
                             <div>
-                                <span class="text-xs font-bold text-[var(--heading-color)] block leading-tight">Ahmed Aly</span>
-                                <span class="text-[10px] text-slate-400">System Admin</span>
+                                <span class="text-xs font-bold text-[var(--heading-color)] block leading-tight">[[ u.name ]]</span>
+                                <span class="text-[10px] text-slate-400">[[ u.role ]]</span>
                             </div>
                         </div>
-                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">Online</span>
-                    </div>
-                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-700 text-white font-black text-xs flex items-center justify-center border border-white/20">
-                                SM
-                            </div>
-                            <div>
-                                <span class="text-xs font-bold text-[var(--heading-color)] block leading-tight">Mohamed Gabry</span>
-                                <span class="text-[10px] text-slate-400">WMS Supervisor</span>
-                            </div>
-                        </div>
-                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">Online</span>
-                    </div>
-                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 font-black text-xs flex items-center justify-center border border-white/10">
-                                RJ
-                            </div>
-                            <div>
-                                <span class="text-xs font-bold text-[var(--heading-color)] block leading-tight">Tarek Hassan</span>
-                                <span class="text-[10px] text-slate-400">Buyer (RPMS)</span>
-                            </div>
-                        </div>
-                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">Offline</span>
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">[[ u.status ]]</span>
                     </div>
                 </div>
             </div>
@@ -359,14 +308,18 @@
                             <!-- Background circle -->
                             <circle cx="50" cy="50" r="38" stroke="currentColor" class="text-slate-500/15" stroke-width="9" fill="transparent"/>
                             <!-- Completed Segment (Blue) -->
-                            <circle cx="50" cy="50" r="38" stroke="#0066FF" stroke-width="9" stroke-dasharray="238.7" stroke-dashoffset="100" stroke-linecap="round" fill="transparent"/>
-                            <!-- In Progress Segment (Light Blue) -->
-                            <circle cx="50" cy="50" r="38" stroke="#38BDF8" stroke-width="9" stroke-dasharray="238.7" stroke-dashoffset="190" stroke-linecap="round" fill="transparent"/>
+                            <circle cx="50" cy="50" r="38" stroke="#0066FF" stroke-width="9" 
+                                :stroke-dasharray="238.7" 
+                                :stroke-dashoffset="taskStatusStats.total > 0 ? 238.7 - (238.7 * taskStatusStats.completed / taskStatusStats.total) : 238.7" 
+                                stroke-linecap="round" fill="transparent"/>
                             <!-- Pending Segment (Slate) -->
-                            <circle cx="50" cy="50" r="38" stroke="#94A3B8" stroke-width="9" stroke-dasharray="238.7" stroke-dashoffset="225" stroke-linecap="round" fill="transparent"/>
+                            <circle cx="50" cy="50" r="38" stroke="#94A3B8" stroke-width="9" 
+                                :stroke-dasharray="238.7" 
+                                :stroke-dashoffset="taskStatusStats.total > 0 ? 238.7 - (238.7 * taskStatusStats.pending / taskStatusStats.total) : 238.7" 
+                                stroke-linecap="round" fill="transparent"/>
                         </svg>
                         <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                            <span class="text-xl font-black text-[var(--heading-color)] tech-font leading-none">48</span>
+                            <span class="text-xl font-black text-[var(--heading-color)] tech-font leading-none">[[ taskStatusStats.total ]]</span>
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Tasks</span>
                         </div>
                     </div>
@@ -376,17 +329,12 @@
                         <div class="flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
                             <span class="text-slate-400">[[ isArabic ? 'مكتمل' : 'Completed' ]]</span>
-                            <span class="text-[var(--heading-color)] font-black mr-1 tech-font">20</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
-                            <span class="text-slate-400">[[ isArabic ? 'قيد التنفيذ' : 'In Progress' ]]</span>
-                            <span class="text-[var(--heading-color)] font-black mr-1 tech-font">14</span>
+                            <span class="text-[var(--heading-color)] font-black mr-1 tech-font">[[ taskStatusStats.completed ]]</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
                             <span class="text-slate-400">[[ isArabic ? 'معلق' : 'Pending' ]]</span>
-                            <span class="text-[var(--heading-color)] font-black mr-1 tech-font">10</span>
+                            <span class="text-[var(--heading-color)] font-black mr-1 tech-font">[[ taskStatusStats.pending ]]</span>
                         </div>
                     </div>
                 </div>
@@ -423,11 +371,11 @@
                 <div class="space-y-3 relative z-10">
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'إجمالي الأصناف' : 'Total Items'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ kpis.inventory ? kpis.inventory.total_items : 0 ]]</span>
+                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ materials_list ? materials_list.length : (kpis.inventory ? kpis.inventory.total_items : 0) ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'كمية المخزون الإجمالية' : 'Stock Qty'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ kpis.inventory ? kpis.inventory.stock_qty : 0 ]]</span>
+                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ (kpis.inventory && kpis.inventory.stock_qty) ? kpis.inventory.stock_qty : ((inventoryList || []).reduce((acc, item) => acc + (parseFloat(item.quantity) || 0), 0)) ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'أصناف حرجة' : 'Critical Stock'"></span>
@@ -464,15 +412,15 @@
                 <div class="space-y-3 relative z-10">
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'إجمالي أوامر الشراء' : 'Total Orders'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(kpis.procurement ? kpis.procurement.total : 0) ]]</span>
+                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.procurementTotal) ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'تم استلامه بالمستودع' : 'Received'"></span>
-                        <span class="font-black text-blue-400 tech-font text-sm">[[ formatCurrency(kpis.procurement ? kpis.procurement.received : 0) ]]</span>
+                        <span class="font-black text-blue-400 tech-font text-sm">[[ formatCurrency(executiveKpis.procurementReceived) ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'المسدد للموردين' : 'Total Paid'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(kpis.procurement ? kpis.procurement.paid : 0) ]]</span>
+                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.procurementPaid) ]]</span>
                     </div>
                 </div>
             </div>
@@ -505,15 +453,15 @@
                 <div class="space-y-3 relative z-10">
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'إجمالي المبيعات' : 'Total Sales'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(kpis.sales ? kpis.sales.total : 0) ]]</span>
+                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.salesTotal) ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'تم تسليمه' : 'Delivered'"></span>
-                        <span class="font-black text-blue-400 tech-font text-sm">[[ formatCurrency(kpis.sales ? kpis.sales.delivered : 0) ]]</span>
+                        <span class="font-black text-blue-400 tech-font text-sm">[[ formatCurrency(executiveKpis.salesDelivered) ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'متبقي للتسليم' : 'Remaining Deliv.'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(kpis.sales ? kpis.sales.remaining_delivery : 0) ]]</span>
+                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.salesRemaining) ]]</span>
                     </div>
                 </div>
             </div>
@@ -546,15 +494,15 @@
                 <div class="space-y-3 relative z-10">
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'إجمالي الفواتير' : 'Total Invoices'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(kpis.finance ? kpis.finance.invoices : 0) ]]</span>
+                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.financeInvoices) ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'ما تم تحصيله' : 'Total Collected'"></span>
-                        <span class="font-black text-blue-400 tech-font text-sm">[[ formatCurrency(kpis.finance ? kpis.finance.collected : 0) ]]</span>
+                        <span class="font-black text-blue-400 tech-font text-sm">[[ formatCurrency(executiveKpis.financeCollected) ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'متبقي / مديونيات' : 'Receivables'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(kpis.finance ? kpis.finance.remaining : 0) ]]</span>
+                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.financeReceivables) ]]</span>
                     </div>
                 </div>
             </div>
@@ -587,15 +535,15 @@
                 <div class="space-y-3 relative z-10">
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'المشاريع الجارية' : 'Active Projects'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ contractingStats ? contractingStats.active_projects_count : 0 ]]</span>
+                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ contractingDashboardStats.activeProjects ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'قيمة العقود الإجمالية' : 'Total Contract Value'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(contractingStats ? contractingStats.total_contract_value : 0) ]]</span>
+                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(contractingDashboardStats.totalValue) ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
                         <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'متوسط نسبة الإنجاز' : 'Avg. Progress'"></span>
-                        <span class="font-black text-blue-400 tech-font text-sm">[[ contractingStats ? Math.round(contractingStats.average_progress || 0) : 0 ]]%</span>
+                        <span class="font-black text-blue-400 tech-font text-sm">[[ contractingDashboardStats.avgProgress ]]%</span>
                     </div>
                 </div>
             </div>

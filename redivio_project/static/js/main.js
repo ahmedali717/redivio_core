@@ -816,6 +816,163 @@ createApp({
             const notifCount = (this.notifications && Array.isArray(this.notifications)) ? this.notifications.length : 0;
             return tasksCount + notifCount;
         },
+
+        executiveKpis() {
+            const pos = this.purchase_orders || [];
+            const sos = this.salesOrders || [];
+            const pInvoices = this.purchaseInvoices || [];
+            const sInvoices = this.salesInvoices || [];
+
+            // Procurement calculations
+            const procTotal = pos.reduce((sum, p) => sum + (parseFloat(p.total_amount) || 0), 0);
+            const procReceived = pos.filter(p => (p.status || '').toUpperCase() === 'RECEIVED').reduce((sum, p) => sum + (parseFloat(p.total_amount) || 0), 0);
+            const procPaid = pInvoices.reduce((sum, inv) => {
+                const isPaid = (inv.status || '').toUpperCase() === 'PAID';
+                return sum + (parseFloat(isPaid ? (inv.grand_total || inv.total_amount) : (inv.paid_amount || 0)) || 0);
+            }, 0);
+
+            // Sales calculations
+            const salesTotal = sos.reduce((sum, s) => sum + (parseFloat(s.grand_total || s.total_amount) || 0), 0);
+            const salesDelivered = sos.filter(s => ['DELIVERED', 'SHIPPED'].includes((s.status || '').toUpperCase())).reduce((sum, s) => sum + (parseFloat(s.grand_total || s.total_amount) || 0), 0);
+            const salesRemaining = Math.max(0, salesTotal - salesDelivered);
+
+            // Finance calculations
+            const finInvoices = sInvoices.reduce((sum, inv) => sum + (parseFloat(inv.total_amount || inv.grand_total) || 0), 0);
+            const finCollected = sInvoices.reduce((sum, inv) => {
+                const isPaid = (inv.status || '').toUpperCase() === 'PAID';
+                return sum + (parseFloat(isPaid ? (inv.total_amount || inv.grand_total) : (inv.paid_amount || 0)) || 0);
+            }, 0);
+            const finReceivables = Math.max(0, finInvoices - finCollected);
+
+            const totalOrdersCount = pos.length + sos.length;
+            const totalRevenue = finCollected > 0 ? finCollected : (finInvoices > 0 ? finInvoices : salesTotal);
+
+            return {
+                procurementTotal: procTotal,
+                procurementReceived: procReceived,
+                procurementPaid: procPaid,
+                salesTotal: salesTotal,
+                salesDelivered: salesDelivered,
+                salesRemaining: salesRemaining,
+                financeInvoices: finInvoices,
+                financeCollected: finCollected,
+                financeReceivables: finReceivables,
+                totalOrdersCount: totalOrdersCount,
+                totalRevenue: totalRevenue,
+                currentMonthRevenue: totalRevenue
+            };
+        },
+
+        recentOrdersList() {
+            const list = [];
+            (this.purchase_orders || []).forEach(po => {
+                list.push({
+                    id: 'po-' + po.id,
+                    type: 'po',
+                    ref: po.po_number || `#PO-${po.id}`,
+                    party_name: po.vendor_name || 'Vendor',
+                    amount: parseFloat(po.total_amount) || 0,
+                    status: (po.status || 'DRAFT').toUpperCase(),
+                    date: po.created_at || po.order_date || ''
+                });
+            });
+            (this.salesOrders || []).forEach(so => {
+                list.push({
+                    id: 'so-' + so.id,
+                    type: 'so',
+                    ref: so.so_number || `#SO-${so.id}`,
+                    party_name: so.customer_name || 'Customer',
+                    amount: parseFloat(so.grand_total || so.total_amount) || 0,
+                    status: (so.status || 'DRAFT').toUpperCase(),
+                    date: so.created_at || so.order_date || ''
+                });
+            });
+            list.sort((a, b) => (b.date > a.date ? 1 : -1));
+            return list.slice(0, 3);
+        },
+
+        activeTeamMembers() {
+            if (this.companyUsers && this.companyUsers.length > 0) {
+                return this.companyUsers.slice(0, 4).map(u => ({
+                    id: u.id,
+                    name: u.full_name || u.name || u.email || 'User',
+                    role: u.role || 'Member',
+                    initials: (u.full_name || u.name || u.email || 'U').slice(0, 2).toUpperCase(),
+                    status: 'Active'
+                }));
+            }
+            return [
+                { id: 1, name: 'Admin', role: 'System Admin', initials: 'AD', status: 'Online' }
+            ];
+        },
+
+        taskStatusStats() {
+            const pending = (this.myPendingActivities || []).length;
+            const completed = (this.activeActivities || []).filter(a => a.status === 'done').length;
+            const total = pending + completed;
+            return {
+                total: total,
+                completed: completed,
+                inProgress: 0,
+                pending: pending
+            };
+        },
+
+        contractingDashboardStats() {
+            const projects = this.projects || this.contractingProjects || [];
+            const contracts = this.jobContracts || this.contractingContracts || [];
+            const activeProjects = projects.filter(p => (p.status || '').toUpperCase() !== 'COMPLETED').length;
+            const totalValue = contracts.reduce((sum, c) => sum + (parseFloat(c.contract_value || c.value) || 0), 0);
+            const avgProgress = projects.length > 0 
+                ? Math.round(projects.reduce((sum, p) => sum + (parseFloat(p.progress || p.completion_percentage) || 0), 0) / projects.length) 
+                : 0;
+            return {
+                activeProjects: activeProjects || projects.length,
+                totalValue: totalValue,
+                avgProgress: avgProgress
+            };
+        },
+
+        procurementDashboardStats() {
+            const pos = this.purchase_orders || [];
+            const draftCount = pos.filter(p => (p.status || '').toUpperCase() === 'DRAFT').length;
+            const lateCount = pos.filter(p => {
+                if ((p.status || '').toUpperCase() === 'RECEIVED') return false;
+                if (!p.expected_delivery) return false;
+                return new Date(p.expected_delivery) < new Date();
+            }).length;
+            const totalPOs = pos.length;
+            const receivedCount = pos.filter(p => (p.status || '').toUpperCase() === 'RECEIVED').length;
+            const qualityScore = totalPOs > 0 ? Math.round((receivedCount / totalPOs) * 100) : 100;
+            
+            const totalSpend = pos.reduce((sum, p) => sum + (parseFloat(p.total_amount) || 0), 0);
+            const vendorSpendMap = {};
+            pos.forEach(p => {
+                const vName = p.vendor_name || 'Vendor';
+                vendorSpendMap[vName] = (vendorSpendMap[vName] || 0) + (parseFloat(p.total_amount) || 0);
+            });
+            let topVendor = 'None';
+            let topVendorSpend = 0;
+            for (const [v, val] of Object.entries(vendorSpendMap)) {
+                if (val > topVendorSpend) {
+                    topVendorSpend = val;
+                    topVendor = v;
+                }
+            }
+            const topVendorPct = totalSpend > 0 ? Math.round((topVendorSpend / totalSpend) * 100) : 0;
+            const otherVendorsPct = Math.max(0, 100 - topVendorPct);
+
+            return {
+                draftCount,
+                lateCount,
+                qualityScore,
+                totalSpend,
+                topVendor,
+                topVendorPct,
+                otherVendorsPct
+            };
+        },
+
         filteredReceivablePOs() {
             let list = (this.pending_pos || []).filter(po => {
                 const st = (po.status || '').toUpperCase();
@@ -2591,10 +2748,7 @@ createApp({
         // Core Init
         this.checkAuth();
         this.startClock();
-        this.fetchAll();
-        this.fetchMaterialsList();
-        this.fetchWMSStats();
-        this.fetchMyActivities();
+        this.refreshAllData();
 
         // 🔄 استعادة الشاشة النشطة ومزامنة التنقل مع المتصفح
         window.addEventListener('hashchange', () => {
@@ -7822,6 +7976,9 @@ createApp({
                     this.fetchCategories(),
                     this.fetchSaleGroups(),
                     this.fetchPurchaseOrders(),
+                    this.fetchSalesOrders(),
+                    this.fetchSalesInvoices(),
+                    this.fetchPurchaseInvoices(),
                     this.fetchInventoryMoves(),
                     this.fetchCustomers(),
                     this.fetchVendors(),
@@ -7830,8 +7987,10 @@ createApp({
                     this.fetchPOSDashboard(),
                     this.checkInventoryFreezeStatus(),
                     this.fetchAccountingData(),
-                    this.fetchContractingData()
+                    this.fetchContractingData(),
+                    this.fetchMyActivities()
                 ]);
+                this.refreshKpis();
                 if (this.activeOpcoId) this.syncGlobalConfig(this.activeOpcoId);
             } catch (e) {
                 console.error("Error in refreshAllData:", e);

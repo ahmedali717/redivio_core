@@ -64,7 +64,7 @@
                 <span class="text-[10px] font-black text-rose-600 uppercase tracking-widest bg-white/80 px-2 py-1 rounded-md border border-rose-100">Action Required</span>
             </div>
             <div class="relative z-10 mt-4">
-                <h3 class="text-4xl font-black text-rose-600 tech-font" v-text="purchase_orders.filter(po => po.status === 'draft').length || 0"></h3>
+                <h3 class="text-4xl font-black text-rose-600 tech-font" v-text="procurementDashboardStats.draftCount"></h3>
                 <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'أوامر شراء مسودة تنتظر الاعتماد' : 'Draft POs requiring approval'"></p>
                 <button class="mt-4 text-xs font-black text-rose-600 hover:text-rose-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'فتح قائمة الاعتمادات' : 'Open Approvals Queue'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
@@ -80,7 +80,7 @@
                 <span class="text-[10px] font-black text-amber-600 uppercase tracking-widest bg-white/80 px-2 py-1 rounded-md border border-amber-100">Review</span>
             </div>
             <div class="relative z-10 mt-4">
-                <h3 class="text-4xl font-black text-amber-600 tech-font" v-text="1"></h3>
+                <h3 class="text-4xl font-black text-amber-600 tech-font" v-text="procurementDashboardStats.lateCount"></h3>
                 <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'شحنات متأخرة عن موعد التسليم' : 'Deliveries past ETA'"></p>
                 <button class="mt-4 text-xs font-black text-amber-600 hover:text-amber-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'تواصل مع الموردين' : 'Contact Suppliers'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
@@ -97,11 +97,11 @@
             </div>
             <div class="relative z-10 mt-4">
                 <div class="flex items-end gap-1">
-                    <h3 class="text-4xl font-black text-emerald-600 tech-font">91.4</h3><span class="text-xl font-bold text-emerald-600 mb-1">%</span>
+                    <h3 class="text-4xl font-black text-emerald-600 tech-font">[[ procurementDashboardStats.qualityScore ]]</h3><span class="text-xl font-bold text-emerald-600 mb-1">%</span>
                 </div>
                 <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'متوسط تقييم جودة التوريد' : 'Average Supplier Quality Score'"></p>
                 <div class="w-full bg-emerald-100 h-2 mt-4 rounded-full overflow-hidden">
-                    <div class="bg-emerald-500 h-full rounded-full" style="width: 91.4%"></div>
+                    <div class="bg-emerald-500 h-full rounded-full" :style="{ width: procurementDashboardStats.qualityScore + '%' }"></div>
                 </div>
             </div>
         </div>
@@ -127,7 +127,7 @@
                         <circle cx="50%" cy="50%" r="48%" class="stroke-emerald-500 transition-all duration-1000" stroke-width="12" fill="none" stroke-dasharray="100 100" stroke-dashoffset="65" stroke-linecap="round"></circle>
                     </svg>
                     <div class="text-center">
-                        <span class="text-xl font-black text-white tech-font">[[ formatCurrency ? formatCurrency(85400) : '85,400' ]]</span>
+                        <span class="text-xl font-black text-white tech-font">[[ formatCurrency(procurementDashboardStats.totalSpend) ]]</span>
                         <p class="text-[9px] text-emerald-400 font-bold uppercase mt-1">YTD Spend</p>
                     </div>
                 </div>
@@ -135,10 +135,10 @@
             
             <div class="relative z-10 space-y-3">
                 <div class="flex justify-between text-xs font-bold text-slate-300 border-b border-white/10 pb-2">
-                    <span v-text="isArabic ? 'مورد 1 (Alrajhi)' : 'Top Vendor'"></span> <span class="text-purple-400">45%</span>
+                    <span class="truncate max-w-[120px]" v-text="procurementDashboardStats.topVendor"></span> <span class="text-purple-400">[[ procurementDashboardStats.topVendorPct ]]%</span>
                 </div>
                 <div class="flex justify-between text-xs font-bold text-slate-300">
-                    <span v-text="isArabic ? 'موردين آخرين' : 'Other Vendors'"></span> <span class="text-slate-400">55%</span>
+                    <span v-text="isArabic ? 'موردين آخرين' : 'Other Vendors'"></span> <span class="text-slate-400">[[ procurementDashboardStats.otherVendorsPct ]]%</span>
                 </div>
             </div>
         </div>

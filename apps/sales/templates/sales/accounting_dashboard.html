@@ -46,8 +46,8 @@
                 <span class="text-[10px] font-black text-rose-600 uppercase tracking-widest bg-white/80 px-2 py-1 rounded-md border border-rose-100">Action Required</span>
             </div>
             <div class="relative z-10 mt-4">
-                <h3 class="text-4xl font-black text-rose-600 tech-font">[[ formatCurrency ? formatCurrency(84500) : '84,500' ]]</h3>
-                <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'ديون متأخرة الدفع عن الموعد' : 'Overdue Receivables'"></p>
+                <h3 class="text-4xl font-black text-rose-600 tech-font">[[ formatCurrency(executiveKpis.financeReceivables) ]]</h3>
+                <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'ديون ومستحقات غير محصلة' : 'Outstanding Receivables'"></p>
                 <button @click="accountingTab = 'invoices'" class="mt-4 text-xs font-black text-rose-600 hover:text-rose-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'متابعة التحصيل' : 'Follow up Collection'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
@@ -62,8 +62,8 @@
                 <span class="text-[10px] font-black text-amber-600 uppercase tracking-widest bg-white/80 px-2 py-1 rounded-md border border-amber-100">Review Liability</span>
             </div>
             <div class="relative z-10 mt-4">
-                <h3 class="text-4xl font-black text-amber-600 tech-font">[[ formatCurrency ? formatCurrency(32000) : '32,000' ]]</h3>
-                <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'التزامات مستحقة هذا الأسبوع' : 'Payables Due This Week'"></p>
+                <h3 class="text-4xl font-black text-amber-600 tech-font">[[ formatCurrency(Math.max(0, executiveKpis.procurementTotal - executiveKpis.procurementPaid)) ]]</h3>
+                <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'مستحقات والتزامات للموردين' : 'Payables Due'"></p>
                 <button class="mt-4 text-xs font-black text-amber-600 hover:text-amber-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'جدولة المدفوعات' : 'Schedule Payments'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
@@ -79,9 +79,9 @@
             </div>
             <div class="relative z-10 mt-4">
                 <div class="flex items-end gap-1">
-                    <h3 class="text-4xl font-black text-emerald-600 tech-font">[[ formatCurrency ? formatCurrency(145000) : '145,000' ]]</h3>
+                    <h3 class="text-4xl font-black text-emerald-600 tech-font">[[ formatCurrency(executiveKpis.financeCollected) ]]</h3>
                 </div>
-                <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'صافي السيولة النقدية' : 'Net Cash Position'"></p>
+                <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'إجمالي المحصل الفعلي' : 'Net Collected Cash'"></p>
                 <p class="mt-4 text-xs font-black text-slate-500 uppercase flex items-center gap-1">
                     <i class="fas fa-arrow-trend-up text-emerald-500"></i> <span v-text="isArabic ? '+12% عن الشهر الماضي' : '+12% vs last month'"></span>
                 </p>
@@ -117,10 +117,10 @@
             
             <div class="relative z-10 space-y-3">
                 <div class="flex justify-between text-xs font-bold text-slate-300 border-b border-white/10 pb-2">
-                    <span v-text="isArabic ? 'الأصول المتداولة' : 'Current Assets'"></span> <span class="text-emerald-400">[[ formatCurrency ? formatCurrency(280000) : '280k' ]]</span>
+                    <span v-text="isArabic ? 'الأصول المتداولة' : 'Current Assets'"></span> <span class="text-emerald-400">[[ formatCurrency(executiveKpis.financeReceivables + executiveKpis.financeCollected) ]]</span>
                 </div>
                 <div class="flex justify-between text-xs font-bold text-slate-300">
-                    <span v-text="isArabic ? 'الالتزامات' : 'Liabilities'"></span> <span class="text-rose-400">[[ formatCurrency ? formatCurrency(154000) : '154k' ]]</span>
+                    <span v-text="isArabic ? 'الالتزامات' : 'Liabilities'"></span> <span class="text-rose-400">[[ formatCurrency(Math.max(0, executiveKpis.procurementTotal - executiveKpis.procurementPaid)) ]]</span>
                 </div>
             </div>
         </div>
