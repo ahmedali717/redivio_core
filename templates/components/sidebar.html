@@ -22,14 +22,14 @@
 
         <!-- 🚀 القائمة المتداخلة الجديدة (Nested Fly-out Menu) -->
         <div v-if="showBrandDropdown" :class="isArabic ? 'right-4 left-auto' : 'left-4 right-auto'"
-            class="brand-dropdown-premium absolute top-16 w-56 rounded-2xl z-[100] overflow-visible animate-in zoom-in-95 duration-200">
+            class="brand-dropdown-premium absolute top-16 w-56 rounded-2xl z-[100] overflow-visible animate-in zoom-in-95 duration-200 shadow-xl border">
 
             <div class="p-2 space-y-1">
                 <!-- Dashboard / Command Center (Only in Modular Mode) -->
                 <button v-if="systemMode !== 'standalone' && canAccess('dashboard')" @click="view = 'dashboard'; showBrandDropdown = false"
-                    class="w-full flex items-center gap-3 p-2.5 rounded-xl text-slate-300 hover:text-blue-400 hover:bg-white/5 text-left transition-all group/item">
+                    class="w-full flex items-center gap-3 p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-white/5 text-left transition-all group/item">
                     <i
-                        class="fas fa-chart-pie w-5 text-center text-slate-400 group-hover/item:text-blue-400 transition-colors"></i>
+                        class="fas fa-chart-pie w-5 text-center text-slate-400 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors"></i>
                     <span class="text-[11px] font-bold tracking-wider">[[ isArabic ? 'لوحة القيادة التنفيذية' : 'Command Center'
                         ]]</span>
                 </button>
@@ -38,7 +38,7 @@
                 <template v-for="mod in sidebarGroups.operations.filter(m => m.id !== 'org_builder')" :key="mod.id">
                     <button v-if="canAccess(mod.id) && isModulePurchased(mod.id)"
                         @click="view = mod.id; showBrandDropdown = false; if(mod.id === 'inventory_module') inventoryTab = 'levels';"
-                        class="w-full flex items-center gap-3 p-2.5 rounded-xl text-slate-300 hover:text-blue-400 hover:bg-white/5 text-left transition-all group/item">
+                        class="w-full flex items-center gap-3 p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-white/5 text-left transition-all group/item">
 
                         <div v-if="mod.id === 'inventory_module'"
                             class="w-5 h-5 flex items-center justify-center shrink-0">
@@ -53,17 +53,17 @@
                                 alt="RPMS">
                         </div>
                         <i v-else :class="mod.icon"
-                            class="w-5 text-center text-slate-400 group-hover/item:text-blue-400 transition-colors"></i>
+                            class="w-5 text-center text-slate-400 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors"></i>
 
                         <span class="text-[11px] font-bold" v-text="isArabic ? mod.name.ar : mod.name.en"></span>
                     </button>
                 </template>
 
 
-                <div class="h-px bg-slate-100 my-2 mx-1"></div>
+                <div class="h-px bg-slate-200 dark:bg-slate-700/60 my-2 mx-1"></div>
 
                 <div class="px-3 py-2 text-center">
-                    <span class="text-[9px] text-brand-dark font-black uppercase tracking-[0.2em] bg-brand/10 py-1 px-3 rounded-full">Core v1.0.4</span>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] bg-blue-500/10 text-blue-600 dark:text-blue-400 py-1 px-3 rounded-full">Core v1.0.4</span>
                 </div>
             </div>
         </div>

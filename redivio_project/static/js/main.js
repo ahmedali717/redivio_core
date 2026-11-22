@@ -7568,12 +7568,15 @@ createApp({
                         finalData.tax_amount = this.calculateOrderTax();
                         finalData.grand_total = this.calculateOrderGrandTotal();
                         delete finalData.activeTab;
+                        if (!finalData.customer_po_date) finalData.customer_po_date = null;
+                        if (!finalData.delivery_date) finalData.delivery_date = null;
                     } else if (type === 'po') {
                         finalData.subtotal = this.calculatePOSubtotal();
                         finalData.discount_amount = this.calculatePODiscounts();
                         finalData.tax_amount = this.calculatePOTax();
                         finalData.grand_total = this.calculatePOGrandTotal();
                         delete finalData.activeTab;
+                        if (!finalData.expected_delivery) finalData.expected_delivery = null;
                     } else if (type === 'journal_entry') {
                         const parity = this.calculateJVTotals();
                         if (!parity.isBalanced) {
@@ -7608,6 +7611,13 @@ createApp({
                         }
                     }
 
+                    // تنظيف أي حقول تواريخ فارغة وتحويلها إلى null لتفادي أخطاء DRF
+                    for (const key of Object.keys(finalData)) {
+                        if (typeof finalData[key] === 'string' && finalData[key].trim() === '' && (key.includes('date') || key.includes('deadline') || key.includes('expiry') || key.includes('dob'))) {
+                            finalData[key] = null;
+                        }
+                    }
+
                     payload = JSON.stringify(finalData);
                 }
 
@@ -7636,21 +7646,106 @@ createApp({
                     try {
                         const errJson = JSON.parse(errorText);
                         const fieldLabels = {
-                            name: this.isArabic ? 'اسم المورد / العنصر' : 'Name',
-                            tax_id: this.isArabic ? 'الرقم الضريبي (Tax ID)' : 'Tax ID',
+                            customer_po_date: this.isArabic ? 'تاريخ أمر شراء العميل' : 'Customer PO Date',
+                            customer_po_reference: this.isArabic ? 'رقم أمر شراء العميل المرجعي' : 'Customer PO Ref',
+                            delivery_date: this.isArabic ? 'تاريخ التسليم المطلوب' : 'Expected Delivery Date',
+                            expected_delivery: this.isArabic ? 'تاريخ التوريد المتوقع' : 'Expected Delivery Date',
+                            customer: this.isArabic ? 'العميل' : 'Customer',
+                            customer_name: this.isArabic ? 'اسم العميل' : 'Customer Name',
+                            vendor: this.isArabic ? 'المورد' : 'Vendor',
+                            vendor_name: this.isArabic ? 'اسم المورد' : 'Vendor Name',
+                            so_number: this.isArabic ? 'رقم أمر البيع' : 'Sales Order Number',
+                            po_number: this.isArabic ? 'رقم أمر الشراء' : 'Purchase Order Number',
+                            payment_terms: this.isArabic ? 'شروط السداد' : 'Payment Terms',
+                            shipping_terms: this.isArabic ? 'شروط الشحن والتسليم' : 'Shipping Terms',
+                            shipping_address: this.isArabic ? 'عنوان الشحن والتسليم' : 'Shipping Address',
+                            billing_address: this.isArabic ? 'عنوان الفوترة' : 'Billing Address',
+                            terms_and_conditions: this.isArabic ? 'الشروط والأحكام' : 'Terms & Conditions',
+                            notes: this.isArabic ? 'الملاحظات' : 'Notes',
+                            material: this.isArabic ? 'الصنف المخزني' : 'Material / Item',
+                            quantity: this.isArabic ? 'الكمية' : 'Quantity',
+                            unit_price: this.isArabic ? 'سعر الوحدة' : 'Unit Price',
+                            rate: this.isArabic ? 'سعر الوحدة' : 'Rate',
+                            discount_rate: this.isArabic ? 'نسبة الخصم' : 'Discount Rate',
+                            discount_amount: this.isArabic ? 'قيمة الخصم' : 'Discount Amount',
+                            tax_rate: this.isArabic ? 'نسبة الضريبة' : 'Tax Rate',
+                            tax_amount: this.isArabic ? 'مبلغ الضريبة' : 'Tax Amount',
+                            subtotal: this.isArabic ? 'المجموع الفرعي' : 'Subtotal',
+                            grand_total: this.isArabic ? 'الإجمالي النهائي' : 'Grand Total',
+                            total_amount: this.isArabic ? 'المبلغ الإجمالي' : 'Total Amount',
+                            posting_date: this.isArabic ? 'تاريخ الترحيل / الفاتورة' : 'Posting Date',
+                            due_date: this.isArabic ? 'تاريخ الاستحقاق' : 'Due Date',
+                            date: this.isArabic ? 'التاريخ' : 'Date',
+                            account: this.isArabic ? 'الحساب المالي' : 'Account',
+                            account_number: this.isArabic ? 'رقم الحساب' : 'Account Number',
+                            account_name: this.isArabic ? 'اسم الحساب' : 'Account Name',
+                            root_type: this.isArabic ? 'نوع الحساب الأساسي' : 'Root Type',
+                            account_type: this.isArabic ? 'تصنيف الحساب' : 'Account Type',
+                            entry_number: this.isArabic ? 'رقم القيد' : 'Entry Number',
+                            reference_number: this.isArabic ? 'الرقم المرجعي' : 'Reference Number',
+                            user_remark: this.isArabic ? 'البيان والملاحظات' : 'Remark',
+                            name: this.isArabic ? 'الاسم' : 'Name',
+                            full_name: this.isArabic ? 'الاسم الكامل' : 'Full Name',
+                            tax_id: this.isArabic ? 'الرقم الضريبي' : 'Tax ID',
                             country: this.isArabic ? 'الدولة' : 'Country',
                             currency: this.isArabic ? 'العملة' : 'Currency',
+                            exchange_rate: this.isArabic ? 'سعر الصرف' : 'Exchange Rate',
                             vendor_type: this.isArabic ? 'نوع الكيان' : 'Entity Type',
                             code: this.isArabic ? 'الكود' : 'Code',
                             sku: this.isArabic ? 'رمز الصنف (SKU)' : 'SKU',
                             category: this.isArabic ? 'المجموعة' : 'Category',
-                            base_uom: this.isArabic ? 'وحدة القياس' : 'Base UOM',
-                            opco: this.isArabic ? 'الشركة' : 'OpCo',
-                            lines: this.isArabic ? 'سطور القيد' : 'Lines'
+                            base_uom: this.isArabic ? 'وحدة القياس الأساسية' : 'Base UOM',
+                            uom: this.isArabic ? 'وحدة القياس' : 'UOM',
+                            opco: this.isArabic ? 'الشركة التابعة / المشغلة' : 'Company / OpCo',
+                            plant: this.isArabic ? 'المنشأة / المستودع' : 'Facility / Plant',
+                            location: this.isArabic ? 'موقع التخزين' : 'Storage Location',
+                            bin: this.isArabic ? 'الرف / الحاوية' : 'Bin',
+                            email: this.isArabic ? 'البريد الإلكتروني' : 'Email',
+                            phone: this.isArabic ? 'رقم الهاتف' : 'Phone',
+                            contact_name: this.isArabic ? 'اسم المسؤول' : 'Contact Person',
+                            credit_limit: this.isArabic ? 'الحد الائتماني' : 'Credit Limit',
+                            lines: this.isArabic ? 'سطور البنود' : 'Lines',
+                            items: this.isArabic ? 'الأصناف' : 'Items',
+                            project: this.isArabic ? 'المشروع' : 'Project',
+                            contract: this.isArabic ? 'العقد' : 'Contract',
+                            consultant_name: this.isArabic ? 'استشاري المشروع' : 'Consultant',
+                            contract_value: this.isArabic ? 'قيمة العقد' : 'Contract Value',
+                            paid_amount: this.isArabic ? 'المبلغ المسدد' : 'Paid Amount',
+                            payment_method: this.isArabic ? 'طريقة السداد' : 'Payment Method',
+                            reference: this.isArabic ? 'المرجع' : 'Reference',
+                            non_field_errors: this.isArabic ? 'تنبيه النظام' : 'System Alert',
+                            detail: this.isArabic ? 'التفاصيل' : 'Detail',
+                            error: this.isArabic ? 'خطأ' : 'Error'
                         };
                         const formatErrorVal = (v) => {
                             if (!v) return '';
-                            if (typeof v === 'string') return v;
+                            if (typeof v === 'string') {
+                                let s = v;
+                                if (s.includes('Date has wrong format') || s.includes('wrong format. Use one of these formats instead: YYYY-MM-DD')) {
+                                    return this.isArabic 
+                                        ? 'صيغة التاريخ غير صحيحة، يرجى كتابة أو اختيار التاريخ بصيغة (YYYY-MM-DD)'
+                                        : 'Invalid date format. Please use YYYY-MM-DD.';
+                                }
+                                if (s.includes('This field is required')) {
+                                    return this.isArabic ? 'هذا الحقل مطلوب ولا يمكن تركه فارغاً' : 'This field is required.';
+                                }
+                                if (s.includes('This field may not be blank') || s.includes('may not be blank')) {
+                                    return this.isArabic ? 'لا يمكن ترك هذا الحقل فارغاً' : 'This field may not be blank.';
+                                }
+                                if (s.includes('This field may not be null') || s.includes('may not be null')) {
+                                    return this.isArabic ? 'هذا الحقل إلزامي' : 'This field is required.';
+                                }
+                                if (s.includes('A valid integer is required') || s.includes('A valid number is required')) {
+                                    return this.isArabic ? 'يرجى إدخال قيمة رقمية صحيحة' : 'A valid number is required.';
+                                }
+                                if (s.includes('Enter a valid email')) {
+                                    return this.isArabic ? 'يرجى إدخال بريد إلكتروني صحيح' : 'Please enter a valid email address.';
+                                }
+                                if (s.includes('Invalid pk')) {
+                                    return this.isArabic ? 'العنصر المحدد غير صالح أو غير موجود' : 'Selected item is invalid.';
+                                }
+                                return s;
+                            }
                             if (Array.isArray(v)) {
                                 return v.map(item => formatErrorVal(item)).filter(Boolean).join(' | ');
                             }
@@ -7658,7 +7753,7 @@ createApp({
                                 return Object.entries(v)
                                     .map(([k, val]) => {
                                         const sub = formatErrorVal(val);
-                                        const kLabel = fieldLabels[k] || k;
+                                        const kLabel = fieldLabels[k] || k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                                         return sub ? `${kLabel}: ${sub}` : '';
                                     })
                                     .filter(Boolean)
@@ -7671,7 +7766,7 @@ createApp({
                         if (firstKey) {
                             const val = errJson[firstKey];
                             const rawMsg = formatErrorVal(val);
-                            const label = fieldLabels[firstKey] || firstKey;
+                            const label = fieldLabels[firstKey] || firstKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                             errorMessage = (firstKey === 'non_field_errors' || firstKey === 'detail' || firstKey === 'error')
                                 ? rawMsg
                                 : `[${label}]: ${rawMsg}`;

@@ -1323,10 +1323,14 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2 border-t border-slate-100 text-xs">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-3 pt-2 border-t border-slate-100 text-xs">
                         <div>
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'رقم أمر شراء العميل (PO Ref)' : 'Customer PO Ref' ]]</label>
                             <input type="text" v-model="forms.salesorder.customer_po_reference" :placeholder="isArabic ? 'مثال: PO-CUST-889' : 'e.g. PO-889'" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'تاريخ أمر شراء العميل' : 'Customer PO Date' ]]</label>
+                            <input type="date" v-model="forms.salesorder.customer_po_date" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
                         </div>
                         <div>
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'شروط السداد' : 'Payment Terms' ]]</label>
@@ -1340,7 +1344,7 @@
                         <div>
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">[[ isArabic ? 'العملة' : 'Currency' ]]</label>
                             <div class="flex gap-1 mt-1">
-                                <select v-model="forms.salesorder.currency" class="w-24 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
+                                <select v-model="forms.salesorder.currency" class="w-20 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none">
                                     <option value="SAR">SAR</option>
                                     <option value="USD">USD</option>
                                     <option value="EUR">EUR</option>

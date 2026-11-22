@@ -983,21 +983,46 @@
             box-shadow: 0 0 15px rgba(44, 130, 240, 0.5);
         }
 
-        /* Premium Brand Dropdown popup styles */
+        /* Premium Brand Dropdown popup styles - Adaptive Light & Dark */
         .brand-dropdown-premium {
-            background: rgba(15, 23, 42, 0.95) !important;
-            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.98) !important;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.9) !important;
+            color: #0f172a !important;
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.12), 0 0 1px 1px rgba(0, 0, 0, 0.04) !important;
+        }
+        .brand-dropdown-premium button {
+            color: #334155 !important;
+            transition: all 0.2s ease;
+        }
+        .brand-dropdown-premium button:hover {
+            background: #eff6ff !important;
+            color: #0066FF !important;
+        }
+        .brand-dropdown-premium button:hover i {
+            color: #0066FF !important;
+        }
+
+        /* Dark Mode Override */
+        .dark .brand-dropdown-premium,
+        [data-theme="dark"] .brand-dropdown-premium {
+            background: rgba(15, 23, 42, 0.96) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             color: #f1f5f9 !important;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
         }
-        .brand-dropdown-premium button {
+        .dark .brand-dropdown-premium button,
+        [data-theme="dark"] .brand-dropdown-premium button {
             color: #cbd5e1 !important;
-            transition: all 0.25s ease;
         }
-        .brand-dropdown-premium button:hover {
-            background: rgba(255, 255, 255, 0.05) !important;
-            color: #3b82f6 !important;
+        .dark .brand-dropdown-premium button:hover,
+        [data-theme="dark"] .brand-dropdown-premium button:hover {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: #38bdf8 !important;
+        }
+        .dark .brand-dropdown-premium button:hover i,
+        [data-theme="dark"] .brand-dropdown-premium button:hover i {
+            color: #38bdf8 !important;
         }
 
 
