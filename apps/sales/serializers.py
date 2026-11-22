@@ -8,13 +8,21 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 class SalesOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.ReadOnlyField(source='material.name')
+    material_sku = serializers.ReadOnlyField(source='material.sku')
+    price = serializers.DecimalField(source='unit_price', max_digits=10, decimal_places=2, read_only=True)
+    
     class Meta:
         model = SalesOrderLine
         fields = [
-            'id', 'so', 'material', 'material_name', 'uom', 'quantity', 'unit_price',
+            'id', 'so', 'material', 'material_name', 'material_sku', 'uom', 'quantity', 'unit_price', 'price',
             'discount_rate', 'discount_amount', 'gross_total', 'total', 'tax_rate', 'tax_amount',
             'shipped_quantity', 'billed_quantity', 'remaining_quantity', 'unbilled_quantity',
             'storage_bin', 'notes', 'extra_data'
+        ]
+        read_only_fields = [
+            'id', 'so', 'material_name', 'material_sku', 'price',
+            'gross_total', 'total', 'tax_amount', 'discount_amount',
+            'shipped_quantity', 'billed_quantity', 'remaining_quantity', 'unbilled_quantity'
         ]
 
 class StockDeliveryLineSerializer(serializers.ModelSerializer):
@@ -95,7 +103,7 @@ class StockDeliverySerializer(serializers.ModelSerializer):
         return delivery
 
 class SalesOrderSerializer(serializers.ModelSerializer):
-    lines = SalesOrderLineSerializer(many=True, read_only=True)
+    lines = SalesOrderLineSerializer(many=True, required=False)
     customer_name = serializers.ReadOnlyField(source='customer.name')
     deliveries = StockDeliverySerializer(many=True, read_only=True)
     deliveries_count = serializers.SerializerMethodField()
@@ -118,6 +126,34 @@ class SalesOrderSerializer(serializers.ModelSerializer):
 
     def get_invoices_count(self, obj):
         return obj.invoices.count()
+
+    def create(self, validated_data):
+        lines_data = validated_data.pop('lines', [])
+        so = SalesOrder.objects.create(**validated_data)
+        for line in lines_data:
+            material = line.get('material')
+            if isinstance(material, dict):
+                line['material_id'] = material.get('id')
+                line.pop('material', None)
+            SalesOrderLine.objects.create(so=so, **line)
+        so.calculate_totals()
+        return so
+
+    def update(self, instance, validated_data):
+        lines_data = validated_data.pop('lines', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if lines_data is not None and instance.status in ['DRAFT', 'draft']:
+            instance.lines.all().delete()
+            for line in lines_data:
+                material = line.get('material')
+                if isinstance(material, dict):
+                    line['material_id'] = material.get('id')
+                    line.pop('material', None)
+                SalesOrderLine.objects.create(so=instance, **line)
+        instance.calculate_totals()
+        return instance
 
 class SalesInvoiceSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')

@@ -97,44 +97,98 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             if opco_val: data['opco'] = int(float(str(opco_val)))
             if customer_val: data['customer'] = int(float(str(customer_val)))
         except (ValueError, TypeError):
-            pass # نترك الـ serializer يظهر خطأ التحقق (Validation Error)
+            pass
 
         with transaction.atomic():
             serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
             so = serializer.save()
 
-            total = decimal.Decimal('0.00')
-            for item in lines_raw:
-                material_id = item.get('material')
-                if not material_id: continue
-                
-                # تأمين القيم المالية (0 كقيمة افتراضية صريحة)
-                raw_q = item.get('quantity', 0)
-                raw_p = item.get('unit_price', 0)
-                
-                q = decimal.Decimal(str(raw_q)) if raw_q not in [None, ''] else decimal.Decimal('0.00')
-                p = decimal.Decimal(str(raw_p)) if raw_p not in [None, ''] else decimal.Decimal('0.00')
-                
-                line_total = (q * p).quantize(decimal.Decimal('0.01'))
-                total += line_total
-                
-                SalesOrderLine.objects.create(
-                    so=so,
-                    material_id=material_id,
-                    quantity=q,
-                    unit_price=p,
-                    total=line_total
-                )
-            
-            # Update totals with 15% VAT
-            tax = (total * decimal.Decimal('0.15')).quantize(decimal.Decimal('0.01'))
-            so.total_amount = total
-            so.tax_amount = tax
-            so.grand_total = total + tax
-            so.save()
+            # التأكد من حفظ البنود وحساب الإجماليات بدقة تامة
+            if lines_raw and not so.lines.exists():
+                for item in lines_raw:
+                    material_id = item.get('material')
+                    if isinstance(material_id, dict):
+                        material_id = material_id.get('id')
+                    if not material_id:
+                        continue
+                    try:
+                        material_id = int(material_id)
+                    except (ValueError, TypeError):
+                        continue
+
+                    raw_q = item.get('quantity', 0)
+                    raw_p = item.get('unit_price', item.get('price', 0))
+                    raw_disc_rate = item.get('discount_rate', 0)
+                    raw_tax_rate = item.get('tax_rate', 15)
+                    uom_val = item.get('uom') or 'Unit'
+
+                    q = decimal.Decimal(str(raw_q)) if raw_q not in [None, ''] else decimal.Decimal('0.00')
+                    p = decimal.Decimal(str(raw_p)) if raw_p not in [None, ''] else decimal.Decimal('0.00')
+                    disc_rate = decimal.Decimal(str(raw_disc_rate)) if raw_disc_rate not in [None, ''] else decimal.Decimal('0.00')
+                    tax_rate = decimal.Decimal(str(raw_tax_rate)) if raw_tax_rate not in [None, ''] else decimal.Decimal('15.00')
+
+                    SalesOrderLine.objects.create(
+                        so=so,
+                        material_id=material_id,
+                        uom=uom_val,
+                        quantity=q,
+                        unit_price=p,
+                        discount_rate=disc_rate,
+                        tax_rate=tax_rate
+                    )
+                so.calculate_totals()
 
         return Response(SalesOrderSerializer(so).data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        """Update SO with lines atomically."""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        lines_raw = data.get('lines', None)
+
+        with transaction.atomic():
+            serializer = self.get_serializer(instance, data=data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            so = serializer.save()
+
+            if lines_raw is not None and so.status in ['DRAFT', 'draft']:
+                so.lines.all().delete()
+                for item in lines_raw:
+                    material_id = item.get('material')
+                    if isinstance(material_id, dict):
+                        material_id = material_id.get('id')
+                    if not material_id:
+                        continue
+                    try:
+                        material_id = int(material_id)
+                    except (ValueError, TypeError):
+                        continue
+
+                    raw_q = item.get('quantity', 0)
+                    raw_p = item.get('unit_price', item.get('price', 0))
+                    raw_disc_rate = item.get('discount_rate', 0)
+                    raw_tax_rate = item.get('tax_rate', 15)
+                    uom_val = item.get('uom') or 'Unit'
+
+                    q = decimal.Decimal(str(raw_q)) if raw_q not in [None, ''] else decimal.Decimal('0.00')
+                    p = decimal.Decimal(str(raw_p)) if raw_p not in [None, ''] else decimal.Decimal('0.00')
+                    disc_rate = decimal.Decimal(str(raw_disc_rate)) if raw_disc_rate not in [None, ''] else decimal.Decimal('0.00')
+                    tax_rate = decimal.Decimal(str(raw_tax_rate)) if raw_tax_rate not in [None, ''] else decimal.Decimal('15.00')
+
+                    SalesOrderLine.objects.create(
+                        so=so,
+                        material_id=material_id,
+                        uom=uom_val,
+                        quantity=q,
+                        unit_price=p,
+                        discount_rate=disc_rate,
+                        tax_rate=tax_rate
+                    )
+                so.calculate_totals()
+
+        return Response(SalesOrderSerializer(so).data)
 
     @action(detail=True, methods=['post'])
     def deliver(self, request, pk=None):

@@ -5592,9 +5592,11 @@ createApp({
                 const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
+                    const list = Array.isArray(data) ? data : (data.results || []);
                     // 🚀 إضافة الخاصية هنا ضروري جداً
-                    this.salesOrders = data.map(so => ({
+                    this.salesOrders = list.map(so => ({
                         ...so,
+                        lines: so.lines || [],
                         showDetails: false
                     }));
                 }
@@ -6044,11 +6046,11 @@ createApp({
         },
         onMaterialChange(line) {
             if (!line.material) return;
-            const mat = (this.materials || []).find(m => m.id === line.material);
+            const mat = (this.materials || this.materials_list || []).find(m => m.id === line.material || m.id === parseInt(line.material));
             if (mat) {
                 line.unit_price = mat.sales_price || mat.standard_price || 0;
                 line.uom = mat.base_uom || 'Unit';
-                line.tax_rate = mat.tax_rate || 15;
+                line.tax_rate = mat.tax_rate !== undefined ? mat.tax_rate : 15;
             }
         },
         async addCustomField(targetForm) {
@@ -7570,6 +7572,25 @@ createApp({
                         delete finalData.activeTab;
                         if (!finalData.customer_po_date) finalData.customer_po_date = null;
                         if (!finalData.delivery_date) finalData.delivery_date = null;
+
+                        // ضمان نظافة وهيكلية بنود أمر البيع قبل الإرسال
+                        if (Array.isArray(finalData.lines)) {
+                            finalData.lines = finalData.lines.map(l => {
+                                let matId = l.material;
+                                if (typeof matId === 'object' && matId) matId = matId.id;
+                                matId = parseInt(matId);
+                                return {
+                                    material: isNaN(matId) ? null : matId,
+                                    uom: l.uom || 'Unit',
+                                    quantity: parseFloat(l.quantity) || 0,
+                                    unit_price: parseFloat(l.unit_price) || 0,
+                                    discount_rate: parseFloat(l.discount_rate) || 0,
+                                    discount_amount: parseFloat(l.discount_amount) || 0,
+                                    tax_rate: parseFloat(l.tax_rate !== undefined ? l.tax_rate : 15) || 0,
+                                    total: this.calculateLineTotal(l)
+                                };
+                            }).filter(l => l.material && l.quantity > 0);
+                        }
                     } else if (type === 'po') {
                         finalData.subtotal = this.calculatePOSubtotal();
                         finalData.discount_amount = this.calculatePODiscounts();

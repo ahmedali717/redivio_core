@@ -444,14 +444,23 @@
                         </thead>
                         <tbody class="divide-y divide-[var(--subcard-border)] text-xs font-medium">
                             <tr v-for="line in so.lines" :key="line.id" class="hover:bg-[var(--subcard-hover-bg)] transition-colors">
-                                <td class="px-5 py-3 font-bold text-[var(--heading-color)]">[[ line.material_name ]]</td>
-                                <td class="px-5 py-3 text-center text-slate-400 font-mono">[[ line.quantity ]]</td>
+                                <td class="px-5 py-3 font-bold text-[var(--heading-color)]">
+                                    [[ line.material_name ]]
+                                    <span v-if="line.material_sku" class="text-[10px] text-slate-400 font-mono block">[[ line.material_sku ]]</span>
+                                </td>
+                                <td class="px-5 py-3 text-center text-slate-400 font-mono">[[ line.quantity ]] <span class="text-[10px] text-slate-500 font-sans" v-if="line.uom">([[ line.uom ]])</span></td>
                                 <td class="px-5 py-3 text-center font-bold text-blue-400 font-mono">[[ line.shipped_quantity ]]</td>
                                 <td class="px-5 py-3 text-center font-bold font-mono" :class="line.remaining_quantity > 0 ? 'text-slate-300' : 'text-slate-500'">
                                     [[ line.remaining_quantity ]]
                                 </td>
-                                <td class="px-5 py-3 text-center font-mono text-slate-400">$[[ formatNumber(line.price) ]]</td>
+                                <td class="px-5 py-3 text-center font-mono text-slate-400">$[[ formatNumber(line.unit_price || line.price) ]]</td>
                                 <td class="px-5 py-3 text-left font-black text-[var(--heading-color)] font-mono">$[[ formatNumber(line.total) ]]</td>
+                            </tr>
+                            <tr v-if="!so.lines || so.lines.length === 0">
+                                <td colspan="6" class="px-5 py-8 text-center text-slate-400 font-bold">
+                                    <i class="fas fa-box-open text-2xl mb-2 opacity-50 block"></i>
+                                    [[ isArabic ? "لا توجد بنود مسجلة لهذا الأمر حالياً" : "No line items recorded for this order" ]]
+                                </td>
                             </tr>
                         </tbody>
                     </table>
