@@ -423,6 +423,10 @@ createApp({
 
 
             showModal: false,
+            selectedDeliveryNote: null,
+            showDeliveryNoteModal: false,
+            selectedSalesInvoice: null,
+            showSalesInvoiceModal: false,
             materialTab: 'general',
             modalType: '',
             draggedType: null,
@@ -5736,7 +5740,81 @@ createApp({
                 return;
             }
             this.showToast(this.isArabic ? "جاري تجهيز إذن الصرف للطباعة..." : "Preparing Delivery Note...", "success");
-            window.open(`/print/delivery/${deliveryId}/`, '_blank');
+            window.open(`/api/print/delivery/${deliveryId}/`, '_blank');
+        },
+
+        printInvoice(invoiceId) {
+            if (!invoiceId || invoiceId === 'undefined') {
+                this.showToast(this.isArabic ? "خطأ: رقم الفاتورة غير موجود" : "Error: Invoice ID is missing", 'error');
+                return;
+            }
+            this.showToast(this.isArabic ? "جاري تجهيز فاتورة المبيعات للطباعة..." : "Preparing Invoice Document...", "success");
+            window.open(`/api/print/invoice/${invoiceId}/`, '_blank');
+        },
+
+        openDeliveryNoteModal(del) {
+            if (!del) return;
+            this.selectedDeliveryNote = del;
+            this.showDeliveryNoteModal = true;
+        },
+
+        closeDeliveryNoteModal() {
+            this.showDeliveryNoteModal = false;
+            this.selectedDeliveryNote = null;
+        },
+
+        navigateToInventoryDelivery(del) {
+            this.showDeliveryNoteModal = false;
+            this.view = 'inventory_module';
+            this.inventoryTab = 'moves';
+            this.showToast(this.isArabic ? `الانتقال إلى سجل حركات المستودع` : `Navigating to Warehouse Moves`, 'info');
+        },
+
+        openSalesInvoiceModal(inv) {
+            if (!inv) return;
+            this.selectedSalesInvoice = inv;
+            this.showSalesInvoiceModal = true;
+        },
+
+        closeSalesInvoiceModal() {
+            this.showSalesInvoiceModal = false;
+            this.selectedSalesInvoice = null;
+        },
+
+        navigateToAccountingInvoices(inv) {
+            this.showSalesInvoiceModal = false;
+            this.view = 'accounting_module';
+            this.accountingTab = 'sales_invoices';
+            this.showToast(this.isArabic ? `الانتقال إلى فواتير المبيعات في المالية` : `Navigating to Sales Invoices in Accounting`, 'info');
+        },
+
+        async postInvoiceToGL(inv) {
+            if (!inv) return;
+            try {
+                this.loading = true;
+                const res = await fetch(`/api/sales-invoices/${inv.id}/post-gl/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.showToast(data.message || (this.isArabic ? "تم ترحيل الفاتورة للدفتر العام بنجاح" : "Invoice posted to GL successfully"), "success");
+                    inv.is_posted = true;
+                    if (this.selectedSalesInvoice) this.selectedSalesInvoice.is_posted = true;
+                    await this.fetchSalesOrders();
+                    await this.fetchSalesInvoices();
+                } else {
+                    this.showToast(data.error || (this.isArabic ? "فشل الترحيل للدفتر العام" : "Failed to post to GL"), "error");
+                }
+            } catch (e) {
+                console.error("Error posting invoice to GL:", e);
+                this.showToast("Network Error", "error");
+            } finally {
+                this.loading = false;
+            }
         },
 
         // 🚀 1. الدالة اللي كانت مفقودة وعاملة الإيرور (ربط الانتر)

@@ -28,10 +28,12 @@ class SalesOrderLineSerializer(serializers.ModelSerializer):
 class StockDeliveryLineSerializer(serializers.ModelSerializer):
     material_id = serializers.IntegerField(required=False)
     material_name = serializers.ReadOnlyField(source='material.name')
+    material_sku = serializers.ReadOnlyField(source='material.sku')
+    storage_bin_code = serializers.ReadOnlyField(source='storage_bin.bin_code')
     
     class Meta:
         model = StockDeliveryLine
-        fields = ['id', 'material', 'material_id', 'material_name', 'quantity', 'storage_bin']
+        fields = ['id', 'material', 'material_id', 'material_name', 'material_sku', 'quantity', 'storage_bin', 'storage_bin_code']
         extra_kwargs = {
             'material': {'required': False, 'allow_null': True},
             'storage_bin': {'required': False, 'allow_null': True},
@@ -40,11 +42,13 @@ class StockDeliveryLineSerializer(serializers.ModelSerializer):
 class StockDeliverySerializer(serializers.ModelSerializer):
     items = StockDeliveryLineSerializer(many=True)
     manual_contact_name = serializers.CharField(required=False, allow_blank=True)
+    customer_name = serializers.ReadOnlyField(source='so.customer.name')
+    so_number = serializers.ReadOnlyField(source='so.so_number')
     
     class Meta:
         model = StockDelivery
         fields = [
-            'id', 'opco', 'delivery_number', 'so', 'date', 'created_by', 
+            'id', 'opco', 'delivery_number', 'so', 'so_number', 'customer_name', 'date', 'created_by', 
             'tracking_number', 'driver_name', 'vehicle_plate', 'delivery_address', 
             'notes', 'extra_data', 'items', 'manual_contact_name'
         ]
@@ -102,10 +106,29 @@ class StockDeliverySerializer(serializers.ModelSerializer):
             delivery.so.save()
         return delivery
 
+class SalesInvoiceSerializer(serializers.ModelSerializer):
+    customer_name = serializers.ReadOnlyField(source='customer.name')
+    so_number = serializers.ReadOnlyField(source='sales_order.so_number')
+    is_posted = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SalesInvoice
+        fields = '__all__'
+
+    def get_is_posted(self, obj):
+        if obj.extra_data and obj.extra_data.get('is_posted'):
+            return True
+        try:
+            from apps.accounting.models import GLEntry
+            return GLEntry.objects.filter(opco=obj.opco, voucher_no=obj.invoice_number, is_cancelled=False).exists()
+        except Exception:
+            return False
+
 class SalesOrderSerializer(serializers.ModelSerializer):
     lines = SalesOrderLineSerializer(many=True, required=False)
     customer_name = serializers.ReadOnlyField(source='customer.name')
     deliveries = StockDeliverySerializer(many=True, read_only=True)
+    invoices = SalesInvoiceSerializer(many=True, read_only=True)
     deliveries_count = serializers.SerializerMethodField()
     invoices_count = serializers.SerializerMethodField()
     
@@ -118,7 +141,7 @@ class SalesOrderSerializer(serializers.ModelSerializer):
             'shipping_address', 'billing_address', 'status',
             'subtotal', 'discount_rate', 'discount_amount', 'total_amount', 'tax_amount', 'grand_total',
             'terms_and_conditions', 'notes', 'extra_data',
-            'lines', 'deliveries', 'deliveries_count', 'invoices_count'
+            'lines', 'deliveries', 'invoices', 'deliveries_count', 'invoices_count'
         ]
 
     def get_deliveries_count(self, obj):
@@ -154,12 +177,6 @@ class SalesOrderSerializer(serializers.ModelSerializer):
                 SalesOrderLine.objects.create(so=instance, **line)
         instance.calculate_totals()
         return instance
-
-class SalesInvoiceSerializer(serializers.ModelSerializer):
-    customer_name = serializers.ReadOnlyField(source='customer.name')
-    class Meta:
-        model = SalesInvoice
-        fields = '__all__'
 
 class CustomerPaymentSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')
