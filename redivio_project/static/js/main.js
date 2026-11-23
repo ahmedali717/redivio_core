@@ -7757,6 +7757,68 @@ createApp({
                                 remark: l.remark || ''
                             })).filter(l => l.account);
                         }
+                    } else if (type === 'rfq') {
+                        if (!finalData.opco && this.activeOpcoId) {
+                            finalData.opco = this.activeOpcoId;
+                        }
+                        if (!finalData.pr || finalData.pr === '') {
+                            finalData.pr = null;
+                        }
+                        if (finalData.title && !finalData.notes) {
+                            finalData.notes = finalData.title;
+                        }
+                        delete finalData.title;
+                        if (Array.isArray(finalData.vendors)) {
+                            finalData.vendors = finalData.vendors.map(v => typeof v === 'object' ? v.id : parseInt(v)).filter(Boolean);
+                        } else {
+                            finalData.vendors = [];
+                        }
+                        if (Array.isArray(finalData.lines)) {
+                            finalData.lines = finalData.lines
+                                .filter(l => l.selected !== false && l.material)
+                                .map(l => {
+                                    const matId = typeof l.material === 'object' ? l.material.id : parseInt(l.material);
+                                    return {
+                                        material: matId,
+                                        quantity: parseFloat(l.quantity) || 1,
+                                        target_price: parseFloat(l.target_price) || 0
+                                    };
+                                });
+                        }
+                        if (!finalData.lines || finalData.lines.length === 0) {
+                            this.showToast(this.isArabic ? "يرجى تحديد أو إضافة صنف واحد على الأقل لطلب السعر" : "Please select or add at least one line item for RFQ", 'error');
+                            this.loading = false;
+                            return;
+                        }
+                    } else if (type === 'sq') {
+                        if (!finalData.opco && this.activeOpcoId) {
+                            finalData.opco = this.activeOpcoId;
+                        }
+                        if (finalData.rfq) {
+                            finalData.rfq = parseInt(finalData.rfq) || null;
+                        }
+                        if (finalData.vendor) {
+                            finalData.vendor = typeof finalData.vendor === 'object' ? finalData.vendor.id : parseInt(finalData.vendor);
+                        }
+                        if (Array.isArray(finalData.lines)) {
+                            finalData.lines = finalData.lines
+                                .filter(l => l.material)
+                                .map(l => {
+                                    const matId = typeof l.material === 'object' ? l.material.id : parseInt(l.material);
+                                    return {
+                                        material: matId,
+                                        quantity: parseFloat(l.quantity) || 1,
+                                        unit_price: parseFloat(l.unit_price) || 0,
+                                        discount_rate: parseFloat(l.discount_rate) || 0,
+                                        tax_rate: parseFloat(l.tax_rate !== undefined ? l.tax_rate : 15) || 0
+                                    };
+                                });
+                        }
+                        if (!finalData.lines || finalData.lines.length === 0) {
+                            this.showToast(this.isArabic ? "يرجى إضافة صنف واحد على الأقل في عرض السعر" : "Please add at least one line item in quote", 'error');
+                            this.loading = false;
+                            return;
+                        }
                     } else if (type === 'purchase_invoice') {
                         if (!finalData.extra_data) finalData.extra_data = {};
                         if (finalData.items && finalData.items.length) {
@@ -8903,9 +8965,57 @@ createApp({
             } else if (type === 'pr') {
                 this.forms.pr = { pr_number: `PR-${Date.now()}`, title: '', requesting_department: '', notes: '', lines: data && data.items ? data.items : [{ material: '', quantity: 1 }] };
             } else if (type === 'rfq') {
-                this.forms.rfq = { rfq_number: `RFQ-${Date.now()}`, pr: data && data.pr_id ? data.pr_id : '', title: '', deadline: '', notes: '' };
+                const prId = data && data.pr_id ? data.pr_id : '';
+                let rfqLines = [];
+                if (prId) {
+                    const pr = (this.purchase_requisitions || []).find(p => p.id == prId);
+                    if (pr && pr.lines && pr.lines.length > 0) {
+                        rfqLines = pr.lines.map(l => ({
+                            selected: true,
+                            material: l.material,
+                            material_name: l.material_name || (this.materials_list.find(m => m.id === l.material)?.name) || '',
+                            material_sku: l.material_sku || (this.materials_list.find(m => m.id === l.material)?.sku) || '',
+                            quantity: l.quantity,
+                            target_price: l.estimated_price || 0
+                        }));
+                    }
+                }
+                this.forms.rfq = {
+                    rfq_number: `RFQ-${Date.now()}`,
+                    pr: prId,
+                    title: prId ? (this.isArabic ? `طلب عروض أسعار مبني على طلب شراء #${prId}` : `RFQ based on PR #${prId}`) : '',
+                    deadline: '',
+                    notes: '',
+                    vendors: [],
+                    lines: rfqLines.length > 0 ? rfqLines : [{ selected: true, material: '', quantity: 1, target_price: 0 }]
+                };
             } else if (type === 'sq') {
-                this.forms.sq = { rfq: data && data.rfq_id ? data.rfq_id : '', vendor: '', total_amount: 0, notes: '', lines: [{ material: '', quantity: 1, unit_price: 0 }] };
+                const rfqId = data && data.rfq_id ? data.rfq_id : '';
+                let sqLines = [];
+                if (rfqId) {
+                    const rfq = (this.rfqs || []).find(r => r.id == rfqId) || this.selectedRFQ;
+                    if (rfq && rfq.lines && rfq.lines.length > 0) {
+                        sqLines = rfq.lines.map(l => ({
+                            material: l.material,
+                            material_name: l.material_name || (this.materials_list.find(m => m.id === l.material)?.name) || '',
+                            material_sku: l.material_sku || (this.materials_list.find(m => m.id === l.material)?.sku) || '',
+                            quantity: l.quantity,
+                            unit_price: l.target_price || 0,
+                            discount_rate: 0,
+                            tax_rate: 15
+                        }));
+                    }
+                }
+                this.forms.sq = {
+                    rfq: rfqId,
+                    vendor: '',
+                    valid_until: '',
+                    delivery_lead_time_days: 1,
+                    payment_terms: 'CASH',
+                    total_amount: 0,
+                    notes: '',
+                    lines: sqLines.length > 0 ? sqLines : [{ material: '', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 }]
+                };
             } else if (type === 'matrix') {
                 this.forms.matrix = { rfq: data && data.rfq_id ? data.rfq_id : '', title: '', notes: '', winning_vendor: '' };
             } else if (type === 'rtv') {
@@ -8945,6 +9055,68 @@ createApp({
                             currency: 'SAR',
                             extra_data: {}
                         };
+                    } else if (type === 'rfq') {
+                        if (!finalData.opco && this.activeOpcoId) {
+                            finalData.opco = this.activeOpcoId;
+                        }
+                        if (!finalData.pr || finalData.pr === '') {
+                            finalData.pr = null;
+                        }
+                        if (finalData.title && !finalData.notes) {
+                            finalData.notes = finalData.title;
+                        }
+                        delete finalData.title;
+                        if (Array.isArray(finalData.vendors)) {
+                            finalData.vendors = finalData.vendors.map(v => typeof v === 'object' ? v.id : parseInt(v)).filter(Boolean);
+                        } else {
+                            finalData.vendors = [];
+                        }
+                        if (Array.isArray(finalData.lines)) {
+                            finalData.lines = finalData.lines
+                                .filter(l => l.selected !== false && l.material)
+                                .map(l => {
+                                    const matId = typeof l.material === 'object' ? l.material.id : parseInt(l.material);
+                                    return {
+                                        material: matId,
+                                        quantity: parseFloat(l.quantity) || 1,
+                                        target_price: parseFloat(l.target_price) || 0
+                                    };
+                                });
+                        }
+                        if (!finalData.lines || finalData.lines.length === 0) {
+                            this.showToast(this.isArabic ? "يرجى تحديد أو إضافة صنف واحد على الأقل لطلب السعر" : "Please select or add at least one line item for RFQ", 'error');
+                            this.loading = false;
+                            return;
+                        }
+                    } else if (type === 'sq') {
+                        if (!finalData.opco && this.activeOpcoId) {
+                            finalData.opco = this.activeOpcoId;
+                        }
+                        if (finalData.rfq) {
+                            finalData.rfq = parseInt(finalData.rfq) || null;
+                        }
+                        if (finalData.vendor) {
+                            finalData.vendor = typeof finalData.vendor === 'object' ? finalData.vendor.id : parseInt(finalData.vendor);
+                        }
+                        if (Array.isArray(finalData.lines)) {
+                            finalData.lines = finalData.lines
+                                .filter(l => l.material)
+                                .map(l => {
+                                    const matId = typeof l.material === 'object' ? l.material.id : parseInt(l.material);
+                                    return {
+                                        material: matId,
+                                        quantity: parseFloat(l.quantity) || 1,
+                                        unit_price: parseFloat(l.unit_price) || 0,
+                                        discount_rate: parseFloat(l.discount_rate) || 0,
+                                        tax_rate: parseFloat(l.tax_rate !== undefined ? l.tax_rate : 15) || 0
+                                    };
+                                });
+                        }
+                        if (!finalData.lines || finalData.lines.length === 0) {
+                            this.showToast(this.isArabic ? "يرجى إضافة صنف واحد على الأقل في عرض السعر" : "Please add at least one line item in quote", 'error');
+                            this.loading = false;
+                            return;
+                        }
                     } else if (type === 'purchase_invoice') {
                         this.forms.purchase_invoice = {
                             id: null,
@@ -9276,9 +9448,10 @@ createApp({
         async fetchEnterpriseProcurementData() {
             try {
                 const opcoParam = this.activeOpcoId ? `?opco=${this.activeOpcoId}` : '';
-                const [prs, rfqs, comps, rtvs, transfers, scraps, salesRet] = await Promise.all([
+                const [prs, rfqs, sqs, comps, rtvs, transfers, scraps, salesRet] = await Promise.all([
                     fetch(`/api/purchase-requisitions/${opcoParam}`).then(r => r.ok ? r.json() : []),
                     fetch(`/api/rfqs/${opcoParam}`).then(r => r.ok ? r.json() : []),
+                    fetch(`/api/supplier-quotations/${opcoParam}`).then(r => r.ok ? r.json() : []),
                     fetch(`/api/quotation-comparisons/${opcoParam}`).then(r => r.ok ? r.json() : []),
                     fetch(`/api/purchase-returns/${opcoParam}`).then(r => r.ok ? r.json() : []),
                     fetch(`/api/transfers/${opcoParam}`).then(r => r.ok ? r.json() : []),
@@ -9287,6 +9460,7 @@ createApp({
                 ]);
                 this.purchase_requisitions = Array.isArray(prs) ? prs : (prs.results || []);
                 this.rfqs = Array.isArray(rfqs) ? rfqs : (rfqs.results || []);
+                this.supplier_quotations = Array.isArray(sqs) ? sqs : (sqs.results || []);
                 this.quotation_comparisons = Array.isArray(comps) ? comps : (comps.results || []);
                 this.purchase_returns = Array.isArray(rtvs) ? rtvs : (rtvs.results || []);
                 this.warehouse_transfers = Array.isArray(transfers) ? transfers : (transfers.results || []);
@@ -9389,6 +9563,53 @@ createApp({
         getPOsForRFQ(rfqId) {
             if (!rfqId) return [];
             return (this.purchase_orders || []).filter(p => p.rfq == rfqId);
+        },
+
+        onRFQPRSelected() {
+            if (!this.forms.rfq || !this.forms.rfq.pr) {
+                if (this.forms.rfq) {
+                    this.forms.rfq.lines = [{ selected: true, material: '', quantity: 1, target_price: 0 }];
+                }
+                return;
+            }
+            const pr = (this.purchase_requisitions || []).find(p => p.id == this.forms.rfq.pr);
+            if (pr && pr.lines && pr.lines.length > 0) {
+                this.forms.rfq.lines = pr.lines.map(l => ({
+                    selected: true,
+                    material: l.material,
+                    material_name: l.material_name || (this.materials_list.find(m => m.id === l.material)?.name) || '',
+                    material_sku: l.material_sku || (this.materials_list.find(m => m.id === l.material)?.sku) || '',
+                    quantity: l.quantity,
+                    target_price: l.estimated_price || 0
+                }));
+                if (!this.forms.rfq.title) {
+                    this.forms.rfq.title = this.isArabic
+                        ? `طلب تقديم عروض أسعار لطلب الشراء #${pr.requisition_number || pr.id}`
+                        : `RFQ for PR #${pr.requisition_number || pr.id}`;
+                }
+            }
+        },
+
+        toggleAllRFQLines(selectAll) {
+            if (this.forms.rfq && Array.isArray(this.forms.rfq.lines)) {
+                this.forms.rfq.lines.forEach(l => { l.selected = !!selectAll; });
+            }
+        },
+
+        onSQRFQSelected() {
+            if (!this.forms.sq || !this.forms.sq.rfq) return;
+            const rfq = (this.rfqs || []).find(r => r.id == this.forms.sq.rfq) || this.selectedRFQ;
+            if (rfq && rfq.lines && rfq.lines.length > 0) {
+                this.forms.sq.lines = rfq.lines.map(l => ({
+                    material: l.material,
+                    material_name: l.material_name || (this.materials_list.find(m => m.id === l.material)?.name) || '',
+                    material_sku: l.material_sku || (this.materials_list.find(m => m.id === l.material)?.sku) || '',
+                    quantity: l.quantity,
+                    unit_price: l.target_price || 0,
+                    discount_rate: 0,
+                    tax_rate: 15
+                }));
+            }
         },
 
         getPOInvoices(poRef) {

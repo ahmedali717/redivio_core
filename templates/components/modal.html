@@ -1,4 +1,4 @@
-<div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in" :dir="isArabic ? 'rtl' : 'ltr'" v-cloak>
+<div v-if="showModal" class="fixed inset-0 z-[20000] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in" :dir="isArabic ? 'rtl' : 'ltr'" v-cloak>
     
     <template v-if="modalType === 'material'">
         {% include "components/item_master_modal.html" %}
@@ -991,20 +991,122 @@
                 </div>
             </div>
 
+            <!-- RFQ: طلب تقديم عروض أسعار للموردين -->
             <div v-if="modalType === 'rfq'" class="space-y-6 animate-in zoom-in-95 duration-300">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-3xl border border-slate-200 dark:border-white/10">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-3xl border border-slate-200 dark:border-white/10">
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">رقم RFQ</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'رقم RFQ' : 'RFQ #' ]]</label>
                         <input type="text" v-model="forms.rfq.rfq_number" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm font-mono font-bold text-purple-700 dark:text-purple-400 outline-none" readonly>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">العنوان</label>
-                        <input type="text" v-model="forms.rfq.title" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none" placeholder="طلب تقديم عروض أسعار" required>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'طلب الشراء المرتبط (PR)' : 'Linked PR' ]]</label>
+                        <select v-model="forms.rfq.pr" @change="onRFQPRSelected" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-xs font-bold text-slate-800 dark:text-white outline-none">
+                            <option value="">[[ isArabic ? 'بدون ربط (طلب أسعار مباشر)' : 'Direct RFQ (No PR)' ]]</option>
+                            <option v-for="pr in purchase_requisitions" :key="pr.id" :value="pr.id">
+                                [[ pr.requisition_number || ('PR #' + pr.id) ]] - [[ pr.title || pr.requesting_department || '' ]] ([[ pr.status ]])
+                            </option>
+                        </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">آخر موعد للتقديم</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'العنوان / الغرض' : 'Title' ]]</label>
+                        <input type="text" v-model="forms.rfq.title" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none" :placeholder="isArabic ? 'طلب تقديم عروض أسعار' : 'Request for Quotation'" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'آخر موعد للتقديم' : 'Deadline' ]]</label>
                         <input type="date" v-model="forms.rfq.deadline" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
+                </div>
+
+                <!-- Vendors to Invite Checklist -->
+                <div class="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-3xl border border-slate-200 dark:border-white/10">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="block text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-truck text-purple-600"></i>
+                            <span>[[ isArabic ? 'الموردون المدعوون لتقديم العروض' : 'Invited Vendors' ]]</span>
+                        </label>
+                        <span class="text-[10px] font-bold text-slate-400">[[ (forms.rfq.vendors || []).length ]] [[ isArabic ? 'مورد محدد' : 'vendors selected' ]]</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10">
+                        <label v-for="v in vendors" :key="v.id" class="flex items-center gap-2 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
+                            <input type="checkbox" :value="v.id" v-model="forms.rfq.vendors" class="rounded text-purple-600 focus:ring-purple-500 w-4 h-4">
+                            <span class="truncate">[[ v.name ]]</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- RFQ Items Table -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
+                    <div class="p-4 border-b border-slate-100 dark:border-white/10 flex justify-between items-center bg-slate-50/50 dark:bg-white/[0.02]">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-boxes-stacked text-purple-600"></i>
+                            <h4 class="font-black text-xs text-slate-800 dark:text-white uppercase tracking-wider">
+                                [[ isArabic ? 'الأصناف والكميات المطلوبة للتسعير' : 'Items & Quantities for Quotation' ]]
+                            </h4>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">
+                                [[ forms.rfq.lines ? forms.rfq.lines.filter(l => l.selected !== false).length : 0 ]] [[ isArabic ? 'صنف محدد' : 'items' ]]
+                            </span>
+                        </div>
+                        <div v-if="forms.rfq.pr" class="flex items-center gap-2">
+                            <button type="button" @click="toggleAllRFQLines(true)" class="px-2.5 py-1 text-[11px] font-bold bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg transition-colors">
+                                [[ isArabic ? 'تحديد الكل' : 'Select All' ]]
+                            </button>
+                            <button type="button" @click="toggleAllRFQLines(false)" class="px-2.5 py-1 text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+                                [[ isArabic ? 'إلغاء التحديد' : 'Deselect All' ]]
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
+                            <tr>
+                                <th v-if="forms.rfq.pr" class="p-3 text-center w-14">
+                                    [[ isArabic ? 'طلب' : 'Include' ]]
+                                </th>
+                                <th class="p-3 text-right">[[ isArabic ? 'الصنف والمواصفات' : 'Material / Description' ]]</th>
+                                <th class="p-3 text-center w-32">[[ isArabic ? 'الكمية المطلوبة' : 'Quantity' ]]</th>
+                                <th class="p-3 text-center w-36">[[ isArabic ? 'السعر التقديري (اختياري)' : 'Target Price' ]]</th>
+                                <th v-if="!forms.rfq.pr" class="p-3 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-white/5">
+                            <tr v-for="(line, idx) in forms.rfq.lines" :key="idx" :class="line.selected === false ? 'opacity-40 bg-slate-50/50' : ''">
+                                <td v-if="forms.rfq.pr" class="p-3 text-center">
+                                    <input type="checkbox" v-model="line.selected" class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer">
+                                </td>
+                                <td class="p-2.5">
+                                    <!-- If linked to PR, display the PR material read-only with SKU -->
+                                    <div v-if="forms.rfq.pr" class="flex items-center gap-2">
+                                        <span class="font-mono text-xs font-black text-purple-600">[[ line.material_sku || (materials_list.find(m => m.id === line.material)?.sku) || '-' ]]</span>
+                                        <span class="font-bold text-xs text-slate-800 dark:text-white">[[ line.material_name || (materials_list.find(m => m.id === line.material)?.name) || 'Item' ]]</span>
+                                    </div>
+                                    <!-- If manual RFQ, allow selecting material from database -->
+                                    <select v-else v-model="line.material" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-2 text-xs font-bold text-slate-800 dark:text-white outline-none" required>
+                                        <option value="">[[ isArabic ? 'اختر الصنف...' : 'Select item...' ]]</option>
+                                        <option v-for="m in materials_list" :key="m.id" :value="m.id">[[ m.sku ]] - [[ m.name ]]</option>
+                                    </select>
+                                </td>
+                                <td class="p-2.5 text-center">
+                                    <input type="number" step="any" v-model="line.quantity" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-2 text-xs text-center font-black outline-none" required>
+                                </td>
+                                <td class="p-2.5 text-center">
+                                    <input type="number" step="0.01" v-model="line.target_price" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-2 text-xs text-center font-bold outline-none" placeholder="0.00">
+                                </td>
+                                <td v-if="!forms.rfq.pr" class="p-2.5 text-center">
+                                    <button type="button" @click="forms.rfq.lines.splice(idx, 1)" class="text-slate-300 hover:text-red-500">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr v-if="!forms.rfq.lines || forms.rfq.lines.length === 0">
+                                <td colspan="5" class="py-6 text-center text-slate-400 text-xs font-bold">
+                                    [[ isArabic ? 'لا توجد أصناف مضافة. اختر طلب شراء لتحميل الأصناف أو أضف صنفاً يدوياً.' : 'No items. Select a PR or add items manually.' ]]
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button v-if="!forms.rfq.pr" type="button" @click="forms.rfq.lines.push({ selected: true, material: '', quantity: 1, target_price: 0 })" class="w-full py-3 bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold hover:bg-slate-100 transition-all border-t border-dashed border-slate-200 dark:border-white/10">
+                        <i class="fas fa-plus-circle mr-1"></i> [[ isArabic ? 'إضافة صنف لطلب عروض الأسعار' : 'Add Item' ]]
+                    </button>
                 </div>
             </div>
 
@@ -1013,9 +1115,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-3xl border border-slate-200 dark:border-white/10">
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'طلب الأسعار (RFQ)' : 'RFQ Ref' ]]</label>
-                        <select v-model="forms.sq.rfq" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-2.5 text-xs font-bold text-slate-800 dark:text-white outline-none" required>
+                        <select v-model="forms.sq.rfq" @change="onSQRFQSelected" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-2.5 text-xs font-bold text-slate-800 dark:text-white outline-none" required>
                             <option value="">[[ isArabic ? 'اختر طلب الأسعار...' : 'Select RFQ...' ]]</option>
-                            <option v-for="r in rfqs" :key="r.id" :value="r.id">[[ r.rfq_number ]] - [[ r.title ]]</option>
+                            <option v-for="r in rfqs" :key="r.id" :value="r.id">[[ r.rfq_number ]] - [[ r.notes || r.title || 'RFQ' ]]</option>
                         </select>
                     </div>
                     <div>
@@ -1037,20 +1139,33 @@
 
                 <!-- SQ Items Table -->
                 <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
+                    <div class="p-4 border-b border-slate-100 dark:border-white/10 flex justify-between items-center bg-slate-50/50 dark:bg-white/[0.02]">
+                        <h4 class="font-black text-xs text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-file-invoice-dollar text-indigo-600"></i>
+                            <span>[[ isArabic ? 'تسعير الأصناف المطلوبة في هذا الـ RFQ' : 'Quoted Items & Pricing' ]]</span>
+                        </h4>
+                        <span class="text-xs font-black text-indigo-700 dark:text-indigo-400">
+                            [[ isArabic ? 'إجمالي العرض:' : 'Total:' ]] $[[ ((forms.sq.lines || []).reduce((acc, l) => acc + (parseFloat(l.quantity || 0) * parseFloat(l.unit_price || 0)), 0)).toLocaleString() ]]
+                        </span>
+                    </div>
                     <table class="w-full text-sm">
                         <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase font-black">
                             <tr>
-                                <th class="p-3 text-right">[[ isArabic ? 'الصنف' : 'Material' ]]</th>
+                                <th class="p-3 text-right">[[ isArabic ? 'الصنف والمواصفات' : 'Material' ]]</th>
                                 <th class="p-3 text-center w-28">[[ isArabic ? 'الكمية' : 'Qty' ]]</th>
-                                <th class="p-3 text-center w-36">[[ isArabic ? 'سعر الوحدة المقترح' : 'Unit Price' ]]</th>
+                                <th class="p-3 text-center w-36">[[ isArabic ? 'سعر الوحدة المعروض' : 'Unit Price' ]]</th>
                                 <th class="p-3 text-left w-36">[[ isArabic ? 'إجمالي البند' : 'Total' ]]</th>
-                                <th class="p-3 w-10"></th>
+                                <th v-if="!forms.sq.rfq" class="p-3 w-10"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-white/5">
                             <tr v-for="(line, idx) in forms.sq.lines" :key="idx">
                                 <td class="p-2.5">
-                                    <select v-model="line.material" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-2 text-xs font-bold text-slate-800 dark:text-white outline-none" required>
+                                    <div v-if="forms.sq.rfq && (line.material_name || line.material_sku)" class="flex items-center gap-2">
+                                        <span class="font-mono text-xs font-black text-indigo-600">[[ line.material_sku || (materials_list.find(m => m.id === line.material)?.sku) ]]</span>
+                                        <span class="font-bold text-xs text-slate-800 dark:text-white">[[ line.material_name || (materials_list.find(m => m.id === line.material)?.name) ]]</span>
+                                    </div>
+                                    <select v-else v-model="line.material" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-2 text-xs font-bold text-slate-800 dark:text-white outline-none" required>
                                         <option value="">[[ isArabic ? 'اختر الصنف...' : 'Select item...' ]]</option>
                                         <option v-for="m in materials_list" :key="m.id" :value="m.id">[[ m.sku ]] - [[ m.name ]]</option>
                                     </select>
@@ -1059,12 +1174,12 @@
                                     <input type="number" step="any" v-model="line.quantity" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-2 text-xs text-center font-black outline-none" required>
                                 </td>
                                 <td class="p-2.5 text-center">
-                                    <input type="number" step="0.01" v-model="line.unit_price" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-2 text-xs text-center font-black outline-none" required>
+                                    <input type="number" step="0.01" v-model="line.unit_price" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-2 text-xs text-center font-black outline-none" placeholder="0.00" required>
                                 </td>
                                 <td class="p-2.5 text-left font-black text-slate-900 dark:text-white font-mono">
                                     [[ ((parseFloat(line.quantity || 0) * parseFloat(line.unit_price || 0)) || 0).toLocaleString() ]]
                                 </td>
-                                <td class="p-2.5 text-center">
+                                <td v-if="!forms.sq.rfq" class="p-2.5 text-center">
                                     <button type="button" @click="forms.sq.lines.splice(idx, 1)" class="text-slate-300 hover:text-red-500">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
@@ -1072,7 +1187,7 @@
                             </tr>
                         </tbody>
                     </table>
-                    <button type="button" @click="forms.sq.lines.push({ material: '', quantity: 1, unit_price: 0 })" class="w-full py-3 bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold hover:bg-slate-100 transition-all border-t border-dashed border-slate-200 dark:border-white/10">
+                    <button v-if="!forms.sq.rfq" type="button" @click="forms.sq.lines.push({ material: '', quantity: 1, unit_price: 0 })" class="w-full py-3 bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold hover:bg-slate-100 transition-all border-t border-dashed border-slate-200 dark:border-white/10">
                         <i class="fas fa-plus-circle mr-1"></i> [[ isArabic ? 'إضافة صنف جديد لعرض السعر' : 'Add Item' ]]
                     </button>
                 </div>
