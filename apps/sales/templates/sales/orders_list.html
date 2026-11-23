@@ -244,15 +244,15 @@
 
                     <!-- Odoo Smart Links: Deliveries & Invoices Counters -->
                     <div class="grid grid-cols-2 gap-2 mb-3 text-[10px] font-bold">
-                        <button @click.stop="startDelivery(so)" 
-                                class="p-2 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] text-blue-400 hover:bg-blue-600/15 flex items-center justify-between">
-                            <span class="flex items-center gap-1.5"><i class="fas fa-truck text-xs"></i> [[ isArabic ? 'أذون صرف' : 'Delivery' ]]</span>
-                            <span class="font-black bg-blue-500/20 px-1.5 py-0.2 rounded-md">[[ so.deliveries ? so.deliveries.length : 0 ]]</span>
+                        <button @click.stop="openSODeliveries(so)" 
+                                class="p-2 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] text-blue-400 hover:bg-blue-600/15 flex items-center justify-between cursor-pointer">
+                            <span class="flex items-center gap-1.5"><i class="fas fa-truck text-xs text-emerald-500"></i> [[ isArabic ? 'أذون صرف' : 'Delivery' ]]</span>
+                            <span class="font-black bg-blue-500/20 px-1.5 py-0.2 rounded-md">[[ so.deliveries ? so.deliveries.length : (so.deliveries_count || 0) ]]</span>
                         </button>
-                        <button @click.stop="generateInvoice(so)" 
-                                class="p-2 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] text-slate-300 hover:text-white hover:bg-slate-700/30 flex items-center justify-between">
-                            <span class="flex items-center gap-1.5"><i class="fas fa-file-invoice text-xs text-blue-400"></i> [[ isArabic ? 'فاتورة' : 'Invoice' ]]</span>
-                            <span class="font-black bg-slate-500/20 px-1.5 py-0.2 rounded-md">[[ so.invoices ? so.invoices.length : 0 ]]</span>
+                        <button @click.stop="openSOInvoices(so)" 
+                                class="p-2 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] text-slate-300 hover:text-white hover:bg-slate-700/30 flex items-center justify-between cursor-pointer">
+                            <span class="flex items-center gap-1.5"><i class="fas fa-file-invoice text-xs text-blue-400"></i> [[ isArabic ? 'فواتير' : 'Invoices' ]]</span>
+                            <span class="font-black bg-slate-500/20 px-1.5 py-0.2 rounded-md">[[ so.invoices ? so.invoices.length : (so.invoices_count || 0) ]]</span>
                         </button>
                     </div>
 
@@ -503,7 +503,7 @@
 
                                 <!-- Action Buttons -->
                                 <div class="flex items-center gap-1.5 pt-1">
-                                    <button @click.stop="openDeliveryNoteModal(del)" 
+                                    <button @click.stop="openDeliveryNoteModal(del, so)" 
                                         :title="isArabic ? 'معاينة تفاصيل إذن الصرف' : 'View Delivery Note'"
                                         class="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all border border-slate-200 dark:border-slate-700">
                                         <i class="fas fa-eye text-blue-500"></i>
@@ -590,7 +590,7 @@
 
                                 <!-- Invoice Action Buttons -->
                                 <div class="flex items-center gap-1.5 pt-1">
-                                    <button @click.stop="openSalesInvoiceModal(inv)" 
+                                    <button @click.stop="openSalesInvoiceModal(inv, so)" 
                                         :title="isArabic ? 'معاينة الفاتورة' : 'View Invoice'"
                                         class="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all border border-slate-200 dark:border-slate-700">
                                         <i class="fas fa-eye text-blue-500"></i>
@@ -635,211 +635,292 @@
         </div>
     </div>
 
-    <!-- 🚚 MODAL: Warehouse Delivery Note Details Modal -->
-    <div v-if="showDeliveryNoteModal && selectedDeliveryNote" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" @click.self="closeDeliveryNoteModal()">
-        <div class="liquid-glass-card rounded-[2rem] max-w-2xl w-full p-6 shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
-            <!-- Header -->
-            <div class="flex items-center justify-between border-b border-[var(--subcard-border)] pb-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-black">
-                        <i class="fas fa-truck-ramp-box text-lg"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-base font-black text-[var(--heading-color)]">[[ isArabic ? "إذن صرف مخزني" : "Warehouse Delivery Note" ]]</h3>
-                        <p class="text-xs text-blue-500 font-mono font-bold">[[ selectedDeliveryNote.delivery_number ]]</p>
-                    </div>
+    <!-- 🚚 FULL-SCREEN MODAL: Warehouse Delivery Note Details Modal -->
+    <div v-if="showDeliveryNoteModal && selectedDeliveryNote" 
+         class="fixed inset-0 z-[20000] flex flex-col w-full h-full min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-10 overflow-y-auto animate-in fade-in duration-200" 
+         :dir="isArabic ? 'rtl' : 'ltr'">
+        
+        <!-- Top Action Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl font-black shadow-sm">
+                    <i class="fas fa-truck-ramp-box"></i>
                 </div>
-                <button @click="closeDeliveryNoteModal()" class="w-8 h-8 rounded-xl bg-[var(--subcard-bg)] hover:bg-rose-500/10 hover:text-rose-500 flex items-center justify-center text-slate-400 transition-colors">
-                    <i class="fas fa-times"></i>
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h2 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
+                            [[ isArabic ? "إذن تسليم وصرف مخزني" : "Warehouse Delivery Note" ]]
+                        </h2>
+                        <span class="px-3 py-1 rounded-full text-xs font-mono font-black bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                            [[ selectedDeliveryNote.delivery_number ]]
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 font-medium mt-0.5">
+                        [[ isArabic ? "إدارة التجهيز والشحن وتتبع حركة المخزون من المستودع للعميل" : "Warehouse dispatch, driver verification and inventory move tracking" ]]
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action buttons & Switcher & Close -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <!-- If multiple deliveries in this order, show switcher -->
+                <div v-if="selectedDeliveryNoteSO && selectedDeliveryNoteSO.deliveries && selectedDeliveryNoteSO.deliveries.length > 1" class="flex items-center gap-1.5 bg-slate-200/80 dark:bg-slate-800 p-1 rounded-xl">
+                    <button v-for="d in selectedDeliveryNoteSO.deliveries" :key="d.id"
+                        @click="openDeliveryNoteModal(d, selectedDeliveryNoteSO)"
+                        :class="d.id === selectedDeliveryNote.id ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'"
+                        class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all">
+                        [[ d.delivery_number ]]
+                    </button>
+                </div>
+
+                <button @click="printDelivery(selectedDeliveryNote.id)"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer">
+                    <i class="fas fa-print"></i>
+                    <span>[[ isArabic ? "طباعة إذن الصرف (PDF)" : "Print Note (PDF)" ]]</span>
+                </button>
+                <button @click="navigateToInventoryDelivery(selectedDeliveryNote)"
+                    class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-2 cursor-pointer">
+                    <i class="fas fa-warehouse text-blue-500"></i>
+                    <span>[[ isArabic ? "حركات المستودع (WMS)" : "Warehouse Moves" ]]</span>
+                </button>
+                <button @click="closeDeliveryNoteModal()"
+                    class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-rose-500/10 hover:text-rose-500 dark:bg-slate-800 text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Close Fullscreen">
+                    <i class="fas fa-times text-base"></i>
                 </button>
             </div>
+        </div>
 
-            <!-- Details Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "العميل" : "Customer" ]]</span>
-                    <span class="font-bold text-[var(--heading-color)]">[[ selectedDeliveryNote.customer_name || selectedDeliveryNote.manual_contact_name || '-' ]]</span>
+        <!-- Main Content Area -->
+        <div class="space-y-6 max-w-7xl mx-auto w-full flex-1">
+            <!-- Info Cards Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "العميل" : "Customer" ]]</span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-white">[[ selectedDeliveryNote.customer_name || selectedDeliveryNote.manual_contact_name || '-' ]]</span>
                 </div>
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "التاريخ" : "Date" ]]</span>
-                    <span class="font-bold text-[var(--heading-color)] font-mono">[[ formatDate(selectedDeliveryNote.date) ]]</span>
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "تاريخ الصرف" : "Date" ]]</span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-white font-mono">[[ formatDate(selectedDeliveryNote.date) ]]</span>
                 </div>
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "أمر البيع" : "Sales Order" ]]</span>
-                    <span class="font-bold text-blue-500 font-mono">[[ selectedDeliveryNote.so_number || '-' ]]</span>
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "أمر البيع" : "Sales Order" ]]</span>
+                    <span class="font-bold text-sm text-blue-500 font-mono">[[ selectedDeliveryNote.so_number || '-' ]]</span>
                 </div>
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "اسم السائق" : "Driver Name" ]]</span>
-                    <span class="font-bold text-[var(--heading-color)]">[[ selectedDeliveryNote.driver_name || '-' ]]</span>
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "السائق" : "Driver" ]]</span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-white">[[ selectedDeliveryNote.driver_name || '-' ]]</span>
                 </div>
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "لوحة المركبة" : "Vehicle Plate" ]]</span>
-                    <span class="font-bold text-[var(--heading-color)] font-mono">[[ selectedDeliveryNote.vehicle_plate || '-' ]]</span>
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "لوحة المركبة" : "Plate" ]]</span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-white font-mono">[[ selectedDeliveryNote.vehicle_plate || '-' ]]</span>
                 </div>
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "رقم التتبع" : "Tracking #" ]]</span>
-                    <span class="font-bold text-[var(--heading-color)] font-mono">[[ selectedDeliveryNote.tracking_number || '-' ]]</span>
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "رقم التتبع" : "Tracking #" ]]</span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-white font-mono">[[ selectedDeliveryNote.tracking_number || '-' ]]</span>
                 </div>
             </div>
 
-            <!-- Items Table -->
-            <div class="overflow-hidden rounded-xl border border-[var(--subcard-border)]">
-                <table class="w-full text-xs text-right">
-                    <thead class="bg-[var(--subcard-bg)] text-[10px] font-black text-slate-400 uppercase">
+            <!-- Address & Notes -->
+            <div v-if="selectedDeliveryNote.delivery_address || selectedDeliveryNote.notes" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div v-if="selectedDeliveryNote.delivery_address" class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "عنوان التسليم" : "Delivery Address" ]]</span>
+                    <p class="text-xs text-slate-700 dark:text-slate-300">[[ selectedDeliveryNote.delivery_address ]]</p>
+                </div>
+                <div v-if="selectedDeliveryNote.notes" class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "ملاحظات" : "Notes" ]]</span>
+                    <p class="text-xs text-slate-700 dark:text-slate-300">[[ selectedDeliveryNote.notes ]]</p>
+                </div>
+            </div>
+
+            <!-- Dispatched Items Table -->
+            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <h3 class="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-boxes-stacked text-blue-500"></i>
+                        [[ isArabic ? "الأصناف والكميات المنصرفة" : "Dispatched Items & Quantities" ]]
+                    </h3>
+                    <span class="text-xs font-mono font-bold text-slate-400">
+                        [[ (selectedDeliveryNote.items || []).length ]] [[ isArabic ? "بند" : "Lines" ]]
+                    </span>
+                </div>
+                <table class="w-full text-right text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-950/50 text-[10px] font-black text-slate-400 uppercase border-b border-slate-200 dark:border-slate-800">
                         <tr>
-                            <th class="px-4 py-2.5">[[ isArabic ? "الصنف / المادة" : "Item / Material" ]]</th>
-                            <th class="px-4 py-2.5 text-center">[[ isArabic ? "الكمية المنصرفة" : "Dispatched Qty" ]]</th>
-                            <th class="px-4 py-2.5 text-center">[[ isArabic ? "الرف / الحاوية" : "Storage Bin" ]]</th>
+                            <th class="px-6 py-3.5">[[ isArabic ? "الصنف / المادة" : "Item / Material" ]]</th>
+                            <th class="px-6 py-3.5 text-center">[[ isArabic ? "كود الصنف (SKU)" : "SKU" ]]</th>
+                            <th class="px-6 py-3.5 text-center">[[ isArabic ? "الكمية المنصرفة" : "Dispatched Qty" ]]</th>
+                            <th class="px-6 py-3.5 text-center">[[ isArabic ? "الرف / حاوية التخزين" : "Storage Bin" ]]</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-[var(--subcard-border)] font-medium">
-                        <tr v-for="it in (selectedDeliveryNote.items || [])" :key="it.id">
-                            <td class="px-4 py-2.5 font-bold text-[var(--heading-color)]">
-                                [[ it.material_name || '-' ]]
-                                <span v-if="it.material_sku" class="text-[10px] text-slate-400 font-mono block">[[ it.material_sku ]]</span>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                        <tr v-for="it in (selectedDeliveryNote.items || [])" :key="it.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <td class="px-6 py-4 font-bold text-sm text-slate-800 dark:text-white">[[ it.material_name || '-' ]]</td>
+                            <td class="px-6 py-4 text-center text-slate-400 font-mono">[[ it.material_sku || '-' ]]</td>
+                            <td class="px-6 py-4 text-center font-black text-base text-blue-500 font-mono">[[ it.quantity ]]</td>
+                            <td class="px-6 py-4 text-center text-slate-600 dark:text-slate-400 font-mono">
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                    [[ it.storage_bin_code || it.storage_bin || '-' ]]
+                                </span>
                             </td>
-                            <td class="px-4 py-2.5 text-center font-black text-blue-500 font-mono">[[ it.quantity ]]</td>
-                            <td class="px-4 py-2.5 text-center text-slate-400 font-mono">[[ it.storage_bin_code || it.storage_bin || '-' ]]</td>
                         </tr>
                         <tr v-if="!selectedDeliveryNote.items || selectedDeliveryNote.items.length === 0">
-                            <td colspan="3" class="px-4 py-4 text-center text-slate-400">[[ isArabic ? "لا توجد بنود مفصلة مسجلة في هذا الإذن" : "No items listed" ]]</td>
+                            <td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">
+                                [[ isArabic ? "لا توجد تفاصيل أصناف مسجلة لهذا الإذن" : "No items recorded" ]]
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-
-            <!-- Modal Footer -->
-            <div class="flex items-center justify-between pt-3 border-t border-[var(--subcard-border)]">
-                <div class="flex items-center gap-2">
-                    <button @click="printDelivery(selectedDeliveryNote.id)"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
-                        <i class="fas fa-print"></i>
-                        <span>[[ isArabic ? "طباعة إذن الصرف" : "Print Delivery Note" ]]</span>
-                    </button>
-                    <button @click="navigateToInventoryDelivery(selectedDeliveryNote)"
-                        class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-2">
-                        <i class="fas fa-warehouse text-blue-500"></i>
-                        <span>[[ isArabic ? "الانتقال إلى حركات المستودع" : "Warehouse Moves" ]]</span>
-                    </button>
-                </div>
-                <button @click="closeDeliveryNoteModal()"
-                    class="px-4 py-2 bg-[var(--subcard-bg)] text-slate-400 hover:text-slate-200 rounded-xl text-xs font-bold transition-colors">
-                    [[ isArabic ? "إغلاق" : "Close" ]]
-                </button>
-            </div>
         </div>
     </div>
 
-    <!-- 🧾 MODAL: Sales Invoice Details & GL Actions Modal -->
-    <div v-if="showSalesInvoiceModal && selectedSalesInvoice" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" @click.self="closeSalesInvoiceModal()">
-        <div class="liquid-glass-card rounded-[2rem] max-w-2xl w-full p-6 shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
-            <!-- Header -->
-            <div class="flex items-center justify-between border-b border-[var(--subcard-border)] pb-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-black">
-                        <i class="fas fa-file-invoice-dollar text-lg"></i>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-base font-black text-[var(--heading-color)]">[[ isArabic ? "فاتورة مبيعات" : "Sales Invoice" ]]</h3>
-                            <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider"
-                                :class="selectedSalesInvoice.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : (selectedSalesInvoice.status === 'PARTIAL' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20')">
-                                [[ selectedSalesInvoice.status ]]
-                            </span>
-                        </div>
-                        <p class="text-xs text-blue-500 font-mono font-bold">[[ selectedSalesInvoice.invoice_number ]]</p>
-                    </div>
+    <!-- 🧾 FULL-SCREEN MODAL: Sales Invoice Details & GL Actions Modal -->
+    <div v-if="showSalesInvoiceModal && selectedSalesInvoice" 
+         class="fixed inset-0 z-[20000] flex flex-col w-full h-full min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-10 overflow-y-auto animate-in fade-in duration-200" 
+         :dir="isArabic ? 'rtl' : 'ltr'">
+        
+        <!-- Top Action Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl font-black shadow-sm">
+                    <i class="fas fa-file-invoice-dollar"></i>
                 </div>
-                <button @click="closeSalesInvoiceModal()" class="w-8 h-8 rounded-xl bg-[var(--subcard-bg)] hover:bg-rose-500/10 hover:text-rose-500 flex items-center justify-center text-slate-400 transition-colors">
-                    <i class="fas fa-times"></i>
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h2 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
+                            [[ isArabic ? "فاتورة مبيعات معتمدة" : "Sales Invoice" ]]
+                        </h2>
+                        <span class="px-3 py-1 rounded-full text-xs font-mono font-black bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                            [[ selectedSalesInvoice.invoice_number ]]
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider"
+                            :class="selectedSalesInvoice.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : (selectedSalesInvoice.status === 'PARTIAL' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20')">
+                            [[ selectedSalesInvoice.status ]]
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 font-medium mt-0.5">
+                        [[ isArabic ? "تفاصيل الفاتورة المالية، القيود المحاسبية، وتحديث أرصدة العملاء" : "Financial invoice breakdown, General Ledger journal entries and customer balance" ]]
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action buttons & Switcher & Close -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <!-- If multiple invoices in this order, show switcher -->
+                <div v-if="selectedSalesInvoiceSO && selectedSalesInvoiceSO.invoices && selectedSalesInvoiceSO.invoices.length > 1" class="flex items-center gap-1.5 bg-slate-200/80 dark:bg-slate-800 p-1 rounded-xl">
+                    <button v-for="invItem in selectedSalesInvoiceSO.invoices" :key="invItem.id"
+                        @click="openSalesInvoiceModal(invItem, selectedSalesInvoiceSO)"
+                        :class="invItem.id === selectedSalesInvoice.id ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'"
+                        class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all">
+                        [[ invItem.invoice_number ]]
+                    </button>
+                </div>
+
+                <button @click="openInvoiceGL(selectedSalesInvoice)"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer">
+                    <i class="fas fa-book-journal-whills"></i>
+                    <span>[[ isArabic ? "عرض قيود اليومية ودفتر الأستاذ" : "View GL Entries" ]]</span>
                 </button>
-            </div>
-
-            <!-- Details Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "العميل" : "Customer" ]]</span>
-                    <span class="font-bold text-[var(--heading-color)]">[[ selectedSalesInvoice.customer_name || '-' ]]</span>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "تاريخ الإصدار" : "Invoice Date" ]]</span>
-                    <span class="font-bold text-[var(--heading-color)] font-mono">[[ formatDate(selectedSalesInvoice.date) ]]</span>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "تاريخ الاستحقاق" : "Due Date" ]]</span>
-                    <span class="font-bold text-[var(--heading-color)] font-mono">[[ formatDate(selectedSalesInvoice.due_date) ]]</span>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "أمر البيع المرتبط" : "Sales Order" ]]</span>
-                    <span class="font-bold text-blue-500 font-mono">[[ selectedSalesInvoice.so_number || '-' ]]</span>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "شروط السداد" : "Payment Terms" ]]</span>
-                    <span class="font-bold text-[var(--heading-color)]">[[ selectedSalesInvoice.payment_terms || 'IMMEDIATE' ]]</span>
-                </div>
-                <div class="p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
-                    <span class="text-[10px] text-slate-400 block font-bold">[[ isArabic ? "حالة الترحيل المحاسبي" : "GL Status" ]]</span>
-                    <span v-if="selectedSalesInvoice.is_posted" class="font-bold text-emerald-500 flex items-center gap-1 mt-0.5">
-                        <i class="fas fa-check-circle"></i>[[ isArabic ? "مرحلة للدفتر العام" : "Posted to GL" ]]
-                    </span>
-                    <span v-else class="font-bold text-amber-500 flex items-center gap-1 mt-0.5">
-                        <i class="fas fa-clock"></i>[[ isArabic ? "مسودة غير مرحلة" : "Unposted Draft" ]]
-                    </span>
-                </div>
-            </div>
-
-            <!-- Financial Totals Box -->
-            <div class="p-4 rounded-2xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] space-y-2">
-                <div class="flex items-center justify-between text-xs">
-                    <span class="text-slate-400">[[ isArabic ? "المجموع الفرعي (قبل الضريبة والخصم)" : "Subtotal" ]]</span>
-                    <span class="font-mono font-bold text-[var(--heading-color)]">$[[ formatNumber(selectedSalesInvoice.subtotal) ]]</span>
-                </div>
-                <div v-if="selectedSalesInvoice.discount_amount > 0" class="flex items-center justify-between text-xs text-rose-400">
-                    <span>[[ isArabic ? "الخصم المطبق" : "Discount" ]]</span>
-                    <span class="font-mono font-bold">-$[[ formatNumber(selectedSalesInvoice.discount_amount) ]]</span>
-                </div>
-                <div class="flex items-center justify-between text-xs text-blue-400">
-                    <span>[[ isArabic ? "ضريبة القيمة المضافة (15% VAT)" : "VAT (15%)" ]]</span>
-                    <span class="font-mono font-bold">+$[[ formatNumber(selectedSalesInvoice.tax_amount) ]]</span>
-                </div>
-                <div class="flex items-center justify-between text-sm font-black pt-2 border-t border-[var(--subcard-border)]">
-                    <span class="text-[var(--heading-color)]">[[ isArabic ? "إجمالي الفاتورة النهائي" : "Grand Total" ]]</span>
-                    <span class="text-blue-500 font-mono text-base">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</span>
-                </div>
-                <div class="flex items-center justify-between text-xs pt-2 border-t border-[var(--subcard-border)]">
-                    <span class="text-slate-400">[[ isArabic ? "المبلغ المدفوع / المحصل" : "Paid Amount" ]]</span>
-                    <span class="font-mono font-bold text-emerald-500">$[[ formatNumber(selectedSalesInvoice.paid_amount || 0) ]]</span>
-                </div>
-            </div>
-
-            <!-- Modal Footer with GL and Navigation Actions -->
-            <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[var(--subcard-border)]">
-                <div class="flex flex-wrap items-center gap-2">
-                    <button @click="openInvoiceGL(selectedSalesInvoice)"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
-                        <i class="fas fa-book-journal-whills"></i>
-                        <span>[[ isArabic ? "عرض قيود اليومية ودفتر الأستاذ" : "View GL Journal Entries" ]]</span>
-                    </button>
-                    <button v-if="!selectedSalesInvoice.is_posted" @click="postInvoiceToGL(selectedSalesInvoice)"
-                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
-                        <i class="fas fa-paper-plane"></i>
-                        <span>[[ isArabic ? "اعتماد وترحيل للدفتر العام الآن" : "Post to GL Now" ]]</span>
-                    </button>
-                    <button @click="printInvoice(selectedSalesInvoice.id)"
-                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
-                        <i class="fas fa-print"></i>
-                        <span>[[ isArabic ? "طباعة" : "Print" ]]</span>
-                    </button>
-                    <button @click="navigateToAccountingInvoices(selectedSalesInvoice)"
-                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
-                        <i class="fas fa-coins text-blue-500"></i>
-                        <span>[[ isArabic ? "إدارة الفواتير في المالية" : "Accounting Invoices" ]]</span>
-                    </button>
-                </div>
+                <button v-if="!selectedSalesInvoice.is_posted" @click="postInvoiceToGL(selectedSalesInvoice)"
+                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>[[ isArabic ? "ترحيل للدفتر العام الآن" : "Post to GL Now" ]]</span>
+                </button>
+                <button @click="printInvoice(selectedSalesInvoice.id)"
+                    class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer">
+                    <i class="fas fa-print"></i>
+                    <span>[[ isArabic ? "طباعة (PDF)" : "Print (PDF)" ]]</span>
+                </button>
+                <button @click="navigateToAccountingInvoices(selectedSalesInvoice)"
+                    class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer">
+                    <i class="fas fa-coins text-blue-500"></i>
+                    <span>[[ isArabic ? "شاشة فواتير المالية" : "Finance Invoices" ]]</span>
+                </button>
                 <button @click="closeSalesInvoiceModal()"
-                    class="px-4 py-2 bg-[var(--subcard-bg)] text-slate-400 hover:text-slate-200 rounded-xl text-xs font-bold transition-colors">
-                    [[ isArabic ? "إغلاق" : "Close" ]]
+                    class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-rose-500/10 hover:text-rose-500 dark:bg-slate-800 text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Close Fullscreen">
+                    <i class="fas fa-times text-base"></i>
                 </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area: Responsive Grid & Totals -->
+        <div class="space-y-6 max-w-7xl mx-auto w-full flex-1">
+            <!-- Info Cards Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "العميل" : "Customer" ]]</span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-white">[[ selectedSalesInvoice.customer_name || '-' ]]</span>
+                </div>
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "تاريخ الإصدار" : "Invoice Date" ]]</span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-white font-mono">[[ formatDate(selectedSalesInvoice.date) ]]</span>
+                </div>
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "تاريخ الاستحقاق" : "Due Date" ]]</span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-white font-mono">[[ formatDate(selectedSalesInvoice.due_date) ]]</span>
+                </div>
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "أمر البيع" : "Sales Order" ]]</span>
+                    <span class="font-bold text-sm text-blue-500 font-mono">[[ selectedSalesInvoice.so_number || '-' ]]</span>
+                </div>
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "شروط السداد" : "Payment Terms" ]]</span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-white">[[ selectedSalesInvoice.payment_terms || 'IMMEDIATE' ]]</span>
+                </div>
+                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "حالة الترحيل المحاسبي" : "GL Status" ]]</span>
+                    <span v-if="selectedSalesInvoice.is_posted" class="font-bold text-sm text-emerald-500 flex items-center gap-1">
+                        <i class="fas fa-check-circle text-xs"></i>[[ isArabic ? "مرحلة للدفتر العام" : "GL Posted" ]]
+                    </span>
+                    <span v-else class="font-bold text-sm text-amber-500 flex items-center gap-1">
+                        <i class="fas fa-clock text-xs"></i>[[ isArabic ? "مسودة غير مرحلة" : "Unposted Draft" ]]
+                    </span>
+                </div>
+            </div>
+
+            <!-- Financial Summary Breakdown Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">[[ isArabic ? "المجموع الفرعي (قبل الضريبة)" : "Subtotal" ]]</span>
+                    <div class="text-2xl font-black text-slate-800 dark:text-white font-mono">$[[ formatNumber(selectedSalesInvoice.subtotal) ]]</div>
+                    <div v-if="selectedSalesInvoice.discount_amount > 0" class="text-xs font-bold text-rose-500 mt-2 font-mono">
+                        [[ isArabic ? "خصم:" : "Discount:" ]] -$[[ formatNumber(selectedSalesInvoice.discount_amount) ]]
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">[[ isArabic ? "ضريبة القيمة المضافة (15% VAT)" : "VAT (15%)" ]]</span>
+                    <div class="text-2xl font-black text-blue-500 font-mono">+$[[ formatNumber(selectedSalesInvoice.tax_amount) ]]</div>
+                    <div class="text-xs text-slate-400 mt-2 font-semibold">[[ isArabic ? "ضريبة مخرجات مبيعات" : "Output Sales VAT" ]]</div>
+                </div>
+
+                <div class="p-5 rounded-3xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 shadow-xs">
+                    <span class="text-[11px] font-black text-blue-500 uppercase tracking-wider block mb-2">[[ isArabic ? "إجمالي الفاتورة النهائي" : "Grand Total" ]]</span>
+                    <div class="text-3xl font-black text-blue-600 dark:text-blue-400 font-mono">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</div>
+                    <div class="text-xs text-blue-500 font-bold mt-2">[[ isArabic ? "شامل الضريبة" : "VAT Inclusive" ]]</div>
+                </div>
+
+                <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">[[ isArabic ? "المدفوع والمتبقي" : "Paid & Balance" ]]</span>
+                    <div class="text-xl font-black text-emerald-500 font-mono">[[ isArabic ? "تم تحصيل:" : "Paid:" ]] $[[ formatNumber(selectedSalesInvoice.paid_amount || 0) ]]</div>
+                    <div class="text-xs font-black font-mono mt-2" :class="(selectedSalesInvoice.total_amount - (selectedSalesInvoice.paid_amount || 0)) > 0 ? 'text-rose-500' : 'text-slate-400'">
+                        [[ isArabic ? "المتبقي:" : "Due Balance:" ]] $[[ formatNumber(selectedSalesInvoice.total_amount - (selectedSalesInvoice.paid_amount || 0)) ]]
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes & Terms -->
+            <div v-if="selectedSalesInvoice.notes || selectedSalesInvoice.billing_address" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div v-if="selectedSalesInvoice.billing_address" class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <span class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">[[ isArabic ? "عنوان الفوترة" : "Billing Address" ]]</span>
+                    <p class="text-xs text-slate-700 dark:text-slate-300 font-medium">[[ selectedSalesInvoice.billing_address ]]</p>
+                </div>
+                <div v-if="selectedSalesInvoice.notes" class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <span class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">[[ isArabic ? "ملاحظات الفاتورة" : "Invoice Notes" ]]</span>
+                    <p class="text-xs text-slate-700 dark:text-slate-300 font-medium">[[ selectedSalesInvoice.notes ]]</p>
+                </div>
             </div>
         </div>
     </div>

@@ -424,8 +424,10 @@ createApp({
 
             showModal: false,
             selectedDeliveryNote: null,
+            selectedDeliveryNoteSO: null,
             showDeliveryNoteModal: false,
             selectedSalesInvoice: null,
+            selectedSalesInvoiceSO: null,
             showSalesInvoiceModal: false,
             materialTab: 'general',
             modalType: '',
@@ -5752,40 +5754,88 @@ createApp({
             window.open(`/api/print/invoice/${invoiceId}/`, '_blank');
         },
 
-        openDeliveryNoteModal(del) {
+        openDeliveryNoteModal(del, so = null) {
             if (!del) return;
             this.selectedDeliveryNote = del;
+            this.selectedDeliveryNoteSO = so;
             this.showDeliveryNoteModal = true;
         },
 
         closeDeliveryNoteModal() {
             this.showDeliveryNoteModal = false;
             this.selectedDeliveryNote = null;
+            this.selectedDeliveryNoteSO = null;
         },
 
         navigateToInventoryDelivery(del) {
             this.showDeliveryNoteModal = false;
+            this.showModal = false;
             this.view = 'inventory_module';
             this.inventoryTab = 'moves';
             this.showToast(this.isArabic ? `الانتقال إلى سجل حركات المستودع` : `Navigating to Warehouse Moves`, 'info');
         },
 
-        openSalesInvoiceModal(inv) {
+        openSalesInvoiceModal(inv, so = null) {
             if (!inv) return;
             this.selectedSalesInvoice = inv;
+            this.selectedSalesInvoiceSO = so;
             this.showSalesInvoiceModal = true;
         },
 
         closeSalesInvoiceModal() {
             this.showSalesInvoiceModal = false;
             this.selectedSalesInvoice = null;
+            this.selectedSalesInvoiceSO = null;
         },
 
         navigateToAccountingInvoices(inv) {
             this.showSalesInvoiceModal = false;
+            this.showModal = false;
             this.view = 'accounting_module';
             this.accountingTab = 'sales_invoices';
             this.showToast(this.isArabic ? `الانتقال إلى فواتير المبيعات في المالية` : `Navigating to Sales Invoices in Accounting`, 'info');
+        },
+
+        openSODeliveries(so) {
+            if (!so) return;
+            let dels = so.deliveries || [];
+            if ((!dels || dels.length === 0) && so.id) {
+                const found = (this.salesOrders || []).find(o => o.id === so.id);
+                if (found && found.deliveries && found.deliveries.length) {
+                    dels = found.deliveries;
+                    so.deliveries = dels;
+                }
+            }
+            if (dels && dels.length > 0) {
+                this.openDeliveryNoteModal(dels[0], so);
+            } else {
+                if (so.status === 'CONFIRMED' || so.status === 'SHIPPED') {
+                    this.startDelivery(so);
+                } else {
+                    this.showToast(this.isArabic ? "لا توجد أذون صرف بعد. يجب اعتماد أمر البيع أولاً" : "No delivery notes yet. Order must be confirmed first", "info");
+                }
+            }
+        },
+
+        openSOInvoices(so) {
+            if (!so) return;
+            let invs = so.invoices || [];
+            if ((!invs || invs.length === 0) && so.id) {
+                const found = (this.salesOrders || []).find(o => o.id === so.id);
+                if (found && found.invoices && found.invoices.length) {
+                    invs = found.invoices;
+                    so.invoices = invs;
+                }
+            }
+            if (invs && invs.length > 0) {
+                this.openSalesInvoiceModal(invs[0], so);
+            } else {
+                if (so.status === 'CONFIRMED' || so.status === 'SHIPPED') {
+                    this.generateInvoice(so);
+                } else {
+                    this.showToast(this.isArabic ? "لا توجد فواتير بعد. يمكنك إصدار فاتورة الآن" : "No invoices yet. You can generate one now", "info");
+                }
+            }
         },
 
         async postInvoiceToGL(inv) {
