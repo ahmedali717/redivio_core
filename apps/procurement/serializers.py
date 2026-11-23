@@ -126,8 +126,8 @@ class RequestForQuotationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RequestForQuotation
-        fields = ['id', 'opco', 'rfq_number', 'pr', 'date', 'deadline', 'status', 'notes', 'vendors', 'vendor_names', 'lines']
-        read_only_fields = ['id', 'rfq_number', 'date']
+        fields = ['id', 'opco', 'rfq_number', 'pr', 'date', 'deadline', 'status', 'notes', 'vendors', 'vendor_names', 'portal_token', 'lines']
+        read_only_fields = ['id', 'rfq_number', 'date', 'portal_token']
 
     def get_vendor_names(self, obj):
         return [v.name for v in obj.vendors.all()]
@@ -166,13 +166,26 @@ class SupplierQuotationLineSerializer(serializers.ModelSerializer):
 
 
 class SupplierQuotationSerializer(serializers.ModelSerializer):
-    lines = SupplierQuotationLineSerializer(many=True)
+    lines = SupplierQuotationLineSerializer(many=True, required=False)
     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
 
     class Meta:
         model = SupplierQuotation
-        fields = ['id', 'opco', 'quotation_number', 'rfq', 'vendor', 'vendor_name', 'date', 'valid_until', 'delivery_lead_time_days', 'payment_terms', 'total_amount', 'notes', 'lines']
+        fields = ['id', 'opco', 'quotation_number', 'rfq', 'vendor', 'vendor_name', 'date', 'valid_until', 'delivery_lead_time_days', 'payment_terms', 'total_amount', 'notes', 'attachment', 'lines']
         read_only_fields = ['id', 'quotation_number', 'date']
+
+    def to_internal_value(self, data):
+        if hasattr(data, '_mutable'):
+            data = data.copy()
+        else:
+            data = dict(data)
+        if isinstance(data.get('lines'), str):
+            import json
+            try:
+                data['lines'] = json.loads(data['lines'])
+            except Exception:
+                pass
+        return super().to_internal_value(data)
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines', [])
@@ -184,6 +197,21 @@ class SupplierQuotationSerializer(serializers.ModelSerializer):
         sq.total_amount = total
         sq.save()
         return sq
+
+    def update(self, instance, validated_data):
+        lines_data = validated_data.pop('lines', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if lines_data is not None:
+            instance.lines.all().delete()
+            total = 0
+            for line in lines_data:
+                l_obj = SupplierQuotationLine.objects.create(quotation=instance, **line)
+                total += l_obj.line_total
+            instance.total_amount = total
+            instance.save()
+        return instance
 
 
 # --- 3. Quotation Comparison Serializer ---

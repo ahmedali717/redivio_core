@@ -359,4 +359,106 @@ def print_po_pdf(request, pk):
 def print_grn_pdf(request, pk):
     receipt = get_object_or_404(StockReceipt, pk=pk)
     return render_to_pdf('procurement/print_grn.html', {'receipt': receipt})
+
+
+def public_rfq_portal(request, token=None, pk=None):
+    from django.db.models import Q
+    lookup = token or pk
+    if not lookup:
+        return render(request, 'procurement/public_rfq_portal.html', {'error': 'رابط طلب الأسعار غير صالح.'})
+
+    rfq = None
+    if isinstance(lookup, int) or (isinstance(lookup, str) and lookup.isdigit()):
+        rfq = RequestForQuotation.objects.filter(Q(id=int(lookup)) | Q(portal_token=str(lookup))).first()
+    else:
+        rfq = RequestForQuotation.objects.filter(portal_token=str(lookup)).first()
+
+    if not rfq:
+        return render(request, 'procurement/public_rfq_portal.html', {'error': 'طلب عروض الأسعار غير موجود أو تم حذفه.'})
+
+    if not rfq.portal_token:
+        import secrets
+        rfq.portal_token = secrets.token_urlsafe(16)
+        rfq.save(update_fields=['portal_token'])
+
+    if request.method == 'POST':
+        vendor_id = request.POST.get('vendor_id')
+        vendor_name = request.POST.get('vendor_name', '').strip()
+        lead_time = int(request.POST.get('delivery_lead_time_days') or 1)
+        payment_terms = request.POST.get('payment_terms', 'CASH').strip()
+        notes = request.POST.get('notes', '').strip()
+        attachment = request.FILES.get('attachment')
+
+        vendor = None
+        if vendor_id and vendor_id.isdigit():
+            vendor = Vendor.objects.filter(id=int(vendor_id)).first()
+        elif vendor_name:
+            vendor = Vendor.objects.filter(opco=rfq.opco, name__iexact=vendor_name).first()
+            if not vendor:
+                import time
+                code = f"V-P{int(time.time()) % 100000}"
+                vendor = Vendor.objects.create(
+                    opco=rfq.opco,
+                    name=vendor_name,
+                    code=code,
+                    email=request.POST.get('vendor_email', ''),
+                    phone=request.POST.get('vendor_phone', '')
+                )
+
+        if not vendor:
+            return render(request, 'procurement/public_rfq_portal.html', {
+                'rfq': rfq,
+                'invited_vendors': rfq.vendors.all(),
+                'lines': rfq.lines.select_related('material').all(),
+                'error': 'يرجى تحديد أو كتابة اسم الشركة / المورد مقدم العرض.'
+            })
+
+        sq = SupplierQuotation.objects.create(
+            opco=rfq.opco,
+            rfq=rfq,
+            vendor=vendor,
+            delivery_lead_time_days=lead_time,
+            payment_terms=payment_terms,
+            notes=notes,
+            attachment=attachment
+        )
+
+        total = 0
+        for line in rfq.lines.all():
+            price_key = f"price_{line.material.id}"
+            quoted_price = request.POST.get(price_key)
+            if quoted_price is not None:
+                try:
+                    price_val = float(quoted_price)
+                except (ValueError, TypeError):
+                    price_val = 0.0
+                sq_line = SupplierQuotationLine.objects.create(
+                    quotation=sq,
+                    material=line.material,
+                    quantity=line.quantity,
+                    unit_price=price_val,
+                    discount_rate=0,
+                    tax_rate=15
+                )
+                total += sq_line.line_total
+
+        sq.total_amount = total
+        sq.save(update_fields=['total_amount'])
+
+        if rfq.status == 'DRAFT':
+            rfq.status = 'RESPONSES_RECEIVED'
+            rfq.save(update_fields=['status'])
+
+        return render(request, 'procurement/public_rfq_portal.html', {
+            'rfq': rfq,
+            'success': True,
+            'sq': sq
+        })
+
+    return render(request, 'procurement/public_rfq_portal.html', {
+        'rfq': rfq,
+        'invited_vendors': rfq.vendors.all(),
+        'lines': rfq.lines.select_related('material').all()
+    })
+
 

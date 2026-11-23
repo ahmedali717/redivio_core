@@ -23,7 +23,8 @@ from apps.wms.views import StockQuantViewSet, StockMoveViewSet
 from apps.procurement.views import (
     VendorViewSet, PurchaseOrderViewSet, PurchaseOrderLineViewSet, StockReceiptViewSet,
     PurchaseRequisitionViewSet, RequestForQuotationViewSet, SupplierQuotationViewSet,
-    QuotationComparisonViewSet, PurchaseReturnViewSet, print_po_pdf, print_grn_pdf
+    QuotationComparisonViewSet, PurchaseReturnViewSet, print_po_pdf, print_grn_pdf,
+    public_rfq_portal
 )
 from apps.sales.views import (
     CustomerViewSet, SalesOrderViewSet, SalesOrderLineViewSet, SalesInvoiceViewSet,
@@ -91,6 +92,8 @@ urlpatterns = [
     path('print/so/<int:pk>/', print_so_pdf, name='print_so_direct'),
     path('print/delivery/<int:pk>/', print_delivery_pdf, name='print_delivery_direct'),
     path('print/invoice/<int:pk>/', print_invoice_pdf, name='print_invoice_direct'),
+    path('portal/rfq/<str:token>/', public_rfq_portal, name='public_rfq_portal'),
+    path('portal/rfq/<int:pk>/', public_rfq_portal, name='public_rfq_portal_id'),
     path('logout/', logout_view, name='logout'), # ✅ رابط الخروج
     path('', include('apps.core.urls')),
 ]

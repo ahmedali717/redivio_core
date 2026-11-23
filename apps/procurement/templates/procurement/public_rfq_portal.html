@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الموردين | طلب تقديم عروض أسعار - {{ rfq.rfq_number }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #F8FAFC; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Top Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-xs">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-lg shadow-sm">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-black text-slate-900 leading-tight">{{ rfq.opco.name|default:"Redivio Enterprise" }}</h1>
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">بوابة تسعير الموردين المعتمدة</span>
+                </div>
+            </div>
+            <div class="text-left">
+                <span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-black font-mono">
+                    {{ rfq.rfq_number }}
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full">
+
+        {% if success %}
+        <!-- Success Screen -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-8 md:p-12 text-center max-w-2xl mx-auto shadow-sm animate-in fade-in zoom-in duration-300">
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl shadow-inner">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-900 mb-2">تم استلام عرض السعر بنجاح!</h2>
+            <p class="text-sm font-bold text-slate-500 mb-6">
+                شكراً لتعاونكم. تم تسجيل عرضكم رسمياً تحت رقم 
+                <span class="font-mono font-black text-blue-600 font-bold">{{ sq.quotation_number }}</span>
+                وسيقوم فريق المشتريات بمراجعة العرض والتواصل معكم فور الانتهاء من التقييم.
+            </p>
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-right text-xs space-y-2 mb-6">
+                <div class="flex justify-between">
+                    <span class="text-slate-500 font-bold">المورد:</span>
+                    <span class="font-black text-slate-800">{{ sq.vendor.name }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500 font-bold">مرجع طلب الأسعار:</span>
+                    <span class="font-mono font-black text-slate-800">{{ rfq.rfq_number }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500 font-bold">إجمالي العرض المقدم:</span>
+                    <span class="font-black text-blue-600 font-mono text-sm">${{ sq.total_amount }}</span>
+                </div>
+                {% if sq.attachment %}
+                <div class="flex justify-between border-t border-slate-200 pt-2">
+                    <span class="text-slate-500 font-bold">ملف العرض المرفق:</span>
+                    <a href="{{ sq.attachment.url }}" target="_blank" class="text-rose-600 hover:underline font-bold flex items-center gap-1">
+                        <i class="fas fa-file-pdf"></i> تحميل المستند
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <button onclick="window.print()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2">
+                <i class="fas fa-print"></i> طباعة إشعار الاستلام
+            </button>
+        </div>
+
+        {% elif error and not rfq %}
+        <!-- Error Screen -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-8 text-center max-w-lg mx-auto shadow-sm">
+            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2 class="text-xl font-black text-slate-900 mb-2">تعذر فتح الصفحة</h2>
+            <p class="text-xs font-bold text-slate-500 mb-4">{{ error }}</p>
+        </div>
+
+        {% else %}
+
+        <!-- RFQ Info Banner -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-xs mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-6">
+                <div>
+                    <span class="text-[10px] font-black uppercase text-blue-600 tracking-widest block mb-1">طلب تقديم عروض أسعار رسمي (RFQ)</span>
+                    <h2 class="text-2xl font-black text-slate-900">{{ rfq.notes|default:"طلب تقديم عروض أسعار للمواد والبنود التالية" }}</h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-left bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2">
+                        <span class="text-[10px] font-black uppercase text-slate-400 block">آخر موعد لتقديم العرض</span>
+                        <span class="text-sm font-black text-rose-600 font-mono">{{ rfq.deadline|default:"مفتوح" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if error %}
+            <div class="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+                <i class="fas fa-exclamation-circle text-base"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Vendor Bidding Form -->
+            <form method="POST" enctype="multipart/form-data" id="rfqPortalForm" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Vendor Basic Info -->
+                <div class="bg-slate-50/70 p-5 rounded-2xl border border-slate-200">
+                    <h3 class="text-xs font-black uppercase text-slate-500 tracking-wider mb-4 flex items-center gap-2">
+                        <i class="fas fa-building text-blue-600"></i>
+                        <span>بيانات الشركة والمورد المتقدم</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {% if invited_vendors %}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">اسم المورد (المسجل لدى المنظومة)</label>
+                            <select name="vendor_id" id="vendorSelect" onchange="toggleManualVendor(this.value)" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">-- اختر من قائمة الموردين المعتمدين --</option>
+                                {% for v in invited_vendors %}
+                                <option value="{{ v.id }}">{{ v.name }}</option>
+                                {% endfor %}
+                                <option value="manual">+ شركة / مورد غير مدرج في القائمة</option>
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <div id="manualVendorDiv" {% if invited_vendors %}style="display:none;"{% endif %}>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">اسم الشركة / المؤسسة المتقدمة *</label>
+                            <input type="text" name="vendor_name" id="vendorNameInput" placeholder="أدخل اسم شركتكم" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">مدة التوريد المقترحة (بالأيام)</label>
+                            <input type="number" min="1" name="delivery_lead_time_days" value="1" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">شروط السداد والدفع</label>
+                            <select name="payment_terms" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="CASH">نقداً عند الاستلام (Cash on Delivery)</option>
+                                <option value="NET 15">آجل 15 يوماً (Net 15 Days)</option>
+                                <option value="NET 30">آجل 30 يوماً (Net 30 Days)</option>
+                                <option value="NET 60">آجل 60 يوماً (Net 60 Days)</option>
+                                <option value="ADVANCE">دفعة مقدمة (Advance Payment)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">البريد الإلكتروني للتواصل</label>
+                            <input type="email" name="vendor_email" placeholder="example@company.com" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">رقم الهاتف / الجوال</label>
+                            <input type="text" name="vendor_phone" placeholder="05XXXXXXXX" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items & Pricing Table -->
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+                    <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-boxes-stacked text-blue-600"></i>
+                            <h3 class="text-xs font-black uppercase text-slate-700 tracking-wider">الأصناف والكميات المطلوبة</h3>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-500">يرجى إدخال سعر الوحدة لكل صنف</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-right">
+                            <thead class="bg-slate-100 text-[10px] font-black uppercase text-slate-500 border-b border-slate-200">
+                                <tr>
+                                    <th class="py-3 px-4 w-12 text-center">#</th>
+                                    <th class="py-3 px-4">كود الصنف (SKU)</th>
+                                    <th class="py-3 px-4">اسم الصنف والمواصفات</th>
+                                    <th class="py-3 px-4 text-center">الكمية المطلوبة</th>
+                                    <th class="py-3 px-4 text-center w-40">سعر الوحدة المقترح *</th>
+                                    <th class="py-3 px-4 text-left w-36">إجمالي البند</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                {% for line in lines %}
+                                <tr class="hover:bg-slate-50/70 transition-colors">
+                                    <td class="py-3.5 px-4 text-center text-xs font-mono font-bold text-slate-400">{{ forloop.counter }}</td>
+                                    <td class="py-3.5 px-4 font-mono font-black text-blue-600 text-xs">{{ line.material.sku|default:"-" }}</td>
+                                    <td class="py-3.5 px-4 font-bold text-slate-800">{{ line.material.name }}</td>
+                                    <td class="py-3.5 px-4 text-center font-black text-slate-900 font-mono text-base">
+                                        <span id="qty_{{ line.material.id }}">{{ line.quantity }}</span>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-center">
+                                        <div class="relative">
+                                            <input type="number" step="0.01" min="0" required
+                                                   name="price_{{ line.material.id }}" 
+                                                   id="price_{{ line.material.id }}" 
+                                                   data-qty="{{ line.quantity }}"
+                                                   oninput="calcLineTotal({{ line.material.id }})"
+                                                   placeholder="0.00" 
+                                                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs text-center font-black text-blue-700 outline-none focus:ring-2 focus:ring-blue-500">
+                                        </div>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-left font-black text-slate-900 font-mono text-sm">
+                                        $<span id="total_{{ line.material.id }}">0.00</span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="py-8 text-center text-slate-400 font-bold text-xs">لا توجد أصناف مسجلة في هذا الطلب</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="bg-slate-50 font-black text-sm border-t-2 border-slate-200">
+                                <tr>
+                                    <td colspan="5" class="py-4 px-4 text-left text-xs uppercase text-slate-500">المجموع الإجمالي المقترح:</td>
+                                    <td class="py-4 px-4 text-left font-mono text-lg text-blue-600">$<span id="grandTotal">0.00</span></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- PDF Quotation Attachment & Notes -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                        <label class="block text-xs font-black text-slate-700 mb-2 flex items-center gap-2">
+                            <i class="fas fa-file-pdf text-rose-600"></i>
+                            <span>إرفاق عرض السعر الرسمي (PDF)</span>
+                        </label>
+                        <p class="text-[11px] text-slate-500 font-bold mb-3">يمكنكم رفع عرض السعر الرسمي المطبوع أو الكتالوج الفني بصيغة PDF.</p>
+                        <input type="file" name="attachment" accept=".pdf,application/pdf" class="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer">
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                        <label class="block text-xs font-black text-slate-700 mb-2 flex items-center gap-2">
+                            <i class="fas fa-sticky-note text-amber-500"></i>
+                            <span>ملاحظات إضافية من المورد</span>
+                        </label>
+                        <textarea name="notes" rows="3" placeholder="أي شروط خاصة، تفاصيل الضمان، أو توضيحات حول المواصفات..." class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center pt-4">
+                    <button type="submit" class="w-full md:w-auto min-w-[280px] px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-sm shadow-md hover:shadow-lg transition-all inline-flex items-center justify-center gap-2">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>إرسال وتقديم عرض السعر رسمياً</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs font-bold text-slate-400">
+        <p>&copy; 2026 {{ rfq.opco.name|default:"Redivio Core" }} — جميع الحقوق محفوظة | منصة المشتريات والتوريد</p>
+    </footer>
+
+    <script>
+        function toggleManualVendor(val) {
+            const manualDiv = document.getElementById('manualVendorDiv');
+            const manualInput = document.getElementById('vendorNameInput');
+            if (val === 'manual' || !val) {
+                if (manualDiv) manualDiv.style.display = 'block';
+                if (manualInput) manualInput.required = true;
+            } else {
+                if (manualDiv) manualDiv.style.display = 'none';
+                if (manualInput) manualInput.required = false;
+            }
+        }
+
+        function calcLineTotal(matId) {
+            const priceInput = document.getElementById('price_' + matId);
+            const totalSpan = document.getElementById('total_' + matId);
+            if (!priceInput || !totalSpan) return;
+            const qty = parseFloat(priceInput.getAttribute('data-qty') || 0);
+            const price = parseFloat(priceInput.value || 0);
+            const lineTotal = qty * price;
+            totalSpan.innerText = lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            recalcGrandTotal();
+        }
+
+        function recalcGrandTotal() {
+            let sum = 0;
+            const priceInputs = document.querySelectorAll("input[id^='price_']");
+            priceInputs.forEach(input => {
+                const qty = parseFloat(input.getAttribute('data-qty') || 0);
+                const price = parseFloat(input.value || 0);
+                sum += (qty * price);
+            });
+            const grandSpan = document.getElementById('grandTotal');
+            if (grandSpan) {
+                grandSpan.innerText = sum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        }
+    </script>
+</body>
+</html>

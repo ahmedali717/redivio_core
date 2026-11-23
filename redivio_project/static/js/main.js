@@ -444,6 +444,7 @@ createApp({
             imagePreview: null,
             selectedFile: null,
             newLogoFile: null,
+            sqAttachmentFile: null,
 
             modalTitles: {
                 plant: { ar: 'إضافة منشأة جديدة', en: 'Add New Facility' },
@@ -7458,6 +7459,31 @@ createApp({
                 this.activeChatterId = itemData.id;
                 this.fetchChatterMessages('purchaseorder', itemData.id);
                 this.fetchActivities('purchaseorder', itemData.id);
+            } else if (type === 'rfq') {
+                const itemData = JSON.parse(JSON.stringify(item));
+                this.forms.rfq = {
+                    ...itemData,
+                    title: itemData.title || itemData.notes || '',
+                    lines: (itemData.lines || []).map(l => ({
+                        ...l,
+                        selected: true,
+                        quantity: parseFloat(l.quantity) || 1,
+                        target_price: parseFloat(l.target_price) || 0
+                    }))
+                };
+            } else if (type === 'sq') {
+                const itemData = JSON.parse(JSON.stringify(item));
+                this.forms.sq = {
+                    ...itemData,
+                    lines: (itemData.lines || []).map(l => ({
+                        ...l,
+                        quantity: parseFloat(l.quantity) || 1,
+                        unit_price: parseFloat(l.unit_price) || 0,
+                        discount_rate: parseFloat(l.discount_rate) || 0,
+                        tax_rate: parseFloat(l.tax_rate !== undefined ? l.tax_rate : 15) || 0
+                    }))
+                };
+                this.sqAttachmentFile = null;
             } else {
                 this.forms[type] = JSON.parse(JSON.stringify(item));
             }
@@ -7516,7 +7542,13 @@ createApp({
                 this.confirmModal.show = false; // إخفاء المودال فوراً
                 try {
                     this.loading = true;
-                    const deleteUrl = (type === 'category') ? `/api/categories/${id}/` : `/api/${type}s/${id}/`;
+                    let deleteUrl = (type === 'category') ? `/api/categories/${id}/` : `/api/${type}s/${id}/`;
+                    if (type === 'sq') deleteUrl = `/api/supplier-quotations/${id}/`;
+                    else if (type === 'rfq') deleteUrl = `/api/rfqs/${id}/`;
+                    else if (type === 'pr') deleteUrl = `/api/purchase-requisitions/${id}/`;
+                    else if (type === 'matrix') deleteUrl = `/api/quotation-comparisons/${id}/`;
+                    else if (type === 'rtv') deleteUrl = `/api/purchase-returns/${id}/`;
+
                     const res = await fetch(deleteUrl, {
                         method: 'DELETE',
                         headers: {
@@ -7527,6 +7559,13 @@ createApp({
                     if (res.ok) {
                         // تحديث البيانات في الواجهة
                         await this.refreshAllData();
+                        if (['sq', 'rfq', 'pr', 'matrix', 'rtv'].includes(type)) {
+                            await this.fetchEnterpriseProcurementData();
+                            if (this.selectedRFQ) {
+                                const updatedRFQ = (this.rfqs || []).find(r => r.id === this.selectedRFQ.id);
+                                if (updatedRFQ) this.selectedRFQ = JSON.parse(JSON.stringify(updatedRFQ));
+                            }
+                        }
                         // إظهار رسالة نجاح احترافية في منتصف الشاشة
                         this.showToast(this.isArabic ? "تم الحذف بنجاح" : "Deleted successfully", 'success');
                     } else {
@@ -7841,7 +7880,21 @@ createApp({
                         }
                     }
 
-                    payload = JSON.stringify(finalData);
+                    if (type === 'sq' && this.sqAttachmentFile) {
+                        const formData = new FormData();
+                        for (const key of Object.keys(finalData)) {
+                            if (key === 'lines') {
+                                formData.append('lines', JSON.stringify(finalData.lines));
+                            } else if (finalData[key] !== null && finalData[key] !== undefined) {
+                                formData.append(key, finalData[key]);
+                            }
+                        }
+                        formData.append('attachment', this.sqAttachmentFile);
+                        payload = formData;
+                        delete headers['Content-Type'];
+                    } else {
+                        payload = JSON.stringify(finalData);
+                    }
                 }
 
                 // تنفيذ الطلب
@@ -7855,6 +7908,7 @@ createApp({
                     this.showModal = false;
                     this.selectedFile = null;
                     this.imagePreview = null;
+                    this.sqAttachmentFile = null;
                     await this.refreshAllData();
                     if (['account', 'journal_entry', 'purchase_invoice', 'payment_entry'].includes(type)) {
                         await this.fetchAccountingData();
@@ -9610,6 +9664,34 @@ createApp({
                     tax_rate: 15
                 }));
             }
+        },
+
+        onSQFileSelected(e) {
+            const file = e.target.files && e.target.files[0];
+            if (file) {
+                this.sqAttachmentFile = file;
+            }
+        },
+
+        copyVendorPortalLink(rfq) {
+            if (!rfq) return;
+            const token = rfq.portal_token || rfq.id;
+            const url = `${window.location.origin}/portal/rfq/${token}/`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    this.showToast(this.isArabic ? "تم نسخ رابط صفحة المورد إلى الحافظة بنجاح!" : "Vendor portal link copied to clipboard!", "success");
+                }).catch(() => {
+                    prompt(this.isArabic ? "انسخ الرابط التالي:" : "Copy this URL:", url);
+                });
+            } else {
+                prompt(this.isArabic ? "انسخ الرابط التالي:" : "Copy this URL:", url);
+            }
+        },
+
+        openVendorPortal(rfq) {
+            if (!rfq) return;
+            const token = rfq.portal_token || rfq.id;
+            window.open(`/portal/rfq/${token}/`, '_blank');
         },
 
         getPOInvoices(poRef) {

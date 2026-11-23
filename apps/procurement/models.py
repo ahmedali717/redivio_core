@@ -99,6 +99,7 @@ class RequestForQuotation(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
     notes = models.TextField(blank=True, null=True)
     vendors = models.ManyToManyField(Vendor, related_name='rfqs', blank=True)
+    portal_token = models.CharField(max_length=64, blank=True, null=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -107,6 +108,9 @@ class RequestForQuotation(models.Model):
             last_rfq = RequestForQuotation.objects.filter(rfq_number__contains=f'RFQ-{year}').order_by('id').last()
             new_no = (int(last_rfq.rfq_number.split('-')[-1]) + 1) if last_rfq else 1
             self.rfq_number = f"RFQ-{year}-{new_no:04d}"
+        if not self.portal_token:
+            import secrets
+            self.portal_token = secrets.token_urlsafe(16)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -134,6 +138,7 @@ class SupplierQuotation(models.Model):
     delivery_lead_time_days = models.IntegerField(default=1)
     payment_terms = models.CharField(max_length=100, default="CASH")
     notes = models.TextField(blank=True, null=True)
+    attachment = models.FileField(upload_to='procurement/quotations/', null=True, blank=True)
     total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     def save(self, *args, **kwargs):
