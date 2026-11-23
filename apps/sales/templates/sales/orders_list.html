@@ -58,13 +58,13 @@
             <div class="glass-sheen"></div>
             <div class="relative z-10 flex items-center justify-between mb-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">[[ isArabic ? "إجمالي العقود والأوامر" : "Total Orders" ]]</span>
-                <span class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center text-xs">
+                <span class="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs shadow-xs">
                     <i class="fas fa-receipt"></i>
                 </span>
             </div>
             <div class="relative z-10 text-xl font-black text-[var(--heading-color)] tech-font tracking-tight">$[[ formatNumber(soStats.totalValue) ]]</div>
             <div class="relative z-10 flex items-center gap-2 mt-2">
-                <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400">[[ soStats.totalCount ]] [[ isArabic ? "أمر" : "Orders" ]]</span>
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500">[[ soStats.totalCount ]] [[ isArabic ? "أمر" : "Orders" ]]</span>
                 <span class="text-[10px] text-slate-400 font-semibold">[[ isArabic ? "شامل الكل" : "All statuses" ]]</span>
             </div>
         </div>
@@ -76,8 +76,8 @@
             <div class="glass-sheen"></div>
             <div class="relative z-10 flex items-center justify-between mb-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">[[ isArabic ? "عروض أسعار / مسودات" : "Draft Quotations" ]]</span>
-                <span class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs shadow-sm">
-                    <i class="fas fa-file-signature text-slate-500 dark:text-slate-400"></i>
+                <span class="w-8 h-8 rounded-xl bg-slate-500/10 border border-slate-500/20 text-slate-600 dark:text-slate-400 flex items-center justify-center text-xs shadow-xs">
+                    <i class="fas fa-file-signature"></i>
                 </span>
             </div>
             <div class="relative z-10 text-xl font-black text-[var(--heading-color)] tech-font tracking-tight">$[[ formatNumber(soStats.draftValue) ]]</div>
@@ -93,14 +93,14 @@
             class="liquid-glass-card rounded-[2rem] p-5 cursor-pointer transition-all relative overflow-hidden group">
             <div class="glass-sheen"></div>
             <div class="relative z-10 flex items-center justify-between mb-2">
-                <span class="text-[10px] font-black uppercase tracking-wider text-blue-400">[[ isArabic ? "معتمدة للتجهيز والصرف" : "Confirmed Orders" ]]</span>
-                <span class="w-8 h-8 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-400 flex items-center justify-center text-xs">
-                    <i class="fas fa-boxes-packing text-blue-400"></i>
+                <span class="text-[10px] font-black uppercase tracking-wider text-blue-500">[[ isArabic ? "معتمدة للتجهيز والصرف" : "Confirmed Orders" ]]</span>
+                <span class="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs shadow-xs">
+                    <i class="fas fa-boxes-packing"></i>
                 </span>
             </div>
-            <div class="relative z-10 text-xl font-black text-blue-400 tech-font tracking-tight">$[[ formatNumber(soStats.confirmedValue) ]]</div>
+            <div class="relative z-10 text-xl font-black text-blue-600 dark:text-blue-400 tech-font tracking-tight">$[[ formatNumber(soStats.confirmedValue) ]]</div>
             <div class="relative z-10 flex items-center gap-2 mt-2">
-                <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400">[[ soStats.confirmedCount ]] [[ isArabic ? "قيد الصرف" : "To Deliver" ]]</span>
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500">[[ soStats.confirmedCount ]] [[ isArabic ? "قيد الصرف" : "To Deliver" ]]</span>
                 <span class="text-[10px] text-slate-400 font-semibold">[[ isArabic ? "بالمستودع" : "In Warehouse" ]]</span>
             </div>
         </div>
@@ -112,13 +112,13 @@
             <div class="glass-sheen"></div>
             <div class="relative z-10 flex items-center justify-between mb-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">[[ isArabic ? "تم الشحن والتسليم" : "Shipped / Delivered" ]]</span>
-                <span class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs shadow-sm">
-                    <i class="fas fa-truck-ramp-box text-slate-500 dark:text-slate-400"></i>
+                <span class="w-8 h-8 rounded-xl bg-slate-500/10 border border-slate-500/20 text-slate-600 dark:text-slate-400 flex items-center justify-center text-xs shadow-xs">
+                    <i class="fas fa-truck-ramp-box"></i>
                 </span>
             </div>
             <div class="relative z-10 text-xl font-black text-[var(--heading-color)] tech-font tracking-tight">$[[ formatNumber(soStats.shippedValue) ]]</div>
             <div class="relative z-10 flex items-center gap-2 mt-2">
-                <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-300">[[ soStats.shippedCount ]] [[ isArabic ? "مكتمل" : "Fulfilled" ]]</span>
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-400">[[ soStats.shippedCount ]] [[ isArabic ? "مكتمل" : "Fulfilled" ]]</span>
                 <span class="text-[10px] text-slate-400 font-semibold">[[ isArabic ? "تم الاستلام" : "Completed" ]]</span>
             </div>
         </div>
