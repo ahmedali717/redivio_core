@@ -501,29 +501,19 @@
                                     <span v-if="del.vehicle_plate" class="font-mono">([[ del.vehicle_plate ]])</span>
                                 </div>
 
-                                <!-- Action Buttons -->
-                                <div class="flex items-center gap-1.5 pt-1">
-                                    <button @click.stop="openDeliveryInWarehouse(del, so)" 
-                                        :title="isArabic ? 'فتح شاشة حركة الصرف في المستودع بكل التفاصيل' : 'Open in Warehouse Screen'"
-                                        class="flex-1 py-1.5 px-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer">
-                                        <i class="fas fa-boxes-packing text-xs"></i>
-                                        <span>[[ isArabic ? "شاشة المخزن" : "WMS Screen" ]]</span>
-                                    </button>
+                                <!-- Action Buttons (Odoo Standard) -->
+                                <div class="flex items-center gap-2 pt-1">
                                     <button @click.stop="openDeliveryNoteModal(del, so)" 
-                                        :title="isArabic ? 'معاينة سريعة لكارت إذن الصرف' : 'View Delivery Card'"
-                                        class="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all border border-slate-200 dark:border-slate-700 cursor-pointer">
-                                        <i class="fas fa-eye text-blue-500"></i>
-                                        <span>[[ isArabic ? "معاينة" : "View" ]]</span>
+                                        :title="isArabic ? 'معاينة إذن الصرف المخزني (WH/OUT)' : 'View Delivery Order'"
+                                        class="flex-1 py-1.5 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        <span>[[ isArabic ? "معاينة إذن الصرف" : "View" ]]</span>
                                     </button>
                                     <button @click.stop="printDelivery(del.id)" 
                                         :title="isArabic ? 'طباعة إذن الصرف' : 'Print Delivery Note'"
-                                        class="py-1.5 px-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all border border-blue-500/20 cursor-pointer">
-                                        <i class="fas fa-print"></i>
-                                    </button>
-                                    <button @click.stop="navigateToInventoryDelivery(del)" 
-                                        :title="isArabic ? 'الانتقال إلى حركات المستودع' : 'WMS Moves'"
-                                        class="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-xl text-[10px] font-bold flex items-center justify-center transition-all border border-slate-200 dark:border-slate-700 cursor-pointer">
-                                        <i class="fas fa-warehouse text-blue-500"></i>
+                                        class="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all border border-slate-200 dark:border-slate-700 cursor-pointer">
+                                        <i class="fas fa-print text-xs"></i>
+                                        <span>[[ isArabic ? "طباعة" : "Print" ]]</span>
                                     </button>
                                 </div>
                             </div>
@@ -593,30 +583,19 @@
                                     <span class="font-black text-[var(--heading-color)]">$[[ formatNumber(inv.total_amount) ]]</span>
                                 </div>
 
-                                <!-- Invoice Action Buttons -->
-                                <div class="flex items-center gap-1.5 pt-1">
-                                    <button @click.stop="openInvoiceInAccounting(inv)" 
-                                        :title="isArabic ? 'فتح شاشة فواتير المبيعات في قسم المحاسبة والمالية' : 'Open in Accounting Screen'"
-                                        class="flex-1 py-1.5 px-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer">
-                                        <i class="fas fa-file-invoice-dollar text-xs"></i>
-                                        <span>[[ isArabic ? "شاشة المحاسبة" : "Accounting" ]]</span>
-                                    </button>
-                                    <button @click.stop="openInvoiceGL(inv)" 
-                                        :title="isArabic ? 'عرض قيود اليومية ودفتر الأستاذ في المحاسبة' : 'GL Entries & Ledger'"
-                                        class="flex-1 py-1.5 px-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all border border-blue-500/20 cursor-pointer">
-                                        <i class="fas fa-book-journal-whills text-xs"></i>
-                                        <span>[[ isArabic ? "دفتر الأستاذ" : "GL Ledger" ]]</span>
-                                    </button>
+                                <!-- Invoice Action Buttons (Odoo Standard) -->
+                                <div class="flex items-center gap-2 pt-1">
                                     <button @click.stop="openSalesInvoiceModal(inv, so)" 
-                                        :title="isArabic ? 'معاينة سريعة لكارت الفاتورة' : 'Quick View'"
-                                        class="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all border border-slate-200 dark:border-slate-700 cursor-pointer">
-                                        <i class="fas fa-eye text-blue-500"></i>
-                                        <span>[[ isArabic ? "معاينة" : "View" ]]</span>
+                                        :title="isArabic ? 'معاينة فاتورة العميل المحاسبية (Customer Invoice)' : 'View Customer Invoice'"
+                                        class="flex-1 py-1.5 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer">
+                                        <i class="fas fa-eye text-xs"></i>
+                                        <span>[[ isArabic ? "معاينة الفاتورة" : "View" ]]</span>
                                     </button>
                                     <button @click.stop="printInvoice(inv.id)" 
                                         :title="isArabic ? 'طباعة الفاتورة' : 'Print Invoice'"
-                                        class="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-xl text-[10px] font-bold flex items-center justify-center transition-all border border-slate-200 dark:border-slate-700 cursor-pointer">
-                                        <i class="fas fa-print"></i>
+                                        class="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all border border-slate-200 dark:border-slate-700 cursor-pointer">
+                                        <i class="fas fa-print text-xs"></i>
+                                        <span>[[ isArabic ? "طباعة" : "Print" ]]</span>
                                     </button>
                                 </div>
                             </div>
@@ -646,301 +625,544 @@
         </div>
     </div>
 
-    <!-- 🚚 FULL-SCREEN MODAL: Warehouse Delivery Note Details Modal -->
+    <!-- 🚚 ODOO STANDARD FORM VIEW: Warehouse Delivery Order (WH/OUT - stock.picking) -->
     <div v-if="showDeliveryNoteModal && selectedDeliveryNote" 
-         class="fixed inset-0 z-[20000] flex flex-col w-full h-full min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-10 overflow-y-auto animate-in fade-in duration-200" 
+         class="fixed inset-0 z-[20000] overflow-y-auto bg-slate-900/60 backdrop-blur-xs p-3 md:p-8 flex flex-col items-center animate-in fade-in duration-200" 
          :dir="isArabic ? 'rtl' : 'ltr'">
         
-        <!-- Top Action Bar -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl font-black shadow-sm">
-                    <i class="fas fa-truck-ramp-box"></i>
+        <div class="max-w-6xl w-full mx-auto space-y-4 my-auto">
+            <!-- Top Control Panel / Breadcrumb & Status Bar -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <!-- Breadcrumbs & Document Tag -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-lg font-black">
+                        <i class="fas fa-truck-ramp-box"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">[[ isArabic ? "المستودع / أذون الصرف" : "Inventory / Delivery Orders" ]]</span>
+                            <span class="text-slate-300 dark:text-slate-700">/</span>
+                            <span class="text-xs font-black text-blue-500 font-mono">[[ selectedDeliveryNote.delivery_number ]]</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <h2 class="text-lg font-black text-slate-800 dark:text-white">
+                                [[ isArabic ? "إذن تسليم وصرف مخزني" : "Delivery Order (WH/OUT)" ]]
+                            </h2>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                                <i class="fas fa-lock text-[9px] mr-1"></i>[[ isArabic ? "للقراءة فقط (منجز)" : "Read-Only (Done)" ]]
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <div class="flex items-center gap-2.5">
-                        <h2 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
-                            [[ isArabic ? "إذن تسليم وصرف مخزني" : "Warehouse Delivery Note" ]]
-                        </h2>
-                        <span class="px-3 py-1 rounded-full text-xs font-mono font-black bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                            [[ selectedDeliveryNote.delivery_number ]]
+
+                <!-- Pipeline Stages (Odoo State Tracker) & Actions -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Odoo Status Pipeline -->
+                    <div class="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 border border-slate-200 dark:border-slate-700 text-[11px] font-bold">
+                        <span class="px-2.5 py-1 text-slate-400">[[ isArabic ? "مسودة" : "Draft" ]]</span>
+                        <i class="fas fa-chevron-left text-[9px] text-slate-300 dark:text-slate-600 px-1" :class="isArabic ? '' : 'fa-chevron-right'"></i>
+                        <span class="px-2.5 py-1 text-slate-400">[[ isArabic ? "في الانتظار" : "Waiting" ]]</span>
+                        <i class="fas fa-chevron-left text-[9px] text-slate-300 dark:text-slate-600 px-1" :class="isArabic ? '' : 'fa-chevron-right'"></i>
+                        <span class="px-2.5 py-1 text-slate-400">[[ isArabic ? "جاهز" : "Ready" ]]</span>
+                        <i class="fas fa-chevron-left text-[9px] text-slate-300 dark:text-slate-600 px-1" :class="isArabic ? '' : 'fa-chevron-right'"></i>
+                        <span class="px-3 py-1 rounded-lg bg-emerald-600 text-white shadow-xs flex items-center gap-1 font-black">
+                            <i class="fas fa-check-circle text-[10px]"></i>
+                            [[ isArabic ? "تم الصرف (Done)" : "Done" ]]
                         </span>
                     </div>
-                    <p class="text-xs text-slate-400 font-medium mt-0.5">
-                        [[ isArabic ? "إدارة التجهيز والشحن وتتبع حركة المخزون من المستودع للعميل" : "Warehouse dispatch, driver verification and inventory move tracking" ]]
-                    </p>
+
+                    <!-- Multi-delivery switcher if exists -->
+                    <div v-if="selectedDeliveryNoteSO && selectedDeliveryNoteSO.deliveries && selectedDeliveryNoteSO.deliveries.length > 1" class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                        <button v-for="d in selectedDeliveryNoteSO.deliveries" :key="d.id"
+                            @click="openDeliveryNoteModal(d, selectedDeliveryNoteSO)"
+                            :class="d.id === selectedDeliveryNote.id ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300'"
+                            class="px-2 py-1 rounded-lg text-xs font-mono font-bold transition-all">
+                            [[ d.delivery_number ]]
+                        </button>
+                    </div>
+
+                    <button @click="printDelivery(selectedDeliveryNote.id)"
+                        class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                        <i class="fas fa-print"></i>
+                        <span>[[ isArabic ? "طباعة الإذن" : "Print Slip" ]]</span>
+                    </button>
+
+                    <button @click="closeDeliveryNoteModal()"
+                        class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-500/10 hover:text-rose-500 dark:bg-slate-800 text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
+                        title="Close">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Action buttons & Switcher & Close -->
-            <div class="flex flex-wrap items-center gap-2.5">
-                <!-- If multiple deliveries in this order, show switcher -->
-                <div v-if="selectedDeliveryNoteSO && selectedDeliveryNoteSO.deliveries && selectedDeliveryNoteSO.deliveries.length > 1" class="flex items-center gap-1.5 bg-slate-200/80 dark:bg-slate-800 p-1 rounded-xl">
-                    <button v-for="d in selectedDeliveryNoteSO.deliveries" :key="d.id"
-                        @click="openDeliveryNoteModal(d, selectedDeliveryNoteSO)"
-                        :class="d.id === selectedDeliveryNote.id ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'"
-                        class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all">
-                        [[ d.delivery_number ]]
+            <!-- Odoo Document Form Sheet (o_form_sheet) -->
+            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 md:p-8 shadow-sm space-y-6">
+                <!-- Document Title & Reference Header -->
+                <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-5">
+                    <div>
+                        <div class="text-xs font-black text-blue-500 uppercase tracking-widest font-mono">WH / OUT</div>
+                        <h1 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-white font-mono tracking-tight mt-1">
+                            [[ selectedDeliveryNote.delivery_number ]]
+                        </h1>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">[[ isArabic ? "المستند المصدر" : "Source Document" ]]</span>
+                        <span class="text-sm font-black text-blue-500 font-mono">[[ selectedDeliveryNote.so_number || '-' ]]</span>
+                    </div>
+                </div>
+
+                <!-- Form Fields Grid (Odoo Form Style) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 text-xs">
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "جهة التسليم / العميل" : "Delivery Address / Partner" ]]</span>
+                        <span class="font-black text-sm text-slate-800 dark:text-white">[[ selectedDeliveryNote.customer_name || selectedDeliveryNote.manual_contact_name || '-' ]]</span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "نوع العملية" : "Operation Type" ]]</span>
+                        <span class="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+                            <i class="fas fa-warehouse text-blue-500"></i>
+                            [[ isArabic ? "أذون صرف المبيعات (Delivery Orders)" : "Delivery Orders" ]]
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "التاريخ الفعلي للصرف" : "Effective Date" ]]</span>
+                        <span class="font-black text-sm text-slate-800 dark:text-white font-mono">[[ formatDate(selectedDeliveryNote.date) ]]</span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "موقع المصدر" : "Source Location" ]]</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300 font-mono">WH/Stock (المستودع الرئيسي)</span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "موقع الوجهة" : "Destination Location" ]]</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300 font-mono">Partner Locations/Customers (موقع العميل)</span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "سياسة الشحن" : "Shipping Policy" ]]</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300">[[ isArabic ? "بأسرع ما يمكن فور الجاهزية" : "As soon as possible" ]]</span>
+                    </div>
+                </div>
+
+                <!-- Odoo Notebook Tabs -->
+                <div class="border-b border-slate-200 dark:border-slate-800 flex items-center gap-6 text-xs font-bold pt-2">
+                    <button @click="deliveryActiveTab = 'operations'"
+                        :class="deliveryActiveTab === 'operations' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 pb-3 font-black' : 'text-slate-400 hover:text-slate-600 pb-3'"
+                        class="flex items-center gap-2 transition-all cursor-pointer">
+                        <i class="fas fa-boxes-stacked"></i>
+                        <span>[[ isArabic ? "العمليات المفصلة (Detailed Operations)" : "Detailed Operations" ]]</span>
+                    </button>
+                    <button @click="deliveryActiveTab = 'info'"
+                        :class="deliveryActiveTab === 'info' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 pb-3 font-black' : 'text-slate-400 hover:text-slate-600 pb-3'"
+                        class="flex items-center gap-2 transition-all cursor-pointer">
+                        <i class="fas fa-truck"></i>
+                        <span>[[ isArabic ? "معلومات إضافية والشحن (Additional Info)" : "Additional Info" ]]</span>
                     </button>
                 </div>
 
-                <button @click="openDeliveryInWarehouse(selectedDeliveryNote, selectedDeliveryNoteSO)"
-                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer">
-                    <i class="fas fa-boxes-packing"></i>
-                    <span>[[ isArabic ? "فتح شاشة حركة الصرف في المستودع (WMS)" : "Open in Warehouse Screen" ]]</span>
-                </button>
-                <button @click="printDelivery(selectedDeliveryNote.id)"
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer">
-                    <i class="fas fa-print"></i>
-                    <span>[[ isArabic ? "طباعة إذن الصرف (PDF)" : "Print Note (PDF)" ]]</span>
-                </button>
-                <button @click="navigateToInventoryDelivery(selectedDeliveryNote)"
-                    class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-2 cursor-pointer">
-                    <i class="fas fa-warehouse text-blue-500"></i>
-                    <span>[[ isArabic ? "حركات المستودع (WMS)" : "Warehouse Moves" ]]</span>
-                </button>
-                <button @click="closeDeliveryNoteModal()"
-                    class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-rose-500/10 hover:text-rose-500 dark:bg-slate-800 text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
-                    title="Close Fullscreen">
-                    <i class="fas fa-times text-base"></i>
-                </button>
-            </div>
-        </div>
+                <!-- Tab 1: Detailed Operations (Odoo Demand vs Done Table) -->
+                <div v-if="deliveryActiveTab === 'operations'" class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-50 dark:bg-slate-950/50 text-[10px] font-black text-slate-400 uppercase border-b border-slate-200 dark:border-slate-800">
+                            <tr>
+                                <th class="px-5 py-3.5">[[ isArabic ? "المنتج / الصنف" : "Product" ]]</th>
+                                <th class="px-5 py-3.5 text-center">[[ isArabic ? "كود الصنف (SKU)" : "SKU" ]]</th>
+                                <th class="px-5 py-3.5 text-center">[[ isArabic ? "الكمية المطلوبة (Demand)" : "Demand" ]]</th>
+                                <th class="px-5 py-3.5 text-center">[[ isArabic ? "الكمية المنصرفة (Done)" : "Done" ]]</th>
+                                <th class="px-5 py-3.5 text-center">[[ isArabic ? "حاوية التخزين / الرف" : "Storage Bin" ]]</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                            <tr v-for="it in (selectedDeliveryNote.items || [])" :key="it.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                <td class="px-5 py-3.5 font-bold text-slate-800 dark:text-white">[[ it.material_name || '-' ]]</td>
+                                <td class="px-5 py-3.5 text-center text-slate-400 font-mono">[[ it.material_sku || '-' ]]</td>
+                                <td class="px-5 py-3.5 text-center font-bold text-slate-700 dark:text-slate-300 font-mono">[[ it.quantity ]]</td>
+                                <td class="px-5 py-3.5 text-center font-black font-mono">
+                                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                        [[ it.quantity ]]
+                                    </span>
+                                </td>
+                                <td class="px-5 py-3.5 text-center font-mono">
+                                    <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-[11px]">
+                                        [[ it.storage_bin_code || it.storage_bin || 'WH/Stock/Bin-1' ]]
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr v-if="!selectedDeliveryNote.items || selectedDeliveryNote.items.length === 0">
+                                <td colspan="5" class="px-6 py-8 text-center text-slate-400 font-bold">
+                                    [[ isArabic ? "لا توجد تفاصيل أصناف مسجلة لهذا الإذن" : "No items recorded" ]]
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-        <!-- Main Content Area -->
-        <div class="space-y-6 max-w-7xl mx-auto w-full flex-1">
-            <!-- Info Cards Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "العميل" : "Customer" ]]</span>
-                    <span class="font-bold text-sm text-slate-800 dark:text-white">[[ selectedDeliveryNote.customer_name || selectedDeliveryNote.manual_contact_name || '-' ]]</span>
-                </div>
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "تاريخ الصرف" : "Date" ]]</span>
-                    <span class="font-bold text-sm text-slate-800 dark:text-white font-mono">[[ formatDate(selectedDeliveryNote.date) ]]</span>
-                </div>
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "أمر البيع" : "Sales Order" ]]</span>
-                    <span class="font-bold text-sm text-blue-500 font-mono">[[ selectedDeliveryNote.so_number || '-' ]]</span>
-                </div>
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "السائق" : "Driver" ]]</span>
-                    <span class="font-bold text-sm text-slate-800 dark:text-white">[[ selectedDeliveryNote.driver_name || '-' ]]</span>
-                </div>
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "لوحة المركبة" : "Plate" ]]</span>
-                    <span class="font-bold text-sm text-slate-800 dark:text-white font-mono">[[ selectedDeliveryNote.vehicle_plate || '-' ]]</span>
-                </div>
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "رقم التتبع" : "Tracking #" ]]</span>
-                    <span class="font-bold text-sm text-slate-800 dark:text-white font-mono">[[ selectedDeliveryNote.tracking_number || '-' ]]</span>
-                </div>
-            </div>
+                <!-- Tab 2: Additional Info & Shipping -->
+                <div v-if="deliveryActiveTab === 'info'" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 space-y-3">
+                        <h4 class="font-black text-slate-800 dark:text-white uppercase tracking-wider text-[11px] flex items-center gap-2">
+                            <i class="fas fa-truck text-blue-500"></i>
+                            [[ isArabic ? "بيانات النقل وسائق الشاحنة" : "Carrier & Vehicle Details" ]]
+                        </h4>
+                        <div class="flex items-center justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                            <span class="text-slate-400">[[ isArabic ? "اسم السائق" : "Driver Name" ]]:</span>
+                            <span class="font-bold text-slate-800 dark:text-white">[[ selectedDeliveryNote.driver_name || '-' ]]</span>
+                        </div>
+                        <div class="flex items-center justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                            <span class="text-slate-400">[[ isArabic ? "رقم لوحة المركبة" : "Vehicle Plate" ]]:</span>
+                            <span class="font-bold text-slate-800 dark:text-white font-mono">[[ selectedDeliveryNote.vehicle_plate || '-' ]]</span>
+                        </div>
+                        <div class="flex items-center justify-between py-1">
+                            <span class="text-slate-400">[[ isArabic ? "رقم بوليصة / تتبع الشحنة" : "Tracking Reference" ]]:</span>
+                            <span class="font-bold text-blue-500 font-mono">[[ selectedDeliveryNote.tracking_number || '-' ]]</span>
+                        </div>
+                    </div>
 
-            <!-- Address & Notes -->
-            <div v-if="selectedDeliveryNote.delivery_address || selectedDeliveryNote.notes" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div v-if="selectedDeliveryNote.delivery_address" class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "عنوان التسليم" : "Delivery Address" ]]</span>
-                    <p class="text-xs text-slate-700 dark:text-slate-300">[[ selectedDeliveryNote.delivery_address ]]</p>
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 space-y-3">
+                        <h4 class="font-black text-slate-800 dark:text-white uppercase tracking-wider text-[11px] flex items-center gap-2">
+                            <i class="fas fa-map-marker-alt text-blue-500"></i>
+                            [[ isArabic ? "عنوان التسليم وملاحظات المستودع" : "Delivery Address & Notes" ]]
+                        </h4>
+                        <div>
+                            <span class="text-slate-400 block mb-1">[[ isArabic ? "العنوان" : "Address" ]]:</span>
+                            <p class="font-bold text-slate-700 dark:text-slate-300">[[ selectedDeliveryNote.delivery_address || '-' ]]</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
+                            <span class="text-slate-400 block mb-1">[[ isArabic ? "ملاحظات إضافية" : "Internal Notes" ]]:</span>
+                            <p class="text-slate-600 dark:text-slate-400">[[ selectedDeliveryNote.notes || '-' ]]</p>
+                        </div>
+                    </div>
                 </div>
-                <div v-if="selectedDeliveryNote.notes" class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "ملاحظات" : "Notes" ]]</span>
-                    <p class="text-xs text-slate-700 dark:text-slate-300">[[ selectedDeliveryNote.notes ]]</p>
-                </div>
-            </div>
-
-            <!-- Dispatched Items Table -->
-            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
-                <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                    <h3 class="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                        <i class="fas fa-boxes-stacked text-blue-500"></i>
-                        [[ isArabic ? "الأصناف والكميات المنصرفة" : "Dispatched Items & Quantities" ]]
-                    </h3>
-                    <span class="text-xs font-mono font-bold text-slate-400">
-                        [[ (selectedDeliveryNote.items || []).length ]] [[ isArabic ? "بند" : "Lines" ]]
-                    </span>
-                </div>
-                <table class="w-full text-right text-xs">
-                    <thead class="bg-slate-50 dark:bg-slate-950/50 text-[10px] font-black text-slate-400 uppercase border-b border-slate-200 dark:border-slate-800">
-                        <tr>
-                            <th class="px-6 py-3.5">[[ isArabic ? "الصنف / المادة" : "Item / Material" ]]</th>
-                            <th class="px-6 py-3.5 text-center">[[ isArabic ? "كود الصنف (SKU)" : "SKU" ]]</th>
-                            <th class="px-6 py-3.5 text-center">[[ isArabic ? "الكمية المنصرفة" : "Dispatched Qty" ]]</th>
-                            <th class="px-6 py-3.5 text-center">[[ isArabic ? "الرف / حاوية التخزين" : "Storage Bin" ]]</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                        <tr v-for="it in (selectedDeliveryNote.items || [])" :key="it.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                            <td class="px-6 py-4 font-bold text-sm text-slate-800 dark:text-white">[[ it.material_name || '-' ]]</td>
-                            <td class="px-6 py-4 text-center text-slate-400 font-mono">[[ it.material_sku || '-' ]]</td>
-                            <td class="px-6 py-4 text-center font-black text-base text-blue-500 font-mono">[[ it.quantity ]]</td>
-                            <td class="px-6 py-4 text-center text-slate-600 dark:text-slate-400 font-mono">
-                                <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                                    [[ it.storage_bin_code || it.storage_bin || '-' ]]
-                                </span>
-                            </td>
-                        </tr>
-                        <tr v-if="!selectedDeliveryNote.items || selectedDeliveryNote.items.length === 0">
-                            <td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">
-                                [[ isArabic ? "لا توجد تفاصيل أصناف مسجلة لهذا الإذن" : "No items recorded" ]]
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>
 
-    <!-- 🧾 FULL-SCREEN MODAL: Sales Invoice Details & GL Actions Modal -->
+    <!-- 🧾 ODOO STANDARD FORM VIEW: Customer Invoice (account.move - Customer Invoice & GL Items) -->
     <div v-if="showSalesInvoiceModal && selectedSalesInvoice" 
-         class="fixed inset-0 z-[20000] flex flex-col w-full h-full min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-10 overflow-y-auto animate-in fade-in duration-200" 
+         class="fixed inset-0 z-[20000] overflow-y-auto bg-slate-900/60 backdrop-blur-xs p-3 md:p-8 flex flex-col items-center animate-in fade-in duration-200" 
          :dir="isArabic ? 'rtl' : 'ltr'">
         
-        <!-- Top Action Bar -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl font-black shadow-sm">
-                    <i class="fas fa-file-invoice-dollar"></i>
+        <div class="max-w-6xl w-full mx-auto space-y-4 my-auto">
+            <!-- Top Control Panel / Breadcrumb & Status Bar -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <!-- Breadcrumbs & Document Tag -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-lg font-black">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">[[ isArabic ? "المحاسبة / فواتير العملاء" : "Accounting / Customer Invoices" ]]</span>
+                            <span class="text-slate-300 dark:text-slate-700">/</span>
+                            <span class="text-xs font-black text-blue-500 font-mono">[[ selectedSalesInvoice.invoice_number ]]</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <h2 class="text-lg font-black text-slate-800 dark:text-white">
+                                [[ isArabic ? "فاتورة عميل معتمدة" : "Customer Invoice" ]]
+                            </h2>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                                <i class="fas fa-lock text-[9px] mr-1"></i>[[ isArabic ? "للقراءة فقط (محاسبة)" : "Read-Only (Accounting)" ]]
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <div class="flex items-center gap-2.5">
-                        <h2 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
-                            [[ isArabic ? "فاتورة مبيعات معتمدة" : "Sales Invoice" ]]
-                        </h2>
-                        <span class="px-3 py-1 rounded-full text-xs font-mono font-black bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                            [[ selectedSalesInvoice.invoice_number ]]
-                        </span>
-                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider"
-                            :class="selectedSalesInvoice.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : (selectedSalesInvoice.status === 'PARTIAL' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20')">
-                            [[ selectedSalesInvoice.status ]]
+
+                <!-- Pipeline Stages (Odoo State Tracker) & Actions -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Odoo Status Pipeline -->
+                    <div class="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 border border-slate-200 dark:border-slate-700 text-[11px] font-bold">
+                        <span class="px-2.5 py-1 text-slate-400">[[ isArabic ? "مسودة" : "Draft" ]]</span>
+                        <i class="fas fa-chevron-left text-[9px] text-slate-300 dark:text-slate-600 px-1" :class="isArabic ? '' : 'fa-chevron-right'"></i>
+                        <span class="px-3 py-1 rounded-lg bg-blue-600 text-white shadow-xs flex items-center gap-1 font-black">
+                            <i class="fas fa-check-double text-[10px]"></i>
+                            [[ isArabic ? "مرحل للدفتر العام (Posted)" : "Posted" ]]
                         </span>
                     </div>
-                    <p class="text-xs text-slate-400 font-medium mt-0.5">
-                        [[ isArabic ? "تفاصيل الفاتورة المالية، القيود المحاسبية، وتحديث أرصدة العملاء" : "Financial invoice breakdown, General Ledger journal entries and customer balance" ]]
-                    </p>
+
+                    <!-- Payment Ribbon / Status Tag -->
+                    <span class="px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border shadow-xs"
+                        :class="selectedSalesInvoice.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : (selectedSalesInvoice.status === 'PARTIAL' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20')">
+                        [[ selectedSalesInvoice.status ]]
+                    </span>
+
+                    <!-- Multi-invoice switcher if exists -->
+                    <div v-if="selectedSalesInvoiceSO && selectedSalesInvoiceSO.invoices && selectedSalesInvoiceSO.invoices.length > 1" class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                        <button v-for="invItem in selectedSalesInvoiceSO.invoices" :key="invItem.id"
+                            @click="openSalesInvoiceModal(invItem, selectedSalesInvoiceSO)"
+                            :class="invItem.id === selectedSalesInvoice.id ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300'"
+                            class="px-2 py-1 rounded-lg text-xs font-mono font-bold transition-all">
+                            [[ invItem.invoice_number ]]
+                        </button>
+                    </div>
+
+                    <button v-if="!selectedSalesInvoice.is_posted" @click="postInvoiceToGL(selectedSalesInvoice)"
+                        class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>[[ isArabic ? "ترحيل للدفتر العام" : "Post to GL" ]]</span>
+                    </button>
+
+                    <button @click="printInvoice(selectedSalesInvoice.id)"
+                        class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                        <i class="fas fa-print"></i>
+                        <span>[[ isArabic ? "طباعة الفاتورة" : "Print Invoice" ]]</span>
+                    </button>
+
+                    <button @click="closeSalesInvoiceModal()"
+                        class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-500/10 hover:text-rose-500 dark:bg-slate-800 text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
+                        title="Close">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Action buttons & Switcher & Close -->
-            <div class="flex flex-wrap items-center gap-2.5">
-                <!-- If multiple invoices in this order, show switcher -->
-                <div v-if="selectedSalesInvoiceSO && selectedSalesInvoiceSO.invoices && selectedSalesInvoiceSO.invoices.length > 1" class="flex items-center gap-1.5 bg-slate-200/80 dark:bg-slate-800 p-1 rounded-xl">
-                    <button v-for="invItem in selectedSalesInvoiceSO.invoices" :key="invItem.id"
-                        @click="openSalesInvoiceModal(invItem, selectedSalesInvoiceSO)"
-                        :class="invItem.id === selectedSalesInvoice.id ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'"
-                        class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all">
-                        [[ invItem.invoice_number ]]
+            <!-- Odoo Document Form Sheet (o_form_sheet) -->
+            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 md:p-8 shadow-sm space-y-6">
+                <!-- Document Title & Reference Header -->
+                <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-5">
+                    <div>
+                        <div class="text-xs font-black text-blue-500 uppercase tracking-widest font-mono">INV / CUSTOMER INVOICE</div>
+                        <h1 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-white font-mono tracking-tight mt-1">
+                            [[ selectedSalesInvoice.invoice_number ]]
+                        </h1>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">[[ isArabic ? "المستند المصدر" : "Source Document" ]]</span>
+                        <span class="text-sm font-black text-blue-500 font-mono">[[ selectedSalesInvoice.so_number || '-' ]]</span>
+                    </div>
+                </div>
+
+                <!-- Form Fields Grid (Odoo Form Style) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 text-xs">
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "العميل" : "Customer" ]]</span>
+                        <span class="font-black text-sm text-slate-800 dark:text-white">[[ selectedSalesInvoice.customer_name || '-' ]]</span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "دفتر اليومية المحاسبي" : "Journal" ]]</span>
+                        <span class="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+                            <i class="fas fa-book-journal-whills text-blue-500"></i>
+                            Customer Invoices (INV) - مبيعات
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "تاريخ الفاتورة" : "Invoice Date" ]]</span>
+                        <span class="font-black text-sm text-slate-800 dark:text-white font-mono">[[ formatDate(selectedSalesInvoice.date) ]]</span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "تاريخ الاستحقاق" : "Due Date" ]]</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300 font-mono">[[ formatDate(selectedSalesInvoice.due_date) ]]</span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "شروط السداد" : "Payment Terms" ]]</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300">[[ selectedSalesInvoice.payment_terms || 'Immediate Payment (سداد فوري)' ]]</span>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "العملة" : "Currency" ]]</span>
+                        <span class="font-bold text-blue-500 font-mono">SAR / USD (العملة الأساسية)</span>
+                    </div>
+                </div>
+
+                <!-- Odoo Notebook Tabs -->
+                <div class="border-b border-slate-200 dark:border-slate-800 flex items-center gap-6 text-xs font-bold pt-2">
+                    <button @click="invoiceActiveTab = 'lines'"
+                        :class="invoiceActiveTab === 'lines' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 pb-3 font-black' : 'text-slate-400 hover:text-slate-600 pb-3'"
+                        class="flex items-center gap-2 transition-all cursor-pointer">
+                        <i class="fas fa-list-check"></i>
+                        <span>[[ isArabic ? "سطور الفاتورة (Invoice Lines)" : "Invoice Lines" ]]</span>
+                    </button>
+                    <button @click="invoiceActiveTab = 'journal_items'"
+                        :class="invoiceActiveTab === 'journal_items' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 pb-3 font-black' : 'text-slate-400 hover:text-slate-600 pb-3'"
+                        class="flex items-center gap-2 transition-all cursor-pointer">
+                        <i class="fas fa-book-journal-whills"></i>
+                        <span>[[ isArabic ? "بنود القيد المحاسبي في دفتر الأستاذ (Journal Items)" : "Journal Items" ]]</span>
+                    </button>
+                    <button @click="invoiceActiveTab = 'info'"
+                        :class="invoiceActiveTab === 'info' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 pb-3 font-black' : 'text-slate-400 hover:text-slate-600 pb-3'"
+                        class="flex items-center gap-2 transition-all cursor-pointer">
+                        <i class="fas fa-circle-info"></i>
+                        <span>[[ isArabic ? "معلومات أخرى (Other Info)" : "Other Info" ]]</span>
                     </button>
                 </div>
 
-                <button @click="openInvoiceInAccounting(selectedSalesInvoice)"
-                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                    <span>[[ isArabic ? "فتح شاشة الفواتير في المحاسبة (Finance)" : "Open in Accounting Screen" ]]</span>
-                </button>
-                <button @click="openInvoiceGL(selectedSalesInvoice)"
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer">
-                    <i class="fas fa-book-journal-whills"></i>
-                    <span>[[ isArabic ? "عرض قيود اليومية ودفتر الأستاذ" : "View GL Entries" ]]</span>
-                </button>
-                <button v-if="!selectedSalesInvoice.is_posted" @click="postInvoiceToGL(selectedSalesInvoice)"
-                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer">
-                    <i class="fas fa-paper-plane"></i>
-                    <span>[[ isArabic ? "ترحيل للدفتر العام الآن" : "Post to GL Now" ]]</span>
-                </button>
-                <button @click="printInvoice(selectedSalesInvoice.id)"
-                    class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer">
-                    <i class="fas fa-print"></i>
-                    <span>[[ isArabic ? "طباعة (PDF)" : "Print (PDF)" ]]</span>
-                </button>
-                <button @click="navigateToAccountingInvoices(selectedSalesInvoice)"
-                    class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer">
-                    <i class="fas fa-coins text-blue-500"></i>
-                    <span>[[ isArabic ? "شاشة فواتير المالية" : "Finance Invoices" ]]</span>
-                </button>
-                <button @click="closeSalesInvoiceModal()"
-                    class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-rose-500/10 hover:text-rose-500 dark:bg-slate-800 text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
-                    title="Close Fullscreen">
-                    <i class="fas fa-times text-base"></i>
-                </button>
-            </div>
-        </div>
+                <!-- Tab 1: Invoice Lines (Odoo Product Lines Table + Totals) -->
+                <div v-if="invoiceActiveTab === 'lines'" class="space-y-4">
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-950/50 text-[10px] font-black text-slate-400 uppercase border-b border-slate-200 dark:border-slate-800">
+                                <tr>
+                                    <th class="px-5 py-3.5">[[ isArabic ? "المنتج / الصنف" : "Product" ]]</th>
+                                    <th class="px-5 py-3.5">[[ isArabic ? "البيان / الوصف" : "Label" ]]</th>
+                                    <th class="px-5 py-3.5">[[ isArabic ? "الحساب المحاسبي" : "Account" ]]</th>
+                                    <th class="px-5 py-3.5 text-center">[[ isArabic ? "الكمية" : "Quantity" ]]</th>
+                                    <th class="px-5 py-3.5 text-center">[[ isArabic ? "السعر" : "Unit Price" ]]</th>
+                                    <th class="px-5 py-3.5 text-center">[[ isArabic ? "الضرائب" : "Taxes" ]]</th>
+                                    <th class="px-5 py-3.5 text-left font-mono">[[ isArabic ? "المجموع الفرعي" : "Subtotal" ]]</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                                <tr v-for="l in (selectedSalesInvoiceSO && selectedSalesInvoiceSO.lines ? selectedSalesInvoiceSO.lines : [selectedSalesInvoice])" :key="l.id" 
+                                    class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td class="px-5 py-3.5 font-bold text-slate-800 dark:text-white">[[ l.material_name || l.invoice_number || '-' ]]</td>
+                                    <td class="px-5 py-3.5 text-slate-500">[[ l.material_sku ? ('كود: ' + l.material_sku) : ('فاتورة مبيعات لأمر ' + (selectedSalesInvoice.so_number || '')) ]]</td>
+                                    <td class="px-5 py-3.5 font-mono text-blue-500 font-bold">4100 إيرادات المبيعات</td>
+                                    <td class="px-5 py-3.5 text-center font-mono font-bold text-slate-800 dark:text-white">[[ l.quantity || 1 ]]</td>
+                                    <td class="px-5 py-3.5 text-center font-mono text-slate-600 dark:text-slate-400">$[[ formatNumber(l.unit_price || selectedSalesInvoice.subtotal) ]]</td>
+                                    <td class="px-5 py-3.5 text-center">
+                                        <span class="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-bold">
+                                            15% VAT
+                                        </span>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-left font-mono font-black text-slate-800 dark:text-white">$[[ formatNumber(l.total_price || selectedSalesInvoice.subtotal) ]]</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-        <!-- Main Content Area: Responsive Grid & Totals -->
-        <div class="space-y-6 max-w-7xl mx-auto w-full flex-1">
-            <!-- Info Cards Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "العميل" : "Customer" ]]</span>
-                    <span class="font-bold text-sm text-slate-800 dark:text-white">[[ selectedSalesInvoice.customer_name || '-' ]]</span>
-                </div>
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "تاريخ الإصدار" : "Invoice Date" ]]</span>
-                    <span class="font-bold text-sm text-slate-800 dark:text-white font-mono">[[ formatDate(selectedSalesInvoice.date) ]]</span>
-                </div>
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "تاريخ الاستحقاق" : "Due Date" ]]</span>
-                    <span class="font-bold text-sm text-slate-800 dark:text-white font-mono">[[ formatDate(selectedSalesInvoice.due_date) ]]</span>
-                </div>
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "أمر البيع" : "Sales Order" ]]</span>
-                    <span class="font-bold text-sm text-blue-500 font-mono">[[ selectedSalesInvoice.so_number || '-' ]]</span>
-                </div>
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "شروط السداد" : "Payment Terms" ]]</span>
-                    <span class="font-bold text-sm text-slate-800 dark:text-white">[[ selectedSalesInvoice.payment_terms || 'IMMEDIATE' ]]</span>
-                </div>
-                <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-1">[[ isArabic ? "حالة الترحيل المحاسبي" : "GL Status" ]]</span>
-                    <span v-if="selectedSalesInvoice.is_posted" class="font-bold text-sm text-emerald-500 flex items-center gap-1">
-                        <i class="fas fa-check-circle text-xs"></i>[[ isArabic ? "مرحلة للدفتر العام" : "GL Posted" ]]
-                    </span>
-                    <span v-else class="font-bold text-sm text-amber-500 flex items-center gap-1">
-                        <i class="fas fa-clock text-xs"></i>[[ isArabic ? "مسودة غير مرحلة" : "Unposted Draft" ]]
-                    </span>
-                </div>
-            </div>
-
-            <!-- Financial Summary Breakdown Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">[[ isArabic ? "المجموع الفرعي (قبل الضريبة)" : "Subtotal" ]]</span>
-                    <div class="text-2xl font-black text-slate-800 dark:text-white font-mono">$[[ formatNumber(selectedSalesInvoice.subtotal) ]]</div>
-                    <div v-if="selectedSalesInvoice.discount_amount > 0" class="text-xs font-bold text-rose-500 mt-2 font-mono">
-                        [[ isArabic ? "خصم:" : "Discount:" ]] -$[[ formatNumber(selectedSalesInvoice.discount_amount) ]]
+                    <!-- Odoo-Style Bottom Totals Summary Box -->
+                    <div class="flex justify-end pt-2">
+                        <div class="w-full md:w-80 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-4 space-y-2 text-xs font-mono">
+                            <div class="flex justify-between items-center text-slate-500">
+                                <span>[[ isArabic ? "المبلغ غير الخاضع للضريبة (Untaxed):" : "Untaxed Amount:" ]]</span>
+                                <span class="font-bold text-slate-800 dark:text-white">$[[ formatNumber(selectedSalesInvoice.subtotal) ]]</span>
+                            </div>
+                            <div v-if="selectedSalesInvoice.discount_amount > 0" class="flex justify-between items-center text-rose-500">
+                                <span>[[ isArabic ? "الخصومات الممنوحة:" : "Discount:" ]]</span>
+                                <span class="font-bold">-$[[ formatNumber(selectedSalesInvoice.discount_amount) ]]</span>
+                            </div>
+                            <div class="flex justify-between items-center text-blue-500">
+                                <span>[[ isArabic ? "ضريبة القيمة المضافة (15% VAT):" : "VAT 15%:" ]]</span>
+                                <span class="font-bold">+$[[ formatNumber(selectedSalesInvoice.tax_amount) ]]</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-800 text-sm font-black text-slate-800 dark:text-white">
+                                <span>[[ isArabic ? "الإجمالي النهائي:" : "Total:" ]]</span>
+                                <span class="text-blue-600 dark:text-blue-400">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-1 text-[11px] font-bold border-t border-slate-200 dark:border-slate-800">
+                                <span class="text-slate-400">[[ isArabic ? "المبلغ المسدد:" : "Paid Amount:" ]]</span>
+                                <span class="text-emerald-500 font-black">$[[ formatNumber(selectedSalesInvoice.paid_amount || 0) ]]</span>
+                            </div>
+                            <div class="flex justify-between items-center text-[11px] font-bold">
+                                <span class="text-slate-400">[[ isArabic ? "الرصيد المستحق:" : "Amount Due:" ]]</span>
+                                <span class="font-black" :class="(selectedSalesInvoice.total_amount - (selectedSalesInvoice.paid_amount || 0)) > 0 ? 'text-rose-500' : 'text-slate-400'">
+                                    $[[ formatNumber(selectedSalesInvoice.total_amount - (selectedSalesInvoice.paid_amount || 0)) ]]
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">[[ isArabic ? "ضريبة القيمة المضافة (15% VAT)" : "VAT (15%)" ]]</span>
-                    <div class="text-2xl font-black text-blue-500 font-mono">+$[[ formatNumber(selectedSalesInvoice.tax_amount) ]]</div>
-                    <div class="text-xs text-slate-400 mt-2 font-semibold">[[ isArabic ? "ضريبة مخرجات مبيعات" : "Output Sales VAT" ]]</div>
-                </div>
+                <!-- Tab 2: Journal Items (بنود القيد المحاسبي في دفتر الأستاذ العام - Odoo GL Lines) -->
+                <div v-if="invoiceActiveTab === 'journal_items'" class="space-y-4">
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-950/50 text-[10px] font-black text-slate-400 uppercase border-b border-slate-200 dark:border-slate-800">
+                                <tr>
+                                    <th class="px-5 py-3.5">[[ isArabic ? "الحساب المحاسبي (Account)" : "Account" ]]</th>
+                                    <th class="px-5 py-3.5">[[ isArabic ? "الشريك / العميل (Partner)" : "Partner" ]]</th>
+                                    <th class="px-5 py-3.5">[[ isArabic ? "البيان (Label)" : "Label" ]]</th>
+                                    <th class="px-5 py-3.5 text-left font-mono">[[ isArabic ? "مدين (Debit)" : "Debit" ]]</th>
+                                    <th class="px-5 py-3.5 text-left font-mono">[[ isArabic ? "دائن (Credit)" : "Credit" ]]</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-xs">
+                                <!-- Line 1: Accounts Receivable (Debit) -->
+                                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td class="px-5 py-3.5 font-bold text-slate-800 dark:text-white">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 font-bold text-[10px]">1100</span>
+                                            <span>العملاء والمدينون (Accounts Receivable)</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-5 py-3.5 font-sans font-medium text-slate-700 dark:text-slate-300">[[ selectedSalesInvoice.customer_name || '-' ]]</td>
+                                    <td class="px-5 py-3.5 font-sans text-slate-500">INV: [[ selectedSalesInvoice.invoice_number ]] - استحقاق مبيعات</td>
+                                    <td class="px-5 py-3.5 text-left font-black text-blue-600 dark:text-blue-400">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</td>
+                                    <td class="px-5 py-3.5 text-left text-slate-400">$0.00</td>
+                                </tr>
 
-                <div class="p-5 rounded-3xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 shadow-xs">
-                    <span class="text-[11px] font-black text-blue-500 uppercase tracking-wider block mb-2">[[ isArabic ? "إجمالي الفاتورة النهائي" : "Grand Total" ]]</span>
-                    <div class="text-3xl font-black text-blue-600 dark:text-blue-400 font-mono">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</div>
-                    <div class="text-xs text-blue-500 font-bold mt-2">[[ isArabic ? "شامل الضريبة" : "VAT Inclusive" ]]</div>
-                </div>
+                                <!-- Line 2: Sales Revenue (Credit) -->
+                                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td class="px-5 py-3.5 font-bold text-slate-800 dark:text-white">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">4100</span>
+                                            <span>إيرادات مبيعات البضائع (Sales Operating Revenue)</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-5 py-3.5 font-sans font-medium text-slate-700 dark:text-slate-300">[[ selectedSalesInvoice.customer_name || '-' ]]</td>
+                                    <td class="px-5 py-3.5 font-sans text-slate-500">SO: [[ selectedSalesInvoice.so_number || '-' ]] - إيراد مبيعات</td>
+                                    <td class="px-5 py-3.5 text-left text-slate-400">$0.00</td>
+                                    <td class="px-5 py-3.5 text-left font-black text-emerald-600 dark:text-emerald-400">$[[ formatNumber(selectedSalesInvoice.subtotal) ]]</td>
+                                </tr>
 
-                <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <span class="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">[[ isArabic ? "المدفوع والمتبقي" : "Paid & Balance" ]]</span>
-                    <div class="text-xl font-black text-emerald-500 font-mono">[[ isArabic ? "تم تحصيل:" : "Paid:" ]] $[[ formatNumber(selectedSalesInvoice.paid_amount || 0) ]]</div>
-                    <div class="text-xs font-black font-mono mt-2" :class="(selectedSalesInvoice.total_amount - (selectedSalesInvoice.paid_amount || 0)) > 0 ? 'text-rose-500' : 'text-slate-400'">
-                        [[ isArabic ? "المتبقي:" : "Due Balance:" ]] $[[ formatNumber(selectedSalesInvoice.total_amount - (selectedSalesInvoice.paid_amount || 0)) ]]
+                                <!-- Line 3: VAT Output Tax (Credit) -->
+                                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td class="px-5 py-3.5 font-bold text-slate-800 dark:text-white">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[10px]">2200</span>
+                                            <span>أمانات ضريبة القيمة المضافة المحصلة (VAT Output Tax)</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-5 py-3.5 font-sans font-medium text-slate-700 dark:text-slate-300">[[ isArabic ? "مصلحة الضرائب / ZATCA" : "Tax Authority / ZATCA" ]]</td>
+                                    <td class="px-5 py-3.5 font-sans text-slate-500">ضريبة مخرجات مبيعات 15%</td>
+                                    <td class="px-5 py-3.5 text-left text-slate-400">$0.00</td>
+                                    <td class="px-5 py-3.5 text-left font-black text-amber-600 dark:text-amber-400">$[[ formatNumber(selectedSalesInvoice.tax_amount) ]]</td>
+                                </tr>
+                            </tbody>
+                            <!-- Balanced Footer Row -->
+                            <tfoot class="bg-slate-100 dark:bg-slate-950 font-mono text-xs font-black border-t-2 border-slate-300 dark:border-slate-700">
+                                <tr>
+                                    <td colspan="3" class="px-5 py-3.5 text-right font-sans">
+                                        <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>[[ isArabic ? "قيد اليومية متزن محاسبياً (Balanced Journal Entry)" : "Journal Entry Balanced (0.00 Difference)" ]]</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-left text-blue-600 dark:text-blue-400">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</td>
+                                    <td class="px-5 py-3.5 text-left text-blue-600 dark:text-blue-400">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
-            </div>
 
-            <!-- Notes & Terms -->
-            <div v-if="selectedSalesInvoice.notes || selectedSalesInvoice.billing_address" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div v-if="selectedSalesInvoice.billing_address" class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                    <span class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">[[ isArabic ? "عنوان الفوترة" : "Billing Address" ]]</span>
-                    <p class="text-xs text-slate-700 dark:text-slate-300 font-medium">[[ selectedSalesInvoice.billing_address ]]</p>
-                </div>
-                <div v-if="selectedSalesInvoice.notes" class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                    <span class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">[[ isArabic ? "ملاحظات الفاتورة" : "Invoice Notes" ]]</span>
-                    <p class="text-xs text-slate-700 dark:text-slate-300 font-medium">[[ selectedSalesInvoice.notes ]]</p>
+                <!-- Tab 3: Other Info -->
+                <div v-if="invoiceActiveTab === 'info'" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 space-y-3">
+                        <h4 class="font-black text-slate-800 dark:text-white uppercase tracking-wider text-[11px] flex items-center gap-2">
+                            <i class="fas fa-file-invoice text-blue-500"></i>
+                            [[ isArabic ? "معلومات الفوترة والضريبة" : "Fiscal & Invoicing Details" ]]
+                        </h4>
+                        <div class="flex items-center justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                            <span class="text-slate-400">[[ isArabic ? "الوضع المالي / الضريبي" : "Fiscal Position" ]]:</span>
+                            <span class="font-bold text-slate-800 dark:text-white">[[ isArabic ? "محلي (المملكة العربية السعودية)" : "Domestic (Saudi Arabia)" ]]</span>
+                        </div>
+                        <div class="flex items-center justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                            <span class="text-slate-400">[[ isArabic ? "عنوان الفوترة" : "Billing Address" ]]:</span>
+                            <span class="font-bold text-slate-800 dark:text-white">[[ selectedSalesInvoice.billing_address || '-' ]]</span>
+                        </div>
+                        <div class="flex items-center justify-between py-1">
+                            <span class="text-slate-400">[[ isArabic ? "الترحيل التلقائي" : "Auto-Post" ]]:</span>
+                            <span class="font-bold text-emerald-500">مفعل (Post at Confirmation)</span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 space-y-3">
+                        <h4 class="font-black text-slate-800 dark:text-white uppercase tracking-wider text-[11px] flex items-center gap-2">
+                            <i class="fas fa-comment-dots text-blue-500"></i>
+                            [[ isArabic ? "ملاحظات الفاتورة وشروط السداد" : "Terms & Notes" ]]
+                        </h4>
+                        <div>
+                            <span class="text-slate-400 block mb-1">[[ isArabic ? "شروط الدفع والملاحظات" : "Terms & Conditions" ]]:</span>
+                            <p class="text-slate-600 dark:text-slate-400">[[ selectedSalesInvoice.notes || 'سداد فوري عند الاستلام - خاضعة للائحة الفوترة الإلكترونية (ZATCA).' ]]</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

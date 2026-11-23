@@ -426,9 +426,11 @@ createApp({
             selectedDeliveryNote: null,
             selectedDeliveryNoteSO: null,
             showDeliveryNoteModal: false,
+            deliveryActiveTab: 'operations',
             selectedSalesInvoice: null,
             selectedSalesInvoiceSO: null,
             showSalesInvoiceModal: false,
+            invoiceActiveTab: 'lines',
             materialTab: 'general',
             modalType: '',
             draggedType: null,
@@ -5758,6 +5760,7 @@ createApp({
             if (!del) return;
             this.selectedDeliveryNote = del;
             this.selectedDeliveryNoteSO = so;
+            this.deliveryActiveTab = 'operations';
             this.showDeliveryNoteModal = true;
         },
 
@@ -5779,6 +5782,7 @@ createApp({
             if (!inv) return;
             this.selectedSalesInvoice = inv;
             this.selectedSalesInvoiceSO = so;
+            this.invoiceActiveTab = 'lines';
             this.showSalesInvoiceModal = true;
         },
 
@@ -5786,69 +5790,6 @@ createApp({
             this.showSalesInvoiceModal = false;
             this.selectedSalesInvoice = null;
             this.selectedSalesInvoiceSO = null;
-        },
-
-        navigateToAccountingInvoices(inv) {
-            this.showSalesInvoiceModal = false;
-            this.showModal = false;
-            this.view = 'accounting_module';
-            this.accountingTab = 'invoices';
-            if (this.fetchSalesInvoices) this.fetchSalesInvoices();
-            this.showToast(this.isArabic ? "الانتقال إلى شاشة فواتير المبيعات في قسم المحاسبة والمالية" : "Navigating to Sales Invoices in Accounting", "info");
-        },
-
-        openDeliveryInWarehouse(del, so = null) {
-            this.showDeliveryNoteModal = false;
-            this.showModal = false;
-            this.view = 'inventory_module';
-            this.inventoryTab = 'direct_move';
-
-            const order = so || (del ? del.so : null);
-            const customerId = order ? (typeof order.customer === 'object' ? order.customer.id : order.customer) : (del ? (typeof del.customer === 'object' ? del.customer.id : del.customer) : '');
-            const customerName = del ? (del.customer_name || del.manual_contact_name) : (order ? order.customer_name : '');
-            
-            let items = [];
-            if (del && del.items && del.items.length > 0) {
-                items = del.items.map(it => ({
-                    material_id: it.material_id || (it.material ? (typeof it.material === 'object' ? it.material.id : it.material) : ''),
-                    quantity: it.quantity || 1,
-                    unit_cost: 0,
-                    sales_price: it.price || it.unit_price || 0,
-                    storage_bin: it.storage_bin || ''
-                }));
-            } else if (order && order.lines && order.lines.length > 0) {
-                items = order.lines.map(l => ({
-                    material_id: l.material_id || (l.material ? (typeof l.material === 'object' ? l.material.id : l.material) : ''),
-                    quantity: l.remaining_quantity !== undefined ? l.remaining_quantity : l.quantity,
-                    unit_cost: 0,
-                    sales_price: l.unit_price || 0,
-                    storage_bin: l.storage_bin || ''
-                }));
-            }
-
-            this.forms.stock_entry = {
-                receipt_type: 'ISSUE', // حركة صرف بضاعة من المستودع للعميل
-                payment_method: 'CREDIT',
-                contact_id: customerId || '',
-                manual_contact_name: customerName || '',
-                reference: del ? `إذن صرف مخزني: ${del.delivery_number} - أمر بيع: ${del.so_number || (order ? order.so_number : '')}` : (order ? `صرف مخزني لأمر البيع: ${order.so_number}` : ''),
-                items: items.length > 0 ? items : [{ material_id: '', quantity: 1, unit_cost: 0, sales_price: 0 }],
-                tax_rate: 15,
-                isEditing: false
-            };
-
-            this.modalType = 'stock_entry';
-            this.showModal = true;
-            this.showToast(this.isArabic ? "تم فتح شاشة حركة الصرف المخزني بكل التفاصيل في المستودع" : "Opened Warehouse Stock Entry Screen", "success");
-        },
-
-        openInvoiceInAccounting(inv) {
-            this.showSalesInvoiceModal = false;
-            this.showModal = false;
-            this.view = 'accounting_module';
-            this.accountingTab = 'invoices';
-            if (this.fetchSalesInvoices) this.fetchSalesInvoices();
-            this.showToast(this.isArabic ? "تم الانتقال إلى شاشة فواتير المبيعات في المحاسبة والمالية" : "Navigated to Accounting Invoices screen", "info");
         },
 
         openSODeliveries(so) {
@@ -5862,12 +5803,12 @@ createApp({
                 }
             }
             if (dels && dels.length > 0) {
-                this.openDeliveryInWarehouse(dels[0], so);
+                this.openDeliveryNoteModal(dels[0], so);
             } else {
                 if (so.status === 'CONFIRMED' || so.status === 'SHIPPED') {
-                    this.openDeliveryInWarehouse(null, so);
+                    this.startDelivery(so);
                 } else {
-                    this.showToast(this.isArabic ? "يجب اعتماد أمر البيع أولاً لإجراء حركة صرف بالمستودع" : "Order must be confirmed first to create warehouse delivery", "info");
+                    this.showToast(this.isArabic ? "لا توجد أذون صرف بعد. يجب اعتماد أمر البيع أولاً" : "No delivery notes yet. Order must be confirmed first", "info");
                 }
             }
         },
@@ -5883,7 +5824,7 @@ createApp({
                 }
             }
             if (invs && invs.length > 0) {
-                this.openInvoiceInAccounting(invs[0]);
+                this.openSalesInvoiceModal(invs[0], so);
             } else {
                 if (so.status === 'CONFIRMED' || so.status === 'SHIPPED') {
                     this.generateInvoice(so);
