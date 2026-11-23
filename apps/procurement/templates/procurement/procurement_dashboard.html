@@ -304,7 +304,7 @@
                                             <div class="font-black text-slate-900 text-sm">$[[ formatNumber(po.grand_total || getPOTotalAmount(po)) ]]</div>
                                         </div>
                                         <div class="flex items-center gap-1" @click.stop>
-                                            <button @click="viewPODetails(po)" :title="isArabic ? 'استلام البضاعة بالمخزن' : 'Receive Goods'"
+                                            <button @click="openReceiptModal(po.id)" :title="isArabic ? 'استلام البضاعة بالمخزن' : 'Receive Goods'"
                                                 class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center text-xs transition-colors">
                                                 <i class="fas fa-box-open"></i>
                                             </button>
@@ -408,7 +408,7 @@
                                     </td>
                                     <td class="py-4 text-center flex justify-center items-center gap-2" @click.stop>
                                         <button v-if="po.status === 'draft' || po.status === 'DRAFT'" @click="updatePOStatus(po.id, 'CONFIRMED')" class="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-rose-700 transition-all uppercase tracking-wider flex items-center gap-1" v-text="isArabic ? 'اعتماد الطلب' : 'Validate'"></button>
-                                        <button v-else-if="po.status === 'confirmed' || po.status === 'CONFIRMED'" @click="viewPODetails(po)" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-emerald-700 transition-all uppercase tracking-wider flex items-center gap-1" v-text="isArabic ? 'استلام' : 'Receive'"></button>
+                                        <button v-else-if="po.status === 'confirmed' || po.status === 'CONFIRMED'" @click="openReceiptModal(po.id)" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-emerald-700 transition-all uppercase tracking-wider flex items-center gap-1" v-text="isArabic ? 'استلام' : 'Receive'"></button>
                                         <button @click="viewPODetails(po)" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition-all uppercase tracking-wider flex items-center gap-1">
                                             <i class="fas fa-eye"></i>
                                             <span v-text="isArabic ? 'تفاصيل' : 'Details'"></span>
@@ -438,7 +438,7 @@
                                                         <i class="fas fa-check-circle"></i>
                                                         <span v-text="isArabic ? 'اعتماد الطلب' : 'Validate PO'"></span>
                                                     </button>
-                                                    <button v-else-if="po.status === 'confirmed' || po.status === 'CONFIRMED'" @click="viewPODetails(po)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-sm transition-all flex items-center gap-1">
+                                                    <button v-else-if="po.status === 'confirmed' || po.status === 'CONFIRMED'" @click="openReceiptModal(po.id)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-sm transition-all flex items-center gap-1">
                                                         <i class="fas fa-box-open"></i>
                                                         <span v-text="isArabic ? 'استلام البضاعة' : 'Receive Goods'"></span>
                                                     </button>

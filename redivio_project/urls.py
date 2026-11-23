@@ -86,6 +86,11 @@ urlpatterns = [
     path('api/print/so/<int:pk>/', print_so_pdf, name='print_so_pdf'),
     path('api/print/delivery/<int:pk>/', print_delivery_pdf, name='print_delivery_pdf'),
     path('api/print/invoice/<int:pk>/', print_invoice_pdf, name='print_invoice_pdf'),
+    path('print/po/<int:pk>/', print_po_pdf, name='print_po_direct'),
+    path('print/grn/<int:pk>/', print_grn_pdf, name='print_grn_direct'),
+    path('print/so/<int:pk>/', print_so_pdf, name='print_so_direct'),
+    path('print/delivery/<int:pk>/', print_delivery_pdf, name='print_delivery_direct'),
+    path('print/invoice/<int:pk>/', print_invoice_pdf, name='print_invoice_direct'),
     path('logout/', logout_view, name='logout'), # ✅ رابط الخروج
     path('', include('apps.core.urls')),
 ]

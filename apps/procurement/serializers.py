@@ -333,6 +333,7 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         purchase_order = PurchaseOrder.objects.create(**validated_data)
         for line_data in lines_data:
             PurchaseOrderLine.objects.create(po=purchase_order, **line_data)
+        purchase_order.calculate_totals()
         return purchase_order
 
     def update(self, instance, validated_data):
@@ -345,6 +346,7 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
             instance.lines.all().delete()
             for line_data in lines_data:
                 PurchaseOrderLine.objects.create(po=instance, **line_data)
+            instance.calculate_totals()
         return instance
 
 

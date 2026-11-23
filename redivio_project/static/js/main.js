@@ -5730,7 +5730,7 @@ createApp({
 
         printGRN(receiptId) {
             this.showToast(this.isArabic ? "جاري تجهيز إذن الاستلام للطباعة..." : "Preparing GRN document...", "success");
-            window.open(`/print/grn/${receiptId}/`, '_blank');
+            window.open(`/api/print/grn/${receiptId}/`, '_blank');
         },
 
         printDirectMove(moveId) {
@@ -6752,8 +6752,8 @@ createApp({
         async fetchPendingPOs() {
             try {
                 const url = this.activeOpcoId
-                    ? `/api/orders/?status=CONFIRMED&opco=${this.activeOpcoId}&has_remaining=1`
-                    : '/api/orders/?status=CONFIRMED&has_remaining=1';
+                    ? `/api/orders/?has_remaining=1&opco=${this.activeOpcoId}`
+                    : '/api/orders/?has_remaining=1';
                 const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
@@ -7382,14 +7382,6 @@ createApp({
 
         editItem(type, item) {
 
-            if (type === 'po' && ['Received', 'Confirmed'].includes(item.status)) {
-                this.showToast(
-                    this.isArabic ? "لا يمكن تعديل أمر توريد تم استلامه أو تأكيده" : "Cannot edit a Received/Confirmed PO",
-                    "error"
-                );
-                return;
-            }
-
             this.isEditing = true;
             this.modalType = type;
             this.showModal = true;
@@ -7721,7 +7713,31 @@ createApp({
                         finalData.tax_amount = this.calculatePOTax();
                         finalData.grand_total = this.calculatePOGrandTotal();
                         delete finalData.activeTab;
-                        if (!finalData.expected_delivery) finalData.expected_delivery = null;
+                        if (!finalData.expected_delivery_date) {
+                            finalData.expected_delivery_date = null;
+                        }
+                        delete finalData.expected_delivery;
+                        if (!finalData.opco && this.activeOpcoId) {
+                            finalData.opco = this.activeOpcoId;
+                        }
+                        if (finalData.vendor && typeof finalData.vendor === 'object') {
+                            finalData.vendor = finalData.vendor.id;
+                        }
+                        if (Array.isArray(finalData.lines)) {
+                            finalData.lines = finalData.lines.map(l => {
+                                const matId = (l.material && typeof l.material === 'object') ? l.material.id : (parseInt(l.material) || null);
+                                return {
+                                    material: matId,
+                                    uom: l.uom || 'Unit',
+                                    quantity: parseFloat(l.quantity) || 1,
+                                    unit_price: parseFloat(l.unit_price) || 0,
+                                    discount_rate: parseFloat(l.discount_rate) || 0,
+                                    discount_amount: parseFloat(l.discount_amount) || 0,
+                                    tax_rate: parseFloat(l.tax_rate !== undefined ? l.tax_rate : 15) || 0,
+                                    line_total: this.calculatePOLineTotal ? this.calculatePOLineTotal(l) : (parseFloat(l.quantity) * parseFloat(l.unit_price))
+                                };
+                            }).filter(l => l.material && l.quantity > 0);
+                        }
                     } else if (type === 'journal_entry') {
                         const parity = this.calculateJVTotals();
                         if (!parity.isBalanced) {
