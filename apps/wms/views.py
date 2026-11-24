@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from decimal import Decimal
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.apps import apps
 
@@ -77,7 +77,7 @@ def wms_stats(request):
     items_count = quants.values('material_id').distinct().count()
 
     # 2. حساب الأصناف الحرجة (Low Stock based on reorder_level)
-    from django.db.models import Sum, F
+    from django.db.models import Sum, F, Q
     from django.db.models.functions import Coalesce
     
     low_stock_qs = Material.objects.filter(
