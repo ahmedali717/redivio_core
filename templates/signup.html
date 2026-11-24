@@ -137,7 +137,7 @@
                 </a>
                 
                 <!-- Language Toggle Button -->
-                <button @click="toggleLang()" class="flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-200 bg-slate-50 text-xs font-bold text-slate-600 hover:text-brand hover:border-brand/30 hover:bg-brand/5 transition-all shadow-sm">
+                <button type="button" @click="toggleLang()" class="flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-200 bg-slate-50 text-xs font-bold text-slate-600 hover:text-brand hover:border-brand/30 hover:bg-brand/5 transition-all shadow-sm">
                     <i class="fas fa-globe text-brand"></i>
                     <span x-text="lang === 'ar' ? 'English' : 'العربية'" class="tracking-wide"></span>
                 </button>
@@ -290,6 +290,41 @@
                 return names[plan] || plan;
             },
             submitForm() {
+                // Client-side validation for Step 1
+                const name = (this.form.name || '').trim();
+                const company = (this.form.company || '').trim();
+                const email = (this.form.email || '').trim();
+                const phone = (this.form.phone || '').trim();
+                const password = (this.form.password || '').trim();
+
+                if (!name || !company || !email || !phone || !password) {
+                    Swal.fire({
+                        title: this.lang === 'ar' ? 'بيانات مطلوبة غير مكتملة' : 'Missing Required Fields',
+                        text: this.lang === 'ar' 
+                            ? 'يرجى إدخال جميع الحقول الأساسية (الاسم، اسم الشركة، البريد الإلكتروني، رقم الهاتف، وكلمة المرور).'
+                            : 'Please fill in all required fields (Full Name, Company Name, Email, Phone Number, and Password).',
+                        icon: 'warning',
+                        confirmButtonText: this.lang === 'ar' ? 'حسناً' : 'OK',
+                        confirmButtonColor: '#3b82f6',
+                        background: '#0f172a',
+                        color: '#fff'
+                    });
+                    return;
+                }
+
+                if (!this.form.industry) {
+                    Swal.fire({
+                        title: this.lang === 'ar' ? 'تحديد مجال العمل' : 'Select Industry',
+                        text: this.lang === 'ar' ? 'يرجى اختيار مجال عمل شركتك للمتابعة.' : 'Please select your industry to proceed.',
+                        icon: 'warning',
+                        confirmButtonText: this.lang === 'ar' ? 'حسناً' : 'OK',
+                        confirmButtonColor: '#3b82f6',
+                        background: '#0f172a',
+                        color: '#fff'
+                    });
+                    return;
+                }
+
                 this.loading = true;
                 
                 // Check if email exists
@@ -305,84 +340,23 @@
                 .then(data => {
                     if (data.exists) {
                         this.loading = false;
-                        const co = data.company;
-                        let infoHtml = '';
-                        if (co) {
-                            if (this.lang === 'ar') {
-                                infoHtml = `
-                                    <div class="text-right bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2 text-sm text-slate-300 font-sans" dir="rtl">
-                                        <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
-                                            <span class="font-semibold text-blue-400">الشركة:</span>
-                                            <span class="text-white font-medium">${co.name}</span>
-                                        </div>
-                                        <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
-                                            <span class="font-semibold text-blue-400">الكود:</span>
-                                            <span class="font-mono text-amber-400 font-bold">${co.code}</span>
-                                        </div>
-                                        <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
-                                            <span class="font-semibold text-blue-400">الخطة:</span>
-                                            <span class="text-white font-medium">${co.plan}</span>
-                                        </div>
-                                        <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
-                                            <span class="font-semibold text-blue-400">تاريخ التسجيل:</span>
-                                            <span class="text-white font-medium">${co.created_at || 'غير متوفر'}</span>
-                                        </div>
-                                        <div class="flex justify-between pb-0.5">
-                                            <span class="font-semibold text-blue-400">حالة الحساب:</span>
-                                            <span class="font-medium ${co.is_active ? 'text-green-400' : 'text-red-400'}">${co.is_active ? 'نشط' : 'غير نشط'}</span>
-                                        </div>
-                                    </div>
-                                `;
-                            } else {
-                                infoHtml = `
-                                    <div class="text-left bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2 text-sm text-slate-300 font-sans" dir="ltr">
-                                        <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
-                                            <span class="font-semibold text-blue-400">Company:</span>
-                                            <span class="text-white font-medium">${co.name}</span>
-                                        </div>
-                                        <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
-                                            <span class="font-semibold text-blue-400">Code:</span>
-                                            <span class="font-mono text-amber-400 font-bold">${co.code}</span>
-                                        </div>
-                                        <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
-                                            <span class="font-semibold text-blue-400">Plan:</span>
-                                            <span class="text-white font-medium">${co.plan}</span>
-                                        </div>
-                                        <div class="flex justify-between border-b border-slate-800/80 pb-1.5">
-                                            <span class="font-semibold text-blue-400">Created At:</span>
-                                            <span class="text-white font-medium">${co.created_at || 'N/A'}</span>
-                                        </div>
-                                        <div class="flex justify-between pb-0.5">
-                                            <span class="font-semibold text-blue-400">Status:</span>
-                                            <span class="font-medium ${co.is_active ? 'text-green-400' : 'text-red-400'}">${co.is_active ? 'Active' : 'Inactive'}</span>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        } else {
-                            infoHtml = this.lang === 'ar' 
-                                ? `<p class="text-slate-300 text-sm">هذا البريد الإلكتروني مسجل بالفعل في نظامنا.</p>`
-                                : `<p class="text-slate-300 text-sm">This email is already registered in our system.</p>`;
-                        }
-                        
                         Swal.fire({
                             title: this.lang === 'ar' 
-                                ? '<span class="text-white text-lg font-bold">البريد الإلكتروني مستخدم بالفعل</span>'
+                                ? '<span class="text-white text-lg font-bold">البريد الإلكتروني مسجل بالفعل</span>'
                                 : '<span class="text-white text-lg font-bold">Email Already Registered</span>',
                             html: `
                                 <div class="space-y-4">
-                                    <p class="text-slate-400 text-sm">
+                                    <p class="text-slate-300 text-sm">
                                         ${this.lang === 'ar' 
-                                            ? `البريد الإلكتروني <strong>${this.form.email}</strong> مستخدم بالفعل في تسجيل شركة في النظام:`
-                                            : `The email <strong>${this.form.email}</strong> is already used to register a company in the system:`}
+                                            ? `البريد الإلكتروني <strong>${this.form.email}</strong> مسجل لدينا بالفعل. هل ترغب في تسجيل الدخول إلى حسابك؟`
+                                            : `The email <strong>${this.form.email}</strong> is already registered. Would you like to sign in to your account?`}
                                     </p>
-                                    ${infoHtml}
                                 </div>
                             `,
                             background: '#0f172a',
                             color: '#fff',
-                            icon: 'warning',
-                            confirmButtonText: this.lang === 'ar' ? 'تسجيل الدخول' : 'Sign IN',
+                            icon: 'info',
+                            confirmButtonText: this.lang === 'ar' ? 'تسجيل الدخول' : 'Sign In',
                             confirmButtonColor: '#3b82f6',
                             showCancelButton: true,
                             cancelButtonText: this.lang === 'ar' ? 'إلغاء' : 'Cancel',

@@ -270,8 +270,28 @@ class SalesInvoiceViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 if not sales_acc:
                     sales_acc = Account.objects.filter(opco=invoice.opco, root_type='INCOME', is_group=False).first()
 
-                # 3. Tax Account (الدائن: حساب ضريبة القيمة المضافة)
-                tax_acc = Account.objects.filter(opco=invoice.opco, account_type='TAX').first()
+                # 3. Output Tax Account (الدائن: حساب أمانات ضريبة القيمة المضافة للمبيعات - التزام)
+                tax_acc = Account.objects.filter(opco=invoice.opco, root_type='LIABILITY', account_type='TAX').first()
+                if not tax_acc:
+                    tax_acc = Account.objects.filter(opco=invoice.opco, root_type='LIABILITY', code__in=['2121', '2161', '2120']).first()
+                if not tax_acc:
+                    tax_acc = Account.objects.filter(opco=invoice.opco, root_type='LIABILITY', name__icontains='مخرجات').first()
+                if not tax_acc:
+                    tax_acc = Account.objects.filter(opco=invoice.opco, root_type='LIABILITY', name__icontains='ضريبة').first()
+                if not tax_acc:
+                    # تأمين عدم الترحيل لحساب أصول ضريبية (1161) بل إنشاء حساب الالتزام المخصص
+                    parent_liab = Account.objects.filter(opco=invoice.opco, code='2120').first() or \
+                                  Account.objects.filter(opco=invoice.opco, code='2100').first() or \
+                                  Account.objects.filter(opco=invoice.opco, root_type='LIABILITY', is_group=True).first()
+                    tax_acc = Account.objects.create(
+                        opco=invoice.opco,
+                        code='2121',
+                        name='أمانات ضريبة القيمة المضافة للمبيعات (VAT Output Tax)',
+                        root_type='LIABILITY',
+                        account_type='TAX',
+                        parent=parent_liab,
+                        is_group=False
+                    )
 
                 if not ar_acc or not sales_acc:
                     return Response({

@@ -11340,6 +11340,10 @@ createApp({
             this.showModal = true;
         },
 
+        openPaymentModal(inv) {
+            this.openPaymentForInvoice('sales', inv);
+        },
+
         openPaymentForInvoice(type, inv) {
             this.isEditing = false;
             this.modalType = 'payment_entry';
@@ -11350,16 +11354,37 @@ createApp({
                     payment_type: 'PAY',
                     party_type: 'VENDOR',
                     party_id: inv.vendor,
-                    party_name: inv.vendor_name,
+                    party_name: inv.vendor_name || '',
                     sales_invoice: null,
                     purchase_invoice: inv.id,
                     paid_from_account: null,
-                    paid_to_account: inv.credit_to_account,
+                    paid_to_account: inv.credit_to_account || null,
                     paid_amount: remaining > 0 ? remaining : 0,
                     posting_date: new Date().toISOString().substring(0, 10),
                     payment_method: 'BANK_TRANSFER',
                     reference_no: inv.invoice_number,
-                    notes: `Payment for bill ${inv.invoice_number}`,
+                    notes: `سداد فاتورة مشتريات ${inv.invoice_number}`,
+                    extra_data: {}
+                };
+            } else if (type === 'sales') {
+                const remaining = (parseFloat(inv.total_amount) || 0) - (parseFloat(inv.paid_amount) || 0);
+                const custId = inv.customer ? (typeof inv.customer === 'object' ? inv.customer.id : inv.customer) : null;
+                const custName = inv.customer_name || (inv.customer && typeof inv.customer === 'object' ? inv.customer.name : '');
+                this.forms.payment_entry = {
+                    id: null,
+                    payment_type: 'RECEIVE',
+                    party_type: 'CUSTOMER',
+                    party_id: custId,
+                    party_name: custName,
+                    sales_invoice: inv.id,
+                    purchase_invoice: null,
+                    paid_from_account: inv.debit_to_account || null,
+                    paid_to_account: null,
+                    paid_amount: remaining > 0 ? remaining : 0,
+                    posting_date: new Date().toISOString().substring(0, 10),
+                    payment_method: 'CASH',
+                    reference_no: inv.invoice_number,
+                    notes: `تحصيل وسداد فاتورة مبيعات ${inv.invoice_number}`,
                     extra_data: {}
                 };
             }

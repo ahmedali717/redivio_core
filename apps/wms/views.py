@@ -249,8 +249,17 @@ class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class StorageLocationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StorageLocation.objects.all()
     serializer_class = StorageLocationSerializer
+
+    def get_queryset(self):
+        active_opco = self.get_active_opco()
+        if not active_opco:
+            return StorageLocation.objects.none()
+        if active_opco.is_holding:
+            return StorageLocation.objects.filter(
+                Q(plant__opco=active_opco) | Q(plant__opco__parent=active_opco)
+            ).distinct()
+        return StorageLocation.objects.filter(plant__opco=active_opco)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -316,8 +325,17 @@ class StorageLocationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class StorageBinViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
-    queryset = StorageBin.objects.all()
     serializer_class = StorageBinSerializer
+
+    def get_queryset(self):
+        active_opco = self.get_active_opco()
+        if not active_opco:
+            return StorageBin.objects.none()
+        if active_opco.is_holding:
+            return StorageBin.objects.filter(
+                Q(plant__opco=active_opco) | Q(plant__opco__parent=active_opco)
+            ).distinct()
+        return StorageBin.objects.filter(plant__opco=active_opco)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

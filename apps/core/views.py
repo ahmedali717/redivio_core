@@ -119,33 +119,11 @@ def dashboard_view(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def check_email_status(request):
-    email = request.data.get('email')
-    if not email: return Response({'exists': False})
-    user = User.objects.filter(email__iexact=email).first()
-    if user:
-        # Check owned company first
-        company = OpCo.all_objects.filter(owner=user).first()
-        if not company:
-            # Check company assignments if not owned directly
-            company_user = CompanyUser.objects.filter(user=user).first()
-            if company_user:
-                company = company_user.company
-        
-        company_data = None
-        if company:
-            company_data = {
-                'name': company.name,
-                'code': company.code,
-                'plan': company.get_plan_display(),
-                'created_at': company.created_at.strftime('%Y-%m-%d') if company.created_at else None,
-                'is_active': company.is_active,
-                'owner_name': company.owner.username if company.owner else None,
-            }
-        return Response({
-            'exists': True,
-            'company': company_data
-        })
-    return Response({'exists': False})
+    email = request.data.get('email', '').strip()
+    if not email:
+        return Response({'exists': False})
+    exists = User.objects.filter(email__iexact=email).exists()
+    return Response({'exists': exists})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -507,6 +485,13 @@ class TenantSignupAPI(APIView):
                     plant = Plant.objects.create(opco=opco, code="MAIN", name=f"{company_name} HQ")
                     StorageLocation.objects.create(plant=plant, code="IN-1", name="Receiving")
                     
+                    # تهيئة شجرة الحسابات القياسية للشركة تلقائياً
+                    try:
+                        from apps.accounting.services import seed_standard_chart_of_accounts
+                        seed_standard_chart_of_accounts(opco)
+                    except Exception as coa_err:
+                        print(f"COA Seed error on signup: {coa_err}")
+                    
                     # إرسال بريد إلكتروني بالترحيب وبيانات التسجيل
                     try:
                         subject = f"Welcome to Redivio ERP - {company_name}"
@@ -621,7 +606,12 @@ class OpCoViewSet(viewsets.ModelViewSet):
 class PlantViewSet(viewsets.ModelViewSet):
     serializer_class = PlantSerializer
     def get_queryset(self):
-        active_id = self.request.session.get('active_opco_id')
+        active_id = self.request.query_params.get('opco') or self.request.session.get('active_opco_id')
+        if not active_id and hasattr(self.request, 'user') and self.request.user.is_authenticated:
+            user_opco = getattr(self.request.user, 'companyuser_set', None)
+            first_cu = user_opco.first() if user_opco else None
+            if first_cu:
+                active_id = first_cu.opco_id
         if not active_id: return Plant.objects.none()
         
         active_opco = OpCo.all_objects.filter(id=active_id).first()
@@ -631,7 +621,7 @@ class PlantViewSet(viewsets.ModelViewSet):
                 Q(opco_id=active_id) | Q(opco__parent_id=active_id)
             ).distinct()
         
-        return Plant.objects.all()
+        return Plant.objects.filter(opco_id=active_id)
 
     def create(self, request, *args, **kwargs):
         active_id = request.data.get('opco') or request.session.get('active_opco_id')
@@ -734,7 +724,14 @@ class PlantViewSet(viewsets.ModelViewSet):
 class LocationViewSet(viewsets.ModelViewSet):
     serializer_class = StorageLocationSerializer
     def get_queryset(self):
-        active_id = self.request.session.get('active_opco_id')
+        active_id = self.request.query_params.get('opco') or self.request.session.get('active_opco_id')
+        if not active_id and hasattr(self.request, 'user') and self.request.user.is_authenticated:
+            user_opco = getattr(self.request.user, 'companyuser_set', None)
+            first_cu = user_opco.first() if user_opco else None
+            if first_cu:
+                active_id = first_cu.opco_id
+        if not active_id: return StorageLocation.objects.none()
+
         active_opco = OpCo.all_objects.filter(id=active_id).first()
         
         if active_opco and active_opco.is_holding:
@@ -742,7 +739,7 @@ class LocationViewSet(viewsets.ModelViewSet):
                 Q(plant__opco_id=active_id) | Q(plant__opco__parent_id=active_id)
             ).distinct()
         
-        return StorageLocation.objects.all()
+        return StorageLocation.objects.filter(plant__opco_id=active_id)
 
     def create(self, request, *args, **kwargs):
         active_id = request.session.get('active_opco_id')
@@ -837,7 +834,14 @@ class LocationViewSet(viewsets.ModelViewSet):
 class StorageBinViewSet(viewsets.ModelViewSet):
     serializer_class = StorageBinSerializer
     def get_queryset(self):
-        active_id = self.request.session.get('active_opco_id')
+        active_id = self.request.query_params.get('opco') or self.request.session.get('active_opco_id')
+        if not active_id and hasattr(self.request, 'user') and self.request.user.is_authenticated:
+            user_opco = getattr(self.request.user, 'companyuser_set', None)
+            first_cu = user_opco.first() if user_opco else None
+            if first_cu:
+                active_id = first_cu.opco_id
+        if not active_id: return StorageBin.objects.none()
+
         active_opco = OpCo.all_objects.filter(id=active_id).first()
         
         if active_opco and active_opco.is_holding:
@@ -846,7 +850,7 @@ class StorageBinViewSet(viewsets.ModelViewSet):
                 Q(plant__opco__parent_id=active_id)
             ).distinct()
             
-        return StorageBin.objects.all()
+        return StorageBin.objects.filter(plant__opco_id=active_id)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

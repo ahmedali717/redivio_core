@@ -23,7 +23,7 @@ class Customer(models.Model):
     address = models.TextField(blank=True, null=True)
     credit_limit = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="الحد الائتماني")
     payment_terms = models.CharField(max_length=50, default='IMMEDIATE', blank=True, null=True, verbose_name="شروط السداد")
-    currency = models.CharField(max_length=10, default='SAR', blank=True, null=True)
+    currency = models.CharField(max_length=10, default='EGP', blank=True, null=True)
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     extra_data = models.JSONField(default=dict, blank=True, verbose_name="حقول مخصصة (Custom Fields)")
     
@@ -45,7 +45,7 @@ class SalesOrder(models.Model):
     delivery_date = models.DateField(blank=True, null=True, verbose_name="تاريخ التسليم المطلوب")
     customer_po_reference = models.CharField(max_length=100, blank=True, null=True, verbose_name="رقم أمر شراء العميل المرجعي")
     customer_po_date = models.DateField(blank=True, null=True, verbose_name="تاريخ أمر شراء العميل")
-    currency = models.CharField(max_length=10, default='SAR', blank=True, null=True)
+    currency = models.CharField(max_length=10, default='EGP', blank=True, null=True)
     exchange_rate = models.DecimalField(max_digits=10, decimal_places=4, default=1.0)
     payment_terms = models.CharField(max_length=50, default='IMMEDIATE', blank=True, null=True, verbose_name="شروط السداد")
     shipping_terms = models.CharField(max_length=100, blank=True, null=True, verbose_name="شروط الشحن والتسليم")
@@ -144,8 +144,23 @@ class SalesOrder(models.Model):
         if existing:
             return existing
         
-        total_amount = decimal.Decimal('0.00')
+        subtotal_amount = decimal.Decimal('0.00')
+        total_discount = decimal.Decimal('0.00')
+        total_tax = decimal.Decimal('0.00')
         lines_to_update = []
+
+        def _process_line(line, qty):
+            nonlocal subtotal_amount, total_discount, total_tax
+            gross = qty * line.unit_price
+            disc = (gross * (line.discount_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01')) if line.discount_rate > 0 else decimal.Decimal('0.00')
+            net = max(decimal.Decimal('0.00'), gross - disc)
+            tax_rate = line.tax_rate if line.tax_rate is not None else decimal.Decimal('15.0')
+            tax = (net * (tax_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01')) if tax_rate > 0 else decimal.Decimal('0.00')
+            subtotal_amount += gross
+            total_discount += disc
+            total_tax += tax
+            line.billed_quantity += qty
+            lines_to_update.append(line)
 
         if delivery:
             # 1. فوترة بناءً على إذن الصرف المخزني الفعلي (Delivered Quantities)
@@ -153,39 +168,31 @@ class SalesOrder(models.Model):
                 so_line = self.lines.filter(material=item.material).first()
                 if so_line:
                     qty_to_bill = item.quantity
-                    total_amount += qty_to_bill * so_line.unit_price
-                    so_line.billed_quantity += qty_to_bill
-                    lines_to_update.append(so_line)
+                    _process_line(so_line, qty_to_bill)
         elif policy == 'ORDERED':
             # 2. فوترة بناءً على الكميات المطلوبة (Ordered Quantities)
             for line in self.lines.all():
                 unbilled_qty = line.quantity - line.billed_quantity
                 if unbilled_qty > 0:
-                    total_amount += unbilled_qty * line.unit_price
-                    line.billed_quantity += unbilled_qty
-                    lines_to_update.append(line)
+                    _process_line(line, unbilled_qty)
         else:
-            # 3. الافتراضي (طريقة أودو): فوترة المنصرف أولاً، وإذا لم يُصرف بعد تُفوتر الكمية المطلوبة
+            # 3. الافتراضي: فوترة المنصرف أولاً، وإذا لم يُصرف بعد تُفوتر الكمية المطلوبة
             for line in self.lines.all():
                 unbilled_qty = line.shipped_quantity - line.billed_quantity
                 if unbilled_qty > 0:
-                    total_amount += unbilled_qty * line.unit_price
-                    line.billed_quantity += unbilled_qty
-                    lines_to_update.append(line)
+                    _process_line(line, unbilled_qty)
             
-            if total_amount <= 0:
+            if subtotal_amount <= 0:
                 for line in self.lines.all():
                     unbilled_qty = line.quantity - line.billed_quantity
                     if unbilled_qty > 0:
-                        total_amount += unbilled_qty * line.unit_price
-                        line.billed_quantity += unbilled_qty
-                        lines_to_update.append(line)
+                        _process_line(line, unbilled_qty)
 
-        if total_amount <= 0:
+        if subtotal_amount <= 0:
             raise Exception("جميع بنود هذا الأمر مفوترة بالفعل بالكامل.")
 
-        tax_amount = (total_amount * decimal.Decimal('0.15')).quantize(decimal.Decimal('0.01'))
-        grand_total = total_amount + tax_amount
+        grand_total = max(decimal.Decimal('0.00'), subtotal_amount - total_discount) + total_tax
+        inv_currency = self.currency or getattr(self.opco, 'currency', 'EGP') or 'EGP'
 
         with transaction.atomic():
             invoice = SalesInvoice.objects.create(
@@ -193,12 +200,15 @@ class SalesOrder(models.Model):
                 invoice_number=invoice_number,
                 sales_order=self,
                 customer=self.customer,
+                currency=inv_currency,
+                exchange_rate=getattr(self, 'exchange_rate', 1.0) or 1.0,
                 due_date=datetime.date.today() + datetime.timedelta(days=30),
-                subtotal=total_amount,
-                tax_amount=tax_amount,
+                subtotal=subtotal_amount,
+                discount_amount=total_discount,
+                tax_amount=total_tax,
                 total_amount=grand_total,
                 status='UNPAID',
-                notes=f"فاتورة مبيعات مرتبطة بأمر البيع {self.so_number} - متوافقة مع Odoo"
+                notes=f"فاتورة مبيعات مرتبطة بأمر البيع {self.so_number}"
             )
             # تحديث الكميات المفوترة في سطور الأوردر
             for l in lines_to_update:
@@ -257,7 +267,7 @@ class SalesInvoice(models.Model):
     date = models.DateField(auto_now_add=True)
     due_date = models.DateField()
     
-    currency = models.CharField(max_length=10, default='SAR', blank=True, null=True)
+    currency = models.CharField(max_length=10, default='EGP', blank=True, null=True)
     exchange_rate = models.DecimalField(max_digits=10, decimal_places=4, default=1.0)
     payment_terms = models.CharField(max_length=50, default='IMMEDIATE', blank=True, null=True, verbose_name="شروط السداد")
     billing_address = models.TextField(blank=True, null=True, verbose_name="عنوان الفوترة")
@@ -295,7 +305,7 @@ class CustomerPayment(models.Model):
     invoice = models.ForeignKey(SalesInvoice, on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
     date = models.DateField(auto_now_add=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    currency = models.CharField(max_length=10, default='SAR', blank=True, null=True)
+    currency = models.CharField(max_length=10, default='EGP', blank=True, null=True)
     exchange_rate = models.DecimalField(max_digits=10, decimal_places=4, default=1.0)
     method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='CASH')
     reference = models.CharField(max_length=100, blank=True, null=True, verbose_name="رقم المرجع / الحوالة")

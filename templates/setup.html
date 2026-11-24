@@ -128,12 +128,44 @@
                         window.location.href = "{% url 'dashboard_home' %}";
                     } else {
                         const err = await response.json();
-                        alert("Error: " + JSON.stringify(err));
+                        const errMsg = (err && err.error) ? err.error : (this.lang === 'ar' ? 'تعذر إكمال التسجيل، يرجى مراجعة البيانات.' : 'Registration failed. Please check your details.');
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: this.lang === 'ar' ? 'تنبيه التسجيل' : 'Registration Alert',
+                                text: errMsg,
+                                icon: 'error',
+                                confirmButtonText: this.lang === 'ar' ? 'العودة لتعديل البيانات' : 'Back to Edit',
+                                confirmButtonColor: '#3b82f6',
+                                background: '#0f172a',
+                                color: '#fff'
+                            }).then(() => {
+                                window.location.href = "{% url 'signup_page' %}";
+                            });
+                        } else {
+                            if (confirm(errMsg + (this.lang === 'ar' ? "\n\nهل ترغب في العودة لتعديل البيانات؟" : "\n\nWould you like to go back and edit?"))) {
+                                window.location.href = "{% url 'signup_page' %}";
+                            }
+                        }
                         this.finalizing = false;
                         this.loading = false;
                     }
                 } catch (error) {
-                    alert("Connection failed");
+                    const failMsg = this.lang === 'ar' ? 'فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.' : 'Connection to server failed. Please try again.';
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: this.lang === 'ar' ? 'خطأ في الاتصال' : 'Connection Error',
+                            text: failMsg,
+                            icon: 'error',
+                            confirmButtonText: this.lang === 'ar' ? 'العودة' : 'Back',
+                            confirmButtonColor: '#3b82f6',
+                            background: '#0f172a',
+                            color: '#fff'
+                        }).then(() => {
+                            window.location.href = "{% url 'signup_page' %}";
+                        });
+                    } else {
+                        alert(failMsg);
+                    }
                     this.finalizing = false;
                     this.loading = false;
                 }

@@ -2,66 +2,59 @@ import json
 import os
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 
-try:
-    import google.generativeai as genai
-    GEMINI_API_KEY = "AIzaSyDnoSEOXEWbd58hFsQ2lJYhm5bmMFr5c6I"
-    if GEMINI_API_KEY:
-        genai.configure(api_key=GEMINI_API_KEY)
-        # It's better to instantiate the model dynamically inside the view to avoid API calls on server startup, 
-        # but generative model initialization is safe. We use gemini-1.5-flash as the default since it's the standard.
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        genai_installed = True
-    else:
-        model = None
-        genai_installed = False
-except ImportError:
-    genai = None
-    model = None
-    genai_installed = False
+def get_gemini_api_key():
+    return os.environ.get("GEMINI_API_KEY") or getattr(settings, "GEMINI_API_KEY", "")
 
 @csrf_exempt
 def chat_api(request):
-    if request.method == 'POST':
-        if not model:
-            return JsonResponse({'error': 'مكتبة google-generativeai غير مسطبة على السيرفر، أو الـ API Key مفقود.'}, status=500)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
+        
+    api_key = get_gemini_api_key()
+    if not api_key:
+        return JsonResponse({
+            'reply': 'المساعد الذكي غير مفعل حالياً. يرجى ضبط مفتاح GEMINI_API_KEY في إعدادات السيرفر.'
+        })
+
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        
+        data = json.loads(request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body)
+        user_message = data.get('message', '').strip()
+        if not user_message:
+            return JsonResponse({'reply': 'مرحباً بك! كيف يمكنني مساعدتك اليوم في نظام Redivio ERP؟'})
             
+        model_name = 'gemini-1.5-flash'
         try:
-            data = json.loads(request.body)
-            user_message = data.get('message', '')
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    if 'flash' in m.name or 'pro' in m.name:
+                        model_name = m.name
+                        break
+        except Exception:
+            pass
             
-            # Dynamically select model to avoid 404 errors with different API keys
-            model_name = 'gemini-1.5-flash'
-            try:
-                for m in genai.list_models():
-                    if 'generateContent' in m.supported_generation_methods:
-                        if 'flash' in m.name or 'pro' in m.name:
-                            model_name = m.name
-                            break
-            except Exception as e:
-                pass # fallback to default if listing fails
-                
-            active_model = genai.GenerativeModel(model_name)
-            
-            # Here we can add system context or tools later
-            prompt = f"""
-            أنت مساعد ذكي مدمج في نظام ERP (Redivio). 
-            مهمتك هي مساعدة المستخدمين على استخدام النظام والإجابة على استفساراتهم باختصار وبطريقة احترافية.
-            
-            سؤال المستخدم:
-            {user_message}
-            """
-            
-            response = active_model.generate_content(prompt)
-            return JsonResponse({'reply': response.text})
-        except Exception as e:
-            try:
-                # If we get an error, let's list the available models to debug!
-                available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-                error_msg = f"{str(e)}\n\nAvailable Models for your Key:\n" + "\n".join(available)
-            except Exception as inner_e:
-                error_msg = f"{str(e)} (Could not fetch models: {str(inner_e)})"
-            
-            return JsonResponse({'error': error_msg}, status=500)
-            
-    return JsonResponse({'error': 'Invalid request method'}, status=400)
+        model = genai.GenerativeModel(model_name)
+        prompt = f"""
+        أنت مساعد ذكي مدمج في نظام ERP (Redivio). 
+        مهمتك هي مساعدة المستخدمين على استخدام النظام والإجابة على استفساراتهم باختصار وبطريقة احترافية.
+        
+        سؤال المستخدم:
+        {user_message}
+        """
+        response = model.generate_content(prompt)
+        return JsonResponse({'reply': response.text})
+    except ImportError:
+        return JsonResponse({
+            'reply': 'مكتبة الذكاء الاصطناعي google-generativeai غير مثبتة على السيرفر.'
+        })
+    except Exception as e:
+        err_str = str(e)
+        if "leaked" in err_str.lower() or "403" in err_str:
+            return JsonResponse({
+                'reply': 'مفتاح الـ API الحالي غير صالح أو تم إيقافه. يرجى تجديد GEMINI_API_KEY في متغيرات البيئة بالسيرفر.'
+            })
+        return JsonResponse({'error': f"عذراً، حدث خطأ أثناء معالجة الطلب: {err_str[:150]}"}, status=500)
