@@ -3,11 +3,11 @@ from rest_framework.routers import DefaultRouter
 from . import views
 
 router = DefaultRouter()
-router.register(r'plants', views.PlantViewSet)
-router.register(r'locations', views.StorageLocationViewSet)
-router.register(r'bins', views.StorageBinViewSet)
+router.register(r'plants', views.PlantViewSet, basename='plant')
+router.register(r'locations', views.StorageLocationViewSet, basename='location')
+router.register(r'bins', views.StorageBinViewSet, basename='bin')
 router.register(r'inventory', views.StockQuantViewSet, basename='inventory')
-router.register(r'moves', views.StockMoveViewSet)
+router.register(r'moves', views.StockMoveViewSet, basename='move')
 router.register(r'transfers', views.WarehouseTransferViewSet, basename='warehousetransfer')
 router.register(r'scraps', views.StockScrapViewSet, basename='stockscrap')
 

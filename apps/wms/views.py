@@ -249,6 +249,7 @@ class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class StorageLocationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    queryset = StorageLocation.objects.none()
     serializer_class = StorageLocationSerializer
 
     def get_queryset(self):
@@ -325,6 +326,7 @@ class StorageLocationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class StorageBinViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
+    queryset = StorageBin.objects.none()
     serializer_class = StorageBinSerializer
 
     def get_queryset(self):

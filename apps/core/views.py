@@ -604,6 +604,7 @@ class OpCoViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
            
 class PlantViewSet(viewsets.ModelViewSet):
+    queryset = Plant.objects.none()
     serializer_class = PlantSerializer
     def get_queryset(self):
         active_id = self.request.query_params.get('opco') or self.request.session.get('active_opco_id')
@@ -722,6 +723,7 @@ class PlantViewSet(viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class LocationViewSet(viewsets.ModelViewSet):
+    queryset = StorageLocation.objects.none()
     serializer_class = StorageLocationSerializer
     def get_queryset(self):
         active_id = self.request.query_params.get('opco') or self.request.session.get('active_opco_id')
@@ -832,6 +834,7 @@ class LocationViewSet(viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class StorageBinViewSet(viewsets.ModelViewSet):
+    queryset = StorageBin.objects.none()
     serializer_class = StorageBinSerializer
     def get_queryset(self):
         active_id = self.request.query_params.get('opco') or self.request.session.get('active_opco_id')
