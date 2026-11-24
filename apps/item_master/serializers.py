@@ -27,6 +27,10 @@ class MaterialSerializer(serializers.ModelSerializer):
     sale_group_name = serializers.CharField(source='sale_group.name', read_only=True)
     default_vendor_name = serializers.CharField(source='default_vendor.name', read_only=True)
     default_vendor_code = serializers.CharField(source='default_vendor.code', read_only=True)
+    standard_price = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0, required=False, default=0)
+    sales_price = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0, required=False, default=0)
+    reorder_level = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0, required=False, default=0)
+    max_level = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0, required=False, default=0)
     company_assignments = serializers.SerializerMethodField()
     on_hand = serializers.SerializerMethodField()
     recipe_lines = serializers.SerializerMethodField()
@@ -56,6 +60,20 @@ class MaterialSerializer(serializers.ModelSerializer):
             'is_pos_item', 'is_combo', 'expiry_date', 'recipe_lines', 'combo_lines', 'allowed_terminals',
             'has_variants', 'parent_template', 'variant_name', 'variants'
         ]
+
+    def validate(self, data):
+        std_price = data.get('standard_price', 0)
+        sales_price = data.get('sales_price', 0)
+        reorder = data.get('reorder_level', 0)
+        max_lvl = data.get('max_level', 0)
+
+        if std_price is not None and std_price < 0:
+            raise serializers.ValidationError({"standard_price": "تكلفة الصنف لا يمكن أن تكون سالبة."})
+        if sales_price is not None and sales_price < 0:
+            raise serializers.ValidationError({"sales_price": "سعر بيع الصنف لا يمكن أن يكون سالباً."})
+        if max_lvl and reorder and float(max_lvl) > 0 and float(reorder) > float(max_lvl):
+            raise serializers.ValidationError({"reorder_level": "الحد الأدنى لإعادة الطلب لا يمكن أن يتجاوز الحد الأقصى للمخزون."})
+        return data
 
     def to_internal_value(self, data):
         raw_data = {}
@@ -214,7 +232,7 @@ class MaterialSerializer(serializers.ModelSerializer):
                     'expiry_date': validated_data.get('expiry_date'),
                     'standard_price': validated_data.get('standard_price', 0),
                     'sales_price': validated_data.get('sales_price', 0),
-                    'tax_rate': validated_data.get('tax_rate', 15),
+                    'tax_rate': validated_data.get('tax_rate', 14),
                     'reorder_level': validated_data.get('reorder_level', 0),
                     'max_level': validated_data.get('max_level', 0),
                     'has_variants': validated_data.get('has_variants', False)

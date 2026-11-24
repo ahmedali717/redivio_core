@@ -9,7 +9,7 @@
                 <div class="flex items-center gap-2">
                     <h2 class="text-2xl font-black text-[var(--heading-color)] tracking-tight">[[ isArabic ? 'فواتير المبيعات والتحصيل' : 'Sales Invoices & Billing' ]]</h2>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        ODOO WORKFLOW
+                        REDIVIO WORKFLOW
                     </span>
                 </div>
                 <p class="text-xs text-[var(--text-secondary)] font-medium mt-0.5">
@@ -34,7 +34,7 @@
             <div class="relative z-10 flex items-center justify-between">
                 <div>
                     <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'المتبقي للتحصيل (مديونيات)' : 'Unpaid Balance' ]]</h4>
-                    <p class="text-2xl font-black text-blue-400 tech-font">$[[ formatNumber(totalUnpaidInvoices) ]]</p>
+                    <p class="text-2xl font-black text-blue-400 tech-font">[[ formatNumber(totalUnpaidInvoices) ]] <span class="text-xs">EGP</span></p>
                 </div>
                 <div class="w-12 h-12 bg-blue-600/15 border border-blue-500/30 rounded-2xl flex items-center justify-center text-blue-400 shadow-md">
                     <i class="fas fa-hand-holding-dollar text-xl text-blue-400"></i>
@@ -48,7 +48,7 @@
             <div class="relative z-10 flex items-center justify-between">
                 <div>
                     <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'إجمالي ما تم تحصيله' : 'Total Paid / Collected' ]]</h4>
-                    <p class="text-2xl font-black text-[var(--heading-color)] tech-font">$[[ formatNumber(totalPaidInvoices) ]]</p>
+                    <p class="text-2xl font-black text-[var(--heading-color)] tech-font">[[ formatNumber(totalPaidInvoices) ]] <span class="text-xs">EGP</span></p>
                 </div>
                 <div class="w-12 h-12 bg-slate-800/80 border border-slate-600/30 rounded-2xl flex items-center justify-center text-white shadow-md">
                     <i class="fas fa-shield-check text-xl text-slate-200"></i>
@@ -85,7 +85,7 @@
                         <th class="px-5 py-3">[[ isArabic ? 'المدفوع' : 'Paid' ]]</th>
                         <th class="px-5 py-3 text-center">[[ isArabic ? 'حالة القيد المالي' : 'Posting Status' ]]</th>
                         <th class="px-5 py-3 text-center">[[ isArabic ? 'حالة السداد' : 'Payment Status' ]]</th>
-                        <th class="px-5 py-3 text-left">[[ isArabic ? 'إجراءات Odoo' : 'Odoo Actions' ]]</th>
+                        <th class="px-5 py-3 text-left">[[ isArabic ? 'الإجراءات' : 'Actions' ]]</th>
                     </tr>
                 </thead>
                 <tbody class="text-xs font-medium">
@@ -131,12 +131,12 @@
 
                         <!-- Total -->
                         <td class="px-5 py-4 font-black text-[var(--heading-color)] tech-font text-sm">
-                            $[[ formatNumber(inv.total_amount) ]]
+                            [[ formatNumber(inv.total_amount) ]] <span class="text-[10px] font-normal text-slate-400">[[ inv.currency || 'EGP' ]]</span>
                         </td>
 
                         <!-- Paid -->
                         <td class="px-5 py-4 font-black text-blue-400 tech-font">
-                            $[[ formatNumber(inv.paid_amount || 0) ]]
+                            [[ formatNumber(inv.paid_amount || 0) ]] <span class="text-[10px] font-normal text-slate-400">[[ inv.currency || 'EGP' ]]</span>
                         </td>
 
                         <!-- Posting Status (Odoo GL Post) -->

@@ -438,7 +438,7 @@ def public_rfq_portal(request, token=None, pk=None):
                     quantity=line.quantity,
                     unit_price=price_val,
                     discount_rate=0,
-                    tax_rate=15
+                    tax_rate=14
                 )
                 total += sq_line.line_total
 

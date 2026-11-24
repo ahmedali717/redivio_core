@@ -135,6 +135,16 @@
             lang: localStorage.getItem('signupLang') || 'ar',
             availableModules: JSON.parse('{{ available_modules_json|escapejs }}' || '[]'),
 
+            init() {
+                if (this.availableModules && this.availableModules.length) {
+                    if (this.systemMode === 'standalone') {
+                        this.selectedModules = [this.availableModules[0].id];
+                    } else {
+                        this.selectedModules = this.availableModules.map(m => m.id);
+                    }
+                }
+            },
+
             getModNameAr(id) {
                 const names = {
                     wms: 'إدارة المستودعات (WMS)',
@@ -162,9 +172,10 @@
             
             setMode(mode) {
                 this.systemMode = mode;
-                if (mode === 'standalone' && this.selectedModules.length > 1) {
-                    // Keep only the first selected module
-                    this.selectedModules = [this.selectedModules[0]];
+                if (mode === 'standalone') {
+                    this.selectedModules = [this.selectedModules[0] || (this.availableModules[0] ? this.availableModules[0].id : 'wms')];
+                } else {
+                    this.selectedModules = this.availableModules.map(m => m.id);
                 }
             },
 
@@ -185,6 +196,10 @@
             },
 
             startAssembly() {
+                if (!this.selectedModules || this.selectedModules.length === 0) {
+                    alert(this.lang === 'ar' ? 'يرجى اختيار موديول واحد على الأقل للمتابعة.' : 'Please select at least one module.');
+                    return;
+                }
                 localStorage.setItem('selectedModules', JSON.stringify(this.selectedModules));
                 localStorage.setItem('systemMode', this.systemMode);
                 this.phase = 'assembly';

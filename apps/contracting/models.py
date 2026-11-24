@@ -58,6 +58,20 @@ class Project(models.Model):
         verbose_name_plural = 'المشاريع الإنشائية'
         ordering = ['-id']
 
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        if self.contract_value is not None and self.contract_value < 0:
+            raise ValidationError({'contract_value': 'قيمة العقد الإجمالية لا يمكن أن تكون سالبة.'})
+        if self.progress_percent is not None and (self.progress_percent < 0 or self.progress_percent > 100):
+            raise ValidationError({'progress_percent': 'نسبة الإنجاز الفعلية يجب أن تكون بين 0% و 100%.'})
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValidationError({'end_date': 'تاريخ الانتهاء المخطط لا يمكن أن يسبق تاريخ البدء.'})
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.code} - {self.name}"
 

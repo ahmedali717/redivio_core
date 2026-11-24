@@ -159,7 +159,7 @@ class SupplierQuotationLine(models.Model):
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     discount_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15)
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=14)
     line_total = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     def save(self, *args, **kwargs):
@@ -254,7 +254,7 @@ class PurchaseOrder(models.Model):
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     discount_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="نسبة الخصم %")
     discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="مبلغ الخصم")
-    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15.0, verbose_name="نسبة الضريبة %")
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=14.0, verbose_name="نسبة الضريبة %")
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
@@ -356,7 +356,7 @@ class PurchaseOrderLine(models.Model):
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     discount_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="نسبة الخصم %")
     discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="مبلغ الخصم")
-    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15.0, verbose_name="نسبة الضريبة %")
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=14.0, verbose_name="نسبة الضريبة %")
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     line_total = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     received_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)

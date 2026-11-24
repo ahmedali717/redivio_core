@@ -80,6 +80,7 @@ def modules_puzzle_view(request):
         'teams': {'id': 'teams', 'name': 'TEAMS', 'icon': 'fas fa-users', 'color': '#3b82f6', 'desc': 'HR'},
         'restaurant_pos': {'id': 'restaurant_pos', 'name': 'POS', 'icon': 'fas fa-cash-register', 'color': '#ef4444', 'desc': 'Point of Sale System'},
         'item_master': {'id': 'item_master', 'name': 'CATALOG', 'icon': 'fas fa-box-open', 'color': '#14b8a6', 'desc': 'Item Master'},
+        'ai_assistant': {'id': 'ai_assistant', 'name': 'AI ASSISTANT', 'icon': 'fas fa-brain', 'color': '#6366f1', 'desc': 'Intelligent ERP Assistant'},
     }
     
     # get installed business apps from settings

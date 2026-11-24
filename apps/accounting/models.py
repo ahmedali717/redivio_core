@@ -483,6 +483,10 @@ class PaymentEntry(models.Model):
         return f"{self.entry_number} [{self.get_payment_type_display()}] - {self.paid_amount}"
 
     def save(self, *args, **kwargs):
+        if self.paid_amount is not None and self.paid_amount <= 0:
+            raise ValueError("مبلغ السند يجب أن يكون أكبر من الصفر.")
+        if self.paid_from_account_id and self.paid_to_account_id and self.paid_from_account_id == self.paid_to_account_id:
+            raise ValueError("لا يمكن أن يكون الحساب المستلم هو نفس الحساب المدفوع منه.")
         if not self.entry_number:
             year = datetime.date.today().year
             prefix = "REC" if self.payment_type == 'RECEIVE' else ("PAY" if self.payment_type == 'PAY' else "TRF")

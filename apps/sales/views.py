@@ -120,13 +120,13 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     raw_q = item.get('quantity', 0)
                     raw_p = item.get('unit_price', item.get('price', 0))
                     raw_disc_rate = item.get('discount_rate', 0)
-                    raw_tax_rate = item.get('tax_rate', 15)
+                    raw_tax_rate = item.get('tax_rate', 14)
                     uom_val = item.get('uom') or 'Unit'
 
                     q = decimal.Decimal(str(raw_q)) if raw_q not in [None, ''] else decimal.Decimal('0.00')
                     p = decimal.Decimal(str(raw_p)) if raw_p not in [None, ''] else decimal.Decimal('0.00')
                     disc_rate = decimal.Decimal(str(raw_disc_rate)) if raw_disc_rate not in [None, ''] else decimal.Decimal('0.00')
-                    tax_rate = decimal.Decimal(str(raw_tax_rate)) if raw_tax_rate not in [None, ''] else decimal.Decimal('15.00')
+                    tax_rate = decimal.Decimal(str(raw_tax_rate)) if raw_tax_rate not in [None, ''] else decimal.Decimal('14.00')
 
                     SalesOrderLine.objects.create(
                         so=so,
@@ -169,13 +169,13 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                     raw_q = item.get('quantity', 0)
                     raw_p = item.get('unit_price', item.get('price', 0))
                     raw_disc_rate = item.get('discount_rate', 0)
-                    raw_tax_rate = item.get('tax_rate', 15)
+                    raw_tax_rate = item.get('tax_rate', 14)
                     uom_val = item.get('uom') or 'Unit'
 
                     q = decimal.Decimal(str(raw_q)) if raw_q not in [None, ''] else decimal.Decimal('0.00')
                     p = decimal.Decimal(str(raw_p)) if raw_p not in [None, ''] else decimal.Decimal('0.00')
                     disc_rate = decimal.Decimal(str(raw_disc_rate)) if raw_disc_rate not in [None, ''] else decimal.Decimal('0.00')
-                    tax_rate = decimal.Decimal(str(raw_tax_rate)) if raw_tax_rate not in [None, ''] else decimal.Decimal('15.00')
+                    tax_rate = decimal.Decimal(str(raw_tax_rate)) if raw_tax_rate not in [None, ''] else decimal.Decimal('14.00')
 
                     SalesOrderLine.objects.create(
                         so=so,
@@ -226,7 +226,7 @@ class SalesOrderViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
                 'status': 'success',
                 'invoice_id': inv.id if inv else None,
                 'invoice_number': inv.invoice_number if inv else None,
-                'message': f'تم إصدار الفاتورة {inv.invoice_number if inv else ""} بنجاح متوافقة مع دورة عمل Odoo.'
+                'message': f'تم إصدار الفاتورة {inv.invoice_number if inv else ""} بنجاح متوافقة مع دورة عمل Redivio.'
             })
         except Exception as e:
             return Response({'error': str(e)}, status=400)

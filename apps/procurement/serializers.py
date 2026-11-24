@@ -230,6 +230,9 @@ class QuotationComparisonSerializer(serializers.ModelSerializer):
 class PurchaseOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.CharField(source='material.name', read_only=True)
     material_sku = serializers.CharField(source='material.sku', read_only=True)
+    quantity = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=decimal.Decimal('0.001'))
+    unit_price = serializers.DecimalField(max_digits=15, decimal_places=2, min_value=decimal.Decimal('0.00'))
+    discount_rate = serializers.DecimalField(max_digits=5, decimal_places=2, min_value=decimal.Decimal('0.00'), max_value=decimal.Decimal('100.00'), required=False, default=0)
     received_qty = serializers.DecimalField(source='received_quantity', max_digits=12, decimal_places=2, read_only=True)
     remaining_quantity = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     
@@ -355,6 +358,19 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
 
     def get_receipts_count(self, obj):
         return obj.receipts.count()
+
+    def validate(self, data):
+        lines = self.initial_data.get('lines', [])
+        if self.instance is None and (not lines or len(lines) == 0):
+            raise serializers.ValidationError({"lines": "يجب إضافة صنف واحد على الأقل في أمر الشراء."})
+        for idx, line in enumerate(lines):
+            try:
+                qty = float(line.get('quantity') or 0)
+            except (ValueError, TypeError):
+                qty = 0
+            if qty <= 0:
+                raise serializers.ValidationError({"lines": f"الكمية في السطر #{idx+1} يجب أن تكون أكبر من الصفر."})
+        return data
 
     def create(self, validated_data):
         lines_data = validated_data.pop('lines', [])

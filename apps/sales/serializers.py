@@ -1,4 +1,5 @@
 from rest_framework import serializers
+import decimal
 from .models import Customer, SalesOrder, SalesOrderLine, SalesInvoice, CustomerPayment, StockDelivery, StockDeliveryLine
 
 class CustomerSerializer(serializers.ModelSerializer):
@@ -9,6 +10,9 @@ class CustomerSerializer(serializers.ModelSerializer):
 class SalesOrderLineSerializer(serializers.ModelSerializer):
     material_name = serializers.ReadOnlyField(source='material.name')
     material_sku = serializers.ReadOnlyField(source='material.sku')
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=decimal.Decimal('0.001'))
+    unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=decimal.Decimal('0.00'))
+    discount_rate = serializers.DecimalField(max_digits=5, decimal_places=2, min_value=decimal.Decimal('0.00'), max_value=decimal.Decimal('100.00'), required=False, default=0)
     price = serializers.DecimalField(source='unit_price', max_digits=10, decimal_places=2, read_only=True)
     
     class Meta:

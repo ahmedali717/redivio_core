@@ -23,6 +23,20 @@ class ProjectSerializer(serializers.ModelSerializer):
     def get_cost_sheets_count(self, obj):
         return obj.cost_sheets.count()
 
+    def validate(self, data):
+        c_val = data.get('contract_value', 0)
+        prog = data.get('progress_percent', 0)
+        start = data.get('start_date')
+        end = data.get('end_date')
+
+        if c_val is not None and c_val < 0:
+            raise serializers.ValidationError({"contract_value": "قيمة العقد لا يمكن أن تكون سالبة."})
+        if prog is not None and (prog < 0 or prog > 100):
+            raise serializers.ValidationError({"progress_percent": "نسبة الإنجاز يجب أن تكون بين 0% و 100%."})
+        if start and end and end < start:
+            raise serializers.ValidationError({"end_date": "تاريخ الانتهاء لا يمكن أن يسبق تاريخ البدء."})
+        return data
+
 
 class ContractExtensionSerializer(serializers.ModelSerializer):
     class Meta:

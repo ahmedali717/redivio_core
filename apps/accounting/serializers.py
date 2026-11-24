@@ -1,3 +1,4 @@
+import decimal
 from rest_framework import serializers
 from .models import Account, CostCenter, JournalEntry, JournalEntryLine, GLEntry, PurchaseInvoice, PaymentEntry
 
@@ -252,6 +253,7 @@ class PurchaseInvoiceSerializer(serializers.ModelSerializer):
 class PaymentEntrySerializer(serializers.ModelSerializer):
     paid_from_name = serializers.CharField(source='paid_from_account.account_name', read_only=True)
     paid_to_name = serializers.CharField(source='paid_to_account.account_name', read_only=True)
+    paid_amount = serializers.DecimalField(max_digits=18, decimal_places=2, min_value=decimal.Decimal('0.01'))
 
     class Meta:
         model = PaymentEntry
@@ -263,3 +265,14 @@ class PaymentEntrySerializer(serializers.ModelSerializer):
             'extra_data', 'created_at'
         ]
         read_only_fields = ['entry_number', 'docstatus']
+
+    def validate(self, data):
+        paid_from = data.get('paid_from_account')
+        paid_to = data.get('paid_to_account')
+        amount = data.get('paid_amount')
+
+        if amount is not None and amount <= 0:
+            raise serializers.ValidationError({"paid_amount": "مبلغ السند يجب أن يكون أكبر من الصفر."})
+        if paid_from and paid_to and paid_from == paid_to:
+            raise serializers.ValidationError({"paid_to_account": "لا يمكن أن يكون الحساب المستلم هو نفس الحساب المدفوع منه."})
+        return data

@@ -154,7 +154,7 @@ class SalesOrder(models.Model):
             gross = qty * line.unit_price
             disc = (gross * (line.discount_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01')) if line.discount_rate > 0 else decimal.Decimal('0.00')
             net = max(decimal.Decimal('0.00'), gross - disc)
-            tax_rate = line.tax_rate if line.tax_rate is not None else decimal.Decimal('15.0')
+            tax_rate = line.tax_rate if line.tax_rate is not None else decimal.Decimal('14.0')
             tax = (net * (tax_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01')) if tax_rate > 0 else decimal.Decimal('0.00')
             subtotal_amount += gross
             total_discount += disc
@@ -225,7 +225,7 @@ class SalesOrderLine(models.Model):
     discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="مبلغ الخصم")
     gross_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15.0, verbose_name="نسبة الضريبة %")
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=14.0, verbose_name="نسبة الضريبة %")
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     shipped_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     billed_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -242,9 +242,15 @@ class SalesOrderLine(models.Model):
         return self.shipped_quantity - self.billed_quantity
 
     def save(self, *args, **kwargs):
-        self.gross_total = self.quantity * self.unit_price
+        if self.discount_rate < 0:
+            self.discount_rate = decimal.Decimal('0.00')
+        elif self.discount_rate > 100:
+            self.discount_rate = decimal.Decimal('100.00')
+        self.gross_total = max(decimal.Decimal('0.00'), self.quantity * self.unit_price)
         if self.discount_rate > 0:
             self.discount_amount = (self.gross_total * (self.discount_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01'))
+        else:
+            self.discount_amount = decimal.Decimal('0.00')
         self.total = max(decimal.Decimal('0.00'), self.gross_total - self.discount_amount)
         if self.tax_rate > 0:
             self.tax_amount = (self.total * (self.tax_rate / decimal.Decimal(100))).quantize(decimal.Decimal('0.01'))

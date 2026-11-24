@@ -445,6 +445,7 @@ createApp({
             selectedFile: null,
             newLogoFile: null,
             sqAttachmentFile: null,
+            isSeedingCOA: false,
 
             modalTitles: {
                 plant: { ar: 'إضافة منشأة جديدة', en: 'Add New Facility' },
@@ -503,7 +504,7 @@ createApp({
                     account_type: 'OTHER',
                     parent: null,
                     is_group: false,
-                    currency: 'SAR',
+                    currency: 'EGP',
                     extra_data: {}
                 },
                 journal_entry: {
@@ -552,7 +553,7 @@ createApp({
                     notes: '',
                     extra_data: {}
                 },
-                opco: { id: null, code: '', name: '', currency: 'USD', parent: null, is_holding: false },
+                opco: { id: null, code: '', name: '', currency: 'EGP', parent: null, is_holding: false },
                 plant: { id: null, opco: null, code: '', name: '' },
                 location: { id: null, plant: null, code: '', name: '' },
                 bin: { id: null, plant: null, code: '' },
@@ -565,7 +566,7 @@ createApp({
                     barcode: '',
                     standard_price: 0,
                     sales_price: 0,
-                    tax_rate: 15,
+                    tax_rate: 14,
                     // 🚀 الهيكل الجديد لدعم تعدد الشركات
                     company_assignments: [
                         { opco_id: null, bins: [], primary_bin: null }
@@ -591,7 +592,7 @@ createApp({
                     vendor: '',
                     po_number: '',
                     is_tax_inclusive: false, // شامل الضريبة؟
-                    tax_rate: 15, // نسبة الضريبة الافتراضية
+                    tax_rate: 14, // نسبة الضريبة الافتراضية
                     lines: [{ material: '', quantity: 1, unit_price: 0 }]
                 },
 
@@ -601,7 +602,7 @@ createApp({
                     filterType: 'ALL', 
                     groupBy: 'none', 
                     payment_method: 'CASH', 
-                    tax_rate: 15,
+                    tax_rate: 14,
                     date_from: '',
                     date_to: '',
                     contact_search: '',
@@ -615,8 +616,8 @@ createApp({
                 vendor: {
                     id: null, code: '', name: '', vendor_type: 'COMPANY', vendor_group: 'Local',
                     tax_id: '', email: '', phone: '', contact_name: '', website: '', address: '',
-                    city: '', country: 'Saudi Arabia', credit_limit: 0, payment_terms: 'NET 30',
-                    currency: 'SAR', balance: 0, extra_data: {}
+                    city: '', country: 'Egypt', credit_limit: 0, payment_terms: 'NET 30',
+                    currency: 'EGP', balance: 0, extra_data: {}
                 },
                 salesorder: {
                     id: null,
@@ -626,7 +627,7 @@ createApp({
                     delivery_date: '',
                     customer_po_reference: '',
                     customer_po_date: '',
-                    currency: 'SAR',
+                    currency: 'EGP',
                     exchange_rate: 1.0,
                     payment_terms: 'IMMEDIATE',
                     shipping_terms: '',
@@ -642,7 +643,7 @@ createApp({
                     notes: '',
                     extra_data: {},
                     activeTab: 'items',
-                    lines: [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 }]
+                    lines: [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 14 }]
                 },
                 payment: {
                     invoice: null,
@@ -729,7 +730,7 @@ createApp({
                     bank_name: '',
                     branch: '',
                     amount: 0,
-                    currency: 'SAR',
+                    currency: 'EGP',
                     issue_date: new Date().toISOString().substring(0, 10),
                     due_date: new Date().toISOString().substring(0, 10),
                     project: null,
@@ -8782,21 +8783,16 @@ createApp({
 
         // 🚀 وظائف لوحة التحكم الحية وربط استلام أمر الشراء مع شاشة المخازن الرسمية
         openReceiptModal(poId) {
-            this.showModal = false;
-            this.view = 'inventory_module';
-            this.inventoryTab = 'moves';
+            this.modalType = 'stock_entry';
             this.activeOperation = 'po_receipt';
             if (!this.forms.stock_entry) {
-                this.forms.stock_entry = { items: [], po_id: '', so_id: '', move_type: 'IN' };
+                this.forms.stock_entry = { items: [], po_id: '', so_id: '', move_type: 'IN', receipt_type: 'PURCHASE' };
             }
+            this.forms.stock_entry.receipt_type = 'PURCHASE';
+            this.forms.stock_entry.move_type = 'IN';
             this.forms.stock_entry.po_id = poId;
-            if (typeof this.fetchPendingPOs === 'function') {
-                this.fetchPendingPOs().then(() => {
-                    this.fetchPODetails();
-                });
-            } else {
-                this.fetchPODetails();
-            }
+            this.showModal = true;
+            this.fetchPODetails();
         },
 
         openDeliveryModal(soId) {
@@ -8921,7 +8917,7 @@ createApp({
                     total_amount: 0, tax_amount: 0, grand_total: 0,
                     terms_and_conditions: '', notes: '', extra_data: {},
                     activeTab: 'items',
-                    lines: [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 }]
+                    lines: [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 14 }]
                 };
                 this.activeChatterModel = 'salesorder';
                 this.activeChatterId = null;
@@ -10936,6 +10932,9 @@ createApp({
         },
 
         async seedDefaultCOA() {
+            if (this.isSeedingCOA) return;
+            this.isSeedingCOA = true;
+            this.showToast(this.isArabic ? "جاري توليد وتأسيس شجرة الحسابات المعيارية..." : "Generating Standard Chart of Accounts...", 'info');
             const csrftoken = this.getCookie('csrftoken');
             try {
                 this.loading = true;
@@ -10953,7 +10952,7 @@ createApp({
                 });
                 const data = await res.json().catch(() => ({}));
                 if (res.ok) {
-                    this.showToast(data.message || (this.isArabic ? "تم توليد شجرة الحسابات بنجاح" : "COA generated"), 'success');
+                    this.showToast(data.message || (this.isArabic ? "تم تأسيس وتوليد شجرة الحسابات المعيارية بنجاح!" : "COA generated successfully!"), 'success');
                     await this.fetchAccounts();
                 } else {
                     this.showToast(data.error || (this.isArabic ? "فشل توليد شجرة الحسابات" : "COA generation failed"), 'error');
@@ -10962,6 +10961,7 @@ createApp({
                 this.showToast(this.isArabic ? "خطأ في الاتصال" : "Network error", 'error');
             } finally {
                 this.loading = false;
+                this.isSeedingCOA = false;
             }
         },
 
