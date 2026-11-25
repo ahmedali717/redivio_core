@@ -73,27 +73,27 @@
         }
 
         /* =========================================================
-           🌓 THEME ARCHITECTURE: DARK MODE (DEFAULT) & LIGHT MODE
+           🌓 60-30-10 DESIGN SYSTEM ARCHITECTURE (ENTERPRISE SAAS)
            ========================================================= */
         :root,
         .theme-dark {
             --canvas-bg: #080C14;
             --canvas-text: #F1F5F9;
-            --card-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.82) 0%, rgba(11, 17, 30, 0.72) 100%);
+            --card-bg: #0F172A;
             --card-border: rgba(255, 255, 255, 0.08);
-            --card-border-top: rgba(255, 255, 255, 0.18);
-            --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65), 0 0 30px -5px rgba(0, 102, 255, 0.08);
+            --card-border-top: rgba(255, 255, 255, 0.14);
+            --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
             --subcard-bg: rgba(255, 255, 255, 0.03);
-            --subcard-border: rgba(255, 255, 255, 0.07);
+            --subcard-border: rgba(255, 255, 255, 0.08);
             --subcard-hover-bg: rgba(255, 255, 255, 0.06);
-            --header-bg: rgba(11, 17, 30, 0.75);
-            --sidebar-bg: rgba(11, 17, 30, 0.85);
+            --header-bg: rgba(11, 17, 30, 0.85);
+            --sidebar-bg: rgba(11, 17, 30, 0.95);
             --heading-color: #FFFFFF;
             --text-primary: #F1F5F9;
             --text-secondary: #94A3B8;
             --text-muted: #64748B;
             --input-bg: rgba(255, 255, 255, 0.04);
-            --input-border: rgba(255, 255, 255, 0.10);
+            --input-border: rgba(255, 255, 255, 0.12);
             --pill-inactive-bg: rgba(255, 255, 255, 0.05);
             --pill-inactive-text: #94A3B8;
         }
@@ -101,148 +101,119 @@
         .theme-light {
             --canvas-bg: #F8FAFC;
             --canvas-text: #0F172A;
-            --card-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.90) 100%);
-            --card-border: rgba(226, 232, 240, 0.95);
-            --card-border-top: rgba(255, 255, 255, 1);
-            --card-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.05), 0 0 15px rgba(0, 102, 255, 0.04);
-            --subcard-bg: rgba(255, 255, 255, 0.85);
-            --subcard-border: rgba(226, 232, 240, 0.85);
-            --subcard-hover-bg: rgba(241, 245, 249, 0.95);
-            --header-bg: rgba(255, 255, 255, 0.85);
-            --sidebar-bg: rgba(255, 255, 255, 0.92);
+            --card-bg: #FFFFFF;
+            --card-border: #E2E8F0;
+            --card-border-top: #FFFFFF;
+            --card-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+            --subcard-bg: #F8FAFC;
+            --subcard-border: #E2E8F0;
+            --subcard-hover-bg: #F1F5F9;
+            --header-bg: rgba(255, 255, 255, 0.92);
+            --sidebar-bg: #FFFFFF;
             --heading-color: #0F172A;
-            --text-primary: #1E293B;
+            --text-primary: #334155;
             --text-secondary: #64748B;
             --text-muted: #94A3B8;
-            --input-bg: rgba(241, 245, 249, 0.9);
-            --input-border: rgba(203, 213, 225, 0.9);
-            --pill-inactive-bg: rgba(241, 245, 249, 0.9);
-            --pill-inactive-text: #475569;
+            --input-bg: #FFFFFF;
+            --input-border: #CBD5E1;
+            --pill-inactive-bg: #F1F5F9;
+            --pill-inactive-text: #64748B;
         }
 
         .liquid-glass-canvas {
-            background: radial-gradient(circle at 15% 15%, rgba(0, 102, 255, 0.12) 0%, transparent 45%),
-                        radial-gradient(circle at 85% 20%, rgba(0, 210, 255, 0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 50% 85%, rgba(15, 23, 42, 0.8) 0%, transparent 60%),
-                        var(--canvas-bg);
+            background-color: var(--canvas-bg);
             min-height: 100vh;
             color: var(--canvas-text);
         }
 
-        .theme-light .liquid-glass-canvas {
-            background: #F8FAFC !important;
+        /* Suppress ambient orbs in light mode to keep clean #F8FAFC canvas */
+        .theme-light .liquid-orb-1,
+        .theme-light .liquid-orb-2,
+        .theme-light [class*="liquid-orb"] {
+            display: none !important;
         }
 
-        /* 🌊 Dark Liquid Glass Card */
+        /* 🏢 Elevated Enterprise Card */
         .liquid-glass-card {
             position: relative;
             background: var(--card-bg) !important;
-            backdrop-filter: blur(28px) saturate(180%) !important;
-            -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
             border: 1px solid var(--card-border) !important;
-            border-top: 1px solid var(--card-border-top) !important;
-            border-radius: 1.75rem !important;
+            border-radius: 1.25rem !important;
             box-shadow: var(--card-shadow) !important;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
             overflow: hidden;
             color: var(--text-primary);
         }
 
-        .liquid-glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 35%;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-            pointer-events: none;
-            border-radius: 1.75rem 1.75rem 0 0;
-            z-index: 1;
-        }
-
         .liquid-glass-card:hover {
-            transform: translateY(-4px) scale(1.008);
-            box-shadow: 
-                0 30px 60px -12px rgba(0, 0, 0, 0.5),
-                0 0 35px -5px rgba(0, 102, 255, 0.2),
-                inset 0 1px 1px 0 rgba(255, 255, 255, 0.22) !important;
-            border-color: rgba(255, 255, 255, 0.16) !important;
-            border-top-color: rgba(0, 210, 255, 0.4) !important;
+            border-color: rgba(0, 102, 255, 0.3) !important;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08) !important;
         }
 
         /* Universal Module Surface for tab containers */
         .liquid-glass-surface {
             background: var(--card-bg) !important;
-            backdrop-filter: blur(28px) saturate(180%) !important;
-            -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
             border: 1px solid var(--card-border) !important;
-            border-top: 1px solid var(--card-border-top) !important;
-            border-radius: 2rem !important;
+            border-radius: 1.25rem !important;
             box-shadow: var(--card-shadow) !important;
             color: var(--text-primary);
         }
 
-        /* 🌟 Ultra-Crisp Dark Mode Normalization & Contrast Rules (WCAG AAA) */
-        .theme-dark h1, .theme-dark h2, .theme-dark h3, .theme-dark h4, .theme-dark h5, .theme-dark h6 {
-            color: #FFFFFF;
-            font-weight: 800 !important;
+        /* Micro-interactions & snappy transitions */
+        button, a, input, select {
+            transition: all 0.15s ease-out !important;
+        }
+        button:active, a:active {
+            transform: scale(0.98);
         }
 
         /* =========================================================
-           🎨 STRICT 3-COLOR SYSTEM ENFORCEMENT (LOGO PALETTE ONLY)
-           1. Primary Brand: Electric Blue (#0066FF / #00D2FF)
-           2. Slate / Obsidian: (#080C14 / #0F172A / #64748B)
-           3. Pure White: (#FFFFFF)
-           Swapped dynamically between Dark Mode and Light Mode
+           🎯 SEMANTIC COLOR CODING SYSTEM (ACCESSIBLE & HIGH CONTRAST)
+           Success: Emerald | Warning: Amber | Danger: Rose | Info: Blue
            ========================================================= */
 
-        /* Unify rogue multi-color gradients into Brand Blue & Slate */
-        [class*="from-emerald"], [class*="from-amber"], [class*="from-purple"], 
-        [class*="from-indigo"], [class*="from-teal"], [class*="from-orange"] {
-            background-image: linear-gradient(135deg, #0066FF 0%, #00D2FF 100%) !important;
+        /* Light Mode Badges */
+        .theme-light .badge-success, .theme-light [class*="bg-emerald-50"] {
+            background-color: #ECFDF5 !important;
+            color: #047857 !important;
+            border: 1px solid #A7F3D0 !important;
+        }
+        .theme-light .badge-warning, .theme-light [class*="bg-amber-50"] {
+            background-color: #FFFBEB !important;
+            color: #B45309 !important;
+            border: 1px solid #FDE68A !important;
+        }
+        .theme-light .badge-danger, .theme-light [class*="bg-rose-50"], .theme-light [class*="bg-red-50"] {
+            background-color: #FFF1F2 !important;
+            color: #BE123C !important;
+            border: 1px solid #FECDD3 !important;
+        }
+        .theme-light .badge-info, .theme-light [class*="bg-sky-50"], .theme-light [class*="bg-blue-50"] {
+            background-color: #EFF6FF !important;
+            color: #1D4ED8 !important;
+            border: 1px solid #BFDBFE !important;
         }
 
-        /* Dark Mode 3-Color mapping for soft badge containers */
-        .theme-dark [class*="bg-emerald-50"],
-        .theme-dark [class*="bg-amber-50"],
-        .theme-dark [class*="bg-purple-50"],
-        .theme-dark [class*="bg-teal-50"],
-        .theme-dark [class*="bg-indigo-50"],
-        .theme-dark [class*="bg-blue-50"] {
+        /* Dark Mode Badges */
+        .theme-dark .badge-success, .theme-dark [class*="bg-emerald-50"] {
+            background-color: rgba(16, 185, 129, 0.12) !important;
+            color: #34D399 !important;
+            border: 1px solid rgba(16, 185, 129, 0.25) !important;
+        }
+        .theme-dark .badge-warning, .theme-dark [class*="bg-amber-50"] {
+            background-color: rgba(245, 158, 11, 0.12) !important;
+            color: #FBBF24 !important;
+            border: 1px solid rgba(245, 158, 11, 0.25) !important;
+        }
+        .theme-dark .badge-danger, .theme-dark [class*="bg-rose-50"], .theme-dark [class*="bg-red-50"] {
+            background-color: rgba(244, 63, 94, 0.12) !important;
+            color: #FB7185 !important;
+            border: 1px solid rgba(244, 63, 94, 0.25) !important;
+        }
+        .theme-dark .badge-info, .theme-dark [class*="bg-sky-50"], .theme-dark [class*="bg-blue-50"] {
             background-color: rgba(0, 102, 255, 0.12) !important;
-            border-color: rgba(0, 210, 255, 0.25) !important;
-            color: #00D2FF !important;
-        }
-
-        /* Light Mode 3-Color mapping for soft badge containers */
-        .theme-light [class*="bg-emerald-50"],
-        .theme-light [class*="bg-amber-50"],
-        .theme-light [class*="bg-purple-50"],
-        .theme-light [class*="bg-teal-50"],
-        .theme-light [class*="bg-indigo-50"],
-        .theme-light [class*="bg-blue-50"] {
-            background-color: rgba(0, 102, 255, 0.08) !important;
-            border-color: rgba(0, 102, 255, 0.2) !important;
-            color: #0066FF !important;
-        }
-
-        /* Dark Mode Text Colors: Electric Blue or White/Slate */
-        .theme-dark [class*="text-emerald-"],
-        .theme-dark [class*="text-amber-"],
-        .theme-dark [class*="text-purple-"],
-        .theme-dark [class*="text-indigo-"],
-        .theme-dark [class*="text-teal-"] {
-            color: #00D2FF !important;
-        }
-
-        /* Light Mode Text Colors: Deep Brand Blue */
-        .theme-light [class*="text-emerald-"],
-        .theme-light [class*="text-amber-"],
-        .theme-light [class*="text-purple-"],
-        .theme-light [class*="text-indigo-"],
-        .theme-light [class*="text-teal-"] {
-            color: #0066FF !important;
+            color: #38BDF8 !important;
+            border: 1px solid rgba(0, 102, 255, 0.25) !important;
         }
 
         /* Prevent Leaking White Background Gradients in Dark Mode */
