@@ -53,6 +53,7 @@ def get_request_opco_id(request):
 
 
 class AccountViewSet(viewsets.ModelViewSet):
+    queryset = Account.objects.none()
     serializer_class = AccountSerializer
     permission_classes = [IsAuthenticated]
 
@@ -96,7 +97,7 @@ class AccountViewSet(viewsets.ModelViewSet):
         created_count, total_count = seed_default_chart_of_accounts(opco)
         if created_count > 0:
             return Response({
-                "message": f"تم توليد وتحديث شجرة حسابات ERPNext بنجاح للشركة: {opco.name} (تمت إضافة {created_count} حساباً جديداً، الإجمالي: {total_count})",
+                "message": f"تم توليد وتحديث شجرة الحسابات المحاسبية المعتمدة لـ Redivio ERP بنجاح للشركة: {opco.name} (تمت إضافة {created_count} حساباً جديداً، الإجمالي: {total_count})",
                 "opco_id": opco.id,
                 "opco_name": opco.name,
                 "created_count": created_count,
@@ -104,7 +105,7 @@ class AccountViewSet(viewsets.ModelViewSet):
             })
         else:
             return Response({
-                "message": f"شجرة حسابات ERPNext مكتملة ومحدثة بالكامل للشركة: {opco.name} (إجمالي {total_count} حساباً)",
+                "message": f"شجرة الحسابات المحاسبية المعتمدة لـ Redivio ERP مكتملة ومحدثة بالكامل للشركة: {opco.name} (إجمالي {total_count} حساباً)",
                 "opco_id": opco.id,
                 "opco_name": opco.name,
                 "created_count": created_count,
@@ -141,6 +142,7 @@ class AccountViewSet(viewsets.ModelViewSet):
 
 
 class CostCenterViewSet(viewsets.ModelViewSet):
+    queryset = CostCenter.objects.none()
     serializer_class = CostCenterSerializer
     permission_classes = [IsAuthenticated]
 
@@ -161,6 +163,7 @@ class CostCenterViewSet(viewsets.ModelViewSet):
 
 
 class JournalEntryViewSet(viewsets.ModelViewSet):
+    queryset = JournalEntry.objects.none()
     serializer_class = JournalEntrySerializer
     permission_classes = [IsAuthenticated]
 
@@ -204,6 +207,7 @@ class JournalEntryViewSet(viewsets.ModelViewSet):
 
 
 class GLEntryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = GLEntry.objects.none()
     serializer_class = GLEntrySerializer
     permission_classes = [IsAuthenticated]
 
@@ -234,6 +238,7 @@ class GLEntryViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class PurchaseInvoiceViewSet(viewsets.ModelViewSet):
+    queryset = PurchaseInvoice.objects.none()
     serializer_class = PurchaseInvoiceSerializer
     permission_classes = [IsAuthenticated]
 
@@ -348,6 +353,7 @@ class PurchaseInvoiceViewSet(viewsets.ModelViewSet):
 
 
 class PaymentEntryViewSet(viewsets.ModelViewSet):
+    queryset = PaymentEntry.objects.none()
     serializer_class = PaymentEntrySerializer
     permission_classes = [IsAuthenticated]
 
@@ -440,7 +446,7 @@ class FinancialReportsViewSet(viewsets.ViewSet):
                 'account_name': acc.account_name,
                 'root_type': acc.root_type,
                 'account_type': acc.account_type,
-                'currency': acc.currency or 'SAR',
+                'currency': acc.currency or 'EGP',
                 'has_children': len(children_map.get(acc.id, [])) > 0,
                 'children_count': len(children_map.get(acc.id, [])),
                 'debit': float(d),

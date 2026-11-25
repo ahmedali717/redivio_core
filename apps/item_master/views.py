@@ -49,6 +49,7 @@ class SaleGroupViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
 class MaterialViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
     """ إدارة المواد والأصناف (Items) مع التصفية حسب الشركة """
+    queryset = Material.objects.none()
     serializer_class = MaterialSerializer
 
     def get_queryset(self):

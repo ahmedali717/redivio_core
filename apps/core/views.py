@@ -567,6 +567,7 @@ class DashboardDataViewSet(viewsets.ViewSet):
 # =========================================================
 
 class OpCoViewSet(viewsets.ModelViewSet):
+    queryset = OpCo.objects.none()
     authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticated]
     serializer_class = OpCoSerializer
@@ -925,6 +926,7 @@ class StorageBinViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 class CompanyUserViewSet(viewsets.ModelViewSet):
+    queryset = CompanyUser.objects.none()
     serializer_class = CompanyUserSerializer
     permission_classes = [IsAuthenticated]
 
@@ -1103,6 +1105,7 @@ from apps.core.serializers import ChatterMessageSerializer, ActivityScheduleSeri
 from django.contrib.contenttypes.models import ContentType
 
 class ChatterMessageViewSet(viewsets.ModelViewSet):
+    queryset = ChatterMessage.objects.none()
     serializer_class = ChatterMessageSerializer
     permission_classes = [IsAuthenticated]
 
@@ -1128,6 +1131,7 @@ class ChatterMessageViewSet(viewsets.ModelViewSet):
 
 
 class ActivityScheduleViewSet(viewsets.ModelViewSet):
+    queryset = ActivitySchedule.objects.none()
     serializer_class = ActivityScheduleSerializer
     permission_classes = [IsAuthenticated]
 
