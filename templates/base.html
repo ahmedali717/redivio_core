@@ -191,24 +191,60 @@
             font-weight: 800 !important;
         }
 
-        /* Preserve Intentional Accent Colors for Badges and KPI Numbers */
-        .theme-dark .text-rose-400, .theme-dark .text-rose-500, .theme-dark .text-red-400, .theme-dark .text-red-500, .theme-dark .text-red-600 {
-            color: #F43F5E !important;
+        /* =========================================================
+           🎨 STRICT 3-COLOR SYSTEM ENFORCEMENT (LOGO PALETTE ONLY)
+           1. Primary Brand: Electric Blue (#0066FF / #00D2FF)
+           2. Slate / Obsidian: (#080C14 / #0F172A / #64748B)
+           3. Pure White: (#FFFFFF)
+           Swapped dynamically between Dark Mode and Light Mode
+           ========================================================= */
+
+        /* Unify rogue multi-color gradients into Brand Blue & Slate */
+        [class*="from-emerald"], [class*="from-amber"], [class*="from-purple"], 
+        [class*="from-indigo"], [class*="from-teal"], [class*="from-orange"] {
+            background-image: linear-gradient(135deg, #0066FF 0%, #00D2FF 100%) !important;
         }
-        .theme-dark .text-amber-400, .theme-dark .text-amber-500, .theme-dark .text-yellow-400, .theme-dark .text-amber-600 {
-            color: #F59E0B !important;
-        }
-        .theme-dark .text-emerald-400, .theme-dark .text-emerald-500, .theme-dark .text-green-400, .theme-dark .text-emerald-600 {
-            color: #10B981 !important;
-        }
-        .theme-dark .text-cyan-400, .theme-dark .text-cyan-300 {
+
+        /* Dark Mode 3-Color mapping for soft badge containers */
+        .theme-dark [class*="bg-emerald-50"],
+        .theme-dark [class*="bg-amber-50"],
+        .theme-dark [class*="bg-purple-50"],
+        .theme-dark [class*="bg-teal-50"],
+        .theme-dark [class*="bg-indigo-50"],
+        .theme-dark [class*="bg-blue-50"] {
+            background-color: rgba(0, 102, 255, 0.12) !important;
+            border-color: rgba(0, 210, 255, 0.25) !important;
             color: #00D2FF !important;
         }
-        .theme-dark .text-blue-400, .theme-dark .text-blue-500 {
-            color: #38BDF8 !important;
+
+        /* Light Mode 3-Color mapping for soft badge containers */
+        .theme-light [class*="bg-emerald-50"],
+        .theme-light [class*="bg-amber-50"],
+        .theme-light [class*="bg-purple-50"],
+        .theme-light [class*="bg-teal-50"],
+        .theme-light [class*="bg-indigo-50"],
+        .theme-light [class*="bg-blue-50"] {
+            background-color: rgba(0, 102, 255, 0.08) !important;
+            border-color: rgba(0, 102, 255, 0.2) !important;
+            color: #0066FF !important;
         }
-        .theme-dark .text-indigo-400, .theme-dark .text-indigo-300 {
-            color: #818CF8 !important;
+
+        /* Dark Mode Text Colors: Electric Blue or White/Slate */
+        .theme-dark [class*="text-emerald-"],
+        .theme-dark [class*="text-amber-"],
+        .theme-dark [class*="text-purple-"],
+        .theme-dark [class*="text-indigo-"],
+        .theme-dark [class*="text-teal-"] {
+            color: #00D2FF !important;
+        }
+
+        /* Light Mode Text Colors: Deep Brand Blue */
+        .theme-light [class*="text-emerald-"],
+        .theme-light [class*="text-amber-"],
+        .theme-light [class*="text-purple-"],
+        .theme-light [class*="text-indigo-"],
+        .theme-light [class*="text-teal-"] {
+            color: #0066FF !important;
         }
 
         /* Prevent Leaking White Background Gradients in Dark Mode */

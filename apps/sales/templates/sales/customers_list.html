@@ -61,8 +61,8 @@
                             </div>
                         </td>
                         <td class="px-5 py-3.5 font-mono text-xs text-slate-400">[[ c.tax_id || '---' ]]</td>
-                        <td class="px-5 py-3.5 font-black text-sm tech-font" :class="c.balance > 0 ? 'text-blue-400' : 'text-slate-400'">
-                            $[[ formatNumber(c.balance) ]]
+                        <td class="px-5 py-3.5 font-black text-sm tech-font" :class="c.balance > 0 ? 'text-blue-500 dark:text-cyan-400' : 'text-slate-400'">
+                            [[ formatNumber(c.balance) ]] ج.م
                         </td>
                         <td class="px-5 py-3.5 text-center text-slate-400 font-mono text-xs">[[ c.phone || '---' ]]</td>
                         <td class="px-5 py-3.5 text-left rounded-l-2xl">
