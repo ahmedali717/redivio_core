@@ -1233,6 +1233,188 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- Side-by-Side Quotation Comparison Section -->
+                <div v-if="forms.matrix.rfq" class="space-y-4">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-black text-slate-800 dark:text-white">
+                                    [[ isArabic ? 'جدول المقارنة الفنية والمالية بين العروض' : 'Technical & Commercial Comparison Matrix' ]]
+                                </h4>
+                                <p class="text-[11px] font-semibold text-slate-400">
+                                    [[ isArabic ? 'مقارنة مباشرة بين أسعار الموردين وشروط السداد وفترات التوريد' : 'Direct side-by-side comparison of supplier quotes, payment terms and lead times' ]]
+                                </p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-black border border-blue-200 dark:border-blue-800">
+                            [[ getQuotationsForRFQ(forms.matrix.rfq).length ]] [[ isArabic ? 'عروض مستلمة' : 'Quotes' ]]
+                        </span>
+                    </div>
+
+                    <!-- Side-by-side comparison cards -->
+                    <div v-if="getQuotationsForRFQ(forms.matrix.rfq).length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div v-for="q in getQuotationsForRFQ(forms.matrix.rfq)" :key="q.id"
+                             :class="forms.matrix.winning_vendor == q.vendor ? 'border-2 border-blue-600 bg-blue-50/20 dark:bg-blue-950/30 shadow-md shadow-blue-500/10' : 'border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-white/20'"
+                             class="rounded-2xl p-4 transition-all relative flex flex-col justify-between">
+                            
+                            <!-- Winner Badge if selected -->
+                            <div v-if="forms.matrix.winning_vendor == q.vendor" class="absolute -top-3 start-4 px-3 py-0.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                <i class="fas fa-check-circle"></i>
+                                <span>[[ isArabic ? 'العرض الفائز المختار' : 'Awarded Winner' ]]</span>
+                            </div>
+
+                            <div>
+                                <!-- Vendor & Quote Ref -->
+                                <div class="flex items-start justify-between gap-2 mb-3 pt-1">
+                                    <div>
+                                        <span class="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400 block">[[ q.quotation_number || ('SQ #' + q.id) ]]</span>
+                                        <h5 class="text-sm font-black text-slate-800 dark:text-white">
+                                            [[ q.vendor_name || (vendors.find(v => v.id === q.vendor)?.name) || (isArabic ? 'مورد غير محدد' : 'Unknown Vendor') ]]
+                                        </h5>
+                                    </div>
+                                    <a v-if="q.attachment" :href="q.attachment" target="_blank" class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold transition-colors" :title="isArabic ? 'عرض ملف العرض الرسمي' : 'View PDF'">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                </div>
+
+                                <!-- Key Criteria List -->
+                                <div class="space-y-2.5 text-xs bg-slate-50 dark:bg-white/[0.02] p-3 rounded-xl border border-slate-100 dark:border-white/5 mb-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-400 font-bold">[[ isArabic ? 'القيمة الإجمالية:' : 'Total Price:' ]]</span>
+                                        <span class="font-mono font-black text-slate-900 dark:text-white text-sm">
+                                            [[ formatCurrency ? formatCurrency(q.total_amount) : q.total_amount ]]
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-400 font-bold">[[ isArabic ? 'مدة التوريد:' : 'Lead Time:' ]]</span>
+                                        <span class="font-bold text-slate-700 dark:text-slate-200">
+                                            [[ q.delivery_lead_time_days || 1 ]] [[ isArabic ? 'أيام' : 'days' ]]
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-400 font-bold">[[ isArabic ? 'شروط السداد:' : 'Payment Terms:' ]]</span>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-black bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200">
+                                            [[ q.payment_terms || 'CASH' ]]
+                                        </span>
+                                    </div>
+                                    <div v-if="q.valid_until" class="flex items-center justify-between">
+                                        <span class="text-slate-400 font-bold">[[ isArabic ? 'صلاحية العرض:' : 'Validity:' ]]</span>
+                                        <span class="font-mono text-slate-600 dark:text-slate-300 text-[11px]">[[ q.valid_until ]]</span>
+                                    </div>
+                                    <div v-if="q.notes" class="pt-1 border-t border-slate-200 dark:border-white/5 text-[11px] text-slate-500 italic">
+                                        "[[ q.notes ]]"
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Award Selection Action -->
+                            <button type="button" 
+                                    @click="forms.matrix.winning_vendor = q.vendor; forms.matrix.title = (isArabic ? 'ترسية طلب الأسعار على ' : 'Awarded to ') + (q.vendor_name || (vendors.find(v => v.id === q.vendor)?.name || ''))"
+                                    :class="forms.matrix.winning_vendor == q.vendor ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-blue-900/30'"
+                                    class="w-full py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5">
+                                <i :class="forms.matrix.winning_vendor == q.vendor ? 'fa-check-circle' : 'fa-hand-pointer'" class="fas"></i>
+                                <span>[[ forms.matrix.winning_vendor == q.vendor ? (isArabic ? 'تم اختيار هذا العرض للترسية' : 'Selected for Award') : (isArabic ? 'ترسية على هذا العرض' : 'Award this Quote') ]]</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Table View (Detailed side-by-side) -->
+                    <div v-if="getQuotationsForRFQ(forms.matrix.rfq).length > 1" class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10 mt-3">
+                        <table class="w-full text-sm text-right" :dir="isArabic ? 'rtl' : 'ltr'">
+                            <thead class="bg-slate-100 dark:bg-white/[0.04] text-[10px] font-black uppercase text-slate-500 border-b border-slate-200 dark:border-white/10">
+                                <tr>
+                                    <th class="py-2.5 px-4 text-slate-400">[[ isArabic ? 'معيار المقارنة / البند' : 'Comparison Criteria' ]]</th>
+                                    <th v-for="q in getQuotationsForRFQ(forms.matrix.rfq)" :key="q.id" class="py-2.5 px-4 text-center"
+                                        :class="forms.matrix.winning_vendor == q.vendor ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-black' : ''">
+                                        [[ q.vendor_name || (vendors.find(v => v.id === q.vendor)?.name) ]]
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-white/5 text-xs">
+                                <tr>
+                                    <td class="py-2.5 px-4 font-bold text-slate-500">[[ isArabic ? 'رقم العرض (Quote Ref)' : 'Quote Ref' ]]</td>
+                                    <td v-for="q in getQuotationsForRFQ(forms.matrix.rfq)" :key="q.id" class="py-2.5 px-4 text-center font-mono font-bold text-blue-600">
+                                        [[ q.quotation_number || ('SQ #' + q.id) ]]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-bold text-slate-500">[[ isArabic ? 'السعر الإجمالي المقدم' : 'Offered Total' ]]</td>
+                                    <td v-for="q in getQuotationsForRFQ(forms.matrix.rfq)" :key="q.id" class="py-2.5 px-4 text-center font-mono font-black text-sm text-slate-900 dark:text-white">
+                                        [[ formatCurrency ? formatCurrency(q.total_amount) : q.total_amount ]]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-bold text-slate-500">[[ isArabic ? 'فترة التوريد (أيام)' : 'Delivery Lead Time' ]]</td>
+                                    <td v-for="q in getQuotationsForRFQ(forms.matrix.rfq)" :key="q.id" class="py-2.5 px-4 text-center font-bold text-slate-700 dark:text-slate-300">
+                                        [[ q.delivery_lead_time_days || 1 ]] [[ isArabic ? 'يوم' : 'days' ]]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-bold text-slate-500">[[ isArabic ? 'شروط السداد والدفع' : 'Payment Terms' ]]</td>
+                                    <td v-for="q in getQuotationsForRFQ(forms.matrix.rfq)" :key="q.id" class="py-2.5 px-4 text-center">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200">
+                                            [[ q.payment_terms || 'CASH' ]]
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-bold text-slate-500">[[ isArabic ? 'تاريخ الصلاحية' : 'Valid Until' ]]</td>
+                                    <td v-for="q in getQuotationsForRFQ(forms.matrix.rfq)" :key="q.id" class="py-2.5 px-4 text-center font-mono text-slate-600 dark:text-slate-400">
+                                        [[ q.valid_until || '-' ]]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-bold text-slate-500">[[ isArabic ? 'ملف العرض الرسمي' : 'Attachment' ]]</td>
+                                    <td v-for="q in getQuotationsForRFQ(forms.matrix.rfq)" :key="q.id" class="py-2.5 px-4 text-center">
+                                        <a v-if="q.attachment" :href="q.attachment" target="_blank" class="inline-flex items-center gap-1 text-rose-600 hover:underline font-bold text-xs">
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </a>
+                                        <span v-else class="text-slate-300 font-bold">-</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-bold text-slate-500">[[ isArabic ? 'قرار الترسية' : 'Award Decision' ]]</td>
+                                    <td v-for="q in getQuotationsForRFQ(forms.matrix.rfq)" :key="q.id" class="py-2.5 px-4 text-center">
+                                        <button type="button" 
+                                                @click="forms.matrix.winning_vendor = q.vendor; forms.matrix.title = (isArabic ? 'ترسية طلب الأسعار على ' : 'Awarded to ') + (q.vendor_name || (vendors.find(v => v.id === q.vendor)?.name || ''))"
+                                                :class="forms.matrix.winning_vendor == q.vendor ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-blue-50 text-slate-700'"
+                                                class="px-3 py-1 rounded-lg text-[10px] font-black transition-all">
+                                            [[ forms.matrix.winning_vendor == q.vendor ? (isArabic ? 'الفائز المختار' : 'Awarded') : (isArabic ? 'اختيار' : 'Select') ]]
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty Quotes state -->
+                    <div v-if="getQuotationsForRFQ(forms.matrix.rfq).length === 0" class="py-8 px-4 text-center bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+                        <i class="fas fa-inbox text-3xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
+                        <h5 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            [[ isArabic ? 'لا توجد عروض أسعار مسجلة لهذا الطلب حتى الآن' : 'No supplier quotes recorded for this RFQ yet' ]]
+                        </h5>
+                        <p class="text-[11px] text-slate-400 mb-3">
+                            [[ isArabic ? 'يمكنك إضافة عروض الموردين أولاً لإجراء المقارنة والمفاضلة' : 'Add supplier quotes first to perform evaluation and comparison' ]]
+                        </p>
+                        <button type="button" @click="openModal('sq', { rfq_id: forms.matrix.rfq })" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all inline-flex items-center gap-1.5">
+                            <i class="fas fa-plus"></i>
+                            <span>[[ isArabic ? 'إضافة عرض سعر للمورد' : 'Add Vendor Quote' ]]</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empty RFQ Selection state -->
+                <div v-else class="py-8 px-4 text-center bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+                    <i class="fas fa-tasks text-3xl text-blue-500/50 mb-2 block"></i>
+                    <h5 class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        [[ isArabic ? 'يرجى اختيار طلب الأسعار (RFQ) لعرض مصفوفة المقارنة الفورية' : 'Please select an RFQ to view the live comparison matrix' ]]
+                    </h5>
+                </div>
+
                 <div>
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">[[ isArabic ? 'مبررات الترسية والتقييم الفني والمالي' : 'Evaluation Notes' ]]</label>
                     <textarea v-model="forms.matrix.notes" rows="3" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-3 text-xs font-semibold text-slate-700 dark:text-white outline-none" placeholder="تم تقييم العروض واختيار العرض الأنسب فنياً ومالياً..."></textarea>
