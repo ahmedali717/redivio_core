@@ -1,172 +1,174 @@
-<div class="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-16" v-cloak>
+<div class="w-full max-w-[1800px] mx-auto px-2 sm:px-4 lg:px-6 space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-500 pb-16" v-cloak>
     
-    <!-- 🏁 1. Liquid Glass Welcome Header (AdminPro V15 Style) -->
-    <div class="liquid-glass-card rounded-[2.5rem] p-6 md:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative overflow-hidden">
-        <div class="glass-sheen"></div>
-        
-        <!-- Left: Branding & Greeting -->
-        <div class="relative z-10 flex items-center gap-4 md:gap-5">
-            <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-700 via-blue-600 to-slate-800 text-white flex items-center justify-center shadow-xl shadow-blue-600/25 border border-white/20 shrink-0">
-                <i class="fas fa-layer-group text-2xl text-white"></i>
+    <!-- =========================================================
+         1. WELCOME COMMAND BAR & SYSTEM STATUS (60-30-10 Rule)
+         ========================================================= -->
+    <section class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 lg:p-8 shadow-xs relative overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            
+            <!-- Left: Greeting & Enterprise Scope -->
+            <div class="flex items-center gap-4 lg:gap-5 min-w-0">
+                <div class="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                    <i class="fas fa-layer-group text-xl lg:text-2xl text-white"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                            [[ isArabic ? 'مرحباً بعودتك، المدير! 👋' : 'Welcome back, Admin! 👋' ]]
+                        </h1>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>[[ isArabic ? 'النظام نشط' : 'SYSTEM LIVE' ]]</span>
+                        </span>
+                    </div>
+                    <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-2">
+                        <i class="fas fa-building text-slate-400 text-xs"></i>
+                        <span class="font-bold text-slate-700 dark:text-slate-200">[[ config.company_name || 'Redivio Global' ]]</span>
+                        <span class="text-slate-300 dark:text-slate-600">•</span>
+                        <span>[[ isArabic ? 'ملخص العمليات التنفيذية والمالية عبر المنشأة اليوم' : 'Consolidated operational and financial status across all entities' ]]</span>
+                    </p>
+                </div>
             </div>
-            <div>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-2xl md:text-3xl font-black text-[var(--heading-color)] tracking-tight">
-                        [[ isArabic ? 'مرحباً بعودتك، المدير! 👋' : 'Welcome back, Admin! 👋' ]]
-                    </h1>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-blue-500/15 text-blue-400 border border-blue-500/30 backdrop-blur-md">
-                        <span class="w-2 h-2 rounded-full bg-blue-400 mr-1.5 animate-ping"></span>
-                        LIVE V15
+
+            <!-- Right: Search & Global Actions -->
+            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end">
+                <!-- Search Input -->
+                <div class="relative flex-1 sm:flex-initial">
+                    <i class="fas fa-magnifying-glass absolute top-1/2 -translate-y-1/2 text-slate-400 text-xs" :class="isArabic ? 'right-4' : 'left-4'"></i>
+                    <input type="text" 
+                           v-model="searchQuery" 
+                           :placeholder="isArabic ? 'بحث سريع في النظام...' : 'Search anything...'" 
+                           class="h-11 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all w-full sm:w-60 md:w-72"
+                           :class="isArabic ? 'pr-10 pl-4' : 'pl-10 pr-4'">
+                </div>
+
+                <!-- Active Users Indicator -->
+                <div class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
+                    <i class="fas fa-users text-slate-400 text-xs"></i>
+                    <span>[[ (companyUsers && companyUsers.length) ? companyUsers.length : (activeUsers.length || 1) ]] [[ isArabic ? 'مستخدم' : 'Active' ]]</span>
                 </div>
-                <p class="text-xs font-semibold text-[var(--text-secondary)] mt-1.5 flex items-center gap-2">
-                    <i class="fas fa-building text-slate-400"></i>
-                    <span class="font-bold text-[var(--heading-color)]">[[ config.company_name || 'Redivio Global' ]]</span>
-                    <span class="text-slate-500">•</span>
-                    <span>[[ isArabic ? 'إليك ملخص ما يحدث في مؤسستك اليوم عبر جميع الفروع والعمليات.' : 'Here is what is happening across your enterprise today.' ]]</span>
-                </p>
+
+                <!-- Activity Log Button -->
+                <button @click="showActivityLog = true" 
+                        class="inline-flex items-center gap-2 h-11 px-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:border-slate-300 transition-all duration-200 active:scale-[0.98]">
+                    <i class="fas fa-bell text-slate-400 text-xs"></i>
+                    <span v-text="isArabic ? 'سجل العمليات' : 'Activity Log'"></span>
+                </button>
             </div>
         </div>
+    </section>
 
-        <!-- Right: Actions & User Quick Info -->
-        <div class="relative z-10 flex flex-wrap items-center gap-3">
-            <!-- Search Bar -->
-            <div class="relative hidden sm:block">
-                <i class="fas fa-magnifying-glass absolute top-1/2 -translate-y-1/2 text-slate-400 text-xs" :class="isArabic ? 'right-4' : 'left-4'"></i>
-                <input type="text" 
-                       v-model="searchQuery" 
-                       :placeholder="isArabic ? 'بحث سريع في النظام...' : 'Search anything...'" 
-                       class="h-11 rounded-2xl bg-[var(--input-bg)] border border-[var(--input-border)] text-xs font-medium text-[var(--text-primary)] placeholder-slate-400 focus:outline-none focus:border-blue-500/50 transition-all w-56 md:w-64"
-                       :class="isArabic ? 'pr-10 pl-4' : 'pl-10 pr-4'">
-            </div>
-
-            <!-- Active Users Pill (Unified Blue / Slate) -->
-            <div class="glass-kpi-pill px-4 py-2.5 rounded-2xl flex items-center gap-2.5 border border-white/10">
-                <span class="relative flex h-2.5 w-2.5">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-                </span>
-                <i class="fas fa-users text-blue-400 text-xs"></i>
-                <span class="text-[11px] font-black text-[var(--text-primary)] tracking-wide">[[ (companyUsers && companyUsers.length) ? companyUsers.length : (activeUsers.length || 1) ]] [[ isArabic ? 'مستخدم نشط' : 'Active Users' ]]</span>
-            </div>
-
-            <!-- Activity Log Button -->
-            <button @click="showActivityLog = true" 
-                    class="liquid-glass-btn px-4 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2 text-[var(--text-primary)] hover:text-blue-400 transition-all">
-                <i class="fas fa-bell text-slate-400"></i>
-                <span v-text="isArabic ? 'سجل العمليات' : 'Log'"></span>
-            </button>
-        </div>
-    </div>
-
-    <!-- 📊 2. Top 4 Primary KPI Floating Glass Cards (AdminPro V15) -->
-    <!-- All Icons strictly adhere to the 3 brand colors: Blue, Gray, White -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+    <!-- =========================================================
+         2. PRIMARY EXECUTIVE KPI METRICS (4 Columns)
+         ========================================================= -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
         
-        <!-- Card 1: Total Revenue -->
-        <div class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-            <div class="glass-sheen"></div>
-            <div class="relative z-10 flex items-start justify-between">
-                <div class="w-13 h-13 rounded-2xl bg-blue-600/15 border border-blue-500/30 text-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/10">
-                    <i class="fas fa-wallet text-xl text-blue-400"></i>
+        <!-- Metric 1: Total Revenue -->
+        <div class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-2xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200 group">
+            <div class="flex items-start justify-between">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg">
+                    <i class="fas fa-wallet"></i>
                 </div>
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    <i class="fas fa-arrow-up text-[9px]"></i> LIVE
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+                    <i class="fas fa-arrow-trend-up text-[9px]"></i> LIVE
                 </span>
             </div>
-            <div class="relative z-10 mt-5">
-                <span class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider block" v-text="isArabic ? 'إجمالي الإيرادات والمبيعات' : 'Total Revenue'"></span>
-                <h3 class="text-2xl font-black text-[var(--heading-color)] tech-font mt-1 tracking-tight">
+            <div class="mt-4">
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block" v-text="isArabic ? 'إجمالي الإيرادات والمبيعات' : 'Total Revenue'"></span>
+                <h3 class="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight mt-1">
                     [[ formatCurrency(executiveKpis.totalRevenue) ]]
                 </h3>
-                <span class="text-[10px] text-slate-400 mt-1 block">[[ isArabic ? 'محدث لحظياً' : 'Live updated' ]]</span>
+                <span class="text-xs text-slate-400 dark:text-slate-500 mt-1 block">[[ isArabic ? 'محدث لحظياً بناءً على القيود والفواتير' : 'Real-time GL posted invoices' ]]</span>
             </div>
         </div>
 
-        <!-- Card 2: Total Orders -->
-        <div class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-            <div class="glass-sheen"></div>
-            <div class="relative z-10 flex items-start justify-between">
-                <div class="w-13 h-13 rounded-2xl bg-slate-800/80 border border-slate-600/30 text-white flex items-center justify-center shadow-lg">
-                    <i class="fas fa-cart-shopping text-xl text-blue-400"></i>
+        <!-- Metric 2: Total Orders -->
+        <div class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-2xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200 group">
+            <div class="flex items-start justify-between">
+                <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-lg">
+                    <i class="fas fa-cart-shopping"></i>
                 </div>
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    <i class="fas fa-arrow-up text-[9px]"></i> LIVE
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20">
+                    <i class="fas fa-check text-[9px]"></i> ACTIVE
                 </span>
             </div>
-            <div class="relative z-10 mt-5">
-                <span class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider block" v-text="isArabic ? 'إجمالي الأوامر والطلبات' : 'Total Orders'"></span>
-                <h3 class="text-2xl font-black text-[var(--heading-color)] tech-font mt-1 tracking-tight">
+            <div class="mt-4">
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block" v-text="isArabic ? 'إجمالي الأوامر والعمليات' : 'Total Orders'"></span>
+                <h3 class="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight mt-1">
                     [[ executiveKpis.totalOrdersCount ]]
                 </h3>
-                <span class="text-[10px] text-slate-400 mt-1 block">[[ isArabic ? 'أوامر بيع وتوريد مقيدة' : 'Confirmed POs & SOs' ]]</span>
+                <span class="text-xs text-slate-400 dark:text-slate-500 mt-1 block">[[ isArabic ? 'أوامر بيع وتوريد معتمدة' : 'Confirmed POs & Sales Orders' ]]</span>
             </div>
         </div>
 
-        <!-- Card 3: Active Users & Clients -->
-        <div class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-            <div class="glass-sheen"></div>
-            <div class="relative z-10 flex items-start justify-between">
-                <div class="w-13 h-13 rounded-2xl bg-blue-600/15 border border-blue-500/30 text-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/10">
-                    <i class="fas fa-users text-xl text-blue-400"></i>
+        <!-- Metric 3: Active Clients & Entities -->
+        <div class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-2xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200 group">
+            <div class="flex items-start justify-between">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg">
+                    <i class="fas fa-users"></i>
                 </div>
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    <i class="fas fa-arrow-up text-[9px]"></i> LIVE
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                    CRM
                 </span>
             </div>
-            <div class="relative z-10 mt-5">
-                <span class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider block" v-text="isArabic ? 'إجمالي العملاء والمستخدمين' : 'Total Users & Clients'"></span>
-                <h3 class="text-2xl font-black text-[var(--heading-color)] tech-font mt-1 tracking-tight">
+            <div class="mt-4">
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block" v-text="isArabic ? 'إجمالي العملاء والمستخدمين' : 'Total Clients & Users'"></span>
+                <h3 class="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight mt-1">
                     [[ (customers ? customers.length : 0) + (companyUsers && companyUsers.length ? companyUsers.length : 1) ]]
                 </h3>
-                <span class="text-[10px] text-slate-400 mt-1 block">[[ isArabic ? 'عملاء ومستخدمي الفروع' : 'Across all entities' ]]</span>
+                <span class="text-xs text-slate-400 dark:text-slate-500 mt-1 block">[[ isArabic ? 'عملاء ومستخدمي الفروع' : 'Registered clients & system users' ]]</span>
             </div>
         </div>
 
-        <!-- Card 4: Total SKUs & Materials -->
-        <div class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-            <div class="glass-sheen"></div>
-            <div class="relative z-10 flex items-start justify-between">
-                <div class="w-13 h-13 rounded-2xl bg-slate-800/80 border border-slate-600/30 text-white flex items-center justify-center shadow-lg">
-                    <i class="fas fa-box-open text-xl text-slate-200"></i>
+        <!-- Metric 4: Catalog Materials & SKUs -->
+        <div class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-2xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200 group">
+            <div class="flex items-start justify-between">
+                <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-lg">
+                    <i class="fas fa-boxes-stacked"></i>
                 </div>
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    <i class="fas fa-arrow-up text-[9px]"></i> LIVE
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                    RIMS
                 </span>
             </div>
-            <div class="relative z-10 mt-5">
-                <span class="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider block" v-text="isArabic ? 'إجمالي الأصناف والمنتجات' : 'Total Products & SKUs'"></span>
-                <h3 class="text-2xl font-black text-[var(--heading-color)] tech-font mt-1 tracking-tight">
+            <div class="mt-4">
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block" v-text="isArabic ? 'إجمالي الأصناف المعرفة' : 'Catalog Items & SKUs'"></span>
+                <h3 class="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight mt-1">
                     [[ materials_list ? materials_list.length : 0 ]]
                 </h3>
-                <span class="text-[10px] text-slate-400 mt-1 block">[[ isArabic ? 'أصناف معرفة في الكتالوج' : 'Active catalog items' ]]</span>
+                <span class="text-xs text-slate-400 dark:text-slate-500 mt-1 block">[[ isArabic ? 'أصناف معرفة في سجل الكتالوج' : 'Active catalog items & inventory codes' ]]</span>
             </div>
         </div>
 
-    </div>
+    </section>
 
-    <!-- 📈 3. Middle Section: Revenue Chart, Recent Orders & Operations Gauges (AdminPro V15) -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- =========================================================
+         3. REVENUE TREND CHART, RECENT ORDERS & TEAM (Grid Layout)
+         ========================================================= -->
+    <section class="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
         
-        <!-- Big Card (2 cols): Revenue Overview Interactive Chart -->
-        <div class="lg:col-span-2 liquid-glass-card rounded-[2.5rem] p-6 md:p-8 relative overflow-hidden flex flex-col justify-between">
-            <div class="glass-sheen"></div>
+        <!-- Left: Revenue Overview (2 Columns on XL) -->
+        <div class="xl:col-span-2 bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 lg:p-8 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200">
             
-            <!-- Top Controls -->
-            <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <!-- Chart Header Controls -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
-                    <h3 class="text-lg md:text-xl font-black text-[var(--heading-color)]" v-text="isArabic ? 'نظرة عامة على الإيرادات والنمو' : 'Revenue Overview'"></h3>
-                    <p class="text-xs text-[var(--text-secondary)] font-medium mt-0.5" v-text="isArabic ? 'معدل التحصيل والمبيعات مقارنة بالشهور السابقة' : 'Monthly revenue flow and financial performance'"></p>
+                    <h2 class="text-lg lg:text-xl font-bold text-slate-900 dark:text-white" v-text="isArabic ? 'نظرة عامة على الإيرادات والنمو' : 'Revenue & Financial Flow'"></h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5" v-text="isArabic ? 'معدل التحصيل والتدفقات النقدية مقارنة بالفترات السابقة' : 'Monthly revenue trends and cash flow performance'"></p>
                 </div>
+                
                 <div class="flex items-center gap-3">
-                    <!-- Floating Stat Pill -->
-                    <div class="px-4 py-2 rounded-2xl bg-blue-600/15 border border-blue-500/30 text-right">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase block" v-text="isArabic ? 'تحصيل الشهر الحالي' : 'Current Month'"></span>
-                        <span class="text-sm font-black text-blue-400 tech-font">[[ formatCurrency(executiveKpis.currentMonthRevenue) ]]</span>
-                        <span class="text-[9px] font-black text-blue-300 ml-1">[[ executiveKpis.totalOrdersCount > 0 ? 'Live Flow' : '0%' ]]</span>
+                    <!-- Current Month KPI Pill -->
+                    <div class="px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-start">
+                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block" v-text="isArabic ? 'الشهر الحالي' : 'Current Month'"></span>
+                        <span class="text-sm font-black text-blue-600 dark:text-blue-400 tabular-nums">[[ formatCurrency(executiveKpis.currentMonthRevenue) ]]</span>
                     </div>
-                    <!-- Time range selector -->
-                    <select class="h-10 px-3 rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] text-xs font-bold text-[var(--text-primary)] focus:outline-none">
+
+                    <!-- Time Range Filter -->
+                    <select class="h-10 px-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-600 transition-colors">
                         <option value="30">[[ isArabic ? 'آخر 30 يوماً' : 'Last 30 Days' ]]</option>
                         <option value="90">[[ isArabic ? 'هذا الربع' : 'This Quarter' ]]</option>
                         <option value="365">[[ isArabic ? 'هذا العام' : 'This Year' ]]</option>
@@ -174,167 +176,163 @@
                 </div>
             </div>
 
-            <!-- SVG Smooth Area Curve Chart (High Performance, No External Dependency) -->
-            <div class="relative z-10 w-full h-64 md:h-72 my-2">
+            <!-- SVG Smooth Area Curve Chart -->
+            <div class="w-full h-64 lg:h-72 my-2">
                 <svg class="w-full h-full overflow-visible" viewBox="0 0 700 240" preserveAspectRatio="none">
                     <defs>
-                        <!-- Blue Gradient Fill for Curve Area -->
                         <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#0066FF" stop-opacity="0.45"/>
-                            <stop offset="50%" stop-color="#0066FF" stop-opacity="0.15"/>
+                            <stop offset="0%" stop-color="#0066FF" stop-opacity="0.30"/>
+                            <stop offset="60%" stop-color="#0066FF" stop-opacity="0.08"/>
                             <stop offset="100%" stop-color="#0066FF" stop-opacity="0.0"/>
                         </linearGradient>
-                        <filter id="glowShadow" x="-10%" y="-10%" width="120%" height="120%">
-                            <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0066FF" flood-opacity="0.4"/>
-                        </filter>
                     </defs>
 
-                    <!-- Horizontal Grid Lines -->
-                    <line x1="40" y1="30" x2="680" y2="30" stroke="currentColor" class="text-slate-500/15" stroke-dasharray="4"/>
-                    <line x1="40" y1="80" x2="680" y2="80" stroke="currentColor" class="text-slate-500/15" stroke-dasharray="4"/>
-                    <line x1="40" y1="130" x2="680" y2="130" stroke="currentColor" class="text-slate-500/15" stroke-dasharray="4"/>
-                    <line x1="40" y1="180" x2="680" y2="180" stroke="currentColor" class="text-slate-500/15" stroke-dasharray="4"/>
+                    <!-- Horizontal Guidelines (Hairline) -->
+                    <line x1="40" y1="30" x2="680" y2="30" stroke="#E2E8F0" stroke-width="1" class="dark:opacity-20" stroke-dasharray="4"/>
+                    <line x1="40" y1="80" x2="680" y2="80" stroke="#E2E8F0" stroke-width="1" class="dark:opacity-20" stroke-dasharray="4"/>
+                    <line x1="40" y1="130" x2="680" y2="130" stroke="#E2E8F0" stroke-width="1" class="dark:opacity-20" stroke-dasharray="4"/>
+                    <line x1="40" y1="180" x2="680" y2="180" stroke="#E2E8F0" stroke-width="1" class="dark:opacity-20" stroke-dasharray="4"/>
 
                     <!-- Y-Axis Labels -->
-                    <text x="10" y="35" class="text-[10px] fill-slate-400 font-bold">40K</text>
-                    <text x="10" y="85" class="text-[10px] fill-slate-400 font-bold">30K</text>
-                    <text x="10" y="135" class="text-[10px] fill-slate-400 font-bold">20K</text>
-                    <text x="10" y="185" class="text-[10px] fill-slate-400 font-bold">10K</text>
+                    <text x="10" y="35" class="text-[10px] fill-slate-400 font-semibold tabular-nums">40K</text>
+                    <text x="10" y="85" class="text-[10px] fill-slate-400 font-semibold tabular-nums">30K</text>
+                    <text x="10" y="135" class="text-[10px] fill-slate-400 font-semibold tabular-nums">20K</text>
+                    <text x="10" y="185" class="text-[10px] fill-slate-400 font-semibold tabular-nums">10K</text>
 
                     <!-- Area Fill -->
                     <path d="M 50 170 Q 150 140, 250 110 T 450 130 T 570 60 T 670 50 L 670 200 L 50 200 Z" fill="url(#revenueGrad)"/>
 
-                    <!-- Smooth Bezier Line -->
-                    <path d="M 50 170 Q 150 140, 250 110 T 450 130 T 570 60 T 670 50" fill="none" stroke="#0066FF" stroke-width="3.5" filter="url(#glowShadow)"/>
+                    <!-- Primary Curve Line -->
+                    <path d="M 50 170 Q 150 140, 250 110 T 450 130 T 570 60 T 670 50" fill="none" stroke="#0066FF" stroke-width="3"/>
 
-                    <!-- Data Point Nodes -->
-                    <circle cx="50" cy="170" r="4.5" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
-                    <circle cx="150" cy="140" r="4.5" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
-                    <circle cx="250" cy="110" r="4.5" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
-                    <circle cx="350" cy="135" r="4.5" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
-                    <circle cx="450" cy="130" r="4.5" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
-                    <circle cx="570" cy="60" r="6" fill="#0066FF" stroke="#FFFFFF" stroke-width="3"/>
-                    <circle cx="670" cy="50" r="5" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
+                    <!-- Nodes -->
+                    <circle cx="50" cy="170" r="4" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
+                    <circle cx="150" cy="140" r="4" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
+                    <circle cx="250" cy="110" r="4" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
+                    <circle cx="350" cy="135" r="4" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
+                    <circle cx="450" cy="130" r="4" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
+                    <circle cx="570" cy="60" r="5" fill="#0066FF" stroke="#FFFFFF" stroke-width="2.5"/>
+                    <circle cx="670" cy="50" r="4" fill="#FFFFFF" stroke="#0066FF" stroke-width="2.5"/>
 
                     <!-- X-Axis Labels -->
-                    <text x="50" y="225" class="text-[11px] fill-slate-400 font-semibold" text-anchor="middle">Jan</text>
-                    <text x="150" y="225" class="text-[11px] fill-slate-400 font-semibold" text-anchor="middle">Feb</text>
-                    <text x="250" y="225" class="text-[11px] fill-slate-400 font-semibold" text-anchor="middle">Mar</text>
-                    <text x="350" y="225" class="text-[11px] fill-slate-400 font-semibold" text-anchor="middle">Apr</text>
-                    <text x="450" y="225" class="text-[11px] fill-slate-400 font-semibold" text-anchor="middle">May</text>
-                    <text x="570" y="225" class="text-[11px] fill-blue-400 font-bold" text-anchor="middle">Jun</text>
-                    <text x="670" y="225" class="text-[11px] fill-slate-400 font-semibold" text-anchor="middle">Jul</text>
+                    <text x="50" y="225" class="text-[11px] fill-slate-400 font-medium" text-anchor="middle">Jan</text>
+                    <text x="150" y="225" class="text-[11px] fill-slate-400 font-medium" text-anchor="middle">Feb</text>
+                    <text x="250" y="225" class="text-[11px] fill-slate-400 font-medium" text-anchor="middle">Mar</text>
+                    <text x="350" y="225" class="text-[11px] fill-slate-400 font-medium" text-anchor="middle">Apr</text>
+                    <text x="450" y="225" class="text-[11px] fill-slate-400 font-medium" text-anchor="middle">May</text>
+                    <text x="570" y="225" class="text-[11px] fill-blue-600 dark:fill-blue-400 font-bold" text-anchor="middle">Jun</text>
+                    <text x="670" y="225" class="text-[11px] fill-slate-400 font-medium" text-anchor="middle">Jul</text>
                 </svg>
             </div>
 
-            <!-- Recent Orders Mini-List (Integrated below chart as in V15) -->
-            <div class="relative z-10 pt-4 border-t border-[var(--subcard-border)] mt-2">
+            <!-- Recent Orders Mini Feed -->
+            <div class="pt-5 border-t border-slate-100 dark:border-slate-800/80 mt-4">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold text-[var(--heading-color)] uppercase tracking-wider flex items-center gap-2">
-                        <i class="fas fa-clock-rotate-left text-blue-400"></i>
-                        [[ isArabic ? 'أحدث الأوامر والعمليات المسجلة' : 'Recent Orders' ]]
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-clock-rotate-left text-blue-600 dark:text-blue-400"></i>
+                        [[ isArabic ? 'أحدث الأوامر والعمليات' : 'Recent Operational Activity' ]]
                     </span>
-                    <button @click="view = 'procurement_module'" class="text-[11px] font-bold text-blue-400 hover:text-blue-300">
-                        [[ isArabic ? 'عرض الكل ←' : 'See All →' ]]
+                    <button @click="view = 'procurement_module'" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors">
+                        [[ isArabic ? 'عرض الكل ←' : 'View All →' ]]
                     </button>
                 </div>
+
                 <div v-if="recentOrdersList && recentOrdersList.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div v-for="order in recentOrdersList" :key="order.id" class="p-3 rounded-2xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] flex items-center justify-between hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-black text-xs">
-                                <i :class="order.type === 'po' ? 'fas fa-file-invoice' : 'fas fa-cart-check'" class="text-xs"></i>
+                    <div v-for="order in recentOrdersList" :key="order.id" class="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-all duration-200">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                <i :class="order.type === 'po' ? 'fas fa-file-invoice' : 'fas fa-cart-shopping'" class="text-xs"></i>
                             </div>
-                            <div class="truncate max-w-[120px]">
-                                <span class="text-xs font-bold text-[var(--heading-color)] block truncate">[[ order.ref ]]</span>
+                            <div class="truncate">
+                                <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate">[[ order.ref ]]</span>
                                 <span class="text-[10px] text-slate-400 block truncate">[[ order.party_name ]]</span>
                             </div>
                         </div>
-                        <div class="text-right flex-shrink-0">
-                            <span class="text-xs font-black text-blue-400 block tech-font">[[ formatCurrency(order.amount) ]]</span>
-                            <span class="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold" :class="order.status === 'RECEIVED' || order.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'">[[ order.status ]]</span>
+                        <div class="text-end shrink-0 ps-2">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white block tabular-nums">[[ formatCurrency(order.amount) ]]</span>
+                            <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold" 
+                                  :class="order.status === 'RECEIVED' || order.status === 'PAID' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400'">
+                                [[ order.status ]]
+                            </span>
                         </div>
                     </div>
                 </div>
-                <div v-else class="text-center py-4 text-xs font-bold text-slate-400">
+                <div v-else class="text-center py-6 text-xs font-medium text-slate-400">
                     [[ isArabic ? 'لا توجد أوامر مسجلة حتى الآن' : 'No recorded orders yet' ]]
                 </div>
             </div>
         </div>
 
-        <!-- Right Side: Team Members & Tasks Status (Stacked) -->
+        <!-- Right: Team Members & Task Status (Stacked on XL) -->
         <div class="space-y-6 flex flex-col justify-between">
             
-            <!-- Card A: Team Members (فريق العمل المتصل) -->
-            <div class="liquid-glass-card rounded-[2.5rem] p-6 relative overflow-hidden">
-                <div class="glass-sheen"></div>
-                <div class="relative z-10 flex items-center justify-between mb-4">
+            <!-- Card A: Team Members -->
+            <div class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200">
+                <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2.5">
-                        <i class="fas fa-user-group text-blue-400 text-sm"></i>
-                        <h4 class="font-black text-sm text-[var(--heading-color)] uppercase tracking-wider" v-text="isArabic ? 'فريق العمل والمسؤولين' : 'Team Members'"></h4>
+                        <i class="fas fa-user-group text-blue-600 dark:text-blue-400 text-sm"></i>
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white uppercase tracking-wider" v-text="isArabic ? 'فريق العمل والمسؤولين' : 'Team Members'"></h3>
                     </div>
-                    <span class="text-[10px] font-bold text-blue-400">See All</span>
+                    <span class="text-xs font-semibold text-slate-400">[[ activeTeamMembers.length ]] Active</span>
                 </div>
-                <div class="space-y-3 relative z-10">
-                    <div v-for="u in activeTeamMembers" :key="u.id" class="flex items-center justify-between p-2.5 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)]">
+                <div class="space-y-2.5">
+                    <div v-for="u in activeTeamMembers" :key="u.id" class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/70 dark:border-slate-800">
                         <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-blue-600 text-white font-black text-xs flex items-center justify-center border border-white/20">
+                            <div class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                                 [[ u.initials ]]
                             </div>
                             <div>
-                                <span class="text-xs font-bold text-[var(--heading-color)] block leading-tight">[[ u.name ]]</span>
+                                <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block leading-tight">[[ u.name ]]</span>
                                 <span class="text-[10px] text-slate-400">[[ u.role ]]</span>
                             </div>
                         </div>
-                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">[[ u.status ]]</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400">[[ u.status ]]</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Card B: Task & Operations Status (Donut Chart) -->
-            <div class="liquid-glass-card rounded-[2.5rem] p-6 relative overflow-hidden flex-1 flex flex-col justify-between">
-                <div class="glass-sheen"></div>
-                <div class="relative z-10 flex items-center justify-between mb-2">
+            <!-- Card B: Operations & Task Status (Donut Chart) -->
+            <div class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 shadow-xs flex-1 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200">
+                <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2.5">
-                        <i class="fas fa-chart-pie text-blue-400 text-sm"></i>
-                        <h4 class="font-black text-sm text-[var(--heading-color)] uppercase tracking-wider" v-text="isArabic ? 'حالة العمليات والمهام' : 'Task Status'"></h4>
+                        <i class="fas fa-chart-pie text-blue-600 dark:text-blue-400 text-sm"></i>
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white uppercase tracking-wider" v-text="isArabic ? 'حالة العمليات والمهام' : 'Operational Status'"></h3>
                     </div>
                 </div>
 
                 <!-- Donut Chart & Legend -->
-                <div class="relative z-10 flex items-center justify-around my-2">
-                    <!-- SVG Circular Donut -->
-                    <div class="relative w-32 h-32 flex items-center justify-center">
+                <div class="flex items-center justify-around my-4">
+                    <div class="relative w-32 h-32 flex items-center justify-center shrink-0">
                         <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <!-- Background circle -->
-                            <circle cx="50" cy="50" r="38" stroke="currentColor" class="text-slate-500/15" stroke-width="9" fill="transparent"/>
+                            <circle cx="50" cy="50" r="38" stroke="#E2E8F0" stroke-width="8" fill="transparent" class="dark:opacity-20"/>
                             <!-- Completed Segment (Blue) -->
-                            <circle cx="50" cy="50" r="38" stroke="#0066FF" stroke-width="9" 
+                            <circle cx="50" cy="50" r="38" stroke="#0066FF" stroke-width="8" 
                                 :stroke-dasharray="238.7" 
                                 :stroke-dashoffset="taskStatusStats.total > 0 ? 238.7 - (238.7 * taskStatusStats.completed / taskStatusStats.total) : 238.7" 
                                 stroke-linecap="round" fill="transparent"/>
                             <!-- Pending Segment (Slate) -->
-                            <circle cx="50" cy="50" r="38" stroke="#94A3B8" stroke-width="9" 
+                            <circle cx="50" cy="50" r="38" stroke="#94A3B8" stroke-width="8" 
                                 :stroke-dasharray="238.7" 
                                 :stroke-dashoffset="taskStatusStats.total > 0 ? 238.7 - (238.7 * taskStatusStats.pending / taskStatusStats.total) : 238.7" 
                                 stroke-linecap="round" fill="transparent"/>
                         </svg>
                         <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                            <span class="text-xl font-black text-[var(--heading-color)] tech-font leading-none">[[ taskStatusStats.total ]]</span>
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Tasks</span>
+                            <span class="text-2xl font-black text-slate-900 dark:text-white tabular-nums leading-none">[[ taskStatusStats.total ]]</span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total</span>
                         </div>
                     </div>
 
                     <!-- Legend Items -->
-                    <div class="space-y-2 text-xs font-bold text-[var(--text-secondary)]">
+                    <div class="space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
                         <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                            <span class="text-slate-400">[[ isArabic ? 'مكتمل' : 'Completed' ]]</span>
-                            <span class="text-[var(--heading-color)] font-black mr-1 tech-font">[[ taskStatusStats.completed ]]</span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0"></span>
+                            <span class="text-slate-500">[[ isArabic ? 'مكتمل' : 'Completed' ]]</span>
+                            <span class="text-slate-900 dark:text-white font-bold ms-auto tabular-nums">[[ taskStatusStats.completed ]]</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
-                            <span class="text-slate-400">[[ isArabic ? 'معلق' : 'Pending' ]]</span>
-                            <span class="text-[var(--heading-color)] font-black mr-1 tech-font">[[ taskStatusStats.pending ]]</span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                            <span class="text-slate-500">[[ isArabic ? 'معلق' : 'Pending' ]]</span>
+                            <span class="text-slate-900 dark:text-white font-bold ms-auto tabular-nums">[[ taskStatusStats.pending ]]</span>
                         </div>
                     </div>
                 </div>
@@ -343,288 +341,285 @@
 
         </div>
 
-    </div>
+    </section>
 
-    <!-- 🏛️ 4. Dynamic Executive Matrix: Module Quick Action Cards -->
-    <!-- All Icons use strictly Blue, Gray, White -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <!-- =========================================================
+         4. ENTERPRISE MODULES MATRIX (3-Column Grid)
+         ========================================================= -->
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         
         <!-- Module 1: RIMS (Inventory Control) -->
-        <div v-if="isModulePurchased('inventory_module')" class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group flex flex-col justify-between">
-            <div class="glass-sheen"></div>
+        <div v-if="isModulePurchased('inventory_module')" class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200">
             <div>
-                <div class="relative z-10 flex items-center justify-between mb-5">
+                <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3.5">
-                        <div class="w-12 h-12 bg-blue-600/15 border border-blue-500/30 text-blue-400 rounded-2xl flex items-center justify-center shadow-lg">
-                            <i class="fas fa-warehouse text-lg text-blue-400"></i>
+                        <div class="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg">
+                            <i class="fas fa-warehouse"></i>
                         </div>
                         <div>
-                            <h3 class="font-black text-[var(--heading-color)] text-base leading-tight" v-text="isArabic ? 'إدارة المستودعات (RIMS)' : 'RIMS (Inventory)'"></h3>
-                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest" v-text="isArabic ? 'المخزون وسلسلة الإمداد' : 'Supply & Warehouse'"></span>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-base leading-tight" v-text="isArabic ? 'إدارة المستودعات (RIMS)' : 'RIMS (Inventory)'"></h3>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" v-text="isArabic ? 'المخزون وسلسلة الإمداد' : 'Supply & Warehousing'"></span>
                         </div>
                     </div>
-                    <span class="glass-kpi-pill text-[10px] font-black text-blue-400 px-3 py-1 rounded-xl">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400">
                         RIMS
                     </span>
                 </div>
                 
-                <div class="space-y-3 relative z-10">
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'إجمالي الأصناف' : 'Total Items'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ materials_list ? materials_list.length : (kpis.inventory ? kpis.inventory.total_items : 0) ]]</span>
+                <div class="space-y-2.5">
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'إجمالي الأصناف' : 'Total Items'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ materials_list ? materials_list.length : (kpis.inventory ? kpis.inventory.total_items : 0) ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'كمية المخزون الإجمالية' : 'Stock Qty'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ (kpis.inventory && kpis.inventory.stock_qty) ? kpis.inventory.stock_qty : ((inventoryList || []).reduce((acc, item) => acc + (parseFloat(item.quantity) || 0), 0)) ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'كمية المخزون الإجمالية' : 'Stock Quantity'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ (kpis.inventory && kpis.inventory.stock_qty) ? kpis.inventory.stock_qty : ((inventoryList || []).reduce((acc, item) => acc + (parseFloat(item.quantity) || 0), 0)) ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'أصناف حرجة' : 'Critical Stock'"></span>
-                        <span class="font-black text-blue-400 tech-font text-sm">[[ kpis.inventory ? kpis.inventory.critical_items : 0 ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'أصناف حرجة' : 'Critical Stock'"></span>
+                        <span class="font-bold text-rose-600 dark:text-rose-400 tabular-nums text-sm">[[ kpis.inventory ? kpis.inventory.critical_items : 0 ]]</span>
                     </div>
                 </div>
             </div>
             
-            <button @click="view = 'inventory_module'" class="liquid-glass-btn w-full mt-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider text-blue-400 hover:text-blue-300 border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 flex items-center justify-center gap-2 transition-all">
-                <span>[[ isArabic ? 'دخول مستودعات RIMS' : 'Manage RIMS' ]]</span>
+            <button @click="view = 'inventory_module'" class="w-full mt-5 py-3 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white border border-blue-200 dark:border-blue-500/20 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98]">
+                <span>[[ isArabic ? 'دخول مستودعات RIMS' : 'Manage Inventory' ]]</span>
                 <i class="fas" :class="isArabic ? 'fa-arrow-left' : 'fa-arrow-right'"></i>
             </button>
         </div>
 
         <!-- Module 2: RPMS (Procurement Flow) -->
-        <div v-if="isModulePurchased('procurement_module')" class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group flex flex-col justify-between">
-            <div class="glass-sheen"></div>
+        <div v-if="isModulePurchased('procurement_module')" class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200">
             <div>
-                <div class="relative z-10 flex items-center justify-between mb-5">
+                <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3.5">
-                        <div class="w-12 h-12 bg-slate-800/80 border border-slate-600/30 text-white rounded-2xl flex items-center justify-center shadow-lg">
-                            <i class="fas fa-truck-ramp-box text-lg text-slate-200"></i>
+                        <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-lg">
+                            <i class="fas fa-truck-ramp-box"></i>
                         </div>
                         <div>
-                            <h3 class="font-black text-[var(--heading-color)] text-base leading-tight" v-text="isArabic ? 'المشتريات والتوريد (RPMS)' : 'RPMS (Procurement)'"></h3>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" v-text="isArabic ? 'أوامر الشراء والموردين' : 'Purchasing & Vendors'"></span>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-base leading-tight" v-text="isArabic ? 'المشتريات والتوريد (RPMS)' : 'RPMS (Procurement)'"></h3>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" v-text="isArabic ? 'أوامر الشراء والموردين' : 'Purchasing & Suppliers'"></span>
                         </div>
                     </div>
-                    <span class="glass-kpi-pill text-[10px] font-black text-slate-300 px-3 py-1 rounded-xl">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300">
                         RPMS
                     </span>
                 </div>
                 
-                <div class="space-y-3 relative z-10">
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'إجمالي أوامر الشراء' : 'Total Orders'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.procurementTotal) ]]</span>
+                <div class="space-y-2.5">
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'إجمالي أوامر الشراء' : 'Total Orders'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ formatCurrency(executiveKpis.procurementTotal) ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'تم استلامه بالمستودع' : 'Received'"></span>
-                        <span class="font-black text-blue-400 tech-font text-sm">[[ formatCurrency(executiveKpis.procurementReceived) ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'تم استلامه بالمستودع' : 'Received'"></span>
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums text-sm">[[ formatCurrency(executiveKpis.procurementReceived) ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'المسدد للموردين' : 'Total Paid'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.procurementPaid) ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'المسدد للموردين' : 'Total Paid'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ formatCurrency(executiveKpis.procurementPaid) ]]</span>
                     </div>
                 </div>
             </div>
             
-            <button @click="view = 'procurement_module'" class="liquid-glass-btn w-full mt-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider text-slate-300 hover:text-white border border-slate-500/20 bg-slate-500/10 hover:bg-slate-500/20 flex items-center justify-center gap-2 transition-all">
-                <span>[[ isArabic ? 'دخول مشتريات RPMS' : 'Manage RPMS' ]]</span>
+            <button @click="view = 'procurement_module'" class="w-full mt-5 py-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-900 hover:text-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98]">
+                <span>[[ isArabic ? 'دخول مشتريات RPMS' : 'Manage Procurement' ]]</span>
                 <i class="fas" :class="isArabic ? 'fa-arrow-left' : 'fa-arrow-right'"></i>
             </button>
         </div>
 
-        <!-- Module 3: Sales Performance -->
-        <div v-if="isModulePurchased('sales_module')" class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group flex flex-col justify-between">
-            <div class="glass-sheen"></div>
+        <!-- Module 3: Sales & CRM -->
+        <div v-if="isModulePurchased('sales_module')" class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200">
             <div>
-                <div class="relative z-10 flex items-center justify-between mb-5">
+                <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3.5">
-                        <div class="w-12 h-12 bg-blue-600/15 border border-blue-500/30 text-blue-400 rounded-2xl flex items-center justify-center shadow-lg">
-                            <i class="fas fa-handshake text-lg text-blue-400"></i>
+                        <div class="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg">
+                            <i class="fas fa-handshake"></i>
                         </div>
                         <div>
-                            <h3 class="font-black text-[var(--heading-color)] text-base leading-tight" v-text="isArabic ? 'إدارة المبيعات والعملاء' : 'Sales & CRM'"></h3>
-                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest" v-text="isArabic ? 'أوامر البيع والعقود' : 'Revenue Pipeline'"></span>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-base leading-tight" v-text="isArabic ? 'إدارة المبيعات والعملاء' : 'Sales & CRM'"></h3>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" v-text="isArabic ? 'أوامر البيع والعقود' : 'Revenue Pipeline'"></span>
                         </div>
                     </div>
-                    <span class="glass-kpi-pill text-[10px] font-black text-blue-400 px-3 py-1 rounded-xl">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400">
                         SALES
                     </span>
                 </div>
                 
-                <div class="space-y-3 relative z-10">
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'إجمالي المبيعات' : 'Total Sales'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.salesTotal) ]]</span>
+                <div class="space-y-2.5">
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'إجمالي المبيعات' : 'Total Sales'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ formatCurrency(executiveKpis.salesTotal) ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'تم تسليمه' : 'Delivered'"></span>
-                        <span class="font-black text-blue-400 tech-font text-sm">[[ formatCurrency(executiveKpis.salesDelivered) ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'تم تسليمه' : 'Delivered'"></span>
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums text-sm">[[ formatCurrency(executiveKpis.salesDelivered) ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'متبقي للتسليم' : 'Remaining Deliv.'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.salesRemaining) ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'متبقي للتسليم' : 'Remaining Delivery'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ formatCurrency(executiveKpis.salesRemaining) ]]</span>
                     </div>
                 </div>
             </div>
             
-            <button @click="view = 'sales_module'" class="liquid-glass-btn w-full mt-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider text-blue-400 hover:text-blue-300 border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 flex items-center justify-center gap-2 transition-all">
+            <button @click="view = 'sales_module'" class="w-full mt-5 py-3 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white border border-blue-200 dark:border-blue-500/20 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98]">
                 <span>[[ isArabic ? 'دخول إدارة المبيعات' : 'Manage Sales' ]]</span>
                 <i class="fas" :class="isArabic ? 'fa-arrow-left' : 'fa-arrow-right'"></i>
             </button>
         </div>
 
         <!-- Module 4: Finance & Accounting -->
-        <div v-if="isModulePurchased('accounting_module')" class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group flex flex-col justify-between">
-            <div class="glass-sheen"></div>
+        <div v-if="isModulePurchased('accounting_module')" class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200">
             <div>
-                <div class="relative z-10 flex items-center justify-between mb-5">
+                <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3.5">
-                        <div class="w-12 h-12 bg-slate-800/80 border border-slate-600/30 text-white rounded-2xl flex items-center justify-center shadow-lg">
-                            <i class="fas fa-file-invoice-dollar text-lg text-slate-200"></i>
+                        <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-lg">
+                            <i class="fas fa-file-invoice-dollar"></i>
                         </div>
                         <div>
-                            <h3 class="font-black text-[var(--heading-color)] text-base leading-tight" v-text="isArabic ? 'المحاسبة والمالية' : 'Finance & GL'"></h3>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" v-text="isArabic ? 'دفتر الأستاذ والفواتير' : 'General Ledger & Invoicing'"></span>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-base leading-tight" v-text="isArabic ? 'المحاسبة والمالية' : 'Finance & GL'"></h3>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" v-text="isArabic ? 'دفتر الأستاذ والقيود والفواتير' : 'General Ledger & Audit'"></span>
                         </div>
                     </div>
-                    <span class="glass-kpi-pill text-[10px] font-black text-slate-300 px-3 py-1 rounded-xl">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300">
                         FINANCE
                     </span>
                 </div>
                 
-                <div class="space-y-3 relative z-10">
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'إجمالي الفواتير' : 'Total Invoices'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.financeInvoices) ]]</span>
+                <div class="space-y-2.5">
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'إجمالي الفواتير' : 'Total Invoices'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ formatCurrency(executiveKpis.financeInvoices) ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'ما تم تحصيله' : 'Total Collected'"></span>
-                        <span class="font-black text-blue-400 tech-font text-sm">[[ formatCurrency(executiveKpis.financeCollected) ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'ما تم تحصيله' : 'Total Collected'"></span>
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums text-sm">[[ formatCurrency(executiveKpis.financeCollected) ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'متبقي / مديونيات' : 'Receivables'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(executiveKpis.financeReceivables) ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'مستحقات ومديونيات' : 'Receivables'"></span>
+                        <span class="font-bold text-amber-600 dark:text-amber-400 tabular-nums text-sm">[[ formatCurrency(executiveKpis.financeReceivables) ]]</span>
                     </div>
                 </div>
             </div>
             
-            <button @click="view = 'accounting_module'" class="liquid-glass-btn w-full mt-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider text-slate-300 hover:text-white border border-slate-500/20 bg-slate-500/10 hover:bg-slate-500/20 flex items-center justify-center gap-2 transition-all">
+            <button @click="view = 'accounting_module'" class="w-full mt-5 py-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-900 hover:text-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98]">
                 <span>[[ isArabic ? 'دخول الإدارة المالية' : 'Manage Finance' ]]</span>
                 <i class="fas" :class="isArabic ? 'fa-arrow-left' : 'fa-arrow-right'"></i>
             </button>
         </div>
 
         <!-- Module 5: RCMS Contracting & Projects -->
-        <div v-if="isModulePurchased('contracting_module')" class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group flex flex-col justify-between">
-            <div class="glass-sheen"></div>
+        <div v-if="isModulePurchased('contracting_module')" class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200">
             <div>
-                <div class="relative z-10 flex items-center justify-between mb-5">
+                <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3.5">
-                        <div class="w-12 h-12 bg-blue-600/15 border border-blue-500/30 text-blue-400 rounded-2xl flex items-center justify-center shadow-lg">
-                            <i class="fas fa-hard-hat text-lg text-blue-400"></i>
+                        <div class="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg">
+                            <i class="fas fa-helmet-safety"></i>
                         </div>
                         <div>
-                            <h3 class="font-black text-[var(--heading-color)] text-base leading-tight" v-text="isArabic ? 'المقاولات والمشاريع (RCMS)' : 'RCMS (Contracting)'"></h3>
-                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest" v-text="isArabic ? 'المستخلصات والمشاريع' : 'Projects & Contracts'"></span>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-base leading-tight" v-text="isArabic ? 'المقاولات والمشاريع (RCMS)' : 'RCMS (Contracting)'"></h3>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" v-text="isArabic ? 'المستخلصات والمشاريع' : 'Projects & Contracts'"></span>
                         </div>
                     </div>
-                    <span class="glass-kpi-pill text-[10px] font-black text-blue-400 px-3 py-1 rounded-xl">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400">
                         RCMS
                     </span>
                 </div>
                 
-                <div class="space-y-3 relative z-10">
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'المشاريع الجارية' : 'Active Projects'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ contractingDashboardStats.activeProjects ]]</span>
+                <div class="space-y-2.5">
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'المشاريع الجارية' : 'Active Projects'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ contractingDashboardStats.activeProjects ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'قيمة العقود الإجمالية' : 'Total Contract Value'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ formatCurrency(contractingDashboardStats.totalValue) ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'قيمة العقود الإجمالية' : 'Total Contract Value'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ formatCurrency(contractingDashboardStats.totalValue) ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'متوسط نسبة الإنجاز' : 'Avg. Progress'"></span>
-                        <span class="font-black text-blue-400 tech-font text-sm">[[ contractingDashboardStats.avgProgress ]]%</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'متوسط نسبة الإنجاز' : 'Avg. Progress'"></span>
+                        <span class="font-bold text-blue-600 dark:text-blue-400 tabular-nums text-sm">[[ contractingDashboardStats.avgProgress ]]%</span>
                     </div>
                 </div>
             </div>
             
-            <button @click="view = 'contracting_module'" class="liquid-glass-btn w-full mt-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider text-blue-400 hover:text-blue-300 border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 flex items-center justify-center gap-2 transition-all">
-                <span>[[ isArabic ? 'دخول مشاريع RCMS' : 'Manage RCMS' ]]</span>
+            <button @click="view = 'contracting_module'" class="w-full mt-5 py-3 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white border border-blue-200 dark:border-blue-500/20 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98]">
+                <span>[[ isArabic ? 'دخول مشاريع RCMS' : 'Manage Contracting' ]]</span>
                 <i class="fas" :class="isArabic ? 'fa-arrow-left' : 'fa-arrow-right'"></i>
             </button>
         </div>
 
         <!-- Module 6: Restaurant POS -->
-        <div v-if="isModulePurchased('restaurant_pos_module')" class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group flex flex-col justify-between">
-            <div class="glass-sheen"></div>
+        <div v-if="isModulePurchased('restaurant_pos_module')" class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200">
             <div>
-                <div class="relative z-10 flex items-center justify-between mb-5">
+                <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3.5">
-                        <div class="w-12 h-12 bg-slate-800/80 border border-slate-600/30 text-white rounded-2xl flex items-center justify-center shadow-lg">
-                            <i class="fas fa-cash-register text-lg text-slate-200"></i>
+                        <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-lg">
+                            <i class="fas fa-cash-register"></i>
                         </div>
                         <div>
-                            <h3 class="font-black text-[var(--heading-color)] text-base leading-tight" v-text="isArabic ? 'نقاط البيع والمطاعم' : 'Restaurant POS'"></h3>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" v-text="isArabic ? 'الكاشير والصالات و KDS' : 'Cashier & Tables'"></span>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-base leading-tight" v-text="isArabic ? 'نقاط البيع والمطاعم' : 'Restaurant POS'"></h3>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" v-text="isArabic ? 'الكاشير والصالات و KDS' : 'Cashier & Floor Tables'"></span>
                         </div>
                     </div>
-                    <span class="glass-kpi-pill text-[10px] font-black text-slate-300 px-3 py-1 rounded-xl">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300">
                         POS
                     </span>
                 </div>
                 
-                <div class="space-y-3 relative z-10">
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'طلبات اليوم' : 'Today Orders'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ kpis.pos ? kpis.pos.orders_count : 0 ]]</span>
+                <div class="space-y-2.5">
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'طلبات اليوم' : 'Today Orders'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ kpis.pos ? kpis.pos.orders_count : 0 ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'المبيعات اللحظية' : 'Live Sales'"></span>
-                        <span class="font-black text-blue-400 tech-font text-sm">[[ formatCurrency(kpis.pos ? kpis.pos.total_sales : 0) ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'المبيعات اللحظية' : 'Live Sales'"></span>
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums text-sm">[[ formatCurrency(kpis.pos ? kpis.pos.total_sales : 0) ]]</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-[var(--subcard-bg)] border border-[var(--subcard-border)] hover:bg-[var(--subcard-hover-bg)] transition-all">
-                        <span class="text-xs font-bold text-slate-400 uppercase" v-text="isArabic ? 'طلبات الصالة' : 'Dine-In'"></span>
-                        <span class="font-black text-[var(--heading-color)] tech-font text-sm">[[ kpis.pos ? kpis.pos.dine_in : 0 ]]</span>
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-xs font-semibold text-slate-500 uppercase" v-text="isArabic ? 'طلبات الصالة' : 'Dine-In'"></span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">[[ kpis.pos ? kpis.pos.dine_in : 0 ]]</span>
                     </div>
                 </div>
             </div>
             
-            <button @click="view = 'restaurant_pos_module'" class="liquid-glass-btn w-full mt-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider text-slate-300 hover:text-white border border-slate-500/20 bg-slate-500/10 hover:bg-slate-500/20 flex items-center justify-center gap-2 transition-all">
-                <span>[[ isArabic ? 'فتح الكاشير (POS)' : 'Open Cashier' ]]</span>
+            <button @click="view = 'restaurant_pos_module'" class="w-full mt-5 py-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-900 hover:text-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98]">
+                <span>[[ isArabic ? 'فتح الكاشير (POS)' : 'Open Cashier Terminal' ]]</span>
                 <i class="fas" :class="isArabic ? 'fa-arrow-left' : 'fa-arrow-right'"></i>
             </button>
         </div>
 
-    </div>
+    </section>
 
-    <!-- ⚡ 5. Liquid Glass Operational Efficiency Alert Row (Unified Palette) -->
-    <div class="liquid-glass-card rounded-[2rem] p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
-        <div class="glass-sheen"></div>
-        <div class="relative z-10 flex items-center gap-5">
-            <div class="w-14 h-14 rounded-2xl bg-blue-600/15 text-blue-400 border border-blue-500/30 flex items-center justify-center text-xl shrink-0 backdrop-blur-md">
-                <i class="fas fa-shield-halved animate-pulse"></i>
+    <!-- =========================================================
+         5. OPERATIONAL EFFICIENCY ACTION BANNER
+         ========================================================= -->
+    <section class="bg-[var(--card-bg)] border border-[var(--subcard-border)] rounded-3xl p-6 lg:p-8 shadow-xs flex flex-col md:flex-row justify-between items-center gap-6 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200">
+        <div class="flex items-center gap-4 lg:gap-5 w-full md:w-auto">
+            <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center text-xl shrink-0">
+                <i class="fas fa-shield-halved"></i>
             </div>
             <div>
-                <div class="flex items-center gap-2">
-                    <h4 class="font-black text-base uppercase tracking-wider text-[var(--heading-color)]" v-text="isArabic ? 'تنبيه الكفاءة التشغيلية الفورية' : 'Operational Efficiency Alert'"></h4>
-                    <span class="px-2.5 py-0.5 rounded-full text-[9px] font-black bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase tracking-wider">SYSTEM ACTIVE</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <h4 class="font-bold text-sm lg:text-base text-slate-900 dark:text-white uppercase tracking-wider" v-text="isArabic ? 'تنبيه الكفاءة التشغيلية الفورية' : 'Operational Efficiency Alert'"></h4>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 uppercase tracking-wider">SYSTEM ACTIVE</span>
                 </div>
-                <p class="text-xs text-[var(--text-secondary)] font-medium mt-1">
-                    <span class="font-bold text-blue-400">[[ kpis.inventory ? kpis.inventory.critical_items : 0 ]]</span> 
-                    <span v-text="isArabic ? 'أصناف حرجة تتطلب إعادة طلب فورية للحفاظ على استقرار سلاسل الإمداد.' : 'Critical items require immediate restock to maintain warehouse stability.'"></span>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                    <span class="font-bold text-rose-600 dark:text-rose-400">[[ kpis.inventory ? kpis.inventory.critical_items : 0 ]]</span> 
+                    <span v-text="isArabic ? 'أصناف حرجة تتطلب إعادة طلب فورية للحفاظ على استقرار سلاسل الإمداد.' : 'Critical items require immediate replenishment to maintain inventory health.'"></span>
                 </p>
             </div>
         </div>
-        <div class="relative z-10 flex items-center gap-3 shrink-0">
-            <button @click="view = 'procurement_module'" class="liquid-glass-btn px-5 py-3 rounded-2xl text-white bg-blue-600 hover:bg-blue-500 text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/30 hover:shadow-xl transition-all flex items-center gap-2">
-                <i class="fas fa-cart-plus text-white"></i>
-                <span v-text="isArabic ? 'إنشاء أمر شراء (PO)' : 'Create PO'"></span>
+        
+        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-start md:justify-end shrink-0">
+            <button @click="view = 'procurement_module'" class="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all duration-200 active:scale-[0.98]">
+                <i class="fas fa-plus text-xs"></i>
+                <span v-text="isArabic ? 'إنشاء أمر شراء (PO)' : 'Create Purchase Order'"></span>
             </button>
-            <button @click="view = 'inventory_module'" class="liquid-glass-btn px-5 py-3 rounded-2xl bg-[var(--subcard-bg)] text-[var(--text-primary)] border border-[var(--subcard-border)] text-[11px] font-black uppercase tracking-widest hover:bg-[var(--subcard-hover-bg)] transition-all flex items-center gap-2">
-                <i class="fas fa-file-waveform text-blue-400"></i>
+            <button @click="view = 'inventory_module'" class="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-all duration-200 active:scale-[0.98]">
+                <i class="fas fa-file-waveform text-slate-400 text-xs"></i>
                 <span v-text="isArabic ? 'تقرير النواقص' : 'Shortage Report'"></span>
             </button>
         </div>
-    </div>
+    </section>
 
 </div>
