@@ -5429,12 +5429,19 @@ createApp({
             } catch (e) { console.error("Last Price Error:", e); }
         },
 
+        getCurrency() {
+            if (this.activeOpco && this.activeOpco.currency) {
+                return this.activeOpco.currency.toUpperCase();
+            }
+            return 'EGP';
+        },
+
         formatCurrency(value) {
-            const currency = (this.activeOpco && this.activeOpco.currency) ? this.activeOpco.currency.toUpperCase() : 'SAR';
-            return new Intl.NumberFormat(this.isArabic ? 'ar-SA' : 'en-US', {
+            const currency = this.getCurrency();
+            return new Intl.NumberFormat(this.isArabic ? 'ar-EG' : 'en-EG', {
                 style: 'currency',
                 currency: currency,
-                maximumFractionDigits: 0
+                maximumFractionDigits: 2
             }).format(value || 0);
         },
 
@@ -7850,7 +7857,7 @@ createApp({
                                         quantity: parseFloat(l.quantity) || 1,
                                         unit_price: parseFloat(l.unit_price) || 0,
                                         discount_rate: parseFloat(l.discount_rate) || 0,
-                                        tax_rate: parseFloat(l.tax_rate !== undefined ? l.tax_rate : 15) || 0
+                                        tax_rate: parseFloat(l.tax_rate !== undefined ? l.tax_rate : 14) || 0
                                     };
                                 });
                         }
@@ -8910,7 +8917,7 @@ createApp({
                 this.forms.salesorder = {
                     id: null, customer: '', so_number: `SO-${Date.now()}`,
                     status: 'DRAFT', delivery_date: '', customer_po_reference: '',
-                    customer_po_date: '', currency: 'SAR', exchange_rate: 1.0,
+                    customer_po_date: '', currency: this.getCurrency(), exchange_rate: 1.0,
                     payment_terms: 'IMMEDIATE', shipping_terms: '',
                     shipping_address: '', billing_address: '',
                     subtotal: 0, discount_rate: 0, discount_amount: 0,
@@ -8937,7 +8944,7 @@ createApp({
             } else if (type === 'material') {
                 this.forms.material = {
                     id: null, sku: '', name: '', category: '', sale_group: '', base_uom: 'PCS', barcode: '',
-                    standard_price: 0, sales_price: 0, tax_rate: 15, is_pos_item: false, is_combo: false,
+                    standard_price: 0, sales_price: 0, tax_rate: 14, is_pos_item: false, is_combo: false,
                     company_assignments: [{ opco_id: this.activeOpcoId, bins: [], primary_bin: null }],
                     tracking: 'none', reorder_level: 0, max_level: 0, recipe_lines: [], combo_lines: [],
                     default_vendor: null, vendor_part_number: '', lead_time_days: 1
@@ -8960,7 +8967,7 @@ createApp({
                         po_number: `PO-${Date.now()}`, 
                         status: 'DRAFT',
                         expected_delivery_date: '',
-                        currency: 'SAR',
+                        currency: this.getCurrency(),
                         exchange_rate: 1.0,
                         payment_terms: 'IMMEDIATE',
                         shipping_terms: '',
@@ -8969,7 +8976,7 @@ createApp({
                         subtotal: 0,
                         discount_rate: 0,
                         discount_amount: 0,
-                        tax_rate: 15,
+                        tax_rate: 14,
                         tax_amount: 0,
                         grand_total: 0,
                         is_tax_inclusive: false,
@@ -8977,7 +8984,7 @@ createApp({
                         notes: '',
                         extra_data: {},
                         activeTab: 'items',
-                        lines: data && data.items ? data.items : [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 15 }]
+                        lines: data && data.items ? data.items : [{ material: '', uom: 'Unit', quantity: 1, unit_price: 0, discount_rate: 0, tax_rate: 14 }]
                     };
                     this.activeChatterModel = 'purchaseorder';
                     this.activeChatterId = null;
@@ -9102,7 +9109,7 @@ createApp({
                             account_type: 'OTHER',
                             parent: null,
                             is_group: false,
-                            currency: 'SAR',
+                            currency: this.getCurrency(),
                             extra_data: {}
                         };
                     } else if (type === 'rfq') {
@@ -9158,7 +9165,7 @@ createApp({
                                         quantity: parseFloat(l.quantity) || 1,
                                         unit_price: parseFloat(l.unit_price) || 0,
                                         discount_rate: parseFloat(l.discount_rate) || 0,
-                                        tax_rate: parseFloat(l.tax_rate !== undefined ? l.tax_rate : 15) || 0
+                                        tax_rate: parseFloat(l.tax_rate !== undefined ? l.tax_rate : 14) || 0
                                     };
                                 });
                         }
@@ -9217,10 +9224,10 @@ createApp({
                             website: '',
                             address: '',
                             city: '',
-                            country: 'Saudi Arabia',
+                            country: 'Egypt',
                             credit_limit: 0,
                             payment_terms: 'NET 30',
-                            currency: 'SAR',
+                            currency: this.getCurrency(),
                             balance: 0,
                             extra_data: {}
                         };
@@ -9295,10 +9302,10 @@ createApp({
                     website: '',
                     address: '',
                     city: '',
-                    country: 'Saudi Arabia',
+                    country: 'Egypt',
                     credit_limit: 0,
                     payment_terms: 'NET 30',
-                    currency: 'SAR',
+                    currency: this.getCurrency(),
                     balance: 0,
                     extra_data: {}
                 };
@@ -11145,7 +11152,7 @@ createApp({
                 account_type: parentAcc ? parentAcc.account_type : 'OTHER',
                 parent: parentAcc ? parentAcc.id : null,
                 is_group: false,
-                currency: 'SAR',
+                currency: (parentAcc && parentAcc.currency) ? parentAcc.currency : this.getCurrency(),
                 extra_data: {}
             };
             this.showModal = true;

@@ -71,17 +71,17 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-slate-50/50 border-b border-slate-200">
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
                 <span class="text-[11px] font-bold text-slate-400 block uppercase">[[ isArabic ? 'إجمالي الفاتورة' : 'Grand Total' ]]</span>
-                <span class="text-xl font-black text-slate-900 font-mono mt-1 block">$[[ formatNumber(selectedPurchaseInvoice.grand_total) ]]</span>
+                <span class="text-xl font-black text-slate-900 font-mono mt-1 block">[[ formatNumber(selectedPurchaseInvoice.grand_total) ]] <span class="text-xs font-normal text-slate-500">[[ selectedPurchaseInvoice.currency || getCurrency() ]]</span></span>
             </div>
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
                 <span class="text-[11px] font-bold text-slate-400 block uppercase">[[ isArabic ? 'المبلغ المسدد' : 'Paid Amount' ]]</span>
-                <span class="text-xl font-black text-emerald-600 font-mono mt-1 block">$[[ formatNumber(selectedPurchaseInvoice.paid_amount) ]]</span>
+                <span class="text-xl font-black text-emerald-600 font-mono mt-1 block">[[ formatNumber(selectedPurchaseInvoice.paid_amount) ]] <span class="text-xs font-normal text-slate-500">[[ selectedPurchaseInvoice.currency || getCurrency() ]]</span></span>
             </div>
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
                 <span class="text-[11px] font-bold text-slate-400 block uppercase">[[ isArabic ? 'الرصيد المتبقي' : 'Outstanding Balance' ]]</span>
                 <span class="text-xl font-black font-mono mt-1 block"
                       :class="(selectedPurchaseInvoice.grand_total - selectedPurchaseInvoice.paid_amount) > 0 ? 'text-rose-600' : 'text-slate-500'">
-                    $[[ formatNumber(Math.max(0, (selectedPurchaseInvoice.grand_total || 0) - (selectedPurchaseInvoice.paid_amount || 0))) ]]
+                    [[ formatNumber(Math.max(0, (selectedPurchaseInvoice.grand_total || 0) - (selectedPurchaseInvoice.paid_amount || 0))) ]] <span class="text-xs font-normal text-slate-500">[[ selectedPurchaseInvoice.currency || getCurrency() ]]</span>
                 </span>
             </div>
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
@@ -178,14 +178,14 @@
                                 <td class="px-4 py-3 font-bold text-slate-800">[[ item.material_name || item.description || item.name || 'Material Item' ]]</td>
                                 <td class="px-4 py-3 text-center font-mono text-slate-600">[[ item.ordered_qty !== undefined ? item.ordered_qty : '-' ]]</td>
                                 <td class="px-4 py-3 text-center font-mono font-black text-blue-700 bg-blue-50/30">[[ item.received_qty !== undefined ? item.received_qty : (item.quantity || 0) ]]</td>
-                                <td class="px-4 py-3 text-center font-mono text-slate-700">$[[ formatNumber(item.unit_price) ]]</td>
-                                <td class="px-4 py-3 text-center font-mono font-black text-slate-900">$[[ formatNumber(item.line_total || ((item.received_qty || item.quantity || 0) * (item.unit_price || 0))) ]]</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-700">[[ formatNumber(item.unit_price) ]]</td>
+                                <td class="px-4 py-3 text-center font-mono font-black text-slate-900">[[ formatNumber(item.line_total || ((item.received_qty || item.quantity || 0) * (item.unit_price || 0))) ]]</td>
                             </tr>
                         </tbody>
                         <tfoot class="bg-slate-50 border-t border-slate-200 font-bold text-slate-700">
                             <tr>
                                 <td colspan="6" class="px-4 py-3 text-left">[[ isArabic ? 'المجموع الفرعي للأصناف:' : 'Subtotal:' ]]</td>
-                                <td class="px-4 py-3 text-center font-mono font-black text-slate-900">$[[ formatNumber(selectedPurchaseInvoice.subtotal) ]]</td>
+                                <td class="px-4 py-3 text-center font-mono font-black text-slate-900">[[ formatNumber(selectedPurchaseInvoice.subtotal) ]]</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -205,27 +205,27 @@
                         <div class="space-y-2 text-xs">
                             <div class="flex justify-between py-1.5 border-b border-slate-100 text-slate-600">
                                 <span>[[ isArabic ? 'المجموع الفرعي (قبل الضريبة):' : 'Subtotal (Excl. Tax):' ]]</span>
-                                <span class="font-mono font-bold text-slate-900">$[[ formatNumber(selectedPurchaseInvoice.subtotal) ]]</span>
+                                <span class="font-mono font-bold text-slate-900">[[ formatNumber(selectedPurchaseInvoice.subtotal) ]] [[ selectedPurchaseInvoice.currency || getCurrency() ]]</span>
                             </div>
                             <div class="flex justify-between py-1.5 border-b border-slate-100 text-slate-600">
-                                <span>[[ isArabic ? 'ضريبة القيمة المضافة (15%):' : 'VAT (15%):' ]]</span>
-                                <span class="font-mono font-bold text-blue-600">+$[[ formatNumber(selectedPurchaseInvoice.tax_amount) ]]</span>
+                                <span>[[ isArabic ? 'ضريبة القيمة المضافة (14%):' : 'VAT (14%):' ]]</span>
+                                <span class="font-mono font-bold text-blue-600">+[[ formatNumber(selectedPurchaseInvoice.tax_amount) ]] [[ selectedPurchaseInvoice.currency || getCurrency() ]]</span>
                             </div>
                             <div v-if="selectedPurchaseInvoice.discount_amount" class="flex justify-between py-1.5 border-b border-slate-100 text-slate-600">
                                 <span>[[ isArabic ? 'الخصومات المطبقة:' : 'Discounts:' ]]</span>
-                                <span class="font-mono font-bold text-rose-600">-$[[ formatNumber(selectedPurchaseInvoice.discount_amount) ]]</span>
+                                <span class="font-mono font-bold text-rose-600">-[[ formatNumber(selectedPurchaseInvoice.discount_amount) ]] [[ selectedPurchaseInvoice.currency || getCurrency() ]]</span>
                             </div>
                             <div class="flex justify-between py-2.5 text-sm font-black text-slate-900 bg-slate-50 px-3 rounded-xl border border-slate-200">
                                 <span>[[ isArabic ? 'إجمالي الفاتورة النهائي:' : 'Grand Total:' ]]</span>
-                                <span class="font-mono text-blue-700">$[[ formatNumber(selectedPurchaseInvoice.grand_total) ]]</span>
+                                <span class="font-mono text-blue-700">[[ formatNumber(selectedPurchaseInvoice.grand_total) ]] [[ selectedPurchaseInvoice.currency || getCurrency() ]]</span>
                             </div>
                             <div class="flex justify-between py-1.5 text-emerald-700 font-bold">
                                 <span>[[ isArabic ? 'المدفوع من الفاتورة:' : 'Paid to Date:' ]]</span>
-                                <span class="font-mono">$[[ formatNumber(selectedPurchaseInvoice.paid_amount) ]]</span>
+                                <span class="font-mono">[[ formatNumber(selectedPurchaseInvoice.paid_amount) ]] [[ selectedPurchaseInvoice.currency || getCurrency() ]]</span>
                             </div>
                             <div class="flex justify-between py-1.5 text-rose-700 font-bold border-t border-slate-100 pt-2">
                                 <span>[[ isArabic ? 'الرصيد المتبقي المستحق:' : 'Balance Due:' ]]</span>
-                                <span class="font-mono">$[[ formatNumber(Math.max(0, (selectedPurchaseInvoice.grand_total || 0) - (selectedPurchaseInvoice.paid_amount || 0))) ]]</span>
+                                <span class="font-mono">[[ formatNumber(Math.max(0, (selectedPurchaseInvoice.grand_total || 0) - (selectedPurchaseInvoice.paid_amount || 0))) ]] [[ selectedPurchaseInvoice.currency || getCurrency() ]]</span>
                             </div>
                         </div>
                     </div>
@@ -260,7 +260,7 @@
                                     <span class="text-[10px] text-slate-400 font-mono block mt-0.5">[[ pay.posting_date ]]</span>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-xs font-mono font-black text-emerald-600 block">$[[ formatNumber(pay.paid_amount) ]]</span>
+                                    <span class="text-xs font-mono font-black text-emerald-600 block">[[ formatNumber(pay.paid_amount) ]] [[ selectedPurchaseInvoice.currency || getCurrency() ]]</span>
                                     <span class="text-[10px] text-slate-500 font-bold">[[ pay.paid_from_account_name || 'Bank/Cash' ]]</span>
                                 </div>
                             </div>

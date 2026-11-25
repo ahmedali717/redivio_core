@@ -1163,7 +1163,7 @@
                             <span>[[ isArabic ? 'تسعير الأصناف المطلوبة في هذا الـ RFQ' : 'Quoted Items & Pricing' ]]</span>
                         </h4>
                         <span class="text-xs font-black text-indigo-700 dark:text-indigo-400">
-                            [[ isArabic ? 'إجمالي العرض:' : 'Total:' ]] $[[ ((forms.sq.lines || []).reduce((acc, l) => acc + (parseFloat(l.quantity || 0) * parseFloat(l.unit_price || 0)), 0)).toLocaleString() ]]
+                            [[ isArabic ? 'إجمالي العرض:' : 'Total:' ]] [[ ((forms.sq.lines || []).reduce((acc, l) => acc + (parseFloat(l.quantity || 0) * parseFloat(l.unit_price || 0)), 0)).toLocaleString() ]] [[ getCurrency() ]]
                         </span>
                     </div>
                     <table class="w-full text-sm">
@@ -1332,12 +1332,12 @@
             <div v-if="modalType === 'customer'" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Code</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1" v-text="isArabic ? 'كود العميل' : 'Code'"></label>
                         <input v-model="forms.customer.code" type="text" class="w-full border p-2.5 rounded-xl font-mono uppercase" placeholder="CUST-001" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Tax ID</label>
-                        <input v-model="forms.customer.tax_id" type="text" class="w-full border p-2.5 rounded-xl" placeholder="123-456-789">
+                        <label class="block text-xs font-bold text-slate-500 mb-1" v-text="isArabic ? 'الرقم الضريبي' : 'Tax ID'"></label>
+                        <input v-model="forms.customer.tax_id" type="text" class="w-full border p-2.5 rounded-xl font-mono" placeholder="100-200-300">
                     </div>
                 </div>
                 <div>
@@ -1351,7 +1351,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1" v-text="isArabic ? 'الهاتف' : 'Phone'"></label>
-                        <input v-model="forms.customer.phone" type="text" class="w-full border p-2.5 rounded-xl">
+                        <input v-model="forms.customer.phone" type="tel" placeholder="+20 10 000 0000" class="w-full border p-2.5 rounded-xl font-mono">
                     </div>
                 </div>
             </div>
@@ -1908,8 +1908,8 @@
                             <tfoot class="bg-slate-100/80 font-black border-t">
                                 <tr>
                                     <td colspan="2" class="p-3 text-right">[[ isArabic ? "مجموع القيد والفرق:" : "Totals & Parity:" ]]</td>
-                                    <td class="p-3 text-center font-mono text-sm text-blue-700">$[[ formatNumber(calculateJVTotals().debit) ]]</td>
-                                    <td class="p-3 text-center font-mono text-sm text-emerald-700">$[[ formatNumber(calculateJVTotals().credit) ]]</td>
+                                    <td class="p-3 text-center font-mono text-sm text-blue-700">[[ formatNumber(calculateJVTotals().debit) ]] <span class="text-[9px]">[[ getCurrency() ]]</span></td>
+                                    <td class="p-3 text-center font-mono text-sm text-emerald-700">[[ formatNumber(calculateJVTotals().credit) ]] <span class="text-[9px]">[[ getCurrency() ]]</span></td>
                                     <td colspan="2" class="p-3">
                                         <span :class="calculateJVTotals().isBalanced ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
                                             class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase flex items-center justify-center gap-1">
@@ -2017,10 +2017,10 @@
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
-                                        $[[ formatNumber(item.unit_price) ]]
+                                        [[ formatNumber(item.unit_price) ]]
                                     </td>
                                     <td class="px-4 py-3 text-center font-mono font-black text-blue-600 dark:text-cyan-400">
-                                        $[[ formatNumber(item.line_total) ]]
+                                        [[ formatNumber(item.line_total) ]]
                                     </td>
                                 </tr>
                             </tbody>

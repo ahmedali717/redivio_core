@@ -26,12 +26,12 @@
                         <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
                             <i class="fas fa-arrow-down-left text-blue-600 text-[9px]"></i>
                             [[ isArabic ? "إجمالي المدين:" : "Debit:" ]] 
-                            <span class="text-blue-700 font-mono font-black">$[[ formatNumber(accountingReports.trialBalance.total_debit) ]]</span>
+                            <span class="text-blue-700 font-mono font-black">[[ formatNumber(accountingReports.trialBalance.total_debit) ]] <span class="text-[8px]">[[ getCurrency() ]]</span></span>
                         </span>
                         <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
                             <i class="fas fa-arrow-up-right text-emerald-600 text-[9px]"></i>
                             [[ isArabic ? "إجمالي الدائن:" : "Credit:" ]] 
-                            <span class="text-emerald-700 font-mono font-black">$[[ formatNumber(accountingReports.trialBalance.total_credit) ]]</span>
+                            <span class="text-emerald-700 font-mono font-black">[[ formatNumber(accountingReports.trialBalance.total_credit) ]] <span class="text-[8px]">[[ getCurrency() ]]</span></span>
                         </span>
                         <span :class="accountingReports.trialBalance.is_balanced ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'" 
                               class="px-2 py-1 rounded-md font-black border text-[9px] flex items-center gap-1">
@@ -45,17 +45,17 @@
                         <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
                             <i class="fas fa-wallet text-emerald-600 text-[9px]"></i>
                             [[ isArabic ? "الإيرادات:" : "Income:" ]] 
-                            <span class="text-emerald-700 font-mono font-black">$[[ formatNumber(accountingReports.profitAndLoss.total_income) ]]</span>
+                            <span class="text-emerald-700 font-mono font-black">[[ formatNumber(accountingReports.profitAndLoss.total_income) ]] <span class="text-[8px]">[[ getCurrency() ]]</span></span>
                         </span>
                         <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
                             <i class="fas fa-receipt text-rose-600 text-[9px]"></i>
                             [[ isArabic ? "المصروفات:" : "Expenses:" ]] 
-                            <span class="text-rose-700 font-mono font-black">$[[ formatNumber(accountingReports.profitAndLoss.total_expenses) ]]</span>
+                            <span class="text-rose-700 font-mono font-black">[[ formatNumber(accountingReports.profitAndLoss.total_expenses) ]] <span class="text-[8px]">[[ getCurrency() ]]</span></span>
                         </span>
                         <span class="flex items-center gap-1 px-2 py-1 rounded-md border text-[9px] font-black"
                               :class="accountingReports.profitAndLoss.net_profit >= 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'">
                             [[ isArabic ? "صافي الربح:" : "Net Profit:" ]]
-                            <span class="font-mono font-black">$[[ formatNumber(accountingReports.profitAndLoss.net_profit) ]]</span>
+                            <span class="font-mono font-black">[[ formatNumber(accountingReports.profitAndLoss.net_profit) ]] <span class="text-[8px]">[[ getCurrency() ]]</span></span>
                         </span>
                     </template>
 
@@ -64,12 +64,12 @@
                         <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
                             <i class="fas fa-boxes-packing text-blue-600 text-[9px]"></i>
                             [[ isArabic ? "الأصول:" : "Assets:" ]] 
-                            <span class="text-blue-700 font-mono font-black">$[[ formatNumber(accountingReports.balanceSheet.total_assets) ]]</span>
+                            <span class="text-blue-700 font-mono font-black">[[ formatNumber(accountingReports.balanceSheet.total_assets) ]] <span class="text-[8px]">[[ getCurrency() ]]</span></span>
                         </span>
                         <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
                             <i class="fas fa-hand-holding-dollar text-rose-600 text-[9px]"></i>
                             [[ isArabic ? "الالتزامات والملكية:" : "Liabilities & Equity:" ]] 
-                            <span class="text-slate-800 font-mono font-black">$[[ formatNumber(accountingReports.balanceSheet.total_liabilities + accountingReports.balanceSheet.total_equity) ]]</span>
+                            <span class="text-slate-800 font-mono font-black">[[ formatNumber(accountingReports.balanceSheet.total_liabilities + accountingReports.balanceSheet.total_equity) ]] <span class="text-[8px]">[[ getCurrency() ]]</span></span>
                         </span>
                         <span :class="accountingReports.balanceSheet.is_balanced ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'" 
                               class="px-2 py-1 rounded-md font-black border text-[9px] flex items-center gap-1">
@@ -352,11 +352,11 @@
                     <template v-if="activeReportTab === 'trial_balance'">
                         <div class="w-24 text-center font-mono text-xs font-bold"
                              :class="acc.debit > 0 ? 'text-blue-700' : 'text-slate-300 font-normal'">
-                            $[[ formatNumber(acc.debit) ]]
+                            [[ formatNumber(acc.debit) ]]
                         </div>
                         <div class="w-24 text-center font-mono text-xs font-bold"
                              :class="acc.credit > 0 ? 'text-emerald-700' : 'text-slate-300 font-normal'">
-                            $[[ formatNumber(acc.credit) ]]
+                            [[ formatNumber(acc.credit) ]]
                         </div>
                     </template>
 
@@ -369,9 +369,9 @@
                                 acc.net < 0 ? 'font-bold text-rose-600' :
                                 'text-slate-300 font-normal'
                             ]">
-                            <span v-if="acc.net < 0">-</span>$[[ formatNumber(Math.abs(acc.net)) ]]
+                            <span v-if="acc.net < 0">-</span>[[ formatNumber(Math.abs(acc.net)) ]]
                         </div>
-                        <div class="text-[8px] text-slate-400 font-bold uppercase leading-none">[[ acc.currency || 'SAR' ]]</div>
+                        <div class="text-[8px] text-slate-400 font-bold uppercase leading-none">[[ acc.currency || getCurrency() ]]</div>
                     </div>
 
                     <!-- Quick Drill-Down to General Ledger -->
@@ -406,10 +406,10 @@
                             <span v-if="r.is_group" class="text-[8px] bg-amber-50 text-amber-700 border border-amber-200 px-1 py-0.2 rounded ml-1">[[ isArabic ? 'مجموعة' : 'Group' ]]</span>
                         </td>
                         <td class="p-2 text-slate-500 text-[10px]">[[ r.root_type ]]</td>
-                        <td v-if="activeReportTab === 'trial_balance'" class="p-2 text-center font-mono font-bold text-xs" :class="r.debit > 0 ? 'text-blue-600' : 'text-slate-300'">$[[ formatNumber(r.debit) ]]</td>
-                        <td v-if="activeReportTab === 'trial_balance'" class="p-2 text-center font-mono font-bold text-xs" :class="r.credit > 0 ? 'text-emerald-600' : 'text-slate-300'">$[[ formatNumber(r.credit) ]]</td>
+                        <td v-if="activeReportTab === 'trial_balance'" class="p-2 text-center font-mono font-bold text-xs" :class="r.debit > 0 ? 'text-blue-600' : 'text-slate-300'">[[ formatNumber(r.debit) ]]</td>
+                        <td v-if="activeReportTab === 'trial_balance'" class="p-2 text-center font-mono font-bold text-xs" :class="r.credit > 0 ? 'text-emerald-600' : 'text-slate-300'">[[ formatNumber(r.credit) ]]</td>
                         <td class="p-2 text-center font-mono font-black text-xs" :class="r.net >= 0 ? 'text-slate-900' : 'text-rose-600'">
-                            <span v-if="r.net < 0">-</span>$[[ formatNumber(Math.abs(r.net)) ]]
+                            <span v-if="r.net < 0">-</span>[[ formatNumber(Math.abs(r.net)) ]]
                         </td>
                     </tr>
                 </tbody>
@@ -431,15 +431,15 @@
             <div class="flex items-center gap-6 font-mono text-xs" :dir="isArabic ? 'rtl' : 'ltr'">
                 <div>
                     <span class="text-[9px] text-slate-500 font-bold block">[[ isArabic ? "إجمالي المدين" : "Debit" ]]</span>
-                    <span class="text-blue-700 text-sm font-black">$[[ formatNumber(accountingReports.trialBalance.total_debit) ]]</span>
+                    <span class="text-blue-700 text-sm font-black">[[ formatNumber(accountingReports.trialBalance.total_debit) ]] <span class="text-[9px]">[[ getCurrency() ]]</span></span>
                 </div>
                 <div>
                     <span class="text-[9px] text-slate-500 font-bold block">[[ isArabic ? "إجمالي الدائن" : "Credit" ]]</span>
-                    <span class="text-emerald-700 text-sm font-black">$[[ formatNumber(accountingReports.trialBalance.total_credit) ]]</span>
+                    <span class="text-emerald-700 text-sm font-black">[[ formatNumber(accountingReports.trialBalance.total_credit) ]] <span class="text-[9px]">[[ getCurrency() ]]</span></span>
                 </div>
                 <div>
                     <span class="text-[9px] text-slate-500 font-bold block">[[ isArabic ? "الفارق" : "Difference" ]]</span>
-                    <span class="text-slate-800 text-sm font-black">$[[ formatNumber(accountingReports.trialBalance.total_debit - accountingReports.trialBalance.total_credit) ]]</span>
+                    <span class="text-slate-800 text-sm font-black">[[ formatNumber(accountingReports.trialBalance.total_debit - accountingReports.trialBalance.total_credit) ]] <span class="text-[9px]">[[ getCurrency() ]]</span></span>
                 </div>
             </div>
         </div>
