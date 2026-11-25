@@ -1,214 +1,218 @@
-<div class="sales-dashboard-wrapper space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-12">
+{% verbatim %}
+<div class="sales-dashboard-wrapper space-y-6 md:space-y-8 animate-in fade-in duration-300 pb-10" :dir="isArabic ? 'rtl' : 'ltr'">
     
-    <!-- Header Control Bar -->
-    <div class="liquid-glass-card rounded-[2.5rem] p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
-        <div class="glass-sheen"></div>
-        <div class="relative z-10 flex items-center gap-5">
-            <div class="w-16 h-16 bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 rounded-3xl flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm">
-                <i class="fas fa-handshake text-2xl"></i>
+    <!-- 🏁 1. Header Control Bar (60-30-10 Design - Symmetrical Blueprint) -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center border border-slate-200 dark:border-slate-800 shadow-xs gap-6">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center text-xl shrink-0">
+                <i class="fas fa-handshake"></i>
             </div>
             <div>
-                <h1 class="text-2xl md:text-3xl font-black text-[var(--heading-color)] tracking-tight" v-text="isArabic ? 'إدارة المبيعات والعملاء (Sales CRM)' : 'Sales Command Center'"></h1>
-                <p class="text-xs font-semibold text-[var(--text-secondary)] mt-1.5 flex items-center gap-2">
+                <h1 class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight" v-text="isArabic ? 'إدارة المبيعات والعملاء (Sales CRM)' : 'Sales Command Center'"></h1>
+                <p class="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-2 mt-1">
                     <span class="flex h-2 w-2 relative">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
                     </span>
                     <span v-text="isArabic ? 'دورة المبيعات المتكاملة والتحصيل المالي اللحظي' : 'Live Pipeline & Financial Receivables'"></span>
                 </p>
             </div>
         </div>
         
-        <!-- Quick Actions -->
-        <div class="relative z-10 flex flex-wrap gap-3">
-            <button @click="openModal('salesorder')" class="liquid-glass-btn bg-blue-600 hover:bg-blue-500 text-white px-5 py-3 rounded-2xl shadow-lg shadow-blue-600/25 transition-all flex items-center gap-2 font-bold text-xs cursor-pointer">
-                <i class="fas fa-plus text-xs"></i> 
-                <span v-text="isArabic ? 'إنشاء أمر بيع جديد' : 'New Sales Order'"></span>
+        <!-- Quick Control Actions -->
+        <div class="flex flex-wrap gap-2.5">
+            <button @click="openModal('salesorder')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 text-xs font-bold active:scale-[0.98]">
+                <i class="fas fa-plus"></i> <span v-text="isArabic ? 'إنشاء أمر بيع جديد' : 'New Sales Order'"></span>
             </button>
-            <button @click="openModal('customer')" class="liquid-glass-btn bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-5 py-3 rounded-2xl shadow-xs transition-all flex items-center gap-2 font-bold text-xs cursor-pointer">
-                <i class="fas fa-user-plus text-blue-500"></i> 
-                <span v-text="isArabic ? 'تعريف عميل جديد' : 'New Customer'"></span>
+            <button @click="openModal('customer')" class="bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 text-xs font-bold active:scale-[0.98]">
+                <i class="fas fa-user-plus"></i> <span v-text="isArabic ? 'تعريف عميل جديد' : 'New Customer'"></span>
             </button>
         </div>
     </div>
-    
-    <!-- Actionable KPI Stat Cards (Unified 3-Color: Blue, Gray, White) -->
+
+    <!-- 📑 2. Unified Enterprise Workflow Tab Switcher -->
+    <div class="bg-white dark:bg-slate-900 p-1.5 rounded-2xl flex flex-wrap gap-1.5 text-xs font-bold border border-slate-200 dark:border-slate-800 shadow-xs">
+        <button @click="salesTab = 'dashboard'" :class="salesTab === 'dashboard' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'" class="px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-chart-line"></i> <span v-text="isArabic ? 'نظرة عامة / القمع' : 'Overview & Pipeline'"></span>
+        </button>
+        <button @click="salesTab = 'orders'" :class="salesTab === 'orders' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'" class="px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-file-invoice"></i> <span v-text="isArabic ? 'أوامر البيع (Sales Orders)' : 'Sales Orders'"></span>
+        </button>
+        <button @click="salesTab = 'customers'" :class="salesTab === 'customers' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'" class="px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-users"></i> <span v-text="isArabic ? 'قائمة العملاء' : 'Customers List'"></span>
+        </button>
+        <button @click="salesTab = 'invoices'" :class="salesTab === 'invoices' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'" class="px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+            <i class="fas fa-file-invoice-dollar"></i> <span v-text="isArabic ? 'فواتير المبيعات' : 'Sales Invoices'"></span>
+        </button>
+    </div>
+
+    <!-- 📊 3. Actionable Alert KPI Cards (Crisp White Elevated Surfaces) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        <!-- Card 1: Pending Approvals -->
-        <div class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group">
-            <div class="glass-sheen"></div>
-            <div class="relative z-10 flex justify-between items-start mb-3">
-                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs">
-                    <i class="fas fa-file-signature text-lg"></i>
+        <!-- Metric 1: Quotes Awaiting Confirmation -->
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div class="flex justify-between items-start mb-2">
+                <div class="w-10 h-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl flex items-center justify-center text-sm">
+                    <i class="fas fa-file-signature"></i>
                 </div>
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-[var(--subcard-bg)] px-2.5 py-1 rounded-xl border border-[var(--subcard-border)]">Pending</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">Action Required</span>
             </div>
-            <div class="relative z-10 mt-2">
-                <h3 class="text-3xl font-black text-[var(--heading-color)] tech-font" v-text="soStats ? soStats.draftCount : 0"></h3>
-                <p class="text-xs font-bold text-[var(--text-secondary)] mt-1" v-text="isArabic ? 'عروض أسعار في انتظار الاعتماد' : 'Quotes awaiting confirmation'"></p>
-                <button @click="salesTab = 'orders'" class="mt-4 text-xs font-black text-blue-500 hover:text-blue-400 uppercase flex items-center gap-1.5 transition-colors cursor-pointer">
+            <div class="mt-3">
+                <h3 class="text-3xl font-black text-slate-900 dark:text-white tabular-nums" v-text="soStats ? soStats.draftCount : 0"></h3>
+                <p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-1" v-text="isArabic ? 'عروض أسعار في انتظار الاعتماد' : 'Quotes awaiting confirmation'"></p>
+                <button @click="salesTab = 'orders'" class="mt-4 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'اعتماد العروض الآن' : 'Validate Quotes'"></span> 
-                    <i class="fas" :class="isArabic ? 'fa-arrow-left' : 'fa-arrow-right'"></i>
+                    <i class="fas fa-arrow-right text-[10px] transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Card 2: Confirmed Orders -->
-        <div class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group">
-            <div class="glass-sheen"></div>
-            <div class="relative z-10 flex justify-between items-start mb-3">
-                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs">
-                    <i class="fas fa-truck-ramp-box text-lg"></i>
+        <!-- Metric 2: Orders Ready For Dispatch -->
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div class="flex justify-between items-start mb-2">
+                <div class="w-10 h-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl flex items-center justify-center text-sm">
+                    <i class="fas fa-truck-ramp-box"></i>
                 </div>
-                <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-2.5 py-1 rounded-xl border border-blue-500/20">Delivery</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">Review</span>
             </div>
-            <div class="relative z-10 mt-2">
-                <h3 class="text-3xl font-black text-blue-600 dark:text-blue-400 tech-font" v-text="soStats ? soStats.confirmedCount : 0"></h3>
-                <p class="text-xs font-bold text-[var(--text-secondary)] mt-1" v-text="isArabic ? 'أوامر بيع جاهزة للصرف المخزني' : 'Orders ready for warehouse delivery'"></p>
-                <button @click="salesTab = 'orders'" class="mt-4 text-xs font-black text-blue-500 hover:text-blue-400 uppercase flex items-center gap-1.5 transition-colors cursor-pointer">
+            <div class="mt-3">
+                <h3 class="text-3xl font-black text-slate-900 dark:text-white tabular-nums" v-text="soStats ? soStats.confirmedCount : 0"></h3>
+                <p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-1" v-text="isArabic ? 'أوامر بيع جاهزة للصرف المخزني' : 'Orders ready for warehouse delivery'"></p>
+                <button @click="salesTab = 'orders'" class="mt-4 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'تنفيذ الصرف بالمستودع' : 'Dispatch Items'"></span> 
-                    <i class="fas" :class="isArabic ? 'fa-arrow-left' : 'fa-arrow-right'"></i>
+                    <i class="fas fa-arrow-right text-[10px] transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Card 3: Monthly Attainment -->
-        <div class="liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden group">
-            <div class="glass-sheen"></div>
-            <div class="relative z-10 flex justify-between items-start mb-3">
-                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs">
-                    <i class="fas fa-trophy text-lg"></i>
+        <!-- Metric 3: Quota Attainment -->
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div class="flex justify-between items-start mb-2">
+                <div class="w-10 h-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl flex items-center justify-center text-sm">
+                    <i class="fas fa-trophy"></i>
                 </div>
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-[var(--subcard-bg)] px-2.5 py-1 rounded-xl border border-[var(--subcard-border)]">Performance</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">Optimal</span>
             </div>
-            <div class="relative z-10 mt-2">
-                <div class="flex items-end gap-1">
-                    <h3 class="text-3xl font-black text-[var(--heading-color)] tech-font">88</h3>
-                    <span class="text-base font-bold text-slate-400 mb-1">%</span>
+            <div class="mt-3">
+                <div class="flex items-baseline gap-1">
+                    <h3 class="text-3xl font-black text-slate-900 dark:text-white tabular-nums">88</h3>
+                    <span class="text-lg font-bold text-slate-500">%</span>
                 </div>
-                <p class="text-xs font-bold text-[var(--text-secondary)] mt-1" v-text="isArabic ? 'نسبة تحقيق مبيعات الشهر' : 'Monthly Quota Attainment'"></p>
-                <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 mt-4 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
-                    <div class="bg-blue-600 h-full rounded-full" style="width: 88%"></div>
+                <p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-1" v-text="isArabic ? 'نسبة تحقيق مبيعات الشهر' : 'Monthly Quota Attainment'"></p>
+                <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 mt-4 rounded-full overflow-hidden">
+                    <div class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: 88%"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Operations Queue & Pipeline Flow -->
+    <!-- ⚡ 4. Bottlenecks & Operational Health Flow (Symmetrical 1/4 + 3/4 Grid) -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        <!-- Pipeline Funnel Visualizer -->
-        <div class="lg:col-span-1 liquid-glass-card rounded-[2.5rem] p-6 md:p-8 relative overflow-hidden flex flex-col justify-between">
-            <div class="glass-sheen"></div>
-            <div class="relative z-10">
-                <h3 class="font-black text-[var(--heading-color)] text-base flex items-center gap-2 mb-1">
-                    <i class="fas fa-filter text-blue-500"></i>
-                    <span v-text="isArabic ? 'قمع المبيعات' : 'Sales Pipeline'"></span>
-                </h3>
-                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold" v-text="isArabic ? 'معدل التحويل' : 'Conversion Flow'"></p>
+        <!-- Pipeline Funnel Card (1/4 Width) -->
+        <div class="lg:col-span-1 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                        <i class="fas fa-filter text-blue-600 dark:text-blue-400"></i>
+                        <span v-text="isArabic ? 'قمع المبيعات' : 'Sales Pipeline'"></span>
+                    </h3>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">CONV.</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400" v-text="isArabic ? 'معدل التحويل عبر المراحل' : 'Conversion Flow'"></p>
             </div>
             
-            <div class="relative z-10 flex flex-col gap-3 my-6">
-                <div class="w-full bg-[var(--subcard-bg)] border border-[var(--subcard-border)] rounded-2xl p-3 flex justify-between items-center">
-                     <span class="text-xs font-bold text-slate-400">Quotes</span>
-                     <span class="font-black text-[var(--heading-color)] tech-font">[[ soStats ? soStats.draftCount : 0 ]]</span>
+            <div class="flex flex-col gap-2.5 my-6">
+                <div class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl p-3 flex justify-between items-center">
+                     <span class="text-xs font-bold text-slate-600 dark:text-slate-400">Quotes</span>
+                     <span class="font-black text-slate-900 dark:text-white tabular-nums">[[ soStats ? soStats.draftCount : 0 ]]</span>
                 </div>
-                <div class="w-11/12 mx-auto bg-blue-500/10 border border-blue-500/20 rounded-2xl p-3 flex justify-between items-center">
-                     <span class="text-xs font-bold text-blue-500">Confirmed</span>
-                     <span class="font-black text-blue-600 dark:text-blue-400 tech-font">[[ soStats ? soStats.confirmedCount : 0 ]]</span>
+                <div class="w-11/12 mx-auto bg-blue-50/80 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl p-3 flex justify-between items-center">
+                     <span class="text-xs font-bold text-blue-700 dark:text-blue-400">Confirmed</span>
+                     <span class="font-black text-blue-700 dark:text-blue-400 tabular-nums">[[ soStats ? soStats.confirmedCount : 0 ]]</span>
                 </div>
-                <div class="w-5/6 mx-auto bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 flex justify-between items-center text-slate-700 dark:text-white">
-                     <span class="text-xs font-bold text-slate-500 dark:text-slate-300">Fulfilled</span>
-                     <span class="font-black text-slate-800 dark:text-white tech-font">[[ soStats ? soStats.shippedCount : 0 ]]</span>
+                <div class="w-5/6 mx-auto bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex justify-between items-center">
+                     <span class="text-xs font-bold text-slate-600 dark:text-slate-400">Fulfilled</span>
+                     <span class="font-black text-slate-900 dark:text-white tabular-nums">[[ soStats ? soStats.shippedCount : 0 ]]</span>
                 </div>
             </div>
             
-            <div class="relative z-10 text-center pt-3 border-t border-[var(--subcard-border)]">
-                <span class="text-2xl font-black text-blue-600 dark:text-blue-400 tech-font">24.5%</span>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5" v-text="isArabic ? 'معدل الإغلاق الناجح' : 'Win Rate Conversion'"></p>
+            <div class="space-y-1 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                <span class="text-2xl font-black text-blue-600 dark:text-blue-400 tabular-nums">24.5%</span>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" v-text="isArabic ? 'معدل الإغلاق الناجح' : 'Win Rate Conversion'"></p>
             </div>
         </div>
 
-        <!-- Operations Queue Control -->
-        <div class="lg:col-span-3 liquid-glass-card rounded-[2.5rem] p-6 md:p-8 relative overflow-hidden">
-            <div class="glass-sheen"></div>
-            <div class="relative z-10 flex justify-between items-center mb-6">
+        <!-- Operations Queue Control (3/4 Width) -->
+        <div class="lg:col-span-3 bg-white dark:bg-slate-900 rounded-2xl p-6 md:p-7 border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
                 <div>
-                    <h3 class="font-black text-lg md:text-xl text-[var(--heading-color)]" v-text="isArabic ? 'أحدث أوامر المبيعات الجارية' : 'Active Sales Orders'"></h3>
-                    <p class="text-xs font-medium text-[var(--text-secondary)] mt-0.5" v-text="isArabic ? 'متابعة الصرف المخزني وإصدار الفواتير فور التسليم' : 'Track delivery dispatch and invoice issuance'"></p>
+                    <h3 class="font-black text-lg text-slate-900 dark:text-white" v-text="isArabic ? 'أحدث أوامر المبيعات الجارية' : 'Active Sales Orders'"></h3>
+                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5" v-text="isArabic ? 'متابعة الصرف المخزني وإصدار الفواتير فور التسليم' : 'Track delivery dispatch and invoice issuance'"></p>
                 </div>
-                <button @click="salesTab = 'orders'" class="text-xs font-bold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-colors cursor-pointer">
-                    <span v-text="isArabic ? 'عرض كافة الأوامر' : 'View All'"></span>
-                    <i class="fas" :class="isArabic ? 'fa-arrow-left' : 'fa-arrow-right'"></i>
+                <button @click="salesTab = 'orders'" class="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 uppercase flex items-center gap-1 group/btn">
+                    <span v-text="isArabic ? 'عرض كافة الأوامر' : 'View All'"></span> 
+                    <i class="fas fa-arrow-right text-[10px] transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
             </div>
             
-            <div class="relative z-10 w-full overflow-x-auto">
-                <table class="w-full text-right border-separate border-spacing-y-2">
+            <div class="w-full overflow-x-auto">
+                <table class="w-full text-left border-collapse" :dir="isArabic ? 'rtl' : 'ltr'">
                     <thead>
-                        <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            <th class="px-4 py-2" v-text="isArabic ? 'رقم الأمر' : 'Order Ref'"></th>
-                            <th class="px-4 py-2" v-text="isArabic ? 'العميل' : 'Customer'"></th>
-                            <th class="px-4 py-2" v-text="isArabic ? 'القيمة الإجمالية' : 'Value'"></th>
-                            <th class="px-4 py-2 text-center" v-text="isArabic ? 'الحالة' : 'Status'"></th>
-                            <th class="px-4 py-2 text-left" v-text="isArabic ? 'إجراءات' : 'Actions'"></th>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50/70 dark:bg-slate-800/40">
+                            <th class="py-3 px-4" v-text="isArabic ? 'رقم الأمر' : 'Order Ref'"></th>
+                            <th class="py-3 px-4" v-text="isArabic ? 'العميل' : 'Customer'"></th>
+                            <th class="py-3 px-4" v-text="isArabic ? 'القيمة الإجمالية' : 'Value'"></th>
+                            <th class="py-3 px-4 text-center" v-text="isArabic ? 'الحالة' : 'Status'"></th>
+                            <th class="py-3 px-4 text-center" v-text="isArabic ? 'إجراءات' : 'Actions'"></th>
                         </tr>
                     </thead>
-                    <tbody class="text-xs font-medium">
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                         <tr v-for="so in (salesOrders || []).slice(0, 5)" :key="so.id" 
                             @click="editItem('salesorder', so)"
-                            class="bg-[var(--subcard-bg)] hover:bg-[var(--subcard-hover-bg)] hover:border-blue-500/40 border border-[var(--subcard-border)] rounded-2xl transition-all cursor-pointer group">
+                            class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group">
                             
-                            <!-- Order Ref with view hint -->
-                            <td class="px-4 py-3.5 rounded-r-2xl font-black text-[var(--heading-color)] font-mono">
-                                <span class="group-hover:text-blue-500 transition-colors flex items-center gap-1.5">
-                                    <i class="fas fa-file-invoice text-blue-500 text-xs opacity-60 group-hover:opacity-100"></i>
+                            <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white font-mono">
+                                <span class="group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
+                                    <i class="fas fa-file-invoice text-blue-600 text-xs opacity-70"></i>
                                     [[ so.so_number ]]
                                 </span>
                             </td>
 
-                            <!-- Customer -->
-                            <td class="px-4 py-3.5 font-bold text-[var(--text-primary)]">
+                            <td class="py-3.5 px-4 font-semibold text-slate-700 dark:text-slate-200">
                                 [[ so.customer_name ]]
                             </td>
 
-                            <!-- Value -->
-                            <td class="px-4 py-3.5 font-black text-blue-600 dark:text-blue-400 font-mono">
+                            <td class="py-3.5 px-4 font-black text-slate-900 dark:text-white tabular-nums">
                                 [[ formatCurrency ? formatCurrency(so.grand_total) : formatNumber(so.grand_total) + ' EGP' ]]
                             </td>
 
-                            <!-- Status -->
-                            <td class="px-4 py-3.5 text-center">
-                                <span :class="getStatusClass(so.status)" class="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase border">
+                            <td class="py-3.5 px-4 text-center">
+                                <span :class="getStatusClass(so.status)" class="text-[10px] px-2.5 py-0.5 rounded-md font-bold uppercase border">
                                     [[ so.status ]]
                                 </span>
                             </td>
 
-                            <!-- Action Buttons: View, Invoice, Print -->
-                            <td class="px-4 py-3.5 text-left rounded-l-2xl">
-                                <div class="flex items-center justify-end gap-1.5" @click.stop>
-                                    <!-- 1. View / Edit Sales Order -->
+                            <td class="py-3.5 px-4 text-center">
+                                <div class="flex items-center justify-center gap-1.5" @click.stop>
                                     <button @click.stop="editItem('salesorder', so)"
                                         :title="isArabic ? 'معاينة وتفاصيل أمر البيع' : 'View Sales Order'"
-                                        class="px-2.5 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center gap-1 transition-all border border-blue-500/20 cursor-pointer shadow-xs">
-                                        <i class="fas fa-eye text-xs"></i>
+                                        class="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-1 transition-all border border-slate-200 dark:border-slate-700 shadow-xs">
+                                        <i class="fas fa-eye text-xs text-blue-600"></i>
                                         <span>[[ isArabic ? 'معاينة' : 'View' ]]</span>
                                     </button>
 
-                                    <!-- 2. Create Invoice (if confirmed) -->
                                     <button v-if="so.status === 'CONFIRMED' || so.status === 'SHIPPED'" 
                                         @click.stop="generateInvoice(so)"
                                         :title="isArabic ? 'إصدار فاتورة مبيعات' : 'Invoice'"
-                                        class="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1 transition-all shadow-xs cursor-pointer">
+                                        class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1 transition-all shadow-xs">
                                         <i class="fas fa-file-invoice-dollar text-[10px]"></i>
                                         <span>[[ isArabic ? 'فاتورة' : 'Invoice' ]]</span>
                                     </button>
 
-                                    <!-- 3. Print Sales Order -->
                                     <button @click.stop="printSO(so.id)" 
                                         :title="isArabic ? 'طباعة أمر البيع' : 'Print'"
-                                        class="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer">
+                                        class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs transition-colors">
                                         <i class="fas fa-print"></i>
                                     </button>
                                 </div>
@@ -217,7 +221,7 @@
 
                         <!-- Empty State -->
                         <tr v-if="!salesOrders || salesOrders.length === 0">
-                            <td colspan="5" class="px-4 py-8 text-center text-slate-400 font-bold">
+                            <td colspan="5" class="py-8 text-center text-slate-500 dark:text-slate-400 font-semibold text-xs">
                                 [[ isArabic ? "لا توجد أوامر بيع مسجلة حالياً" : "No sales orders recorded yet" ]]
                             </td>
                         </tr>
@@ -227,3 +231,4 @@
         </div>
     </div>
 </div>
+{% endverbatim %}
