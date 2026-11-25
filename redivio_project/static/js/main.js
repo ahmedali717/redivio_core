@@ -5456,6 +5456,20 @@ createApp({
             }).format(value || 0);
         },
 
+        formatCompactCurrency(value) {
+            const num = parseFloat(value) || 0;
+            const currency = this.isArabic ? 'ج.م' : 'EGP';
+            if (Math.abs(num) >= 1000000) {
+                return (num / 1000000).toFixed(1).replace(/\.0$/, '') + (this.isArabic ? ' مليون ' : 'M ') + currency;
+            }
+            if (Math.abs(num) >= 1000) {
+                return (num / 1000).toFixed(1).replace(/\.0$/, '') + (this.isArabic ? ' ألف ' : 'K ') + currency;
+            }
+            return new Intl.NumberFormat(this.isArabic ? 'ar-EG' : 'en-EG', {
+                maximumFractionDigits: 0
+            }).format(num) + ' ' + currency;
+        },
+
         refreshKpis() {
             // 📦 1. حسابات المخزون (Inventory)
             this.kpis.inventory.total_items = (this.materials_list || []).length;
