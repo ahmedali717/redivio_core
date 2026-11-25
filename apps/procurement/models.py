@@ -265,10 +265,16 @@ class PurchaseOrder(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        if not self.po_number:
+        if not self.po_number or (self.po_number.startswith('PO-') and len(self.po_number) > 13 and self.po_number[3:5].isdigit()):
             year = datetime.date.today().year
-            last_po = PurchaseOrder.objects.filter(po_number__contains=f'PO-{year}').order_by('id').last()
-            new_no = (int(last_po.po_number.split('-')[-1]) + 1) if last_po else 1
+            last_po = PurchaseOrder.objects.filter(po_number__startswith=f'PO-{year}-').order_by('id').last()
+            if last_po and last_po.po_number:
+                try:
+                    new_no = int(last_po.po_number.split('-')[-1]) + 1
+                except (ValueError, IndexError):
+                    new_no = PurchaseOrder.objects.count() + 1
+            else:
+                new_no = 1
             self.po_number = f"PO-{year}-{new_no:04d}"
         super().save(*args, **kwargs)
 

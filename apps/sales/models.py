@@ -70,6 +70,21 @@ class SalesOrder(models.Model):
     
     def __str__(self): return self.so_number
 
+    def save(self, *args, **kwargs):
+        if not self.so_number or (self.so_number.startswith('SO-') and len(self.so_number) > 13 and self.so_number[3:5].isdigit()):
+            import datetime
+            year = datetime.datetime.now().year
+            last_so = SalesOrder.all_objects.filter(so_number__startswith=f"SO-{year}-").order_by('-id').first()
+            if last_so and last_so.so_number:
+                try:
+                    new_no = int(last_so.so_number.split('-')[-1]) + 1
+                except (ValueError, IndexError):
+                    new_no = SalesOrder.all_objects.count() + 1
+            else:
+                new_no = 1
+            self.so_number = f"SO-{year}-{new_no:04d}"
+        super().save(*args, **kwargs)
+
     def calculate_totals(self):
         line_subtotals = sum(line.gross_total for line in self.lines.all())
         line_discounts = sum(line.discount_amount for line in self.lines.all())
@@ -133,11 +148,19 @@ class SalesOrder(models.Model):
         - If policy == 'ORDERED' or fallback: bills based on ordered items (for advance payments or order-based invoicing).
         """
         import datetime
-        timestamp = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
+        year = datetime.datetime.now().year
         if delivery:
             invoice_number = f"INV-{delivery.delivery_number}"
         else:
-            invoice_number = f"INV-{self.so_number}-{timestamp}"
+            last_inv = SalesInvoice.objects.filter(invoice_number__startswith=f"INV-{year}-").order_by('-id').first()
+            if last_inv and last_inv.invoice_number:
+                try:
+                    new_no = int(last_inv.invoice_number.split('-')[-1]) + 1
+                except (ValueError, IndexError):
+                    new_no = SalesInvoice.objects.count() + 1
+            else:
+                new_no = 1
+            invoice_number = f"INV-{year}-{new_no:04d}"
         
         # التأكد من عدم تكرار الفاتورة
         existing = SalesInvoice.objects.filter(invoice_number=invoice_number).first()

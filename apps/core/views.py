@@ -168,16 +168,16 @@ class CheckAuthAPI(APIView):
 
         plan = holding_opco.plan if holding_opco else 'starter'
         if plan == 'business':
-            days_limit = 9999
+            days_limit = 365
             sku_limit = 5000
         elif plan in ['professional', 'pro']:
-            days_limit = 9999
+            days_limit = 365
             sku_limit = 99999
         elif plan == 'enterprise':
-            days_limit = 9999
+            days_limit = 365
             sku_limit = 999999
-        else: # starter / free
-            days_limit = 9999
+        else: # starter / free trial
+            days_limit = 14
             sku_limit = 50
 
         days_remaining = days_limit
@@ -223,7 +223,7 @@ class CheckAuthAPI(APIView):
             "user": request.user.username,
             "company_id": user_opco.id if user_opco else None,
             "company_name": user_opco.name if user_opco else "REDIVIO",
-            "currency": user_opco.currency if user_opco else "SAR",
+            "currency": user_opco.currency if user_opco else "EGP",
             "holding_name": holding_opco.name if holding_opco else "REDIVIO Inc.",
             "days_remaining": days_remaining,
             "header_opcos": header_opcos,

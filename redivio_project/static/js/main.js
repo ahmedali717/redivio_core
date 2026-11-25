@@ -612,7 +612,7 @@ createApp({
                     transfer_dest_bin: '',
                     transfer_quantity: 1
                 },
-                customer: { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' },
+                customer: { id: null, code: 'CUST-1001', name: '', tax_id: '', email: '', phone: '', address: '' },
                 vendor: {
                     id: null, code: '', name: '', vendor_type: 'COMPANY', vendor_group: 'Local',
                     tax_id: '', email: '', phone: '', contact_name: '', website: '', address: '',
@@ -874,7 +874,7 @@ createApp({
         },
 
         recentOrdersList() {
-            const list = [];
+            let list = [];
             (this.purchase_orders || []).forEach(po => {
                 list.push({
                     id: 'po-' + po.id,
@@ -898,7 +898,15 @@ createApp({
                 });
             });
             list.sort((a, b) => (b.date > a.date ? 1 : -1));
-            return list.slice(0, 3);
+            if (this.searchQuery && this.searchQuery.trim()) {
+                const q = this.searchQuery.trim().toLowerCase();
+                list = list.filter(item =>
+                    (item.ref && item.ref.toLowerCase().includes(q)) ||
+                    (item.party_name && item.party_name.toLowerCase().includes(q)) ||
+                    (item.status && item.status.toLowerCase().includes(q))
+                );
+            }
+            return list.slice(0, 6);
         },
 
         activeTeamMembers() {
@@ -2740,20 +2748,23 @@ createApp({
             this.checkActivePOSSession();
         }
         
-        // 🚀 KDS Timer & Polling
+        // 🚀 KDS Timer & Smart Targeted Polling
         setInterval(() => { this.kdsCurrentTime = new Date(); }, 1000);
         this.kdsInterval = setInterval(() => {
             if (this.view === 'restaurant_pos_module' && this.posTab === 'kitchen') {
                 this.fetchKDSOrders();
             }
-            if (this.view === 'users') {
-                this.fetchCompanyUsers();
-            }
             if (this.view === 'restaurant_pos_module') {
                 this.checkPOSStatusUpdates();
             }
-            this.fetchMyActivities();
         }, 5000);
+
+        // Polling activities moderately (every 45s) instead of aggressive 5s polling to avoid CPU spikes
+        setInterval(() => {
+            if (this.isAuthenticated) {
+                this.fetchMyActivities();
+            }
+        }, 45000);
 
         // Core Init
         this.checkAuth();
@@ -8931,7 +8942,8 @@ createApp({
                 this.activeChatterMessages = [];
                 this.activeActivities = [];
             } else if (type === 'customer') {
-                this.forms.customer = { id: null, code: '', name: '', tax_id: '', email: '', phone: '', address: '' };
+                const nextNo = (this.customers && this.customers.length ? this.customers.length + 1001 : 1001);
+                this.forms.customer = { id: null, code: `CUST-${nextNo}`, name: '', tax_id: '', email: '', phone: '', address: '' };
             } else if (type === 'plant') {
                 this.forms.plant = { id: null, opco: this.activeOpcoId, code: '', name: '' };
             } else if (type === 'location') {

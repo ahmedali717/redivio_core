@@ -47,7 +47,7 @@
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
                 </span>
                 <i class="fas fa-users text-blue-400 text-xs"></i>
-                <span class="text-[11px] font-black text-[var(--text-primary)] tracking-wide">[[ activeUsers.length || 24 ]] [[ isArabic ? 'مستخدم نشط' : 'Active Users' ]]</span>
+                <span class="text-[11px] font-black text-[var(--text-primary)] tracking-wide">[[ (companyUsers && companyUsers.length) ? companyUsers.length : (activeUsers.length || 1) ]] [[ isArabic ? 'مستخدم نشط' : 'Active Users' ]]</span>
             </div>
 
             <!-- Activity Log Button -->
@@ -163,7 +163,7 @@
                     <div class="px-4 py-2 rounded-2xl bg-blue-600/15 border border-blue-500/30 text-right">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block" v-text="isArabic ? 'تحصيل الشهر الحالي' : 'Current Month'"></span>
                         <span class="text-sm font-black text-blue-400 tech-font">[[ formatCurrency(executiveKpis.currentMonthRevenue) ]]</span>
-                        <span class="text-[9px] font-black text-blue-300 ml-1">↑ 15.2%</span>
+                        <span class="text-[9px] font-black text-blue-300 ml-1">[[ executiveKpis.totalOrdersCount > 0 ? 'Live Flow' : '0%' ]]</span>
                     </div>
                     <!-- Time range selector -->
                     <select class="h-10 px-3 rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] text-xs font-bold text-[var(--text-primary)] focus:outline-none">

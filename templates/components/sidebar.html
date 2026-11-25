@@ -874,7 +874,7 @@
                     </div>
                     <div class="flex justify-between">
                         <span>[[ isArabic ? 'الأيام المتبقية:' : 'Days Remaining:' ]]</span>
-                        <span class="font-bold text-white">[[ license.daysRemaining ]] [[ isArabic ? 'يوم' : 'Days' ]]</span>
+                        <span class="font-bold text-white">[[ license.daysRemaining >= 365 ? (isArabic ? 'اشتراك ساري' : 'Active Plan') : (license.daysRemaining + ' ' + (isArabic ? 'يوم' : 'Days')) ]]</span>
                     </div>
                 </div>
             </div>
