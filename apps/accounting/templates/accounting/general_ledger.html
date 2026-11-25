@@ -107,11 +107,11 @@
                             </button>
                             <span v-else class="text-slate-500">-</span>
                         </td>
-                        <td class="px-4 py-3.5 text-center font-mono font-black" :class="gl.debit > 0 ? 'text-blue-400' : 'text-slate-500'">
-                            $[[ formatNumber(gl.debit) ]]
+                        <td class="px-4 py-3.5 text-center font-mono font-black" :class="gl.debit > 0 ? 'text-blue-500' : 'text-slate-500'">
+                            [[ formatNumber(gl.debit) ]] <span v-if="gl.debit > 0" class="text-[10px] font-bold text-slate-400">[[ isArabic ? 'ج.م' : 'EGP' ]]</span>
                         </td>
                         <td class="px-4 py-3.5 text-center font-mono font-black" :class="gl.credit > 0 ? 'text-[var(--heading-color)]' : 'text-slate-500'">
-                            $[[ formatNumber(gl.credit) ]]
+                            [[ formatNumber(gl.credit) ]] <span v-if="gl.credit > 0" class="text-[10px] font-bold text-slate-400">[[ isArabic ? 'ج.م' : 'EGP' ]]</span>
                         </td>
                         <td class="px-4 py-3.5 text-slate-400 max-w-[250px] truncate rounded-l-2xl">[[ gl.remarks || '-' ]]</td>
                     </tr>

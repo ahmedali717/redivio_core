@@ -1,4 +1,4 @@
-<div v-if="showModal && modalType === 'material'" 
+﻿<div v-if="showModal && modalType === 'material'" 
      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
     
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col animate-fadeIn">
@@ -7,7 +7,7 @@
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
             <div>
                 <h2 class="text-xl font-bold text-slate-800">
-                    <i class="fas fa-barcode ml-2 text-indigo-600"></i>
+                    <i class="fas fa-barcode ml-2 text-blue-600"></i>
                     [[ isEditing ? (isArabic ? 'تعديل صنف' : 'Edit Material') : (isArabic ? 'تعريف صنف جديد' : 'New Material') ]]
                 </h2>
                 <div class="flex items-center gap-2 mt-1 flex-wrap">
@@ -28,12 +28,12 @@
                 </button>
                 <div class="flex items-center bg-white border rounded-lg p-1 shadow-sm">
                     <button @click="isAdvancedMode = false" 
-                            :class="!isAdvancedMode ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400'"
+                            :class="!isAdvancedMode ? 'bg-blue-100 text-blue-700' : 'text-slate-400'"
                             class="px-3 py-1 text-xs font-bold rounded-md transition-all">
                         Plug & Play
                     </button>
                     <button @click="isAdvancedMode = true" 
-                            :class="isAdvancedMode ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'"
+                            :class="isAdvancedMode ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'"
                             class="px-3 py-1 text-xs font-bold rounded-md transition-all">
                         Advanced
                     </button>
@@ -44,12 +44,12 @@
         <!-- Tab Bar -->
         <div v-if="isAdvancedMode" class="flex border-b border-gray-100 bg-white px-6">
             <button @click="materialTab = 'general'" 
-                    :class="materialTab === 'general' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'"
+                    :class="materialTab === 'general' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500'"
                     class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
                 <i class="fas fa-info-circle ml-1"></i> [[ isArabic ? 'بيانات عامة' : 'General' ]]
             </button>
             <button @click="materialTab = 'inventory'" 
-                    :class="materialTab === 'inventory' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'"
+                    :class="materialTab === 'inventory' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500'"
                     class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
                 <i class="fas fa-boxes ml-1"></i> [[ isArabic ? 'المخزون والرفوف' : 'Inventory & Bins' ]]
             </button>
@@ -78,7 +78,7 @@
             </button>
             <button @click="materialTab = 'balances'" 
                     v-if="isEditing"
-                    :class="materialTab === 'balances' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500'"
+                    :class="materialTab === 'balances' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500'"
                     class="py-3 px-4 border-b-2 font-medium text-sm transition-all text-right" dir="rtl">
                 <i class="fas fa-chart-pie ml-1"></i> [[ isArabic ? 'الأرصدة الحالية' : 'Stock Balances' ]]
             </button>
@@ -110,7 +110,7 @@
                         <div class="flex items-center gap-2 mt-2">
                             <input type="file" @change="handleImageUpload($event, $this)" class="hidden" id="matImage">
                             <label for="matImage" class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold cursor-pointer hover:shadow-sm">
-                                <i class="fas fa-camera ml-1 text-indigo-600"></i>
+                                <i class="fas fa-camera ml-1 text-blue-600"></i>
                                 [[ isArabic ? 'اختيار صورة رئيسية' : 'Main Photo' ]]
                             </label>
                         </div>
@@ -119,10 +119,10 @@
                         <div class="mt-6 w-full pt-4 border-t border-slate-200/80" dir="rtl">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                                    <i class="fas fa-images text-indigo-500"></i>
+                                    <i class="fas fa-images text-blue-500"></i>
                                     [[ isArabic ? 'معرض صور المنتجات' : 'Photo Gallery' ]]
                                 </span>
-                                <label class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer flex items-center gap-1">
+                                <label class="text-[10px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer flex items-center gap-1">
                                     <i class="fas fa-plus"></i> [[ isArabic ? 'إضافة صورة' : 'Add Photo' ]]
                                     <input type="file" @change="addGalleryImage" accept="image/*" class="hidden">
                                 </label>
@@ -152,21 +152,21 @@
                     <div class="md:col-span-2 grid grid-cols-2 gap-4">
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-slate-700 mb-1">SKU *</label>
-                            <input v-model="forms.material.sku" type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="e.g. ITEM-1001">
+                            <input v-model="forms.material.sku" type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g. ITEM-1001">
                         </div>
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'الاسم' : 'Name' ]] *</label>
-                            <input v-model="forms.material.name" type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <input v-model="forms.material.name" type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
                         </div>
                         
                         <div v-if="isAdvancedMode" class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'الباركود' : 'Barcode' ]]</label>
-                            <input v-model="forms.material.barcode" type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <input v-model="forms.material.barcode" type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
                         </div>
 
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'وحدة القياس الأساسية' : 'Base UOM' ]]</label>
-                            <select v-model="forms.material.base_uom" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs">
+                            <select v-model="forms.material.base_uom" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs">
                                 <option value="PCS">Pieces (Pcs)</option>
                                 <option value="KG">Kilograms (Kg)</option>
                                 <option value="MTR">Meters (m)</option>
@@ -179,11 +179,11 @@
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'فئة الصنف (Category)' : 'Category' ]]</label>
                             <div class="flex gap-1.5">
-                                <select v-model="forms.material.category" class="flex-1 px-4 py-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500">
+                                <select v-model="forms.material.category" class="flex-1 px-4 py-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500">
                                     <option value="">[[ isArabic ? '-- بدون فئة --' : '-- No Category --' ]]</option>
                                     <option v-for="c in categories" :key="c.id" :value="c.id">[[ c.name ]]</option>
                                 </select>
-                                <button type="button" @click="openCategoryModal()" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition-all font-bold text-xs" :title="isArabic ? 'إضافة مجموعة جديدة' : 'Add Category'">
+                                <button type="button" @click="openCategoryModal()" class="px-2.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all font-bold text-xs" :title="isArabic ? 'إضافة مجموعة جديدة' : 'Add Category'">
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </div>
@@ -192,11 +192,11 @@
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'المجموعة البيعية (Sale Group)' : 'Sale Group' ]]</label>
                             <div class="flex gap-1">
-                                <select v-model="forms.material.sale_group" class="flex-grow px-3 py-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500">
+                                <select v-model="forms.material.sale_group" class="flex-grow px-3 py-2 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500">
                                     <option value="">[[ isArabic ? '-- بدون مجموعة --' : '-- No Group --' ]]</option>
                                     <option v-for="sg in sale_groups" :key="sg.id" :value="sg.id">[[ sg.name ]]</option>
                                 </select>
-                                <button @click="addSaleGroup" type="button" class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all font-bold text-xs" :title="isArabic ? 'إضافة مجموعة جديدة' : 'Add Group'">
+                                <button @click="addSaleGroup" type="button" class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all font-bold text-xs" :title="isArabic ? 'إضافة مجموعة جديدة' : 'Add Group'">
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </div>
@@ -208,45 +208,45 @@
                                 <label class="block text-xs font-bold text-slate-800">[[ isArabic ? 'حالة الصنف (نشط / معطل)' : 'Material Active Status' ]]</label>
                                 <p class="text-[9px] text-slate-400">[[ isArabic ? 'إيقاف الصنف يمنع أي حركة مخزنية أو مبيعات' : 'Deactivating disables transactions' ]]</p>
                             </div>
-                            <input type="checkbox" v-model="forms.material.is_active" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                            <input type="checkbox" v-model="forms.material.is_active" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
                         </div>
 
                         <!-- 🚀 Item 11: Material Description Field -->
                         <div class="col-span-2">
                             <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'وصف الصنف' : 'Description' ]]</label>
-                            <textarea v-model="forms.material.description" rows="2" class="w-full px-4 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-indigo-500" :placeholder="isArabic ? 'أدخل وصفاً تفصيلياً للصنف...' : 'Enter item description...'"></textarea>
+                            <textarea v-model="forms.material.description" rows="2" class="w-full px-4 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-blue-500" :placeholder="isArabic ? 'أدخل وصفاً تفصيلياً للصنف...' : 'Enter item description...'"></textarea>
                         </div>
 
                         <!-- 🚀 Item 09: Alternate UOM (AUOM) & Transformation Ratio -->
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'وحدة القياس البديلة (AUOM)' : 'Alternate UOM' ]]</label>
-                            <input v-model="forms.material.alternate_uom" type="text" class="w-full px-4 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-indigo-500" placeholder="e.g. CARTON, DOZEN">
+                            <input v-model="forms.material.alternate_uom" type="text" class="w-full px-4 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-blue-500" placeholder="e.g. CARTON, DOZEN">
                         </div>
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-slate-700 mb-1">[[ isArabic ? 'معامل التحويل (Transformation Ratio)' : 'Conversion Ratio' ]]</label>
-                            <input v-model.number="forms.material.uom_conversion_factor" type="number" step="0.0001" class="w-full px-4 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-indigo-500" placeholder="e.g. 12">
+                            <input v-model.number="forms.material.uom_conversion_factor" type="number" step="0.0001" class="w-full px-4 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-blue-500" placeholder="e.g. 12">
                         </div>
 
                         <div v-if="isAdvancedMode" class="col-span-2 border-t pt-4 mt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <h4 class="text-xs font-black text-indigo-600 mb-3 uppercase tracking-wider text-right" dir="rtl">[[ isArabic ? 'إعدادات التتبع والصلاحية' : 'Traceability & Expiry' ]]</h4>
+                                <h4 class="text-xs font-black text-blue-600 mb-3 uppercase tracking-wider text-right" dir="rtl">[[ isArabic ? 'إعدادات التتبع والصلاحية' : 'Traceability & Expiry' ]]</h4>
                                 <div class="grid grid-cols-3 gap-2">
-                                    <label class="flex items-center justify-center p-2 border rounded-lg cursor-pointer hover:bg-slate-50 transition-all" :class="forms.material.tracking === 'none' ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-100' : ''">
+                                    <label class="flex items-center justify-center p-2 border rounded-lg cursor-pointer hover:bg-slate-50 transition-all" :class="forms.material.tracking === 'none' ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100' : ''">
                                         <input type="radio" v-model="forms.material.tracking" value="none" class="hidden">
                                         <span class="text-[10px] font-bold">[[ isArabic ? 'بدون تتبع' : 'None' ]]</span>
                                     </label>
-                                    <label class="flex items-center justify-center p-2 border rounded-lg cursor-pointer hover:bg-slate-50 transition-all" :class="forms.material.tracking === 'lot' ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-100' : ''">
+                                    <label class="flex items-center justify-center p-2 border rounded-lg cursor-pointer hover:bg-slate-50 transition-all" :class="forms.material.tracking === 'lot' ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100' : ''">
                                         <input type="radio" v-model="forms.material.tracking" value="lot" class="hidden">
                                         <span class="text-[10px] font-bold">[[ isArabic ? 'دفعات' : 'Lots' ]]</span>
                                     </label>
-                                    <label class="flex items-center justify-center p-2 border rounded-lg cursor-pointer hover:bg-slate-50 transition-all" :class="forms.material.tracking === 'serial' ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-100' : ''">
+                                    <label class="flex items-center justify-center p-2 border rounded-lg cursor-pointer hover:bg-slate-50 transition-all" :class="forms.material.tracking === 'serial' ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100' : ''">
                                         <input type="radio" v-model="forms.material.tracking" value="serial" class="hidden">
                                         <span class="text-[10px] font-bold">[[ isArabic ? 'سيريال' : 'Serial' ]]</span>
                                     </label>
                                 </div>
                                 <div class="mt-3">
                                     <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">[[ isArabic ? 'تاريخ انتهاء الصلاحية' : 'Expiry Date' ]]</label>
-                                    <input type="date" v-model="forms.material.expiry_date" class="w-full px-3 py-1.5 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500">
+                                    <input type="date" v-model="forms.material.expiry_date" class="w-full px-3 py-1.5 border rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500">
                                 </div>
                             </div>
 
@@ -306,7 +306,7 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'متوسط التكلفة' : 'Standard Cost' ]]</label>
                         <div class="relative">
-                            <input type="number" step="0.01" v-model.number="forms.material.standard_price" class="w-full text-sm border-slate-300 rounded-lg p-2.5 pl-10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                            <input type="number" step="0.01" v-model.number="forms.material.standard_price" class="w-full text-sm border-slate-300 rounded-lg p-2.5 pl-10 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-slate-50">
                             <span class="absolute left-3 top-3 text-xs text-slate-400 font-black">[[ activeOpco ? activeOpco.currency : 'USD' ]]</span>
                         </div>
                     </div>
@@ -321,17 +321,17 @@
 
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'نسبة الضريبة %' : 'VAT Rate %' ]]</label>
-                        <input type="number" step="0.01" v-model.number="forms.material.tax_rate" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                        <input type="number" step="0.01" v-model.number="forms.material.tax_rate" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-slate-50">
                     </div>
                     
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'حد الطلب (Min)' : 'Min Level' ]]</label>
-                        <input type="number" step="0.01" v-model.number="forms.material.reorder_level" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                        <input type="number" step="0.01" v-model.number="forms.material.reorder_level" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-slate-50">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">[[ isArabic ? 'الحد الأقصى (Max)' : 'Max Level' ]]</label>
-                        <input type="number" step="0.01" v-model.number="forms.material.max_level" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                        <input type="number" step="0.01" v-model.number="forms.material.max_level" class="w-full text-sm border-slate-300 rounded-lg p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-slate-50">
                     </div>
                 </div>
             </div>
@@ -601,12 +601,12 @@
             <div v-show="materialTab === 'inventory'" class="space-y-6">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <div class="flex justify-between items-center mb-4">
-                        <h4 class="text-xs font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2">
+                        <h4 class="text-xs font-black text-blue-700 uppercase tracking-widest flex items-center gap-2">
                             <i class="fas fa-sitemap"></i>
                             [[ isArabic ? 'ربط الصنف بالشركات والمستودعات' : 'Company & Bin Assignments' ]]
                         </h4>
                         <button @click="addCompanyRow" type="button" 
-                                class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-1">
+                                class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-blue-700 shadow-sm flex items-center gap-1">
                             <i class="fas fa-plus"></i> [[ isArabic ? 'إضافة شركة' : 'Add Company' ]]
                         </button>
                     </div>
@@ -626,14 +626,14 @@
                                 <tr v-for="(row, index) in forms.material.company_assignments" :key="index" class="hover:bg-slate-50/50 transition-colors text-right">
                                     <td class="px-4 py-3 align-top">
                                         <select v-model="row.opco_id" @change="row.bins = []; row.primary_bin = null"
-                                                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500">
+                                                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500">
                                             <option value="">[[ isArabic ? '-- اختر الشركة --' : '-- Select OpCo --' ]]</option>
                                             <option v-for="op in allOpcos" :key="op.id" :value="op.id">[[ op.name ]]</option>
                                         </select>
                                     </td>
                                     <td class="px-2 py-3 align-top text-center">
                                         <input type="number" step="0.01" v-model.number="row.plant_standard_price" :placeholder="forms.material.standard_price || 0"
-                                               class="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs font-mono font-bold text-center focus:ring-2 focus:ring-indigo-500 bg-slate-50">
+                                               class="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs font-mono font-bold text-center focus:ring-2 focus:ring-blue-500 bg-slate-50">
                                     </td>
                                     <td class="px-2 py-3 align-top text-center">
                                         <input type="number" step="0.01" v-model.number="row.plant_sales_price" :placeholder="forms.material.sales_price || 0"
@@ -643,7 +643,7 @@
                                         <div v-if="row.opco_id">
                                             <div class="flex flex-wrap gap-2 mb-2 justify-start">
                                                 <span v-for="binId in row.bins" :key="binId" 
-                                                      class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 text-[10px] font-bold">
+                                                      class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 text-[10px] font-bold">
                                                     [[ getBinCodeById(binId) ]]
                                                     <i @click="removeBinFromRow(index, binId)" class="fas fa-times cursor-pointer hover:text-red-500"></i>
                                                 </span>
@@ -675,21 +675,21 @@
             <!-- Stock Balances Tab (Odoo 19 Style) -->
             <div v-show="materialTab === 'balances'" class="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                 <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4" dir="rtl">
-                    <div class="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100 relative overflow-hidden flex-grow">
+                    <div class="bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100 relative overflow-hidden flex-grow">
                          <div class="flex justify-between items-center relative z-10">
                             <div>
-                                <h3 class="text-2xl font-black text-indigo-900 leading-none">[[ parseFloat(forms.material.on_hand || 0).toLocaleString() ]] [[ forms.material.base_uom ]]</h3>
-                                <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mt-1">Total Stock on Hand (إجمالي الرصيد)</p>
+                                <h3 class="text-2xl font-black text-blue-900 leading-none">[[ parseFloat(forms.material.on_hand || 0).toLocaleString() ]] [[ forms.material.base_uom ]]</h3>
+                                <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mt-1">Total Stock on Hand (إجمالي الرصيد)</p>
                             </div>
-                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-50">
+                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm border border-blue-50">
                                 <i class="fas fa-boxes-stacked text-xl"></i>
                             </div>
                          </div>
-                         <i class="fas fa-cubes-stacked absolute -bottom-4 -right-4 text-8xl text-indigo-600 opacity-5"></i>
+                         <i class="fas fa-cubes-stacked absolute -bottom-4 -right-4 text-8xl text-blue-600 opacity-5"></i>
                     </div>
                     <!-- Adjust Stock (New Bin) Button for admin or manager -->
                     <div v-if="['admin', 'administrator', 'manager'].includes((user.role || '').toLowerCase()) || user.is_superuser" class="flex items-center">
-                        <button @click="openStockAdjustment(null)" type="button" class="bg-indigo-600 text-white px-5 py-3 rounded-2xl text-xs font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center gap-2 whitespace-nowrap">
+                        <button @click="openStockAdjustment(null)" type="button" class="bg-blue-600 text-white px-5 py-3 rounded-2xl text-xs font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center gap-2 whitespace-nowrap">
                             <i class="fas fa-plus"></i>
                             [[ isArabic ? 'تحديث رصيد (رف جديد)' : 'Adjust Stock (New Bin)' ]]
                         </button>
@@ -712,7 +712,7 @@
                                     <div class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">[[ st.plant ]]</div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-black border border-indigo-100 uppercase font-mono">
+                                    <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-black border border-blue-100 uppercase font-mono">
                                         [[ st.bin ]]
                                     </span>
                                 </td>
@@ -725,7 +725,7 @@
                                     <button v-if="['admin', 'administrator', 'manager'].includes((user.role || '').toLowerCase()) || user.is_superuser"
                                             @click="openStockAdjustment(st)"
                                             type="button"
-                                            class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-1.5 rounded-lg transition-all flex items-center justify-center shadow-sm"
+                                            class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-1.5 rounded-lg transition-all flex items-center justify-center shadow-sm"
                                             :title="isArabic ? 'تعديل رصيد الرف' : 'Adjust Bin Stock'">
                                         <i class="fas fa-pencil-alt text-[10px]"></i>
                                     </button>
@@ -748,7 +748,7 @@
             </button>
             <button @click="submitForm" 
                     :disabled="loading"
-                    class="px-8 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-lg disabled:opacity-50 flex items-center">
+                    class="px-8 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg disabled:opacity-50 flex items-center">
                 <i v-if="loading" class="fas fa-spinner fa-spin ml-2"></i>
                 [[ isArabic ? 'حفظ الصنف' : 'Save Material' ]]
             </button>
@@ -763,7 +763,7 @@
             <!-- Header -->
             <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50" dir="rtl">
                 <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
-                    <i class="fas fa-sliders-h text-indigo-600"></i>
+                    <i class="fas fa-sliders-h text-blue-600"></i>
                     [[ isArabic ? 'تعديل رصيد المخزون' : 'Adjust Stock Balance' ]]
                 </h3>
                 <button @click="showStockAdjustModal = false" class="text-slate-400 hover:text-slate-600 transition-colors">
@@ -790,7 +790,7 @@
                     </div>
                     
                     <!-- 🚀 Item 15 & 12: Dropdown Bin filtered by material assigned bins with Plant Code -->
-                    <select v-else v-model="stockAdjustForm.bin_id" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm font-bold text-slate-700 bg-white">
+                    <select v-else v-model="stockAdjustForm.bin_id" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-bold text-slate-700 bg-white">
                         <option value="">[[ isArabic ? '-- اختر الرف (الرفوف المربوطة بالصنف فقط) --' : '-- Select Assigned Bin --' ]]</option>
                         <option v-for="bin in getMaterialAssignedBins(forms.material)" :key="bin.id" :value="bin.id">
                             🏢 [[ bin.plant_code || getBinPlantName(bin.id) ]] | 📍 [[ bin.code ]]
@@ -807,9 +807,9 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-indigo-700 mb-1.5">[[ isArabic ? 'الرصيد الجديد' : 'New Stock' ]] *</label>
+                        <label class="block text-xs font-bold text-blue-700 mb-1.5">[[ isArabic ? 'الرصيد الجديد' : 'New Stock' ]] *</label>
                         <input type="number" step="0.001" v-model.number="stockAdjustForm.new_quantity" 
-                               class="w-full px-4 py-3 border border-indigo-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 rounded-xl font-mono text-indigo-900 text-sm font-black text-center bg-indigo-50/20">
+                               class="w-full px-4 py-3 border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl font-mono text-blue-900 text-sm font-black text-center bg-blue-50/20">
                     </div>
                 </div>
 
@@ -817,7 +817,7 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-2">[[ isArabic ? 'سبب التعديل / الملاحظات' : 'Reason / Notes' ]]</label>
                     <input type="text" v-model="stockAdjustForm.reason" :placeholder="isArabic ? 'مثال: جرد سنوي، تسوية تالف...' : 'e.g. Stocktake, Damaged items...'"
-                           class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-xs font-bold text-slate-700">
+                           class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-xs font-bold text-slate-700">
                 </div>
             </div>
 
@@ -828,7 +828,7 @@
                 </button>
                 <button @click="submitStockAdjustment" 
                         :disabled="loading"
-                        class="px-6 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md disabled:opacity-50 transition-colors flex items-center gap-1.5">
+                        class="px-6 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md disabled:opacity-50 transition-colors flex items-center gap-1.5">
                     <i v-if="loading" class="fas fa-spinner fa-spin"></i>
                     [[ isArabic ? 'حفظ التعديل' : 'Save Adjustment' ]]
                 </button>

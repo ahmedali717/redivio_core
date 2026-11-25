@@ -513,8 +513,8 @@
                     <div v-if="inventoryTab === 'moves'" class="absolute inset-0 liquid-glass-surface rounded-[2rem] overflow-y-auto">
                         {% include "wms/inventory_item_report.html" %}
                     </div>
-                    <div v-if="inventoryTab === 'reports'" class="absolute inset-0 liquid-glass-surface flex items-center justify-center rounded-[2rem] border border-white/10">
-                        <h1 class="text-4xl font-black text-rose-500">5. صفحة حركة الصنف (Ledger)</h1>
+                    <div v-if="inventoryTab === 'reports'" class="absolute inset-0 liquid-glass-surface rounded-[2rem] overflow-y-auto">
+                        {% include "wms/inventory_item_report.html" %}
                     </div>
                     <div v-if="inventoryTab === 'item_ledger'" class="absolute inset-0 liquid-glass-surface rounded-[2rem] p-6 overflow-y-auto z-[999]">
                         {% include "wms/inventory_moves.html" %}

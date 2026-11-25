@@ -141,7 +141,7 @@
                                 <div class="flex items-start gap-2.5">
                                     <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
                                          :class="act.activity_type === 'call' ? 'bg-[#0066FF]/15 text-[#0066FF] border-[#0066FF]/30' : 
-                                                (act.activity_type === 'meeting' ? 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30' : 
+                                                (act.activity_type === 'meeting' ? 'bg-[#0066FF]/15 text-[#0066FF] border-[#0066FF]/30' : 
                                                 (act.activity_type === 'email' ? 'bg-sky-500/15 text-sky-400 border-sky-500/30' : 
                                                 'bg-[#0066FF]/15 text-[#0066FF] border-[#0066FF]/30'))">
                                         <i :class="act.activity_type === 'call' ? 'fas fa-phone-alt' : 
@@ -197,7 +197,7 @@
                                  class="p-4 border-b border-white/5 hover:bg-white/[0.03] transition-colors flex flex-col gap-2 group/notif" :dir="isArabic ? 'rtl' : 'ltr'">
                                 <div class="flex gap-3">
                                     <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                                         :class="n.type === 'low_stock' ? 'bg-indigo-500/15 text-indigo-400' : 'bg-rose-500/15 text-rose-400'">
+                                         :class="n.type === 'low_stock' ? 'bg-[#0066FF]/15 text-[#0066FF]' : 'bg-rose-500/15 text-rose-400'">
                                         <i :class="n.type === 'low_stock' ? 'fas fa-box' : (n.type === 'pos_ready' ? 'fas fa-utensils' : 'fas fa-bell')"></i>
                                     </div>
                                     <div class="flex-1">
@@ -236,7 +236,7 @@
             <button @click="toggleTheme()" 
                     :title="theme === 'dark' ? (isArabic ? 'التحويل للوضع النهاري (Light Mode)' : 'Switch to Light Mode') : (isArabic ? 'التحويل للوضع الليلي (Dark Mode)' : 'Switch to Dark Mode')"
                     class="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.12] transition-all flex items-center justify-center border border-white/10 shadow-sm relative group backdrop-blur-md">
-                <i :class="theme === 'dark' ? 'fas fa-sun text-amber-400' : 'fas fa-moon text-indigo-400'" class="text-sm transition-transform group-hover:rotate-45"></i>
+                <i :class="theme === 'dark' ? 'fas fa-sun text-amber-400' : 'fas fa-moon text-blue-500'" class="text-sm transition-transform group-hover:rotate-45"></i>
             </button>
 
             <!-- Activity / Task Toggle Button -->

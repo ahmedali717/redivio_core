@@ -1,4 +1,4 @@
-<div class="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
+﻿<div class="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
     <!-- Top Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -62,7 +62,7 @@
                     <i class="fas fa-receipt"></i>
                 </span>
             </div>
-            <div class="relative z-10 text-xl font-black text-[var(--heading-color)] tech-font tracking-tight">$[[ formatNumber(soStats.totalValue) ]]</div>
+            <div class="relative z-10 text-xl font-black text-[var(--heading-color)] tech-font tracking-tight">[[ formatNumber(soStats.totalValue) ]]</div>
             <div class="relative z-10 flex items-center gap-2 mt-2">
                 <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500">[[ soStats.totalCount ]] [[ isArabic ? "أمر" : "Orders" ]]</span>
                 <span class="text-[10px] text-slate-400 font-semibold">[[ isArabic ? "شامل الكل" : "All statuses" ]]</span>
@@ -80,7 +80,7 @@
                     <i class="fas fa-file-signature"></i>
                 </span>
             </div>
-            <div class="relative z-10 text-xl font-black text-[var(--heading-color)] tech-font tracking-tight">$[[ formatNumber(soStats.draftValue) ]]</div>
+            <div class="relative z-10 text-xl font-black text-[var(--heading-color)] tech-font tracking-tight">[[ formatNumber(soStats.draftValue) ]]</div>
             <div class="relative z-10 flex items-center gap-2 mt-2">
                 <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-400">[[ soStats.draftCount ]] [[ isArabic ? "مسودة" : "Draft" ]]</span>
                 <span class="text-[10px] text-slate-400 font-semibold">[[ isArabic ? "تحتاج اعتماد" : "Pending" ]]</span>
@@ -98,7 +98,7 @@
                     <i class="fas fa-boxes-packing"></i>
                 </span>
             </div>
-            <div class="relative z-10 text-xl font-black text-blue-600 dark:text-blue-400 tech-font tracking-tight">$[[ formatNumber(soStats.confirmedValue) ]]</div>
+            <div class="relative z-10 text-xl font-black text-blue-600 dark:text-blue-400 tech-font tracking-tight">[[ formatNumber(soStats.confirmedValue) ]]</div>
             <div class="relative z-10 flex items-center gap-2 mt-2">
                 <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500">[[ soStats.confirmedCount ]] [[ isArabic ? "قيد الصرف" : "To Deliver" ]]</span>
                 <span class="text-[10px] text-slate-400 font-semibold">[[ isArabic ? "بالمستودع" : "In Warehouse" ]]</span>
@@ -116,7 +116,7 @@
                     <i class="fas fa-truck-ramp-box"></i>
                 </span>
             </div>
-            <div class="relative z-10 text-xl font-black text-[var(--heading-color)] tech-font tracking-tight">$[[ formatNumber(soStats.shippedValue) ]]</div>
+            <div class="relative z-10 text-xl font-black text-[var(--heading-color)] tech-font tracking-tight">[[ formatNumber(soStats.shippedValue) ]]</div>
             <div class="relative z-10 flex items-center gap-2 mt-2">
                 <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-400">[[ soStats.shippedCount ]] [[ isArabic ? "مكتمل" : "Fulfilled" ]]</span>
                 <span class="text-[10px] text-slate-400 font-semibold">[[ isArabic ? "تم الاستلام" : "Completed" ]]</span>
@@ -169,7 +169,7 @@
                     <h3 class="font-black text-[var(--heading-color)] text-sm">[[ isArabic ? "مسودات وعروض أسعار" : "Quotations" ]]</h3>
                     <span class="text-[10px] font-black bg-slate-500/15 text-slate-300 px-2 py-0.5 rounded-md">[[ soKanbanDraft.length ]]</span>
                 </div>
-                <span class="text-xs font-black text-slate-400 tech-font">$[[ formatNumber(soKanbanDraft.reduce((s, o) => s + parseFloat(o.grand_total || 0), 0)) ]]</span>
+                <span class="text-xs font-black text-slate-400 tech-font">[[ formatNumber(soKanbanDraft.reduce((s, o) => s + parseFloat(o.grand_total || 0), 0)) ]]</span>
             </div>
 
             <div class="space-y-3 flex-1 overflow-y-auto max-h-[750px]">
@@ -194,7 +194,7 @@
 
                     <div class="flex items-center justify-between pt-3 border-t border-[var(--subcard-border)]">
                         <div>
-                            <div class="font-black text-[var(--heading-color)] text-sm tech-font">$[[ formatNumber(so.grand_total) ]]</div>
+                            <div class="font-black text-[var(--heading-color)] text-sm tech-font">[[ formatNumber(so.grand_total) ]]</div>
                         </div>
                         <div class="flex items-center gap-1.5" @click.stop>
                             <button @click="updateSOStatus(so.id, 'CONFIRMED')" 
@@ -219,7 +219,7 @@
                     <h3 class="font-black text-[var(--heading-color)] text-sm">[[ isArabic ? "معتمدة للتجهيز والفوترة" : "Confirmed & Processing" ]]</h3>
                     <span class="text-[10px] font-black bg-blue-500/15 text-blue-400 px-2 py-0.5 rounded-md">[[ soKanbanConfirmed.length ]]</span>
                 </div>
-                <span class="text-xs font-black text-blue-400 tech-font">$[[ formatNumber(soKanbanConfirmed.reduce((s, o) => s + parseFloat(o.grand_total || 0), 0)) ]]</span>
+                <span class="text-xs font-black text-blue-400 tech-font">[[ formatNumber(soKanbanConfirmed.reduce((s, o) => s + parseFloat(o.grand_total || 0), 0)) ]]</span>
             </div>
 
             <div class="space-y-3 flex-1 overflow-y-auto max-h-[750px]">
@@ -258,7 +258,7 @@
 
                     <div class="flex items-center justify-between pt-3 border-t border-[var(--subcard-border)]">
                         <div>
-                            <div class="font-black text-[var(--heading-color)] text-sm tech-font">$[[ formatNumber(so.grand_total) ]]</div>
+                            <div class="font-black text-[var(--heading-color)] text-sm tech-font">[[ formatNumber(so.grand_total) ]]</div>
                         </div>
                         
                         <!-- Odoo Card Actions -->
@@ -294,7 +294,7 @@
                     <h3 class="font-black text-[var(--heading-color)] text-sm">[[ isArabic ? "تم التسليم والمطابقة" : "Shipped & Fulfilled" ]]</h3>
                     <span class="text-[10px] font-black bg-slate-500/15 text-slate-300 px-2 py-0.5 rounded-md">[[ soKanbanShipped.length ]]</span>
                 </div>
-                <span class="text-xs font-black text-slate-400 tech-font">$[[ formatNumber(soKanbanShipped.reduce((s, o) => s + parseFloat(o.grand_total || 0), 0)) ]]</span>
+                <span class="text-xs font-black text-slate-400 tech-font">[[ formatNumber(soKanbanShipped.reduce((s, o) => s + parseFloat(o.grand_total || 0), 0)) ]]</span>
             </div>
 
             <div class="space-y-3 flex-1 overflow-y-auto max-h-[750px]">
@@ -319,7 +319,7 @@
 
                     <div class="flex items-center justify-between pt-3 border-t border-[var(--subcard-border)]">
                         <div>
-                            <div class="font-black text-[var(--heading-color)] text-sm tech-font">$[[ formatNumber(so.grand_total) ]]</div>
+                            <div class="font-black text-[var(--heading-color)] text-sm tech-font">[[ formatNumber(so.grand_total) ]]</div>
                         </div>
                         <div class="flex items-center gap-1.5" @click.stop>
                             <button @click="generateInvoice(so)" 
@@ -378,7 +378,7 @@
                 <!-- Grand Total -->
                 <div class="min-w-[130px]">
                     <div class="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-0.5">[[ isArabic ? "الإجمالي" : "Total" ]]</div>
-                    <div class="font-black text-[var(--heading-color)] text-sm tracking-tight tech-font">$[[ formatNumber(so.grand_total) ]]</div>
+                    <div class="font-black text-[var(--heading-color)] text-sm tracking-tight tech-font">[[ formatNumber(so.grand_total) ]]</div>
                 </div>
 
                 <!-- Status Badge -->
@@ -453,8 +453,8 @@
                                 <td class="px-5 py-3 text-center font-bold font-mono" :class="line.remaining_quantity > 0 ? 'text-slate-300' : 'text-slate-500'">
                                     [[ line.remaining_quantity ]]
                                 </td>
-                                <td class="px-5 py-3 text-center font-mono text-slate-400">$[[ formatNumber(line.unit_price || line.price) ]]</td>
-                                <td class="px-5 py-3 text-left font-black text-[var(--heading-color)] font-mono">$[[ formatNumber(line.total) ]]</td>
+                                <td class="px-5 py-3 text-center font-mono text-slate-400">[[ formatNumber(line.unit_price || line.price) ]]</td>
+                                <td class="px-5 py-3 text-left font-black text-[var(--heading-color)] font-mono">[[ formatNumber(line.total) ]]</td>
                             </tr>
                             <tr v-if="!so.lines || so.lines.length === 0">
                                 <td colspan="6" class="px-5 py-8 text-center text-slate-400 font-bold">
@@ -580,7 +580,7 @@
 
                                 <div class="flex items-center justify-between pt-2 border-t border-[var(--subcard-border)] text-xs font-mono">
                                     <span class="text-slate-400 text-[10px]">[[ isArabic ? "الإجمالي" : "Total" ]]:</span>
-                                    <span class="font-black text-[var(--heading-color)]">$[[ formatNumber(inv.total_amount) ]]</span>
+                                    <span class="font-black text-[var(--heading-color)]">[[ formatNumber(inv.total_amount) ]]</span>
                                 </div>
 
                                 <!-- Invoice Action Buttons (Odoo Standard) -->
@@ -1014,13 +1014,13 @@
                                     <td class="px-5 py-3.5 text-slate-500">[[ l.material_sku ? ('كود: ' + l.material_sku) : ('فاتورة مبيعات لأمر ' + (selectedSalesInvoice.so_number || '')) ]]</td>
                                     <td class="px-5 py-3.5 font-mono text-blue-500 font-bold">4100 إيرادات المبيعات</td>
                                     <td class="px-5 py-3.5 text-center font-mono font-bold text-slate-800 dark:text-white">[[ l.quantity || 1 ]]</td>
-                                    <td class="px-5 py-3.5 text-center font-mono text-slate-600 dark:text-slate-400">$[[ formatNumber(l.unit_price || selectedSalesInvoice.subtotal) ]]</td>
+                                    <td class="px-5 py-3.5 text-center font-mono text-slate-600 dark:text-slate-400">[[ formatNumber(l.unit_price || selectedSalesInvoice.subtotal) ]]</td>
                                     <td class="px-5 py-3.5 text-center">
                                         <span class="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-bold">
                                             15% VAT
                                         </span>
                                     </td>
-                                    <td class="px-5 py-3.5 text-left font-mono font-black text-slate-800 dark:text-white">$[[ formatNumber(l.total_price || selectedSalesInvoice.subtotal) ]]</td>
+                                    <td class="px-5 py-3.5 text-left font-mono font-black text-slate-800 dark:text-white">[[ formatNumber(l.total_price || selectedSalesInvoice.subtotal) ]]</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1031,28 +1031,28 @@
                         <div class="w-full md:w-80 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-4 space-y-2 text-xs font-mono">
                             <div class="flex justify-between items-center text-slate-500">
                                 <span>[[ isArabic ? "المبلغ غير الخاضع للضريبة (Untaxed):" : "Untaxed Amount:" ]]</span>
-                                <span class="font-bold text-slate-800 dark:text-white">$[[ formatNumber(selectedSalesInvoice.subtotal) ]]</span>
+                                <span class="font-bold text-slate-800 dark:text-white">[[ formatNumber(selectedSalesInvoice.subtotal) ]]</span>
                             </div>
                             <div v-if="selectedSalesInvoice.discount_amount > 0" class="flex justify-between items-center text-rose-500">
                                 <span>[[ isArabic ? "الخصومات الممنوحة:" : "Discount:" ]]</span>
-                                <span class="font-bold">-$[[ formatNumber(selectedSalesInvoice.discount_amount) ]]</span>
+                                <span class="font-bold">-[[ formatNumber(selectedSalesInvoice.discount_amount) ]]</span>
                             </div>
                             <div class="flex justify-between items-center text-blue-500">
                                 <span>[[ isArabic ? "ضريبة القيمة المضافة (15% VAT):" : "VAT 15%:" ]]</span>
-                                <span class="font-bold">+$[[ formatNumber(selectedSalesInvoice.tax_amount) ]]</span>
+                                <span class="font-bold">+[[ formatNumber(selectedSalesInvoice.tax_amount) ]]</span>
                             </div>
                             <div class="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-800 text-sm font-black text-slate-800 dark:text-white">
                                 <span>[[ isArabic ? "الإجمالي النهائي:" : "Total:" ]]</span>
-                                <span class="text-blue-600 dark:text-blue-400">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</span>
+                                <span class="text-blue-600 dark:text-blue-400">[[ formatNumber(selectedSalesInvoice.total_amount) ]]</span>
                             </div>
                             <div class="flex justify-between items-center pt-1 text-[11px] font-bold border-t border-slate-200 dark:border-slate-800">
                                 <span class="text-slate-400">[[ isArabic ? "المبلغ المسدد:" : "Paid Amount:" ]]</span>
-                                <span class="text-emerald-500 font-black">$[[ formatNumber(selectedSalesInvoice.paid_amount || 0) ]]</span>
+                                <span class="text-emerald-500 font-black">[[ formatNumber(selectedSalesInvoice.paid_amount || 0) ]]</span>
                             </div>
                             <div class="flex justify-between items-center text-[11px] font-bold">
                                 <span class="text-slate-400">[[ isArabic ? "الرصيد المستحق:" : "Amount Due:" ]]</span>
                                 <span class="font-black" :class="(selectedSalesInvoice.total_amount - (selectedSalesInvoice.paid_amount || 0)) > 0 ? 'text-rose-500' : 'text-slate-400'">
-                                    $[[ formatNumber(selectedSalesInvoice.total_amount - (selectedSalesInvoice.paid_amount || 0)) ]]
+                                    [[ formatNumber(selectedSalesInvoice.total_amount - (selectedSalesInvoice.paid_amount || 0)) ]]
                                 </span>
                             </div>
                         </div>
@@ -1083,8 +1083,8 @@
                                     </td>
                                     <td class="px-5 py-3.5 font-sans font-medium text-slate-700 dark:text-slate-300">[[ selectedSalesInvoice.customer_name || '-' ]]</td>
                                     <td class="px-5 py-3.5 font-sans text-slate-500">INV: [[ selectedSalesInvoice.invoice_number ]] - استحقاق مبيعات</td>
-                                    <td class="px-5 py-3.5 text-left font-black text-blue-600 dark:text-blue-400">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</td>
-                                    <td class="px-5 py-3.5 text-left text-slate-400">$0.00</td>
+                                    <td class="px-5 py-3.5 text-left font-black text-blue-600 dark:text-blue-400">[[ formatNumber(selectedSalesInvoice.total_amount) ]]</td>
+                                    <td class="px-5 py-3.5 text-left text-slate-400">0.00</td>
                                 </tr>
 
                                 <!-- Line 2: Sales Revenue (Credit) -->
@@ -1097,8 +1097,8 @@
                                     </td>
                                     <td class="px-5 py-3.5 font-sans font-medium text-slate-700 dark:text-slate-300">[[ selectedSalesInvoice.customer_name || '-' ]]</td>
                                     <td class="px-5 py-3.5 font-sans text-slate-500">SO: [[ selectedSalesInvoice.so_number || '-' ]] - إيراد مبيعات</td>
-                                    <td class="px-5 py-3.5 text-left text-slate-400">$0.00</td>
-                                    <td class="px-5 py-3.5 text-left font-black text-emerald-600 dark:text-emerald-400">$[[ formatNumber(selectedSalesInvoice.subtotal) ]]</td>
+                                    <td class="px-5 py-3.5 text-left text-slate-400">0.00</td>
+                                    <td class="px-5 py-3.5 text-left font-black text-emerald-600 dark:text-emerald-400">[[ formatNumber(selectedSalesInvoice.subtotal) ]]</td>
                                 </tr>
 
                                 <!-- Line 3: VAT Output Tax (Credit) -->
@@ -1111,8 +1111,8 @@
                                     </td>
                                     <td class="px-5 py-3.5 font-sans font-medium text-slate-700 dark:text-slate-300">[[ isArabic ? "مصلحة الضرائب / ZATCA" : "Tax Authority / ZATCA" ]]</td>
                                     <td class="px-5 py-3.5 font-sans text-slate-500">ضريبة مخرجات مبيعات 15%</td>
-                                    <td class="px-5 py-3.5 text-left text-slate-400">$0.00</td>
-                                    <td class="px-5 py-3.5 text-left font-black text-amber-600 dark:text-amber-400">$[[ formatNumber(selectedSalesInvoice.tax_amount) ]]</td>
+                                    <td class="px-5 py-3.5 text-left text-slate-400">0.00</td>
+                                    <td class="px-5 py-3.5 text-left font-black text-amber-600 dark:text-amber-400">[[ formatNumber(selectedSalesInvoice.tax_amount) ]]</td>
                                 </tr>
                             </tbody>
                             <!-- Balanced Footer Row -->
@@ -1124,8 +1124,8 @@
                                             <span>[[ isArabic ? "قيد اليومية متزن محاسبياً (Balanced Journal Entry)" : "Journal Entry Balanced (0.00 Difference)" ]]</span>
                                         </div>
                                     </td>
-                                    <td class="px-5 py-3.5 text-left text-blue-600 dark:text-blue-400">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</td>
-                                    <td class="px-5 py-3.5 text-left text-blue-600 dark:text-blue-400">$[[ formatNumber(selectedSalesInvoice.total_amount) ]]</td>
+                                    <td class="px-5 py-3.5 text-left text-blue-600 dark:text-blue-400">[[ formatNumber(selectedSalesInvoice.total_amount) ]]</td>
+                                    <td class="px-5 py-3.5 text-left text-blue-600 dark:text-blue-400">[[ formatNumber(selectedSalesInvoice.total_amount) ]]</td>
                                 </tr>
                             </tfoot>
                         </table>

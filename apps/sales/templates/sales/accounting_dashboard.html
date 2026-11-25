@@ -1,35 +1,36 @@
-<div class="accounting-dashboard-wrapper space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-10">
+<div class="accounting-dashboard-wrapper space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-12" :dir="isArabic ? 'rtl' : 'ltr'">
     
     <!-- Header Control Bar -->
-    <div class="bg-white rounded-[2rem] p-6 flex flex-col md:flex-row justify-between items-start md:items-center border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] gap-6">
-        <div class="flex items-center gap-5">
-            <div class="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-200 rotate-3 hover:rotate-0 transition-transform">
+    <div class="liquid-glass-card rounded-[2.5rem] p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
+        <div class="glass-sheen"></div>
+        <div class="relative z-10 flex items-center gap-5">
+            <div class="w-16 h-16 bg-blue-600 text-white rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/25 border border-white/20 shrink-0">
                 <i class="fas fa-file-invoice-dollar text-2xl"></i>
             </div>
             <div>
-                <h1 class="text-3xl font-black text-slate-800 tracking-tight" v-text="isArabic ? 'الإدارة المالية (Finance Control)' : 'Finance Command Center'"></h1>
-                <p class="text-slate-500 text-sm font-bold uppercase tracking-wider flex items-center gap-2 mt-1">
+                <h1 class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight" v-text="isArabic ? 'الإدارة المالية والمحاسبية (Finance Control)' : 'Finance Command Center'"></h1>
+                <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider flex items-center gap-2 mt-1.5">
                     <span class="flex h-2 w-2 relative">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
                     </span>
-                    <span v-text="isArabic ? 'مراقبة السيولة والتدفقات النقدية' : 'Live Cash Flow & Liquidity'"></span>
+                    <span v-text="isArabic ? 'مراقبة السيولة والتدفقات النقدية والأستاذ العام' : 'Live Cash Flow, Liquidity & General Ledger'"></span>
                 </p>
             </div>
         </div>
         
         <!-- Quick Control Actions -->
-        <div class="flex flex-wrap gap-2.5">
-            <button @click="openModal('journal_entry')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 font-bold text-xs">
+        <div class="relative z-10 flex flex-wrap gap-2.5">
+            <button @click="openModal('journal_entry')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl shadow-md shadow-blue-500/20 transition-all flex items-center gap-2 font-bold text-xs">
                 <i class="fas fa-plus"></i> <span v-text="isArabic ? 'قيد يومية جديد' : 'New Journal Entry'"></span>
             </button>
-            <button @click="accountingTab = 'payments'" class="bg-amber-50 hover:bg-amber-500 text-amber-600 hover:text-white px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold text-xs">
+            <button @click="accountingTab = 'payments'" class="bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 border border-blue-200 px-4 py-2.5 rounded-xl shadow-2xs transition-all flex items-center gap-2 font-bold text-xs">
                 <i class="fas fa-money-check-dollar"></i> <span v-text="isArabic ? 'سند قبض / صرف' : 'Payment Entry'"></span>
             </button>
-            <button @click="accountingTab = 'chart_of_accounts'; fetchAccounts();" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold text-xs">
+            <button @click="accountingTab = 'chart_of_accounts'; fetchAccounts();" class="bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 px-4 py-2.5 rounded-xl shadow-2xs transition-all flex items-center gap-2 font-bold text-xs">
                 <i class="fas fa-sitemap"></i> <span v-text="isArabic ? 'دليل الحسابات' : 'Chart of Accounts'"></span>
             </button>
-            <button @click="accountingTab = 'reports'; activeReportTab = 'balance_sheet'; loadReportData();" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 font-bold text-xs">
+            <button @click="accountingTab = 'reports'; activeReportTab = 'balance_sheet'; loadReportData();" class="bg-slate-900 hover:bg-slate-800 dark:bg-white/15 dark:hover:bg-white/25 text-white px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 font-bold text-xs">
                 <i class="fas fa-chart-pie"></i> <span v-text="isArabic ? 'التقارير المالية' : 'Financial Reports'"></span>
             </button>
         </div>
@@ -39,15 +40,15 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         <!-- Critical Alert: Overdue Receivables -->
-        <div class="bg-gradient-to-br from-rose-50 to-white p-6 rounded-[2rem] border border-rose-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div class="absolute right-0 top-0 w-24 h-24 bg-rose-100/50 rounded-bl-full z-0 transition-transform group-hover:scale-110"></div>
+        <div class="liquid-glass-card rounded-[2rem] p-6 border border-rose-200 dark:border-rose-900/40 relative overflow-hidden group shadow-sm">
+            <div class="glass-sheen"></div>
             <div class="relative z-10 flex justify-between items-start mb-2">
-                <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center animate-pulse"><i class="fas fa-exclamation-circle"></i></div>
-                <span class="text-[10px] font-black text-rose-600 uppercase tracking-widest bg-white/80 px-2 py-1 rounded-md border border-rose-100">Action Required</span>
+                <div class="w-10 h-10 bg-rose-50 dark:bg-rose-950/40 text-rose-600 rounded-xl flex items-center justify-center border border-rose-200 dark:border-rose-800"><i class="fas fa-exclamation-circle"></i></div>
+                <span class="text-[10px] font-black text-rose-600 uppercase tracking-widest bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded-md border border-rose-200 dark:border-rose-800">Action Required</span>
             </div>
             <div class="relative z-10 mt-4">
-                <h3 class="text-4xl font-black text-rose-600 tech-font">[[ formatCurrency(executiveKpis.financeReceivables) ]]</h3>
-                <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'ديون ومستحقات غير محصلة' : 'Outstanding Receivables'"></p>
+                <h3 class="text-3xl md:text-4xl font-black text-rose-600 font-mono tracking-tight">[[ formatCurrency ? formatCurrency(executiveKpis.financeReceivables) : executiveKpis.financeReceivables ]]</h3>
+                <p class="text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 mt-1" v-text="isArabic ? 'ديون ومستحقات غير محصلة' : 'Outstanding Receivables'"></p>
                 <button @click="accountingTab = 'invoices'" class="mt-4 text-xs font-black text-rose-600 hover:text-rose-700 uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'متابعة التحصيل' : 'Follow up Collection'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
@@ -55,33 +56,33 @@
         </div>
 
         <!-- Warning: Upcoming Payables -->
-        <div class="bg-gradient-to-br from-amber-50 to-white p-6 rounded-[2rem] border border-amber-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div class="absolute right-0 top-0 w-24 h-24 bg-amber-100/50 rounded-bl-full z-0 transition-transform group-hover:scale-110"></div>
+        <div class="liquid-glass-card rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 relative overflow-hidden group shadow-sm">
+            <div class="glass-sheen"></div>
             <div class="relative z-10 flex justify-between items-start mb-2">
-                <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center"><i class="fas fa-calendar-minus"></i></div>
-                <span class="text-[10px] font-black text-amber-600 uppercase tracking-widest bg-white/80 px-2 py-1 rounded-md border border-amber-100">Review Liability</span>
+                <div class="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center border border-blue-200 dark:border-blue-800"><i class="fas fa-calendar-minus"></i></div>
+                <span class="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md border border-blue-200 dark:border-blue-800">Liabilities</span>
             </div>
             <div class="relative z-10 mt-4">
-                <h3 class="text-4xl font-black text-amber-600 tech-font">[[ formatCurrency(Math.max(0, executiveKpis.procurementTotal - executiveKpis.procurementPaid)) ]]</h3>
-                <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'مستحقات والتزامات للموردين' : 'Payables Due'"></p>
-                <button class="mt-4 text-xs font-black text-amber-600 hover:text-amber-700 uppercase flex items-center gap-1 group/btn">
+                <h3 class="text-3xl md:text-4xl font-black text-slate-800 dark:text-white font-mono tracking-tight">[[ formatCurrency ? formatCurrency(Math.max(0, executiveKpis.procurementTotal - executiveKpis.procurementPaid)) : Math.max(0, executiveKpis.procurementTotal - executiveKpis.procurementPaid) ]]</h3>
+                <p class="text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 mt-1" v-text="isArabic ? 'مستحقات والتزامات للموردين' : 'Payables Due'"></p>
+                <button class="mt-4 text-xs font-black text-blue-600 dark:text-blue-400 hover:underline uppercase flex items-center gap-1 group/btn">
                     <span v-text="isArabic ? 'جدولة المدفوعات' : 'Schedule Payments'"></span> <i class="fas fa-arrow-right transition-transform group-hover/btn:translate-x-1" :class="isArabic ? 'rotate-180' : ''"></i>
                 </button>
             </div>
         </div>
 
         <!-- Good: Cash Flow Indicator -->
-        <div class="bg-gradient-to-br from-emerald-50 to-white p-6 rounded-[2rem] border border-emerald-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-100/50 rounded-bl-full z-0 transition-transform group-hover:scale-110"></div>
+        <div class="liquid-glass-card rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 relative overflow-hidden group shadow-sm">
+            <div class="glass-sheen"></div>
             <div class="relative z-10 flex justify-between items-start mb-2">
-                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center"><i class="fas fa-money-bill-trend-up"></i></div>
-                <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-white/80 px-2 py-1 rounded-md border border-emerald-100">Positive</span>
+                <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl flex items-center justify-center border border-emerald-200 dark:border-emerald-800"><i class="fas fa-money-bill-trend-up"></i></div>
+                <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">Positive</span>
             </div>
             <div class="relative z-10 mt-4">
                 <div class="flex items-end gap-1">
-                    <h3 class="text-4xl font-black text-emerald-600 tech-font">[[ formatCurrency(executiveKpis.financeCollected) ]]</h3>
+                    <h3 class="text-3xl md:text-4xl font-black text-slate-900 dark:text-white font-mono tracking-tight">[[ formatCurrency ? formatCurrency(executiveKpis.financeCollected) : executiveKpis.financeCollected ]]</h3>
                 </div>
-                <p class="text-sm font-bold text-slate-800 mt-1" v-text="isArabic ? 'إجمالي المحصل الفعلي' : 'Net Collected Cash'"></p>
+                <p class="text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 mt-1" v-text="isArabic ? 'إجمالي المحصل الفعلي' : 'Net Collected Cash'"></p>
                 <p class="mt-4 text-xs font-black text-slate-500 uppercase flex items-center gap-1">
                     <i class="fas fa-arrow-trend-up text-emerald-500"></i> <span v-text="isArabic ? '+12% عن الشهر الماضي' : '+12% vs last month'"></span>
                 </p>
@@ -92,78 +93,81 @@
     <!-- Bottlenecks & Operational Health Flow -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        <!-- Liquidity Visualizer -->
-        <div class="lg:col-span-1 bg-slate-900 rounded-[2.5rem] p-8 relative overflow-hidden shadow-2xl flex flex-col justify-between group">
-            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+        <!-- Liquidity Visualizer (Adaptive Glass Card) -->
+        <div class="lg:col-span-1 liquid-glass-card rounded-[2rem] p-6 relative overflow-hidden shadow-sm flex flex-col justify-between border border-slate-200 dark:border-white/10 group">
+            <div class="glass-sheen"></div>
             <div class="relative z-10">
-                <h3 class="font-black text-white text-lg flex items-center gap-2 mb-1">
-                    <i class="fas fa-scale-balanced text-amber-400"></i>
+                <h3 class="font-black text-slate-800 dark:text-white text-base md:text-lg flex items-center gap-2 mb-1">
+                    <i class="fas fa-scale-balanced text-blue-600 dark:text-blue-400 text-sm"></i>
                     <span v-text="isArabic ? 'مؤشر السيولة' : 'Liquidity Ratio'"></span>
                 </h3>
-                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold" v-text="isArabic ? 'قياس القدرة على السداد' : 'Current Ratio Health'"></p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold" v-text="isArabic ? 'قياس القدرة على السداد' : 'Current Ratio Health'"></p>
             </div>
             
-            <div class="relative z-10 flex flex-col items-center justify-center my-8">
-                <div class="relative w-40 h-40 flex items-center justify-center rounded-full border-8 border-slate-800 bg-slate-800/50">
+            <div class="relative z-10 flex flex-col items-center justify-center my-6">
+                <div class="relative w-36 h-36 flex items-center justify-center rounded-full border-8 border-slate-100 dark:border-slate-800 shadow-inner">
                     <svg class="absolute inset-0 w-full h-full -rotate-90">
-                        <circle cx="50%" cy="50%" r="48%" class="stroke-emerald-500 transition-all duration-1000" stroke-width="12" fill="none" stroke-dasharray="100 100" stroke-dashoffset="30" stroke-linecap="round"></circle>
+                        <circle cx="50%" cy="50%" r="48%" class="stroke-blue-600 dark:stroke-blue-400 transition-all duration-1000" stroke-width="10" fill="none" stroke-dasharray="100 100" stroke-dashoffset="30" stroke-linecap="round"></circle>
                     </svg>
                     <div class="text-center">
-                        <span class="text-4xl font-black text-white tech-font">1.8</span>
-                        <p class="text-[9px] text-emerald-400 font-bold uppercase mt-1">[[ isArabic ? 'حالة جيدة' : 'Healthy' ]]</p>
+                        <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">1.8</span>
+                        <p class="text-[9px] text-blue-600 dark:text-blue-400 font-bold uppercase mt-1">[[ isArabic ? 'حالة جيدة' : 'Healthy' ]]</p>
                     </div>
                 </div>
             </div>
             
-            <div class="relative z-10 space-y-3">
-                <div class="flex justify-between text-xs font-bold text-slate-300 border-b border-white/10 pb-2">
-                    <span v-text="isArabic ? 'الأصول المتداولة' : 'Current Assets'"></span> <span class="text-emerald-400">[[ formatCurrency(executiveKpis.financeReceivables + executiveKpis.financeCollected) ]]</span>
+            <div class="relative z-10 space-y-2.5 pt-2 border-t border-slate-100 dark:border-white/10">
+                <div class="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
+                    <span v-text="isArabic ? 'الأصول المتداولة' : 'Current Assets'"></span> 
+                    <span class="text-slate-900 dark:text-white font-mono font-bold">[[ formatCurrency ? formatCurrency(executiveKpis.financeReceivables + executiveKpis.financeCollected) : (executiveKpis.financeReceivables + executiveKpis.financeCollected) ]]</span>
                 </div>
-                <div class="flex justify-between text-xs font-bold text-slate-300">
-                    <span v-text="isArabic ? 'الالتزامات' : 'Liabilities'"></span> <span class="text-rose-400">[[ formatCurrency(Math.max(0, executiveKpis.procurementTotal - executiveKpis.procurementPaid)) ]]</span>
+                <div class="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
+                    <span v-text="isArabic ? 'الالتزامات' : 'Liabilities'"></span> 
+                    <span class="text-rose-600 dark:text-rose-400 font-mono font-bold">[[ formatCurrency ? formatCurrency(Math.max(0, executiveKpis.procurementTotal - executiveKpis.procurementPaid)) : Math.max(0, executiveKpis.procurementTotal - executiveKpis.procurementPaid) ]]</span>
                 </div>
             </div>
         </div>
 
         <!-- Operations Queue Control -->
-        <div class="lg:col-span-3 bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <div class="flex justify-between items-center mb-6">
+        <div class="lg:col-span-3 liquid-glass-card rounded-[2rem] p-6 md:p-7 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+            <div class="glass-sheen"></div>
+            <div class="relative z-10 flex justify-between items-center mb-5">
                 <div>
-                    <h3 class="font-black text-xl text-slate-800" v-text="isArabic ? 'مهام المراجعة المالية (Finance Queue)' : 'Pending Finance Queue'"></h3>
-                    <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider" v-text="isArabic ? 'فواتير و مدفوعات تتطلب التأكيد' : 'Invoices & Payments requiring validation'"></p>
+                    <h3 class="font-black text-lg md:text-xl text-slate-800 dark:text-white" v-text="isArabic ? 'مهام المراجعة المالية (Finance Queue)' : 'Pending Finance Queue'"></h3>
+                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5 uppercase tracking-wider" v-text="isArabic ? 'فواتير و مدفوعات تتطلب التأكيد' : 'Invoices & Payments requiring validation'"></p>
                 </div>
-                <button class="w-10 h-10 bg-slate-50 text-slate-400 hover:text-amber-600 rounded-xl flex items-center justify-center transition-colors">
-                    <i class="fas fa-ellipsis-v"></i>
+                <button class="w-9 h-9 liquid-glass-btn text-slate-500 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 rounded-xl flex items-center justify-center transition-colors">
+                    <i class="fas fa-ellipsis-v text-xs"></i>
                 </button>
             </div>
             
-            <div class="w-full overflow-x-auto">
+            <div class="relative z-10 w-full overflow-x-auto">
                 <table class="w-full text-left border-collapse" :dir="isArabic ? 'rtl' : 'ltr'">
                     <thead>
-                        <tr class="border-b-2 border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            <th class="pb-4 w-1/4" v-text="isArabic ? 'المستند' : 'Document'"></th>
-                            <th class="pb-4 w-1/4" v-text="isArabic ? 'الطرف الثاني' : 'Partner'"></th>
-                            <th class="pb-4 w-1/4" v-text="isArabic ? 'المبلغ' : 'Amount'"></th>
-                            <th class="pb-4 w-1/4 text-center" v-text="isArabic ? 'التحكم' : 'Action'"></th>
+                        <tr class="border-b border-slate-200 dark:border-white/10 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-50/60 dark:bg-white/[0.02]">
+                            <th class="py-3 px-3 w-1/4" v-text="isArabic ? 'المستند' : 'Document'"></th>
+                            <th class="py-3 px-3 w-1/4" v-text="isArabic ? 'الطرف الثاني' : 'Partner'"></th>
+                            <th class="py-3 px-3 w-1/4" v-text="isArabic ? 'المبلغ' : 'Amount'"></th>
+                            <th class="py-3 px-3 w-1/4 text-center" v-text="isArabic ? 'التحكم' : 'Action'"></th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr v-for="item in financeQueueItems" :key="item.type + '-' + item.id" class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
-                            <td class="py-4">
-                                <span class="font-black text-slate-700 font-mono">[[ item.docNumber ]]</span>
-                                <p class="text-[10px] font-bold flex items-center gap-1.5 mt-0.5">
+                    <tbody class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+                        <tr v-for="item in financeQueueItems" :key="item.type + '-' + item.id" class="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors group">
+                            <td class="py-3.5 px-3">
+                                <span class="font-black text-blue-600 dark:text-blue-400 font-mono text-xs">[[ item.docNumber ]]</span>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold flex items-center gap-1.5 mt-0.5">
                                     <i :class="item.iconClass"></i>
                                     <span>[[ item.docType ]]</span>
                                 </p>
                             </td>
-                            <td class="py-4 font-bold text-sm text-slate-600">[[ item.partner ]]</td>
-                            <td class="py-4 font-black" :class="item.isNegative ? 'text-rose-600' : 'text-emerald-600'">
+                            <td class="py-3.5 px-3 font-bold text-xs text-slate-700 dark:text-slate-200">[[ item.partner ]]</td>
+                            <td class="py-3.5 px-3 font-mono font-black text-sm" :class="item.isNegative ? 'text-rose-600' : 'text-slate-900 dark:text-white'">
                                 <span v-if="item.isNegative">- </span>[[ formatCurrency ? formatCurrency(item.amount) : item.amount ]]
                             </td>
-                            <td class="py-4 text-center">
+                            <td class="py-3.5 px-3 text-center">
                                 <button @click="item.action()" 
                                         :disabled="loading"
-                                        class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all uppercase tracking-wider flex items-center gap-1.5 mx-auto active:scale-95 disabled:opacity-50">
+                                        class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm shadow-blue-500/20 transition-all uppercase tracking-wider flex items-center gap-1.5 mx-auto active:scale-95 disabled:opacity-50">
                                     <i class="fas fa-check-double text-[10px]"></i>
                                     <span>[[ item.actionLabel ]]</span>
                                 </button>
@@ -171,17 +175,17 @@
                         </tr>
                         <tr v-if="financeQueueItems.length === 0">
                             <td colspan="4" class="py-12 text-center text-slate-400">
-                                <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center mx-auto mb-3 shadow-inner">
+                                <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 flex items-center justify-center mx-auto mb-3 border border-blue-200 dark:border-blue-800">
                                     <i class="fas fa-check-circle text-2xl"></i>
                                 </div>
-                                <p class="text-sm font-bold text-slate-600" v-text="isArabic ? 'كافة المستندات والعمليات المالية مرحلة بنجاح!' : 'All financial documents are fully posted!'"></p>
+                                <p class="text-sm font-bold text-slate-700 dark:text-slate-300" v-text="isArabic ? 'كافة المستندات والعمليات المالية مرحلة بنجاح!' : 'All financial documents are fully posted!'"></p>
                                 <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest" v-text="isArabic ? 'لا توجد فواتير أو سندات معلقة بحاجة لاعتماد حالياً' : 'No pending drafts in the finance queue'"></p>
                             </td>
                         </tr>
                     </tbody>
                 </table>
                 <div class="mt-4 text-center">
-                     <button @click="accountingTab = 'invoices'" class="text-[10px] font-black text-slate-400 hover:text-amber-600 uppercase tracking-widest transition-colors" v-text="isArabic ? 'عرض كافة العمليات المالية' : 'View All Financial Operations'"></button>
+                     <button @click="accountingTab = 'invoices'" class="text-[10px] font-black text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 uppercase tracking-widest transition-colors" v-text="isArabic ? 'عرض كافة العمليات المالية' : 'View All Financial Operations'"></button>
                 </div>
             </div>
         </div>

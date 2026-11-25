@@ -174,8 +174,8 @@
                             </td>
 
                             <!-- Value -->
-                            <td class="px-4 py-3.5 font-black text-blue-600 dark:text-blue-400 tech-font">
-                                $[[ formatNumber(so.grand_total) ]]
+                            <td class="px-4 py-3.5 font-black text-blue-600 dark:text-blue-400 font-mono">
+                                [[ formatCurrency ? formatCurrency(so.grand_total) : formatNumber(so.grand_total) + ' EGP' ]]
                             </td>
 
                             <!-- Status -->
