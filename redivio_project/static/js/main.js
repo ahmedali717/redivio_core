@@ -5473,14 +5473,14 @@ createApp({
         refreshKpis() {
             // 📦 1. حسابات المخزون (Inventory)
             this.kpis.inventory.total_items = (this.materials_list || []).length;
-            this.kpis.inventory.stock_qty = (this.inventoryList || []).reduce((acc, item) => acc + (item.quantity || 0), 0);
+            this.kpis.inventory.stock_qty = (this.inventoryList || []).reduce((acc, item) => acc + (parseFloat(item.quantity) || 0), 0);
             
             this.kpis.inventory.critical_items = (this.inventoryList || []).filter(item => {
                 const material = (this.materials_list || []).find(m => m.id === item.material_id);
-                return material && (item.quantity < (material.reorder_level || 5));
+                return material && ((parseFloat(item.quantity) || 0) < (parseFloat(material.reorder_level) || 5));
             }).length;
             
-            this.kpis.inventory.dead_stock = (this.inventoryList || []).filter(item => item.quantity > 500).length;
+            this.kpis.inventory.dead_stock = (this.inventoryList || []).filter(item => (parseFloat(item.quantity) || 0) > 500).length;
 
             // 💰 2. حسابات المبيعات (Sales)
             const soData = this.salesOrders || [];

@@ -363,7 +363,7 @@
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
                         <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase" v-text="isArabic ? 'كمية المخزون الإجمالية' : 'Stock Qty'"></span>
-                        <span class="font-black text-slate-900 dark:text-white tabular-nums text-sm">[[ (kpis.inventory && kpis.inventory.stock_qty) ? kpis.inventory.stock_qty : ((inventoryList || []).reduce((acc, item) => acc + (parseFloat(item.quantity) || 0), 0)) ]]</span>
+                        <span class="font-black text-slate-900 dark:text-white tabular-nums text-sm">[[ formatNumber(parseFloat(kpis.inventory && kpis.inventory.stock_qty ? kpis.inventory.stock_qty : 0) || ((inventoryList || []).reduce((acc, item) => acc + (parseFloat(item.quantity) || 0), 0))) ]]</span>
                     </div>
                     <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
                         <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase" v-text="isArabic ? 'أصناف حرجة' : 'Critical Stock'"></span>
