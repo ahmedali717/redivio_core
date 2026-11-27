@@ -47,6 +47,16 @@ def parse_csv_file(file):
         rows.append(cleaned_row)
     return fieldnames, rows
 
+
+def find_column_flexible(headers, aliases):
+    import re
+    norm_headers = {re.sub(r'[^a-zA-Z0-9\u0621-\u064A]', '', str(h)).lower(): h for h in headers}
+    for alias in aliases:
+        norm_alias = re.sub(r'[^a-zA-Z0-9\u0621-\u064A]', '', str(alias)).lower()
+        if norm_alias in norm_headers:
+            return norm_headers[norm_alias]
+    return None
+
 # =========================================================
 #  1. API Functions
 # =========================================================
@@ -212,12 +222,12 @@ class PlantViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
             success_count = 0
             skipped_count = 0
             
-            # Map Arabic and English headers
-            code_col = 'الكود' if 'الكود' in headers else ('كود المنشأة' if 'كود المنشأة' in headers else ('Plant Code' if 'Plant Code' in headers else 'Code'))
-            name_col = 'الاسم' if 'الاسم' in headers else ('اسم المنشأة' if 'اسم المنشأة' in headers else ('Plant Name' if 'Plant Name' in headers else 'Name'))
+            # Map Arabic and English headers flexibly
+            code_col = find_column_flexible(headers, ['code', 'plant_code', 'كود', 'كود_المنشأة', 'رمز_المنشأة', 'plant', 'الفرع'])
+            name_col = find_column_flexible(headers, ['name', 'plant_name', 'الاسم', 'اسم_المنشأة', 'اسم', 'المنشأة'])
             
-            if code_col not in headers or name_col not in headers:
-                return Response({"error": f"Missing required columns. Ensure '{code_col}' and '{name_col}' exist."}, status=status.HTTP_400_BAD_REQUEST)
+            if not code_col or not name_col:
+                return Response({"error": "تعذر العثور على أعمدة الكود والاسم. يرجى التأكد من احتواء الملف على أعمدة 'Plant Code' و 'Plant Name'."}, status=status.HTTP_400_BAD_REQUEST)
 
             with transaction.atomic():
                 for row in rows:
@@ -294,22 +304,27 @@ class StorageLocationViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
             success_count, skipped_count = 0, 0
             
-            pcode_col = 'كود المنشأة' if 'كود المنشأة' in headers else 'Plant Code'
-            code_col = 'كود الموقع' if 'كود الموقع' in headers else 'Location Code'
-            name_col = 'اسم الموقع' if 'اسم الموقع' in headers else 'Location Name'
+            pcode_col = find_column_flexible(headers, ['plant_code', 'plant', 'كود_المنشأة', 'المنشأة', 'كود_الفرع'])
+            code_col = find_column_flexible(headers, ['location_code', 'code', 'كود_الموقع', 'رمز_الموقع', 'الموقع'])
+            name_col = find_column_flexible(headers, ['location_name', 'name', 'اسم_الموقع', 'اسم'])
             
-            if not all(col in headers for col in [pcode_col, code_col, name_col]):
-                return Response({"error": "Missing columns. Ensure Plant Code, Location Code, and Location Name exist."}, status=status.HTTP_400_BAD_REQUEST)
+            if not code_col or not name_col:
+                return Response({"error": "تعذر العثور على أعمدة كود الموقع واسم الموقع. يرجى التأكد من احتواء الملف على أعمدة 'Location Code' و 'Location Name'."}, status=status.HTTP_400_BAD_REQUEST)
 
             with transaction.atomic():
                 for row in rows:
-                    pcode = str(row.get(pcode_col, '')).strip()
+                    pcode = str(row.get(pcode_col, '')).strip() if pcode_col else ''
                     code = str(row.get(code_col, '')).strip()
                     name = str(row.get(name_col, '')).strip()
                     
-                    if not pcode or not code or not name or str(code).lower() == 'nan': continue
+                    if not code or not name or str(code).lower() == 'nan': continue
                         
-                    plant = Plant.objects.filter(opco=active_opco, code=pcode).first()
+                    plant = None
+                    if pcode:
+                        plant = Plant.objects.filter(opco=active_opco, code=pcode).first()
+                    if not plant:
+                        plant = Plant.objects.filter(opco=active_opco).first()
+                        
                     if not plant:
                         skipped_count += 1
                         continue
@@ -377,20 +392,31 @@ class StorageBinViewSet(OpcoAwareMixin, viewsets.ModelViewSet):
 
             success_count, skipped_count = 0, 0
             
-            pcode_col = 'كود المنشأة' if 'كود المنشأة' in headers else 'Plant Code'
-            code_col = 'كود الرف' if 'كود الرف' in headers else 'Bin Code'
+            code_col = find_column_flexible(headers, ['bin_code', 'bin', 'code', 'كود_الرف', 'الرف', 'رمز_الرف'])
+            pcode_col = find_column_flexible(headers, ['plant_code', 'plant', 'كود_المنشأة', 'المنشأة'])
+            loc_col = find_column_flexible(headers, ['location_code', 'location', 'كود_الموقع', 'الموقع'])
             
-            if not all(col in headers for col in [pcode_col, code_col]):
-                return Response({"error": "Missing columns. Ensure Plant Code and Bin Code exist."}, status=status.HTTP_400_BAD_REQUEST)
+            if not code_col:
+                return Response({"error": "تعذر العثور على عمود الرف. يرجى التأكد من احتواء الملف على عمود 'Bin Code' أو 'كود الرف'."}, status=status.HTTP_400_BAD_REQUEST)
             
             with transaction.atomic():
                 for row in rows:
-                    pcode = str(row.get(pcode_col, '')).strip()
+                    pcode = str(row.get(pcode_col, '')).strip() if pcode_col else ''
+                    lcode = str(row.get(loc_col, '')).strip() if loc_col else ''
                     code = str(row.get(code_col, '')).strip()
                     
-                    if not pcode or not code or str(code).lower() == 'nan': continue
+                    if not code or str(code).lower() == 'nan': continue
                         
-                    plant = Plant.objects.filter(opco=active_opco, code=pcode).first()
+                    plant = None
+                    if pcode:
+                        plant = Plant.objects.filter(opco=active_opco, code=pcode).first()
+                    if not plant and lcode:
+                        loc = StorageLocation.objects.filter(plant__opco=active_opco, code=lcode).first()
+                        if loc:
+                            plant = loc.plant
+                    if not plant:
+                        plant = Plant.objects.filter(opco=active_opco).first()
+                        
                     if not plant:
                         skipped_count += 1
                         continue
